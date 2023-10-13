@@ -1,0 +1,6 @@
+
+# Ignore the example binaries
+example
+
+# Ignore the generated docs
+generated-docs

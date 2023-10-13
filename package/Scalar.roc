@@ -1,54 +1,76 @@
 interface Scalar
-    exposes [Scalar, toU32, toCodePt, appendToUtf8, parseUtf8, fromCodePt, countUtf8Bytes, fromU32]
-    imports [CodePt.{ CodePt }, CodePtInternal]
+    exposes [
+        Scalar,
+        toU32,
+        toCodePoint,
+        # appendToUtf8,
+        # parseUtf8,
+        fromCodePt,
+        fromStr,
+        toScalars,
+        startsWithScalar,
+        appendScalar,
+        walkScalars,
+        walkScalarsUntil,
+        # countUtf8Bytes,
+        fromU32,
+    ]
+    imports [
+        CodePoint.{ CodePoint, isValidScalar },
+    ]
 
 ## A [Unicode scalar value](http://www.unicode.org/glossary/#unicode_scalar_value) - that is,
-## any [code point](./CodePt#CodePt) except for [high-surrogate](http://www.unicode.org/glossary/#high_surrogate_code_point)
+## any [code point](./CodePoint#CodePoint) except for [high-surrogate](http://www.unicode.org/glossary/#high_surrogate_code_point)
 ## and [low-surrogate](http://www.unicode.org/glossary/#low_surrogate_code_point) code points.
-Scalar := U32
-    has [Eq, Hash]
+Scalar := CodePoint
 
 toU32 : Scalar -> U32
-toU32 = \@Scalar u32 -> u32
+toU32 = \@Scalar cp -> CodePoint.toU32 cp
 
+## Any Unicode code point except high-surrogate and low-surrogate code points. Note UTF-8 does not use
+## surrogates as it is a variable-width encoding unlike UTF-16.
 fromU32 : U32 -> Result Scalar [InvalidScalar]
-fromU32 = \_u32 ->
-    crash "TODO implement" # this can't just delegate to CodePt.fromU32; scalars are a subset of code points
+fromU32 = \u32 ->
+    CodePoint.fromU32 u32 |> CodePoint.isValidScalar
 
-toCodePt : Scalar -> CodePt
-toCodePt = \@Scalar u32 ->
-    CodePtInternal.fromU32Unchecked u32
+# inRangeA = u32 >= 0x000000 && u32 <= 0xD7FF16
+# inRangeB = u32 >= 0xE00016 && u32 <= 0x10FFFF16
+
+# if inRangeA || inRangeB then
+#     Ok (@Scalar (fromU32Unchecked u32))
+# else
+#     Err InvalidScalar
+
+toCodePoint : Scalar -> CodePoint
+toCodePoint = \@Scalar cp -> cp
 
 ## Convert a code point to a scalar value. This can fail if the given
 ## code point is
-fromCodePt : CodePt -> Result Scalar [NonScalarCodePt]
-fromCodePt = \codePt ->
-    if CodePt.isValidScalar codePt then
-        Ok (@Scalar (CodePt.toU32 codePt))
+fromCodePt : CodePoint -> Result Scalar [NonScalarCodePt]
+fromCodePt = \cp ->
+    if isValidScalar cp then
+        Ok (@Scalar cp)
     else
         Err NonScalarCodePt
 
-fromU32 : U32 -> Result Scalar [InvalidScalar]
-fromU32 = \_u32 ->
-    crash "TODO implement" # this can't just delegate to CodePt.fromU32; scalars are a subset of code points
-
-
 fromStr : Str -> List Scalar
-fromStr = \str ->
+fromStr = \_str ->
     crash "TODO implement" # https://www.roc-lang.org/builtins/Str#toScalars
 
-appendToStr : Scalar, Str -> Str
-appendToStr = \@Scalar u32, str ->
-    when Str.appendScalar str u32 is
-        Ok answer -> answer
-        Err InvalidScalar ->
-            u32str = Num.toStr u32
+# appendToStr : Scalar, Str -> Str
+# appendToStr = \@Scalar u32, str ->
+#     when Str.appendScalar str u32 is
+#         Ok answer -> answer
+#         Err InvalidScalar ->
+#             u32str = Num.toStr u32
 
-            crash "appendToStr received a Scalar value of \(u32str). This is an invalid Unicode scalar value, so it should not have been possible to obtain a `Scalar` which wraps it!"
+#             crash "appendToStr received a Scalar value of \(u32str). This is an invalid Unicode scalar value, so it should not have been possible to obtain a `Scalar` which wraps it!"
 
-walkStr : Str, state, (state, Scalar -> state) -> state
+# TODO WHAT IS THIS?
+# walkStr : Str, state, (state, Scalar -> state) -> state
 
-walkStrUntil : Str, state, (state, U32 -> [Break state, Continue state]) -> state
+# TODO WHAT IS THIS?
+# walkStrUntil : Str, state, (state, U32 -> [Break state, Continue state]) -> state
 
 ## If the string begins with a [Unicode code point](http://www.unicode.org/glossary/#code_point)
 ## equal to the given [U32], returns [Bool.true]. Otherwise returns [Bool.false].
@@ -96,15 +118,15 @@ toScalars : Str -> List U32
 ## expect Str.appendScalar "😢" 0xabcdef == Err InvalidScalar
 ## ```
 appendScalar : Str, U32 -> Result Str [InvalidScalar]
-appendScalar = \string, scalar ->
-    if isValidScalar scalar then
-        Ok (appendScalarUnsafe string scalar)
+appendScalar = \string, u32 ->
+    if isValidScalar (fromU32Unchecked u32) then
+        Ok (appendScalarUnsafe string u32)
     else
         Err InvalidScalar
 
-isValidScalar : U32 -> Bool
-isValidScalar = \scalar ->
-    scalar <= 0xD7FF || (scalar >= 0xE000 && scalar <= 0x10FFFF)
+appendScalarUnsafe : Str, U32 -> Str
+appendScalarUnsafe = \_string, _scalar ->
+    crash "TODO"
 
 getScalarUnsafe : Str, Nat -> { scalar : U32, bytesParsed : Nat }
 
@@ -128,7 +150,6 @@ walkScalarsHelp = \string, state, step, index, length ->
         walkScalarsHelp string newState step (index + bytesParsed) length
     else
         state
-
 
 ## Walks over the unicode [U32] values for the given [Str] and calls a function
 ## to update state for each.
