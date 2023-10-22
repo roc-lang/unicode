@@ -1,6 +1,7 @@
 package "unicode"
     exposes [
         CodePoint,
-        Scalar,
+        # TODO enable
+        # Scalar,
     ]
     packages {}

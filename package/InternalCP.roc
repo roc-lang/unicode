@@ -1,4 +1,4 @@
-interface Internal
+interface InternalCP
     exposes [
         CP,
         fromU32Unchecked,

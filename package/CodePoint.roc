@@ -13,7 +13,7 @@ interface CodePoint
         countUtf8Bytes,
     ]
     imports [
-        Internal.{ CP, fromU32Unchecked },
+        InternalCP.{ CP, fromU32Unchecked },
     ]
 
 ## A [Unicode code point](http://www.unicode.org/glossary/#code_point).
@@ -22,7 +22,7 @@ CodePoint : CP
 ## Converts a [CodePoint] to its underlying [Unicode code point](http://www.unicode.org/glossary/#code_point)
 ## integer representation.
 toU32 : CodePoint -> U32
-toU32 = Internal.toU32
+toU32 = InternalCP.toU32
 
 ## Converts a [U32] to a [CodePoint] by verifying that it is a valid [Unicode code point](http://www.unicode.org/glossary/#code_point)
 ## (that is, it's between `0` and `0x10FFFF`).
@@ -45,7 +45,7 @@ isValidScalar = \codePoint -> !(isHighSurrogate codePoint || isLowSurrogate code
 ## (`0xD800` to `0xDBFF`)
 isHighSurrogate : CodePoint -> Bool
 isHighSurrogate = \codePoint ->
-    u32 = Internal.toU32 codePoint
+    u32 = InternalCP.toU32 codePoint
 
     u32 >= 0xDC00 && u32 <= 0xDFFF
 
@@ -53,7 +53,7 @@ isHighSurrogate = \codePoint ->
 ## U+DC00 to U+DFFF
 isLowSurrogate : CodePoint -> Bool
 isLowSurrogate = \codePoint ->
-    u32 = Internal.toU32 codePoint
+    u32 = InternalCP.toU32 codePoint
 
     u32 >= 0xDC00 && u32 <= 0xDFFF
 
@@ -61,7 +61,7 @@ isLowSurrogate = \codePoint ->
 ## for the given codepoint.
 utf8Len : CodePoint -> Result Nat [InvalidCodePoint]
 utf8Len = \codePoint ->
-    u32 = Internal.toU32 codePoint
+    u32 = InternalCP.toU32 codePoint
 
     if u32 < 0x80 then
         Ok 1
@@ -77,7 +77,7 @@ utf8Len = \codePoint ->
 ## Encode a Scalar as UTF-8 bytes and append those bytes to an existing list of UTF-8 bytes.
 appendUtf8 : List U8, CodePoint -> List U8
 appendUtf8 = \bytes, codePoint ->
-    u32 = Internal.toU32 codePoint
+    u32 = InternalCP.toU32 codePoint
 
     if u32 < 0x80 then
         List.append bytes (Num.toU8 u32)
@@ -174,7 +174,7 @@ addContinuation = \original, continuationByte ->
 ## The number of UTF-8 bytes it takes to represent this Scalar.
 countUtf8Bytes : CodePoint -> Nat
 countUtf8Bytes = \codePoint ->
-    u32 = Internal.toU32 codePoint
+    u32 = InternalCP.toU32 codePoint
 
     if u32 < 0x80 then
         1
