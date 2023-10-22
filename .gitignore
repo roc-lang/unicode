@@ -2,5 +2,6 @@
 # Ignore the example binaries
 example
 
-# Ignore the generated docs
+# Ignore the generated files
 generated-docs
+ucd/gen
