@@ -2,7 +2,7 @@
 
 # Generate the GBP internal module
 echo "Generating package/InternalGBP.roc"
-roc run ucd/GBP.roc -- package/
+roc run ucd/InternalGBP.roc -- package/
 
 # Test the GBP internal module
 echo "Testing package/InternalGBP.roc"
