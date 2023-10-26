@@ -125,7 +125,7 @@ isXYZTemplate =
         exp =
             cpsForProperty current
             |> List.map cpMapToExpression
-            |> Str.joinWith " && "
+            |> Str.joinWith " || "
 
         """
 
@@ -246,6 +246,42 @@ ifGbpStr : Str, Str -> Str
 ifGbpStr = \funcStr, gbpStr ->
     "if \(funcStr) u32 then\n        \(gbpStr)\n    else "
 
+unicodeHexToTest : (Str, Str) -> Str 
+unicodeHexToTest = \(hex, gbpExpected) ->
+    u32 = hex |> Str.toUtf8 |> hexBytesToU32
+
+    """
+    expect  
+        a = \(Num.toStr u32) |> fromU32Unchecked |> fromCP 
+        a == \(gbpExpected)
+
+    """
+
+testsTemplate : Str
+testsTemplate = 
+    [
+        ("000D", "CR"),
+        ("000A", "LF"),
+        ("200D", "ZWJ"),
+        ("17BF", "SpacingMark"),
+        ("A960", "L"),
+        ("D7C6", "V"),
+        ("11A8", "T"),
+        ("AC00", "LV"),
+        ("AC04", "LVT"),
+        ("B93D", "LVT"),
+        ("0041", "Other"),
+        ("D7CD", "T"),
+        ("1160", "V"),
+        ("D7C6", "V"),
+        ("1E2AE", "Extend"),
+        ("FFF0", "Control"),
+        ("1D17A", "Control"),
+        ("06DD", "Prepend"),
+    ]
+    |> List.map unicodeHexToTest
+    |> Str.joinWith ""
+
 # 2. BUILD TEMPLATE
 
 template =
@@ -257,7 +293,7 @@ template =
             fromCP,
         ]
         imports [
-            InternalCP.{ CP, toU32 },
+            InternalCP.{ CP, toU32, fromU32Unchecked },
         ]
 
     \(gbpDefinitionTemplate)
@@ -266,10 +302,12 @@ template =
 
     \(fromCPTemplate)
 
-    expect 1 == 1
+    \(testsTemplate)
     """
 
+    
 # HELPERS
+
 
 startsWithHex : Str -> Result Str [NonHex]
 startsWithHex = \str ->
@@ -377,39 +415,7 @@ expect
     takeHexBytes { val: [], rest: bytes } == { val: [68, 54, 69, 49], rest: [46, 46, 68, 54, 70, 66, 32, 32] }
 
 isHex : U8 -> Bool
-isHex = \u8 ->
-    u8
-    == '0'
-    || u8
-    == '1'
-    || u8
-    == '2'
-    || u8
-    == '3'
-    || u8
-    == '4'
-    || u8
-    == '5'
-    || u8
-    == '6'
-    || u8
-    == '7'
-    || u8
-    == '8'
-    || u8
-    == '9'
-    || u8
-    == 'A'
-    || u8
-    == 'B'
-    || u8
-    == 'C'
-    || u8
-    == 'D'
-    || u8
-    == 'E'
-    || u8
-    == 'F'
+isHex = \u8 -> u8 == '0' || u8 == '1' || u8 == '2' || u8 == '3' || u8 == '4' || u8 == '5' || u8 == '6' || u8 == '7' || u8 == '8' || u8 == '9' || u8 == 'A' || u8 == 'B' || u8 == 'C' || u8 == 'D' || u8 == 'E' || u8 == 'F'
 
 expect isHex '0'
 expect isHex 'A'
