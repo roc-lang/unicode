@@ -1,7 +1,7 @@
 app "gen"
     packages { 
         pf: "https://github.com/roc-lang/basic-cli/releases/download/0.5.0/Cufzl36_SnJ4QbOoEmiJ5dIpUxBvdB3NEySvuH82Wio.tar.br",
-        parser: "https://github.com/lukewilliamboswell/roc-parser/releases/download/0.1.0/vPU-UZbWGIXsAfcJvAnmU3t3SWlHoG_GauZpqzJiBKA.tar.br",
+        # parser: "https://github.com/lukewilliamboswell/roc-parser/releases/download/0.1.0/vPU-UZbWGIXsAfcJvAnmU3t3SWlHoG_GauZpqzJiBKA.tar.br",
     }
     imports [
         pf.Stdout, 
@@ -10,10 +10,8 @@ app "gen"
         pf.Path.{Path },
         pf.Arg,
         pf.File,
-        parser.Core.{ Parser, buildPrimitiveParser },
-        parser.String.{ parseStr },
-        # "GraphemeBreakProperty-15.1.0.txt" as gbpFile : Str,
-        "GBPTemplate.roc" as template : Str,
+        "GraphemeBreakProperty-15.1.0.txt" as gbpFile : Str,
+        # "InternalGBP.roc" as template : Str,
     ]
     provides [main] to pf
 
@@ -23,10 +21,11 @@ GraphemeBreakProperty : [
     LF, 
     Control,
     Extend,
-    ZWL,
+    ZWJ,
     RI,
     Prepend,
     SpacingMark,
+    RegionalIndicator,
     L,
     V,
     T,
@@ -41,6 +40,8 @@ main =
     |> Task.await writeToFile 
     |> Task.onErr \err -> Stderr.line "\(err)"
 
+# TASKS
+
 getFilePath : Task Path Str
 getFilePath = 
     args <- Arg.list |> Task.await
@@ -51,9 +52,65 @@ getFilePath =
 
 writeToFile : Path -> Task {} Str 
 writeToFile = \path ->
-    File.writeUtf8 path template
+    File.writeUtf8 path lines
     |> Task.mapErr \_ -> "ERROR: unable to write to \(Path.display path)"
-    |> Task.await \_ -> Stdout.line "\nSucessfully wrote \(lineCountStr) lines to \(Path.display path)\n"
+    |> Task.await \_ -> Stdout.line "\nSucessfully wrote to \(Path.display path)\n"
+
+# PROCESS FILE
+
+lines = 
+    gbpFile
+    |> Str.split  "\n"
+    |> List.keepOks startsWithHex
+    |> List.map \l -> 
+        when Str.split l ";" is 
+            [hexPart, propPart] -> 
+                when (parseHexPart hexPart, parsePropPart propPart) is 
+                    (Ok cp, Ok prop) -> (cp, prop)
+                    _ -> crash "Error parsing line -- \(l)"
+            _ -> crash "Error unexpected ';' on line -- \(l)"
+    |> List.map \(cp, _) -> 
+        when cp is 
+            Single _ -> "got single"
+            Range _ _ -> "got double"
+    |> Str.joinWith "\n"
+
+parseHexPart : Str -> Result [Single CodePoint, Range CodePoint CodePoint] [ParsingError]
+parseHexPart = \hexPart ->
+    when hexPart |> Str.trim |> Str.split ".." is 
+        [single] -> 
+            when codePointParser single is 
+                Ok a -> Ok (Single a )
+                Err _ -> Err ParsingError
+        [start, end] -> 
+            when (codePointParser start, codePointParser end) is 
+                (Ok a, Ok b) -> Ok (Range a b)
+                _ -> Err ParsingError
+        _ -> Err ParsingError
+
+expect parseHexPart "0890..0891    " == Ok (Range 2192 2193)
+expect parseHexPart "08E2          " == Ok (Single 2274)
+
+parsePropPart : Str -> Result GraphemeBreakProperty [ParsingError]
+parsePropPart = \str -> 
+    when Str.split str "#" is 
+        [propStr, ..] -> graphemePropertyParser (Str.trim propStr)
+        _ -> Err ParsingError 
+        
+expect parsePropPart " Prepend # Cf   [6] ARABIC NUMBER SIGN..ARABIC NUMBER MARK ABOVE" == Ok Prepend
+expect parsePropPart " CR # Cc       <control-000D>" == Ok CR
+expect parsePropPart " Regional_Indicator # So  [26] REGIONAL INDICATOR SYMBOL LETTER A..REGIONAL INDICATOR SYMBOL LETTER Z" == Ok RegionalIndicator
+
+# HELPERS
+
+startsWithHex : Str -> Result Str [NonHex]
+startsWithHex = \str ->
+    when Str.toUtf8 str is 
+        [a, ..] if isHex a -> Ok str
+        _ -> Err NonHex
+
+expect startsWithHex "# ===" == Err NonHex
+expect startsWithHex "0000.." == Ok "0000.."
 
 removeTrailingSlash : Str -> Str
 removeTrailingSlash = \str ->
@@ -72,13 +129,7 @@ removeTrailingSlash = \str ->
 expect removeTrailingSlash "abc  " == "abc"
 expect removeTrailingSlash "  abc/package/  " == "abc/package"
 
-lineCountStr = 
-    template
-    |> Str.split "\n"
-    |> List.len
-    |> Num.toStr
-
-props : List {bytes : List U8, property : GraphemeBreakProperty, len : Nat}
+props : List {bytes : List U8, property : GraphemeBreakProperty}
 props =
     # NOTE ordering matters here, e.g. L after LV and LVT
     # to match on longest first
@@ -86,7 +137,7 @@ props =
         { bytes: Str.toUtf8 "CR", property: CR},
         { bytes: Str.toUtf8 "Control", property: Control},
         { bytes: Str.toUtf8 "Extend", property: Extend},
-        { bytes: Str.toUtf8 "ZWL", property: ZWL},
+        { bytes: Str.toUtf8 "ZWJ", property: ZWJ},
         { bytes: Str.toUtf8 "RI", property: RI},
         { bytes: Str.toUtf8 "Prepend", property: Prepend},
         { bytes: Str.toUtf8 "SpacingMark", property: SpacingMark},
@@ -97,52 +148,46 @@ props =
         { bytes: Str.toUtf8 "LV", property: LV},
         { bytes: Str.toUtf8 "L", property: L},
         { bytes: Str.toUtf8 "Other", property: Other},
+        { bytes: Str.toUtf8 "Regional_Indicator", property: RegionalIndicator},
     ]
-    |> List.map \{bytes, property} -> {bytes, property, len: List.len bytes}
 
-graphemePropertyParser : Parser (List U8) GraphemeBreakProperty
-graphemePropertyParser = 
+graphemePropertyParser : Str -> Result GraphemeBreakProperty [ParsingError]
+graphemePropertyParser = \input ->
 
-    input <- buildPrimitiveParser
+    startsWithProp : { bytes : List U8, property : GraphemeBreakProperty} -> Result GraphemeBreakProperty [NonGBP]
+    startsWithProp = \prop -> 
+        if input |> Str.toUtf8 |> List.startsWith prop.bytes then 
+            Ok prop.property 
+        else 
+            Err NonGBP
 
-    matches : List { val : GraphemeBreakProperty, input : List U8}
-    matches = 
-        props
-        |> List.keepOks \prop ->
-            if List.startsWith input prop.bytes then 
-                Ok prop
-            else 
-                Err "not used"
-        |> List.map \{property, len} -> 
-            { val : property, input : List.drop input len }
-        
-    when matches is 
-        [a, ..] -> Ok a # take the longest match
-        _ -> Err (ParsingFailure "Not a GBP")
+    # see which properties match 
+    matches : List GraphemeBreakProperty
+    matches = props |> List.keepOks startsWithProp
 
-expect parseStr graphemePropertyParser "L" == Ok L
-expect parseStr graphemePropertyParser "LF" == Ok LF
-expect parseStr graphemePropertyParser "LV" == Ok LV
-expect parseStr graphemePropertyParser "LVT" == Ok LVT
-expect parseStr graphemePropertyParser "Other" == Ok Other
-expect parseStr graphemePropertyParser "# ===" == Err (ParsingFailure "Not a GBP")
+    when matches is # take the longest match
+        [a, ..] -> Ok a 
+        _ -> Err ParsingError
 
-codePointParser : Parser (List U8) CodePoint
-codePointParser =
-    input <- buildPrimitiveParser
+expect graphemePropertyParser "L" == Ok L
+expect graphemePropertyParser "LF" == Ok LF
+expect graphemePropertyParser "LV" == Ok LV
+expect graphemePropertyParser "LVT" == Ok LVT
+expect graphemePropertyParser "Other" == Ok Other
+expect graphemePropertyParser "# ===" == Err ParsingError
 
-    { val: hexBytes, rest} = takeHexBytes {val: [], rest:input}
+codePointParser : Str -> Result CodePoint [ParsingError]
+codePointParser = \input ->
+
+    { val: hexBytes } = takeHexBytes {val: [], rest: Str.toUtf8 input}
 
     when hexBytes is
-        [] -> Err (ParsingFailure "No hex bytes")
-        _ -> Ok {
-            val: hexBytesToU32 hexBytes, 
-            input: List.drop rest (List.len hexBytes),
-        }
+        [] -> Err ParsingError
+        _ -> Ok (hexBytesToU32 hexBytes)
 
-expect parseStr codePointParser "0000" == Ok 0
-expect parseStr codePointParser "16FF1" == Ok 94193
-expect parseStr codePointParser "# ===" == Err (ParsingFailure "No hex bytes")
+expect codePointParser "0000" == Ok 0
+expect codePointParser "16FF1" == Ok 94193
+expect codePointParser "# ===" == Err ParsingError
 
 hexBytesToU32 : List U8 -> CodePoint
 hexBytesToU32 = \bytes ->
