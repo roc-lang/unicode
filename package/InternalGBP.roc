@@ -3,23 +3,42 @@ interface InternalGBP
     exposes [
         GraphemeBreakProperty,
     ]
-    imports []
+    imports [
+        InternalCP.{ CP },
+    ]
 
 GraphemeBreakProperty : [
-    CR,
-    LF, 
-    Control,
-    Extend,
-    ZWL,
-    RI,
-    Prepend,
-    SpacingMark,
-    L,
-    V,
-    T,
-    LV,
-    LVT,
-    Other,
+    CR
+    Control
+    Extend
+    ZWJ
+    RI
+    Prepend
+    SpacingMark
+    V
+    T
+    LF
+    LVT
+    LV
+    L
+    Other
+    Regional_Indicator
 ]
+
+isCR : CP -> Bool
+isControl : CP -> Bool
+isExtend : CP -> Bool
+isZWJ : CP -> Bool
+isRI : CP -> Bool
+isPrepend : CP -> Bool
+isSpacingMark : CP -> Bool
+isV : CP -> Bool
+isT : CP -> Bool
+isLF : CP -> Bool
+isLVT : CP -> Bool
+isLV : CP -> Bool
+isL : CP -> Bool
+isOther : CP -> Bool
+isRegionalIndicator : CP -> Bool
 
 expect 1 == 1
