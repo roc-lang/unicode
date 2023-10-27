@@ -46,8 +46,11 @@ expect # test withGBP
 
     withGBP [cr, lf] == [(cr, CR), (lf, LF)]
 
-isExtendOrZWJ : (CodePoint, GBP) -> Bool
-isExtendOrZWJ = \(_, gbp) -> gbp == Extend || gbp == ZWJ
+isExtendOrZWJOrSpacing : (CodePoint, GBP) -> Bool
+isExtendOrZWJOrSpacing = \(_, gbp) -> 
+    # GB9 Do not break before extending characters or ZWJ.
+    # GB9a Do not break before SpacingMarks
+    gbp == Extend || gbp == ZWJ || gbp == SpacingMark
 
 extractCP : (CodePoint, GBP) -> CodePoint
 extractCP = .0
@@ -72,8 +75,8 @@ splitHelp = \cpsWithGpbs, prevState, acc, strs ->
 
         # Look ahead if we have more than one CodePoint left
         [current, next, ..] ->
-            if isExtendOrZWJ next then 
-                # GB9 Do not break before extending characters or ZWJ.
+            if isExtendOrZWJOrSpacing next then 
+                # GB9 Do not break before extending characters, ZWJ, or spacing marks.
                 advance
                     DontBreak
                     (List.append acc (extractCP current))
@@ -127,10 +130,15 @@ splitHelp = \cpsWithGpbs, prevState, acc, strs ->
                 nextAcc
                 nextStrs          
 
-# GBP : [CR, Control, Extend, ZWJ, RI, Prepend, SpacingMark, V, T, LF, LVT, LV, L, Other]
+# TODO GB9c Do not break within certain combinations. ref [Indic_Conjunct_Break](https://unicode.org/reports/tr44/#Indic_Conjunct_Break)
+# TODO GB11 Do not break within emoji modifier sequences or emoji zwj sequences. ref [Extended_Pictographic](https://unicode.org/reports/tr44/#Extended_Pictographic)
+# TODO GB12, GB13 Do not break within emoji flag sequences
 gbpRules : GCBPState, GBP -> GCBPState
 gbpRules = \prevState, gbp ->
     when (prevState, gbp) is
+        # GB3, GB4, GB5 Do not break between a CR and LF. Otherwise, break before and after controls
+        (AfterCR, LF) -> Break
+        (_, CR) -> AfterCR
         # GB6, GB7, GB8 Do not break Hangul syllable sequences.
         (_, L) -> AfterHungulL
         (AfterHungulL, V) -> AfterHungulLVorV
@@ -139,9 +147,8 @@ gbpRules = \prevState, gbp ->
         (AfterHungulLVorV, V) -> AfterHungulLVorV
         (AfterHungulLVorV, T) -> AfterHungulLVTorT
         (AfterHungulLVTorT, T) -> AfterHungulLVTorT
-        # GB3, GB4, GB5 Do not break between a CR and LF. Otherwise, break before and after controls
-        (AfterCR, LF) -> Break
-        (_, CR) -> AfterCR
+        # GB9b Do not break after Prepend characters
+        (_, Prepend) -> DontBreak
         # GB1, GB2 Break at the start and end of text, unless the text is empty
         _ -> Break
     
@@ -152,7 +159,8 @@ GCBPState : [
     AfterCR, # need to look ahead to next gbp
     AfterHungulL,
     AfterHungulLVorV,
-    AfterHungulLVTorT, 
+    AfterHungulLVTorT,
+    AfterRI,
 ]
 
  
