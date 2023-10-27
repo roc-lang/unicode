@@ -4,4 +4,5 @@ example
 
 # Ignore the generated files
 generated-docs
-ucd/InternalGBP
+package/InternalGBPGen
+package/GraphemeTestGen

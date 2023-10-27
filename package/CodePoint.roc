@@ -11,6 +11,7 @@ interface CodePoint
         appendUtf8,
         parseUtf8,
         countUtf8Bytes,
+        toStr,
     ]
     imports [
         InternalCP.{ CP, fromU32Unchecked },
@@ -338,6 +339,34 @@ parsePartialUtf8 = \bytes ->
     else
         Err InvalidUtf8
 
+
+toStr : List CP -> Str
+toStr = \cps ->
+
+    # allocated extra space for the extra bytes as some CPs expand into 
+    # multiple U8s, so this minimises extra allocations
+    capacity = List.withCapacity (50 + List.len cps)
+
+    cps 
+    |> cpsToStrHelp capacity 
+    |> Str.fromUtf8
+    |> Result.withDefault ""
+
+cpsToStrHelp : List CP, List U8 -> List U8
+cpsToStrHelp = \cps, bytes ->
+    when cps is 
+        [] -> bytes
+        [cp,..] -> 
+            cpsToStrHelp 
+                (List.drop cps 1)
+                (CodePoint.appendUtf8 bytes cp)
+            
+expect # test toStr 
+    cr = (fromU32Unchecked 13)
+    lf = (fromU32Unchecked 10)
+
+    toStr [cr, lf] == "\r\n"
+                        
 ## Empty input
 expect [] |> parsePartialUtf8 == Err ListWasEmpty
 
