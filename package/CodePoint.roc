@@ -340,7 +340,7 @@ parsePartialUtf8 = \bytes ->
         Err InvalidUtf8
 
 
-toStr : List CP -> Str
+toStr : List CP -> Result Str [BadUtf8]
 toStr = \cps ->
 
     # allocated extra space for the extra bytes as some CPs expand into 
@@ -350,7 +350,7 @@ toStr = \cps ->
     cps 
     |> cpsToStrHelp capacity 
     |> Str.fromUtf8
-    |> Result.withDefault ""
+    |> Result.onErr \_ -> Err BadUtf8
 
 cpsToStrHelp : List CP, List U8 -> List U8
 cpsToStrHelp = \cps, bytes ->
@@ -365,7 +365,7 @@ expect # test toStr
     cr = (fromU32Unchecked 13)
     lf = (fromU32Unchecked 10)
 
-    toStr [cr, lf] == "\r\n"
+    toStr [cr, lf] == Ok "\r\n"
                         
 ## Empty input
 expect [] |> parsePartialUtf8 == Err ListWasEmpty
