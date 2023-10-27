@@ -9,7 +9,7 @@ app "gen"
         pf.Path.{ Path },
         pf.Arg,
         pf.File,
-        "GraphemeBreakTest-15.1.0.txt" as gbpFile : Str,
+        "data/GraphemeBreakTest-15.1.0.txt" as file : Str,
         Helpers,
         CodePoint,
         InternalCP,
@@ -41,7 +41,7 @@ writeToFile = \path ->
 
 lines : Str
 lines =
-    gbpFile
+    file
     |> Str.split "\n"
     |> List.keepOks \l -> 
         if Str.startsWith l "÷ " then 

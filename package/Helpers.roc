@@ -1,13 +1,24 @@
 interface Helpers 
     exposes [
+        PropertyMap,
+        CPMeta,
         removeTrailingSlash,
         takeHexBytes,
         isHex,
         hexToDec,
         startsWithHex,
         hexBytesToU32,
+        properyMapFromFile,
+        filterPropertyMap,
+        metaToExpression,
     ]
     imports []
+
+CPMeta : [Single U32, Range U32 U32]
+PropertyMap a : { cp : CPMeta, prop : a }
+
+filterPropertyMap : List (PropertyMap a), (PropertyMap a -> Result CPMeta [NotNeeded]) -> List CPMeta
+filterPropertyMap = \map, filter -> List.keepOks map filter
 
 removeTrailingSlash : Str -> Str
 removeTrailingSlash = \str ->
@@ -107,3 +118,55 @@ hexToDec = \byte ->
 
 expect hexToDec '0' == 0
 expect hexToDec 'F' == 15
+
+properyMapFromFile : Str, (Str -> Result a [ParsingError]) -> List { cp : CPMeta, prop : a }
+properyMapFromFile = \file, parsePropPart  -> 
+    file
+    |> Str.split "\n"
+    |> List.keepOks Helpers.startsWithHex
+    |> List.map \l ->
+        when Str.split l ";" is
+            [hexPart, propPart] ->
+                when (parseHexPart hexPart, parsePropPart propPart) is
+                    (Ok cp, Ok prop) -> { cp, prop }
+                    _ -> crash "Error parsing line -- \(l)"
+
+            _ -> crash "Error unexpected ';' on line -- \(l)"
+
+parseHexPart : Str -> Result CPMeta [ParsingError]
+parseHexPart = \hexPart ->
+    when hexPart |> Str.trim |> Str.split ".." is
+        [single] ->
+            when codePointParser single is
+                Ok a -> Ok (Single a)
+                Err _ -> Err ParsingError
+
+        [start, end] ->
+            when (codePointParser start, codePointParser end) is
+                (Ok a, Ok b) -> Ok (Range a b)
+                _ -> Err ParsingError
+
+        _ -> Err ParsingError
+
+expect parseHexPart "0890..0891    " == Ok (Range 2192 2193)
+expect parseHexPart "08E2          " == Ok (Single 2274)
+
+codePointParser : Str -> Result U32 [ParsingError]
+codePointParser = \input ->
+
+    { val: hexBytes } = takeHexBytes { val: [], rest: Str.toUtf8 input }
+
+    when hexBytes is
+        [] -> Err ParsingError
+        _ -> Ok (hexBytesToU32 hexBytes)
+
+expect codePointParser "0000" == Ok 0
+expect codePointParser "16FF1" == Ok 94193
+expect codePointParser "# ===" == Err ParsingError
+
+# Convert to a string suitible for building a function
+metaToExpression : CPMeta -> Str
+metaToExpression = \cp ->
+    when cp is
+        Single a -> "(u32 == \(Num.toStr a))"
+        Range a b -> "(u32 >= \(Num.toStr a) && u32 <= \(Num.toStr b))"
