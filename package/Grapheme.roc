@@ -7,6 +7,7 @@ interface Grapheme
         CodePoint.{ CodePoint, Utf8ParseErr },
         InternalGBP.{ GBP },
         InternalCP,
+        InternalEmoji,
     ]
 
 ## Extended Grapheme Cluster
@@ -16,7 +17,7 @@ Grapheme : InternalGBP.GBP
 # capacity here for the number of substrings
 defaultCapacity = 50
 
-## Split a string into extended graphemes clusters
+## Split a string into extended grapheme clusters
 ## 
 ## This typically associated with "characters" in a string, for example:
 ## TODO ADD EXAMPLES
@@ -64,7 +65,7 @@ splitHelp = \cpsWithGpbs, prevState, acc, strs ->
     # Set up helper to advance to the next CP recursively and update state 
     advance = \nextState, nextAcc, nextStrs -> 
         splitHelp
-            (List.drop cpsWithGpbs 1)
+            (List.dropFirst cpsWithGpbs 1)
             nextState
             nextAcc
             nextStrs
@@ -76,11 +77,16 @@ splitHelp = \cpsWithGpbs, prevState, acc, strs ->
         # Look ahead if we have more than one CodePoint left
         [current, next, ..] ->
             if isExtendOrZWJOrSpacing next then 
+
+                # GB11
+
                 # GB9 Do not break before extending characters, ZWJ, or spacing marks.
                 advance
                     DontBreak
                     (List.append acc (extractCP current))
                     strs
+
+                
 
             else 
                 nextState = gbpRules prevState (extractGBP current)
@@ -151,7 +157,6 @@ gbpRules = \prevState, gbp ->
         (_, Prepend) -> DontBreak
         # GB1, GB2 Break at the start and end of text, unless the text is empty
         _ -> Break
-    
         
 GCBPState : [
     DontBreak,
@@ -163,4 +168,77 @@ GCBPState : [
     AfterRI,
 ]
 
- 
+# WIP add emoji handling to text segmentation
+takeGb11 : List CodePoint -> Result { acc: List CodePoint, rest : List CodePoint } [NotEmojiSequence] 
+takeGb11 = \cps ->
+    takeGb11Help 
+        {
+            acc: List.withCapacity 10, # TODO is there a better default capacity?
+            state: Start,
+            rest: cps,
+        }
+
+Gb11State : [Start, AfterPictographic, AfterExtend, AfterZWJ]
+
+# State Machine for GB11 "Do not break within emoji modifier sequences or emoji zwj sequences"
+takeGb11Help : { acc: List CodePoint, state: Gb11State, rest : List CodePoint} -> Result { acc: List CodePoint, rest : List CodePoint } [NotEmojiSequence] 
+takeGb11Help = \{ acc, state, rest } ->
+    when rest is 
+        [] -> Err NotEmojiSequence
+        [cp, ..] ->
+            when state is 
+                Start if InternalEmoji.isPictographic (CodePoint.toU32 cp) -> 
+                    {
+                        acc: List.append acc cp,
+                        state: AfterPictographic,
+                        rest: List.dropFirst rest 1,
+                    }
+                    |> takeGb11Help # next cp 
+                AfterPictographic if InternalGBP.isExtend (CodePoint.toU32 cp) -> 
+                    {
+                        acc: List.append acc cp,
+                        state: AfterExtend,
+                        rest: List.dropFirst rest 1,
+                    }
+                    |> takeGb11Help # next cp 
+                AfterPictographic if InternalGBP.isZWJ (CodePoint.toU32 cp) -> 
+                    {
+                        acc: List.append acc cp,
+                        state: AfterZWJ,
+                        rest: List.dropFirst rest 1,
+                    }
+                    |> takeGb11Help # next cp 
+                AfterPictographic -> 
+                    {
+                        acc: List.append acc cp,
+                        rest: List.dropFirst rest 1,
+                    }
+                    |> Ok
+                AfterExtend if InternalGBP.isExtend (CodePoint.toU32 cp) -> 
+                    {
+                        acc: List.append acc cp,
+                        state: AfterExtend,
+                        rest: List.dropFirst rest 1,
+                    }
+                    |> takeGb11Help # next cp 
+                AfterExtend if InternalGBP.isZWJ (CodePoint.toU32 cp) -> 
+                    {
+                        acc: List.append acc cp,
+                        state: AfterZWJ,
+                        rest: List.dropFirst rest 1,
+                    }
+                    |> takeGb11Help # next cp 
+                AfterZWJ if InternalEmoji.isPictographic (CodePoint.toU32 cp) -> 
+                    {
+                        acc: List.append acc cp,
+                        state: AfterPictographic,
+                        rest: List.dropFirst rest 1,
+                    }
+                    |> takeGb11Help # next cp 
+                _ -> 
+                    Err NotEmojiSequence
+
+expect InternalEmoji.isPictographic 0x1F468
+expect InternalGBP.isZWJ 0x200D
+
+

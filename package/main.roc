@@ -1,7 +1,7 @@
 package "unicode"
     exposes [
         CodePoint,
-        # TODO enable
-        # Scalar,
+        Grapheme,
+        GraphemeTest,
     ]
     packages {}

@@ -4,5937 +4,5945 @@ interface GraphemeTest
     imports [CodePoint, Grapheme, InternalCP]
 
 
-expect # test % 0020 % 0020 %
-    cps = [32,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 x 0308 % 0020 %
-    cps = [32,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 % 000D %
-    cps = [32,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 x 0308 % 000D %
-    cps = [32,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 % 000A %
-    cps = [32,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 x 0308 % 000A %
-    cps = [32,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 % 0001 %
-    cps = [32,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 x 0308 % 0001 %
-    cps = [32,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 x 034F %
-    cps = [32,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0020 x 0308 x 034F %
-    cps = [32,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0020 % 1F1E6 %
-    cps = [32,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 x 0308 % 1F1E6 %
-    cps = [32,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 % 0600 %
-    cps = [32,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 x 0308 % 0600 %
-    cps = [32,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 x 0A03 %
-    cps = [32,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0020 x 0308 x 0A03 %
-    cps = [32,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0020 % 1100 %
-    cps = [32,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 x 0308 % 1100 %
-    cps = [32,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 % 1160 %
-    cps = [32,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 x 0308 % 1160 %
-    cps = [32,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 % 11A8 %
-    cps = [32,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 x 0308 % 11A8 %
-    cps = [32,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 % AC00 %
-    cps = [32,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 x 0308 % AC00 %
-    cps = [32,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 % AC01 %
-    cps = [32,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 x 0308 % AC01 %
-    cps = [32,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 x 0900 %
-    cps = [32,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0020 x 0308 x 0900 %
-    cps = [32,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0020 x 0903 %
-    cps = [32,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0020 x 0308 x 0903 %
-    cps = [32,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0020 % 0904 %
-    cps = [32,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 x 0308 % 0904 %
-    cps = [32,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 % 0D4E %
-    cps = [32,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 x 0308 % 0D4E %
-    cps = [32,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 % 0915 %
-    cps = [32,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 x 0308 % 0915 %
-    cps = [32,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 % 231A %
-    cps = [32,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 x 0308 % 231A %
-    cps = [32,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 x 0300 %
-    cps = [32,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0020 x 0308 x 0300 %
-    cps = [32,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0020 x 093C %
-    cps = [32,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0020 x 0308 x 093C %
-    cps = [32,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0020 x 094D %
-    cps = [32,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0020 x 0308 x 094D %
-    cps = [32,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0020 x 200D %
-    cps = [32,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0020 x 0308 x 200D %
-    cps = [32,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0020 % 0378 %
-    cps = [32,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0020 x 0308 % 0378 %
-    cps = [32,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0020 %
-    cps = [13,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 % 0020 %
-    cps = [13,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000D % 000D %
-    cps = [13,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 % 000D %
-    cps = [13,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000D x 000A %
-    cps = [13,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 000D % 0308 % 000A %
-    cps = [13,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000D % 0001 %
-    cps = [13,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 % 0001 %
-    cps = [13,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000D % 034F %
-    cps = [13,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 x 034F %
-    cps = [13,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 1F1E6 %
-    cps = [13,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 % 1F1E6 %
-    cps = [13,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000D % 0600 %
-    cps = [13,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 % 0600 %
-    cps = [13,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000D % 0A03 %
-    cps = [13,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 x 0A03 %
-    cps = [13,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 1100 %
-    cps = [13,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 % 1100 %
-    cps = [13,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000D % 1160 %
-    cps = [13,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 % 1160 %
-    cps = [13,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000D % 11A8 %
-    cps = [13,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 % 11A8 %
-    cps = [13,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000D % AC00 %
-    cps = [13,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 % AC00 %
-    cps = [13,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000D % AC01 %
-    cps = [13,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 % AC01 %
-    cps = [13,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000D % 0900 %
-    cps = [13,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 x 0900 %
-    cps = [13,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0903 %
-    cps = [13,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 x 0903 %
-    cps = [13,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0904 %
-    cps = [13,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 % 0904 %
-    cps = [13,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000D % 0D4E %
-    cps = [13,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 % 0D4E %
-    cps = [13,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000D % 0915 %
-    cps = [13,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 % 0915 %
-    cps = [13,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000D % 231A %
-    cps = [13,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 % 231A %
-    cps = [13,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000D % 0300 %
-    cps = [13,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 x 0300 %
-    cps = [13,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 093C %
-    cps = [13,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 x 093C %
-    cps = [13,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 094D %
-    cps = [13,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 x 094D %
-    cps = [13,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 200D %
-    cps = [13,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 x 200D %
-    cps = [13,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0378 %
-    cps = [13,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D % 0308 % 0378 %
-    cps = [13,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000A % 0020 %
-    cps = [10,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 % 0020 %
-    cps = [10,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000A % 000D %
-    cps = [10,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 % 000D %
-    cps = [10,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000A % 000A %
-    cps = [10,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 % 000A %
-    cps = [10,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000A % 0001 %
-    cps = [10,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 % 0001 %
-    cps = [10,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000A % 034F %
-    cps = [10,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 x 034F %
-    cps = [10,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 1F1E6 %
-    cps = [10,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 % 1F1E6 %
-    cps = [10,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000A % 0600 %
-    cps = [10,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 % 0600 %
-    cps = [10,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000A % 0A03 %
-    cps = [10,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 x 0A03 %
-    cps = [10,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 1100 %
-    cps = [10,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 % 1100 %
-    cps = [10,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000A % 1160 %
-    cps = [10,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 % 1160 %
-    cps = [10,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000A % 11A8 %
-    cps = [10,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 % 11A8 %
-    cps = [10,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000A % AC00 %
-    cps = [10,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 % AC00 %
-    cps = [10,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000A % AC01 %
-    cps = [10,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 % AC01 %
-    cps = [10,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000A % 0900 %
-    cps = [10,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 x 0900 %
-    cps = [10,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0903 %
-    cps = [10,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 x 0903 %
-    cps = [10,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0904 %
-    cps = [10,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 % 0904 %
-    cps = [10,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000A % 0D4E %
-    cps = [10,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 % 0D4E %
-    cps = [10,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000A % 0915 %
-    cps = [10,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 % 0915 %
-    cps = [10,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000A % 231A %
-    cps = [10,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 % 231A %
-    cps = [10,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 000A % 0300 %
-    cps = [10,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 x 0300 %
-    cps = [10,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 093C %
-    cps = [10,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 x 093C %
-    cps = [10,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 094D %
-    cps = [10,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 x 094D %
-    cps = [10,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 200D %
-    cps = [10,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 x 200D %
-    cps = [10,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0378 %
-    cps = [10,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000A % 0308 % 0378 %
-    cps = [10,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 0001 % 0020 %
-    cps = [1,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 % 0020 %
-    cps = [1,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 0001 % 000D %
-    cps = [1,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 % 000D %
-    cps = [1,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 0001 % 000A %
-    cps = [1,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 % 000A %
-    cps = [1,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 0001 % 0001 %
-    cps = [1,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 % 0001 %
-    cps = [1,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 0001 % 034F %
-    cps = [1,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 x 034F %
-    cps = [1,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 1F1E6 %
-    cps = [1,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 % 1F1E6 %
-    cps = [1,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 0001 % 0600 %
-    cps = [1,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 % 0600 %
-    cps = [1,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 0001 % 0A03 %
-    cps = [1,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 x 0A03 %
-    cps = [1,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 1100 %
-    cps = [1,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 % 1100 %
-    cps = [1,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 0001 % 1160 %
-    cps = [1,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 % 1160 %
-    cps = [1,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 0001 % 11A8 %
-    cps = [1,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 % 11A8 %
-    cps = [1,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 0001 % AC00 %
-    cps = [1,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 % AC00 %
-    cps = [1,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 0001 % AC01 %
-    cps = [1,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 % AC01 %
-    cps = [1,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 0001 % 0900 %
-    cps = [1,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 x 0900 %
-    cps = [1,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0903 %
-    cps = [1,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 x 0903 %
-    cps = [1,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0904 %
-    cps = [1,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 % 0904 %
-    cps = [1,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 0001 % 0D4E %
-    cps = [1,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 % 0D4E %
-    cps = [1,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 0001 % 0915 %
-    cps = [1,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 % 0915 %
-    cps = [1,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 0001 % 231A %
-    cps = [1,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 % 231A %
-    cps = [1,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 0001 % 0300 %
-    cps = [1,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 x 0300 %
-    cps = [1,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 093C %
-    cps = [1,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 x 093C %
-    cps = [1,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 094D %
-    cps = [1,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 x 094D %
-    cps = [1,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 200D %
-    cps = [1,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 x 200D %
-    cps = [1,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0378 %
-    cps = [1,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0001 % 0308 % 0378 %
-    cps = [1,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 034F % 0020 %
-    cps = [847,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F x 0308 % 0020 %
-    cps = [847,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F % 000D %
-    cps = [847,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F x 0308 % 000D %
-    cps = [847,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F % 000A %
-    cps = [847,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F x 0308 % 000A %
-    cps = [847,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F % 0001 %
-    cps = [847,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F x 0308 % 0001 %
-    cps = [847,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F x 034F %
-    cps = [847,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 034F x 0308 x 034F %
-    cps = [847,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 034F % 1F1E6 %
-    cps = [847,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F x 0308 % 1F1E6 %
-    cps = [847,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F % 0600 %
-    cps = [847,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F x 0308 % 0600 %
-    cps = [847,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F x 0A03 %
-    cps = [847,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 034F x 0308 x 0A03 %
-    cps = [847,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 034F % 1100 %
-    cps = [847,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F x 0308 % 1100 %
-    cps = [847,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F % 1160 %
-    cps = [847,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F x 0308 % 1160 %
-    cps = [847,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F % 11A8 %
-    cps = [847,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F x 0308 % 11A8 %
-    cps = [847,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F % AC00 %
-    cps = [847,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F x 0308 % AC00 %
-    cps = [847,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F % AC01 %
-    cps = [847,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F x 0308 % AC01 %
-    cps = [847,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F x 0900 %
-    cps = [847,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 034F x 0308 x 0900 %
-    cps = [847,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 034F x 0903 %
-    cps = [847,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 034F x 0308 x 0903 %
-    cps = [847,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 034F % 0904 %
-    cps = [847,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F x 0308 % 0904 %
-    cps = [847,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F % 0D4E %
-    cps = [847,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F x 0308 % 0D4E %
-    cps = [847,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F % 0915 %
-    cps = [847,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F x 0308 % 0915 %
-    cps = [847,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F % 231A %
-    cps = [847,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F x 0308 % 231A %
-    cps = [847,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F x 0300 %
-    cps = [847,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 034F x 0308 x 0300 %
-    cps = [847,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 034F x 093C %
-    cps = [847,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 034F x 0308 x 093C %
-    cps = [847,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 034F x 094D %
-    cps = [847,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 034F x 0308 x 094D %
-    cps = [847,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 034F x 200D %
-    cps = [847,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 034F x 0308 x 200D %
-    cps = [847,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 034F % 0378 %
-    cps = [847,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 034F x 0308 % 0378 %
-    cps = [847,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 % 0020 %
-    cps = [127462,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 x 0308 % 0020 %
-    cps = [127462,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 % 000D %
-    cps = [127462,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 x 0308 % 000D %
-    cps = [127462,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 % 000A %
-    cps = [127462,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 x 0308 % 000A %
-    cps = [127462,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 % 0001 %
-    cps = [127462,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 x 0308 % 0001 %
-    cps = [127462,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 x 034F %
-    cps = [127462,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1F1E6 x 0308 x 034F %
-    cps = [127462,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1F1E6 x 1F1E6 %
-    cps = [127462,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1F1E6 x 0308 % 1F1E6 %
-    cps = [127462,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 % 0600 %
-    cps = [127462,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 x 0308 % 0600 %
-    cps = [127462,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 x 0A03 %
-    cps = [127462,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1F1E6 x 0308 x 0A03 %
-    cps = [127462,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1F1E6 % 1100 %
-    cps = [127462,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 x 0308 % 1100 %
-    cps = [127462,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 % 1160 %
-    cps = [127462,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 x 0308 % 1160 %
-    cps = [127462,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 % 11A8 %
-    cps = [127462,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 x 0308 % 11A8 %
-    cps = [127462,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 % AC00 %
-    cps = [127462,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 x 0308 % AC00 %
-    cps = [127462,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 % AC01 %
-    cps = [127462,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 x 0308 % AC01 %
-    cps = [127462,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 x 0900 %
-    cps = [127462,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1F1E6 x 0308 x 0900 %
-    cps = [127462,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1F1E6 x 0903 %
-    cps = [127462,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1F1E6 x 0308 x 0903 %
-    cps = [127462,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1F1E6 % 0904 %
-    cps = [127462,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 x 0308 % 0904 %
-    cps = [127462,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 % 0D4E %
-    cps = [127462,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 x 0308 % 0D4E %
-    cps = [127462,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 % 0915 %
-    cps = [127462,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 x 0308 % 0915 %
-    cps = [127462,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 % 231A %
-    cps = [127462,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 x 0308 % 231A %
-    cps = [127462,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 x 0300 %
-    cps = [127462,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1F1E6 x 0308 x 0300 %
-    cps = [127462,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1F1E6 x 093C %
-    cps = [127462,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1F1E6 x 0308 x 093C %
-    cps = [127462,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1F1E6 x 094D %
-    cps = [127462,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1F1E6 x 0308 x 094D %
-    cps = [127462,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1F1E6 x 200D %
-    cps = [127462,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1F1E6 x 0308 x 200D %
-    cps = [127462,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1F1E6 % 0378 %
-    cps = [127462,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 x 0308 % 0378 %
-    cps = [127462,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0600 x 0020 %
-    cps = [1536,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0308 % 0020 %
-    cps = [1536,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0600 % 000D %
-    cps = [1536,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0600 x 0308 % 000D %
-    cps = [1536,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0600 % 000A %
-    cps = [1536,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0600 x 0308 % 000A %
-    cps = [1536,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0600 % 0001 %
-    cps = [1536,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0600 x 0308 % 0001 %
-    cps = [1536,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0600 x 034F %
-    cps = [1536,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0308 x 034F %
-    cps = [1536,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 1F1E6 %
-    cps = [1536,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0308 % 1F1E6 %
-    cps = [1536,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0600 x 0600 %
-    cps = [1536,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0308 % 0600 %
-    cps = [1536,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0600 x 0A03 %
-    cps = [1536,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0308 x 0A03 %
-    cps = [1536,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 1100 %
-    cps = [1536,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0308 % 1100 %
-    cps = [1536,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0600 x 1160 %
-    cps = [1536,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0308 % 1160 %
-    cps = [1536,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0600 x 11A8 %
-    cps = [1536,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0308 % 11A8 %
-    cps = [1536,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0600 x AC00 %
-    cps = [1536,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0308 % AC00 %
-    cps = [1536,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0600 x AC01 %
-    cps = [1536,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0308 % AC01 %
-    cps = [1536,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0600 x 0900 %
-    cps = [1536,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0308 x 0900 %
-    cps = [1536,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0903 %
-    cps = [1536,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0308 x 0903 %
-    cps = [1536,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0904 %
-    cps = [1536,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0308 % 0904 %
-    cps = [1536,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0600 x 0D4E %
-    cps = [1536,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0308 % 0D4E %
-    cps = [1536,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0600 x 0915 %
-    cps = [1536,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0308 % 0915 %
-    cps = [1536,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0600 x 231A %
-    cps = [1536,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0308 % 231A %
-    cps = [1536,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0600 x 0300 %
-    cps = [1536,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0308 x 0300 %
-    cps = [1536,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 093C %
-    cps = [1536,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0308 x 093C %
-    cps = [1536,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 094D %
-    cps = [1536,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0308 x 094D %
-    cps = [1536,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 200D %
-    cps = [1536,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0308 x 200D %
-    cps = [1536,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0378 %
-    cps = [1536,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0600 x 0308 % 0378 %
-    cps = [1536,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 % 0020 %
-    cps = [2563,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 x 0308 % 0020 %
-    cps = [2563,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 % 000D %
-    cps = [2563,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 x 0308 % 000D %
-    cps = [2563,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 % 000A %
-    cps = [2563,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 x 0308 % 000A %
-    cps = [2563,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 % 0001 %
-    cps = [2563,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 x 0308 % 0001 %
-    cps = [2563,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 x 034F %
-    cps = [2563,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0A03 x 0308 x 034F %
-    cps = [2563,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0A03 % 1F1E6 %
-    cps = [2563,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 x 0308 % 1F1E6 %
-    cps = [2563,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 % 0600 %
-    cps = [2563,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 x 0308 % 0600 %
-    cps = [2563,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 x 0A03 %
-    cps = [2563,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0A03 x 0308 x 0A03 %
-    cps = [2563,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0A03 % 1100 %
-    cps = [2563,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 x 0308 % 1100 %
-    cps = [2563,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 % 1160 %
-    cps = [2563,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 x 0308 % 1160 %
-    cps = [2563,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 % 11A8 %
-    cps = [2563,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 x 0308 % 11A8 %
-    cps = [2563,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 % AC00 %
-    cps = [2563,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 x 0308 % AC00 %
-    cps = [2563,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 % AC01 %
-    cps = [2563,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 x 0308 % AC01 %
-    cps = [2563,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 x 0900 %
-    cps = [2563,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0A03 x 0308 x 0900 %
-    cps = [2563,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0A03 x 0903 %
-    cps = [2563,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0A03 x 0308 x 0903 %
-    cps = [2563,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0A03 % 0904 %
-    cps = [2563,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 x 0308 % 0904 %
-    cps = [2563,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 % 0D4E %
-    cps = [2563,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 x 0308 % 0D4E %
-    cps = [2563,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 % 0915 %
-    cps = [2563,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 x 0308 % 0915 %
-    cps = [2563,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 % 231A %
-    cps = [2563,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 x 0308 % 231A %
-    cps = [2563,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 x 0300 %
-    cps = [2563,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0A03 x 0308 x 0300 %
-    cps = [2563,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0A03 x 093C %
-    cps = [2563,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0A03 x 0308 x 093C %
-    cps = [2563,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0A03 x 094D %
-    cps = [2563,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0A03 x 0308 x 094D %
-    cps = [2563,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0A03 x 200D %
-    cps = [2563,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0A03 x 0308 x 200D %
-    cps = [2563,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0A03 % 0378 %
-    cps = [2563,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0A03 x 0308 % 0378 %
-    cps = [2563,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 % 0020 %
-    cps = [4352,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 x 0308 % 0020 %
-    cps = [4352,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 % 000D %
-    cps = [4352,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 x 0308 % 000D %
-    cps = [4352,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 % 000A %
-    cps = [4352,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 x 0308 % 000A %
-    cps = [4352,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 % 0001 %
-    cps = [4352,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 x 0308 % 0001 %
-    cps = [4352,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 x 034F %
-    cps = [4352,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1100 x 0308 x 034F %
-    cps = [4352,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1100 % 1F1E6 %
-    cps = [4352,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 x 0308 % 1F1E6 %
-    cps = [4352,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 % 0600 %
-    cps = [4352,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 x 0308 % 0600 %
-    cps = [4352,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 x 0A03 %
-    cps = [4352,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1100 x 0308 x 0A03 %
-    cps = [4352,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1100 x 1100 %
-    cps = [4352,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1100 x 0308 % 1100 %
-    cps = [4352,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 x 1160 %
-    cps = [4352,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1100 x 0308 % 1160 %
-    cps = [4352,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 % 11A8 %
-    cps = [4352,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 x 0308 % 11A8 %
-    cps = [4352,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 x AC00 %
-    cps = [4352,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1100 x 0308 % AC00 %
-    cps = [4352,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 x AC01 %
-    cps = [4352,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1100 x 0308 % AC01 %
-    cps = [4352,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 x 0900 %
-    cps = [4352,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1100 x 0308 x 0900 %
-    cps = [4352,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1100 x 0903 %
-    cps = [4352,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1100 x 0308 x 0903 %
-    cps = [4352,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1100 % 0904 %
-    cps = [4352,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 x 0308 % 0904 %
-    cps = [4352,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 % 0D4E %
-    cps = [4352,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 x 0308 % 0D4E %
-    cps = [4352,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 % 0915 %
-    cps = [4352,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 x 0308 % 0915 %
-    cps = [4352,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 % 231A %
-    cps = [4352,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 x 0308 % 231A %
-    cps = [4352,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 x 0300 %
-    cps = [4352,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1100 x 0308 x 0300 %
-    cps = [4352,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1100 x 093C %
-    cps = [4352,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1100 x 0308 x 093C %
-    cps = [4352,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1100 x 094D %
-    cps = [4352,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1100 x 0308 x 094D %
-    cps = [4352,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1100 x 200D %
-    cps = [4352,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1100 x 0308 x 200D %
-    cps = [4352,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1100 % 0378 %
-    cps = [4352,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 x 0308 % 0378 %
-    cps = [4352,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 % 0020 %
-    cps = [4448,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 x 0308 % 0020 %
-    cps = [4448,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 % 000D %
-    cps = [4448,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 x 0308 % 000D %
-    cps = [4448,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 % 000A %
-    cps = [4448,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 x 0308 % 000A %
-    cps = [4448,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 % 0001 %
-    cps = [4448,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 x 0308 % 0001 %
-    cps = [4448,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 x 034F %
-    cps = [4448,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1160 x 0308 x 034F %
-    cps = [4448,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1160 % 1F1E6 %
-    cps = [4448,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 x 0308 % 1F1E6 %
-    cps = [4448,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 % 0600 %
-    cps = [4448,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 x 0308 % 0600 %
-    cps = [4448,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 x 0A03 %
-    cps = [4448,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1160 x 0308 x 0A03 %
-    cps = [4448,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1160 % 1100 %
-    cps = [4448,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 x 0308 % 1100 %
-    cps = [4448,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 x 1160 %
-    cps = [4448,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1160 x 0308 % 1160 %
-    cps = [4448,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 x 11A8 %
-    cps = [4448,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1160 x 0308 % 11A8 %
-    cps = [4448,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 % AC00 %
-    cps = [4448,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 x 0308 % AC00 %
-    cps = [4448,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 % AC01 %
-    cps = [4448,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 x 0308 % AC01 %
-    cps = [4448,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 x 0900 %
-    cps = [4448,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1160 x 0308 x 0900 %
-    cps = [4448,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1160 x 0903 %
-    cps = [4448,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1160 x 0308 x 0903 %
-    cps = [4448,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1160 % 0904 %
-    cps = [4448,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 x 0308 % 0904 %
-    cps = [4448,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 % 0D4E %
-    cps = [4448,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 x 0308 % 0D4E %
-    cps = [4448,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 % 0915 %
-    cps = [4448,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 x 0308 % 0915 %
-    cps = [4448,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 % 231A %
-    cps = [4448,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 x 0308 % 231A %
-    cps = [4448,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 x 0300 %
-    cps = [4448,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1160 x 0308 x 0300 %
-    cps = [4448,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1160 x 093C %
-    cps = [4448,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1160 x 0308 x 093C %
-    cps = [4448,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1160 x 094D %
-    cps = [4448,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1160 x 0308 x 094D %
-    cps = [4448,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1160 x 200D %
-    cps = [4448,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1160 x 0308 x 200D %
-    cps = [4448,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1160 % 0378 %
-    cps = [4448,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1160 x 0308 % 0378 %
-    cps = [4448,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 % 0020 %
-    cps = [4520,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 x 0308 % 0020 %
-    cps = [4520,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 % 000D %
-    cps = [4520,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 x 0308 % 000D %
-    cps = [4520,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 % 000A %
-    cps = [4520,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 x 0308 % 000A %
-    cps = [4520,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 % 0001 %
-    cps = [4520,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 x 0308 % 0001 %
-    cps = [4520,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 x 034F %
-    cps = [4520,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 11A8 x 0308 x 034F %
-    cps = [4520,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 11A8 % 1F1E6 %
-    cps = [4520,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 x 0308 % 1F1E6 %
-    cps = [4520,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 % 0600 %
-    cps = [4520,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 x 0308 % 0600 %
-    cps = [4520,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 x 0A03 %
-    cps = [4520,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 11A8 x 0308 x 0A03 %
-    cps = [4520,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 11A8 % 1100 %
-    cps = [4520,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 x 0308 % 1100 %
-    cps = [4520,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 % 1160 %
-    cps = [4520,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 x 0308 % 1160 %
-    cps = [4520,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 x 11A8 %
-    cps = [4520,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 11A8 x 0308 % 11A8 %
-    cps = [4520,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 % AC00 %
-    cps = [4520,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 x 0308 % AC00 %
-    cps = [4520,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 % AC01 %
-    cps = [4520,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 x 0308 % AC01 %
-    cps = [4520,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 x 0900 %
-    cps = [4520,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 11A8 x 0308 x 0900 %
-    cps = [4520,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 11A8 x 0903 %
-    cps = [4520,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 11A8 x 0308 x 0903 %
-    cps = [4520,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 11A8 % 0904 %
-    cps = [4520,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 x 0308 % 0904 %
-    cps = [4520,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 % 0D4E %
-    cps = [4520,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 x 0308 % 0D4E %
-    cps = [4520,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 % 0915 %
-    cps = [4520,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 x 0308 % 0915 %
-    cps = [4520,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 % 231A %
-    cps = [4520,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 x 0308 % 231A %
-    cps = [4520,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 x 0300 %
-    cps = [4520,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 11A8 x 0308 x 0300 %
-    cps = [4520,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 11A8 x 093C %
-    cps = [4520,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 11A8 x 0308 x 093C %
-    cps = [4520,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 11A8 x 094D %
-    cps = [4520,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 11A8 x 0308 x 094D %
-    cps = [4520,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 11A8 x 200D %
-    cps = [4520,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 11A8 x 0308 x 200D %
-    cps = [4520,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 11A8 % 0378 %
-    cps = [4520,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 11A8 x 0308 % 0378 %
-    cps = [4520,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 % 0020 %
-    cps = [44032,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 x 0308 % 0020 %
-    cps = [44032,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 % 000D %
-    cps = [44032,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 x 0308 % 000D %
-    cps = [44032,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 % 000A %
-    cps = [44032,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 x 0308 % 000A %
-    cps = [44032,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 % 0001 %
-    cps = [44032,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 x 0308 % 0001 %
-    cps = [44032,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 x 034F %
-    cps = [44032,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC00 x 0308 x 034F %
-    cps = [44032,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC00 % 1F1E6 %
-    cps = [44032,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 x 0308 % 1F1E6 %
-    cps = [44032,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 % 0600 %
-    cps = [44032,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 x 0308 % 0600 %
-    cps = [44032,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 x 0A03 %
-    cps = [44032,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC00 x 0308 x 0A03 %
-    cps = [44032,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC00 % 1100 %
-    cps = [44032,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 x 0308 % 1100 %
-    cps = [44032,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 x 1160 %
-    cps = [44032,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC00 x 0308 % 1160 %
-    cps = [44032,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 x 11A8 %
-    cps = [44032,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC00 x 0308 % 11A8 %
-    cps = [44032,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 % AC00 %
-    cps = [44032,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 x 0308 % AC00 %
-    cps = [44032,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 % AC01 %
-    cps = [44032,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 x 0308 % AC01 %
-    cps = [44032,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 x 0900 %
-    cps = [44032,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC00 x 0308 x 0900 %
-    cps = [44032,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC00 x 0903 %
-    cps = [44032,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC00 x 0308 x 0903 %
-    cps = [44032,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC00 % 0904 %
-    cps = [44032,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 x 0308 % 0904 %
-    cps = [44032,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 % 0D4E %
-    cps = [44032,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 x 0308 % 0D4E %
-    cps = [44032,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 % 0915 %
-    cps = [44032,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 x 0308 % 0915 %
-    cps = [44032,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 % 231A %
-    cps = [44032,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 x 0308 % 231A %
-    cps = [44032,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 x 0300 %
-    cps = [44032,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC00 x 0308 x 0300 %
-    cps = [44032,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC00 x 093C %
-    cps = [44032,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC00 x 0308 x 093C %
-    cps = [44032,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC00 x 094D %
-    cps = [44032,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC00 x 0308 x 094D %
-    cps = [44032,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC00 x 200D %
-    cps = [44032,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC00 x 0308 x 200D %
-    cps = [44032,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC00 % 0378 %
-    cps = [44032,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC00 x 0308 % 0378 %
-    cps = [44032,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 % 0020 %
-    cps = [44033,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 x 0308 % 0020 %
-    cps = [44033,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 % 000D %
-    cps = [44033,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 x 0308 % 000D %
-    cps = [44033,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 % 000A %
-    cps = [44033,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 x 0308 % 000A %
-    cps = [44033,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 % 0001 %
-    cps = [44033,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 x 0308 % 0001 %
-    cps = [44033,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 x 034F %
-    cps = [44033,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC01 x 0308 x 034F %
-    cps = [44033,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC01 % 1F1E6 %
-    cps = [44033,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 x 0308 % 1F1E6 %
-    cps = [44033,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 % 0600 %
-    cps = [44033,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 x 0308 % 0600 %
-    cps = [44033,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 x 0A03 %
-    cps = [44033,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC01 x 0308 x 0A03 %
-    cps = [44033,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC01 % 1100 %
-    cps = [44033,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 x 0308 % 1100 %
-    cps = [44033,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 % 1160 %
-    cps = [44033,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 x 0308 % 1160 %
-    cps = [44033,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 x 11A8 %
-    cps = [44033,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC01 x 0308 % 11A8 %
-    cps = [44033,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 % AC00 %
-    cps = [44033,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 x 0308 % AC00 %
-    cps = [44033,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 % AC01 %
-    cps = [44033,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 x 0308 % AC01 %
-    cps = [44033,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 x 0900 %
-    cps = [44033,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC01 x 0308 x 0900 %
-    cps = [44033,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC01 x 0903 %
-    cps = [44033,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC01 x 0308 x 0903 %
-    cps = [44033,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC01 % 0904 %
-    cps = [44033,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 x 0308 % 0904 %
-    cps = [44033,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 % 0D4E %
-    cps = [44033,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 x 0308 % 0D4E %
-    cps = [44033,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 % 0915 %
-    cps = [44033,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 x 0308 % 0915 %
-    cps = [44033,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 % 231A %
-    cps = [44033,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 x 0308 % 231A %
-    cps = [44033,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 x 0300 %
-    cps = [44033,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC01 x 0308 x 0300 %
-    cps = [44033,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC01 x 093C %
-    cps = [44033,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC01 x 0308 x 093C %
-    cps = [44033,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC01 x 094D %
-    cps = [44033,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC01 x 0308 x 094D %
-    cps = [44033,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC01 x 200D %
-    cps = [44033,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC01 x 0308 x 200D %
-    cps = [44033,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC01 % 0378 %
-    cps = [44033,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 x 0308 % 0378 %
-    cps = [44033,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 % 0020 %
-    cps = [2304,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 x 0308 % 0020 %
-    cps = [2304,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 % 000D %
-    cps = [2304,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 x 0308 % 000D %
-    cps = [2304,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 % 000A %
-    cps = [2304,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 x 0308 % 000A %
-    cps = [2304,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 % 0001 %
-    cps = [2304,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 x 0308 % 0001 %
-    cps = [2304,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 x 034F %
-    cps = [2304,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0900 x 0308 x 034F %
-    cps = [2304,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0900 % 1F1E6 %
-    cps = [2304,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 x 0308 % 1F1E6 %
-    cps = [2304,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 % 0600 %
-    cps = [2304,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 x 0308 % 0600 %
-    cps = [2304,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 x 0A03 %
-    cps = [2304,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0900 x 0308 x 0A03 %
-    cps = [2304,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0900 % 1100 %
-    cps = [2304,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 x 0308 % 1100 %
-    cps = [2304,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 % 1160 %
-    cps = [2304,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 x 0308 % 1160 %
-    cps = [2304,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 % 11A8 %
-    cps = [2304,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 x 0308 % 11A8 %
-    cps = [2304,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 % AC00 %
-    cps = [2304,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 x 0308 % AC00 %
-    cps = [2304,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 % AC01 %
-    cps = [2304,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 x 0308 % AC01 %
-    cps = [2304,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 x 0900 %
-    cps = [2304,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0900 x 0308 x 0900 %
-    cps = [2304,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0900 x 0903 %
-    cps = [2304,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0900 x 0308 x 0903 %
-    cps = [2304,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0900 % 0904 %
-    cps = [2304,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 x 0308 % 0904 %
-    cps = [2304,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 % 0D4E %
-    cps = [2304,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 x 0308 % 0D4E %
-    cps = [2304,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 % 0915 %
-    cps = [2304,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 x 0308 % 0915 %
-    cps = [2304,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 % 231A %
-    cps = [2304,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 x 0308 % 231A %
-    cps = [2304,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 x 0300 %
-    cps = [2304,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0900 x 0308 x 0300 %
-    cps = [2304,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0900 x 093C %
-    cps = [2304,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0900 x 0308 x 093C %
-    cps = [2304,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0900 x 094D %
-    cps = [2304,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0900 x 0308 x 094D %
-    cps = [2304,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0900 x 200D %
-    cps = [2304,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0900 x 0308 x 200D %
-    cps = [2304,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0900 % 0378 %
-    cps = [2304,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0900 x 0308 % 0378 %
-    cps = [2304,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 % 0020 %
-    cps = [2307,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 x 0308 % 0020 %
-    cps = [2307,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 % 000D %
-    cps = [2307,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 x 0308 % 000D %
-    cps = [2307,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 % 000A %
-    cps = [2307,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 x 0308 % 000A %
-    cps = [2307,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 % 0001 %
-    cps = [2307,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 x 0308 % 0001 %
-    cps = [2307,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 x 034F %
-    cps = [2307,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0903 x 0308 x 034F %
-    cps = [2307,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0903 % 1F1E6 %
-    cps = [2307,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 x 0308 % 1F1E6 %
-    cps = [2307,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 % 0600 %
-    cps = [2307,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 x 0308 % 0600 %
-    cps = [2307,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 x 0A03 %
-    cps = [2307,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0903 x 0308 x 0A03 %
-    cps = [2307,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0903 % 1100 %
-    cps = [2307,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 x 0308 % 1100 %
-    cps = [2307,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 % 1160 %
-    cps = [2307,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 x 0308 % 1160 %
-    cps = [2307,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 % 11A8 %
-    cps = [2307,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 x 0308 % 11A8 %
-    cps = [2307,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 % AC00 %
-    cps = [2307,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 x 0308 % AC00 %
-    cps = [2307,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 % AC01 %
-    cps = [2307,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 x 0308 % AC01 %
-    cps = [2307,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 x 0900 %
-    cps = [2307,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0903 x 0308 x 0900 %
-    cps = [2307,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0903 x 0903 %
-    cps = [2307,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0903 x 0308 x 0903 %
-    cps = [2307,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0903 % 0904 %
-    cps = [2307,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 x 0308 % 0904 %
-    cps = [2307,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 % 0D4E %
-    cps = [2307,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 x 0308 % 0D4E %
-    cps = [2307,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 % 0915 %
-    cps = [2307,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 x 0308 % 0915 %
-    cps = [2307,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 % 231A %
-    cps = [2307,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 x 0308 % 231A %
-    cps = [2307,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 x 0300 %
-    cps = [2307,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0903 x 0308 x 0300 %
-    cps = [2307,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0903 x 093C %
-    cps = [2307,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0903 x 0308 x 093C %
-    cps = [2307,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0903 x 094D %
-    cps = [2307,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0903 x 0308 x 094D %
-    cps = [2307,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0903 x 200D %
-    cps = [2307,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0903 x 0308 x 200D %
-    cps = [2307,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0903 % 0378 %
-    cps = [2307,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0903 x 0308 % 0378 %
-    cps = [2307,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 % 0020 %
-    cps = [2308,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 x 0308 % 0020 %
-    cps = [2308,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 % 000D %
-    cps = [2308,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 x 0308 % 000D %
-    cps = [2308,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 % 000A %
-    cps = [2308,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 x 0308 % 000A %
-    cps = [2308,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 % 0001 %
-    cps = [2308,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 x 0308 % 0001 %
-    cps = [2308,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 x 034F %
-    cps = [2308,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0904 x 0308 x 034F %
-    cps = [2308,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0904 % 1F1E6 %
-    cps = [2308,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 x 0308 % 1F1E6 %
-    cps = [2308,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 % 0600 %
-    cps = [2308,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 x 0308 % 0600 %
-    cps = [2308,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 x 0A03 %
-    cps = [2308,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0904 x 0308 x 0A03 %
-    cps = [2308,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0904 % 1100 %
-    cps = [2308,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 x 0308 % 1100 %
-    cps = [2308,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 % 1160 %
-    cps = [2308,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 x 0308 % 1160 %
-    cps = [2308,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 % 11A8 %
-    cps = [2308,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 x 0308 % 11A8 %
-    cps = [2308,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 % AC00 %
-    cps = [2308,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 x 0308 % AC00 %
-    cps = [2308,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 % AC01 %
-    cps = [2308,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 x 0308 % AC01 %
-    cps = [2308,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 x 0900 %
-    cps = [2308,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0904 x 0308 x 0900 %
-    cps = [2308,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0904 x 0903 %
-    cps = [2308,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0904 x 0308 x 0903 %
-    cps = [2308,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0904 % 0904 %
-    cps = [2308,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 x 0308 % 0904 %
-    cps = [2308,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 % 0D4E %
-    cps = [2308,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 x 0308 % 0D4E %
-    cps = [2308,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 % 0915 %
-    cps = [2308,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 x 0308 % 0915 %
-    cps = [2308,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 % 231A %
-    cps = [2308,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 x 0308 % 231A %
-    cps = [2308,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 x 0300 %
-    cps = [2308,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0904 x 0308 x 0300 %
-    cps = [2308,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0904 x 093C %
-    cps = [2308,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0904 x 0308 x 093C %
-    cps = [2308,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0904 x 094D %
-    cps = [2308,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0904 x 0308 x 094D %
-    cps = [2308,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0904 x 200D %
-    cps = [2308,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0904 x 0308 x 200D %
-    cps = [2308,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0904 % 0378 %
-    cps = [2308,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0904 x 0308 % 0378 %
-    cps = [2308,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0D4E x 0020 %
-    cps = [3406,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0308 % 0020 %
-    cps = [3406,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0D4E % 000D %
-    cps = [3406,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0D4E x 0308 % 000D %
-    cps = [3406,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0D4E % 000A %
-    cps = [3406,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0D4E x 0308 % 000A %
-    cps = [3406,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0D4E % 0001 %
-    cps = [3406,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0D4E x 0308 % 0001 %
-    cps = [3406,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0D4E x 034F %
-    cps = [3406,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0308 x 034F %
-    cps = [3406,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 1F1E6 %
-    cps = [3406,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0308 % 1F1E6 %
-    cps = [3406,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0D4E x 0600 %
-    cps = [3406,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0308 % 0600 %
-    cps = [3406,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0D4E x 0A03 %
-    cps = [3406,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0308 x 0A03 %
-    cps = [3406,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 1100 %
-    cps = [3406,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0308 % 1100 %
-    cps = [3406,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0D4E x 1160 %
-    cps = [3406,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0308 % 1160 %
-    cps = [3406,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0D4E x 11A8 %
-    cps = [3406,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0308 % 11A8 %
-    cps = [3406,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0D4E x AC00 %
-    cps = [3406,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0308 % AC00 %
-    cps = [3406,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0D4E x AC01 %
-    cps = [3406,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0308 % AC01 %
-    cps = [3406,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0D4E x 0900 %
-    cps = [3406,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0308 x 0900 %
-    cps = [3406,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0903 %
-    cps = [3406,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0308 x 0903 %
-    cps = [3406,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0904 %
-    cps = [3406,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0308 % 0904 %
-    cps = [3406,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0D4E x 0D4E %
-    cps = [3406,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0308 % 0D4E %
-    cps = [3406,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0D4E x 0915 %
-    cps = [3406,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0308 % 0915 %
-    cps = [3406,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0D4E x 231A %
-    cps = [3406,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0308 % 231A %
-    cps = [3406,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0D4E x 0300 %
-    cps = [3406,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0308 x 0300 %
-    cps = [3406,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 093C %
-    cps = [3406,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0308 x 093C %
-    cps = [3406,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 094D %
-    cps = [3406,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0308 x 094D %
-    cps = [3406,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 200D %
-    cps = [3406,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0308 x 200D %
-    cps = [3406,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0378 %
-    cps = [3406,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0D4E x 0308 % 0378 %
-    cps = [3406,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 % 0020 %
-    cps = [2325,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 x 0308 % 0020 %
-    cps = [2325,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 % 000D %
-    cps = [2325,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 x 0308 % 000D %
-    cps = [2325,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 % 000A %
-    cps = [2325,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 x 0308 % 000A %
-    cps = [2325,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 % 0001 %
-    cps = [2325,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 x 0308 % 0001 %
-    cps = [2325,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 x 034F %
-    cps = [2325,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0915 x 0308 x 034F %
-    cps = [2325,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0915 % 1F1E6 %
-    cps = [2325,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 x 0308 % 1F1E6 %
-    cps = [2325,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 % 0600 %
-    cps = [2325,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 x 0308 % 0600 %
-    cps = [2325,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 x 0A03 %
-    cps = [2325,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0915 x 0308 x 0A03 %
-    cps = [2325,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0915 % 1100 %
-    cps = [2325,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 x 0308 % 1100 %
-    cps = [2325,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 % 1160 %
-    cps = [2325,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 x 0308 % 1160 %
-    cps = [2325,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 % 11A8 %
-    cps = [2325,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 x 0308 % 11A8 %
-    cps = [2325,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 % AC00 %
-    cps = [2325,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 x 0308 % AC00 %
-    cps = [2325,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 % AC01 %
-    cps = [2325,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 x 0308 % AC01 %
-    cps = [2325,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 x 0900 %
-    cps = [2325,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0915 x 0308 x 0900 %
-    cps = [2325,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0915 x 0903 %
-    cps = [2325,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0915 x 0308 x 0903 %
-    cps = [2325,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0915 % 0904 %
-    cps = [2325,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 x 0308 % 0904 %
-    cps = [2325,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 % 0D4E %
-    cps = [2325,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 x 0308 % 0D4E %
-    cps = [2325,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 % 0915 %
-    cps = [2325,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 x 0308 % 0915 %
-    cps = [2325,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 % 231A %
-    cps = [2325,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 x 0308 % 231A %
-    cps = [2325,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 x 0300 %
-    cps = [2325,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0915 x 0308 x 0300 %
-    cps = [2325,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0915 x 093C %
-    cps = [2325,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0915 x 0308 x 093C %
-    cps = [2325,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0915 x 094D %
-    cps = [2325,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0915 x 0308 x 094D %
-    cps = [2325,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0915 x 200D %
-    cps = [2325,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0915 x 0308 x 200D %
-    cps = [2325,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0915 % 0378 %
-    cps = [2325,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 x 0308 % 0378 %
-    cps = [2325,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A % 0020 %
-    cps = [8986,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A x 0308 % 0020 %
-    cps = [8986,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A % 000D %
-    cps = [8986,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A x 0308 % 000D %
-    cps = [8986,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A % 000A %
-    cps = [8986,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A x 0308 % 000A %
-    cps = [8986,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A % 0001 %
-    cps = [8986,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A x 0308 % 0001 %
-    cps = [8986,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A x 034F %
-    cps = [8986,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 231A x 0308 x 034F %
-    cps = [8986,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 231A % 1F1E6 %
-    cps = [8986,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A x 0308 % 1F1E6 %
-    cps = [8986,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A % 0600 %
-    cps = [8986,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A x 0308 % 0600 %
-    cps = [8986,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A x 0A03 %
-    cps = [8986,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 231A x 0308 x 0A03 %
-    cps = [8986,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 231A % 1100 %
-    cps = [8986,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A x 0308 % 1100 %
-    cps = [8986,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A % 1160 %
-    cps = [8986,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A x 0308 % 1160 %
-    cps = [8986,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A % 11A8 %
-    cps = [8986,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A x 0308 % 11A8 %
-    cps = [8986,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A % AC00 %
-    cps = [8986,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A x 0308 % AC00 %
-    cps = [8986,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A % AC01 %
-    cps = [8986,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A x 0308 % AC01 %
-    cps = [8986,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A x 0900 %
-    cps = [8986,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 231A x 0308 x 0900 %
-    cps = [8986,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 231A x 0903 %
-    cps = [8986,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 231A x 0308 x 0903 %
-    cps = [8986,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 231A % 0904 %
-    cps = [8986,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A x 0308 % 0904 %
-    cps = [8986,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A % 0D4E %
-    cps = [8986,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A x 0308 % 0D4E %
-    cps = [8986,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A % 0915 %
-    cps = [8986,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A x 0308 % 0915 %
-    cps = [8986,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A % 231A %
-    cps = [8986,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A x 0308 % 231A %
-    cps = [8986,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A x 0300 %
-    cps = [8986,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 231A x 0308 x 0300 %
-    cps = [8986,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 231A x 093C %
-    cps = [8986,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 231A x 0308 x 093C %
-    cps = [8986,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 231A x 094D %
-    cps = [8986,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 231A x 0308 x 094D %
-    cps = [8986,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 231A x 200D %
-    cps = [8986,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 231A x 0308 x 200D %
-    cps = [8986,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 231A % 0378 %
-    cps = [8986,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 231A x 0308 % 0378 %
-    cps = [8986,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 % 0020 %
-    cps = [768,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 x 0308 % 0020 %
-    cps = [768,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 % 000D %
-    cps = [768,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 x 0308 % 000D %
-    cps = [768,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 % 000A %
-    cps = [768,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 x 0308 % 000A %
-    cps = [768,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 % 0001 %
-    cps = [768,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 x 0308 % 0001 %
-    cps = [768,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 x 034F %
-    cps = [768,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0300 x 0308 x 034F %
-    cps = [768,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0300 % 1F1E6 %
-    cps = [768,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 x 0308 % 1F1E6 %
-    cps = [768,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 % 0600 %
-    cps = [768,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 x 0308 % 0600 %
-    cps = [768,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 x 0A03 %
-    cps = [768,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0300 x 0308 x 0A03 %
-    cps = [768,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0300 % 1100 %
-    cps = [768,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 x 0308 % 1100 %
-    cps = [768,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 % 1160 %
-    cps = [768,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 x 0308 % 1160 %
-    cps = [768,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 % 11A8 %
-    cps = [768,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 x 0308 % 11A8 %
-    cps = [768,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 % AC00 %
-    cps = [768,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 x 0308 % AC00 %
-    cps = [768,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 % AC01 %
-    cps = [768,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 x 0308 % AC01 %
-    cps = [768,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 x 0900 %
-    cps = [768,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0300 x 0308 x 0900 %
-    cps = [768,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0300 x 0903 %
-    cps = [768,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0300 x 0308 x 0903 %
-    cps = [768,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0300 % 0904 %
-    cps = [768,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 x 0308 % 0904 %
-    cps = [768,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 % 0D4E %
-    cps = [768,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 x 0308 % 0D4E %
-    cps = [768,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 % 0915 %
-    cps = [768,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 x 0308 % 0915 %
-    cps = [768,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 % 231A %
-    cps = [768,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 x 0308 % 231A %
-    cps = [768,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 x 0300 %
-    cps = [768,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0300 x 0308 x 0300 %
-    cps = [768,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0300 x 093C %
-    cps = [768,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0300 x 0308 x 093C %
-    cps = [768,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0300 x 094D %
-    cps = [768,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0300 x 0308 x 094D %
-    cps = [768,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0300 x 200D %
-    cps = [768,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0300 x 0308 x 200D %
-    cps = [768,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0300 % 0378 %
-    cps = [768,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0300 x 0308 % 0378 %
-    cps = [768,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C % 0020 %
-    cps = [2364,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C x 0308 % 0020 %
-    cps = [2364,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C % 000D %
-    cps = [2364,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C x 0308 % 000D %
-    cps = [2364,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C % 000A %
-    cps = [2364,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C x 0308 % 000A %
-    cps = [2364,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C % 0001 %
-    cps = [2364,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C x 0308 % 0001 %
-    cps = [2364,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C x 034F %
-    cps = [2364,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 093C x 0308 x 034F %
-    cps = [2364,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 093C % 1F1E6 %
-    cps = [2364,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C x 0308 % 1F1E6 %
-    cps = [2364,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C % 0600 %
-    cps = [2364,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C x 0308 % 0600 %
-    cps = [2364,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C x 0A03 %
-    cps = [2364,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 093C x 0308 x 0A03 %
-    cps = [2364,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 093C % 1100 %
-    cps = [2364,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C x 0308 % 1100 %
-    cps = [2364,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C % 1160 %
-    cps = [2364,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C x 0308 % 1160 %
-    cps = [2364,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C % 11A8 %
-    cps = [2364,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C x 0308 % 11A8 %
-    cps = [2364,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C % AC00 %
-    cps = [2364,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C x 0308 % AC00 %
-    cps = [2364,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C % AC01 %
-    cps = [2364,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C x 0308 % AC01 %
-    cps = [2364,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C x 0900 %
-    cps = [2364,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 093C x 0308 x 0900 %
-    cps = [2364,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 093C x 0903 %
-    cps = [2364,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 093C x 0308 x 0903 %
-    cps = [2364,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 093C % 0904 %
-    cps = [2364,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C x 0308 % 0904 %
-    cps = [2364,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C % 0D4E %
-    cps = [2364,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C x 0308 % 0D4E %
-    cps = [2364,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C % 0915 %
-    cps = [2364,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C x 0308 % 0915 %
-    cps = [2364,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C % 231A %
-    cps = [2364,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C x 0308 % 231A %
-    cps = [2364,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C x 0300 %
-    cps = [2364,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 093C x 0308 x 0300 %
-    cps = [2364,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 093C x 093C %
-    cps = [2364,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 093C x 0308 x 093C %
-    cps = [2364,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 093C x 094D %
-    cps = [2364,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 093C x 0308 x 094D %
-    cps = [2364,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 093C x 200D %
-    cps = [2364,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 093C x 0308 x 200D %
-    cps = [2364,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 093C % 0378 %
-    cps = [2364,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 093C x 0308 % 0378 %
-    cps = [2364,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D % 0020 %
-    cps = [2381,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D x 0308 % 0020 %
-    cps = [2381,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D % 000D %
-    cps = [2381,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D x 0308 % 000D %
-    cps = [2381,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D % 000A %
-    cps = [2381,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D x 0308 % 000A %
-    cps = [2381,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D % 0001 %
-    cps = [2381,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D x 0308 % 0001 %
-    cps = [2381,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D x 034F %
-    cps = [2381,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 094D x 0308 x 034F %
-    cps = [2381,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 094D % 1F1E6 %
-    cps = [2381,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D x 0308 % 1F1E6 %
-    cps = [2381,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D % 0600 %
-    cps = [2381,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D x 0308 % 0600 %
-    cps = [2381,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D x 0A03 %
-    cps = [2381,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 094D x 0308 x 0A03 %
-    cps = [2381,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 094D % 1100 %
-    cps = [2381,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D x 0308 % 1100 %
-    cps = [2381,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D % 1160 %
-    cps = [2381,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D x 0308 % 1160 %
-    cps = [2381,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D % 11A8 %
-    cps = [2381,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D x 0308 % 11A8 %
-    cps = [2381,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D % AC00 %
-    cps = [2381,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D x 0308 % AC00 %
-    cps = [2381,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D % AC01 %
-    cps = [2381,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D x 0308 % AC01 %
-    cps = [2381,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D x 0900 %
-    cps = [2381,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 094D x 0308 x 0900 %
-    cps = [2381,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 094D x 0903 %
-    cps = [2381,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 094D x 0308 x 0903 %
-    cps = [2381,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 094D % 0904 %
-    cps = [2381,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D x 0308 % 0904 %
-    cps = [2381,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D % 0D4E %
-    cps = [2381,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D x 0308 % 0D4E %
-    cps = [2381,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D % 0915 %
-    cps = [2381,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D x 0308 % 0915 %
-    cps = [2381,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D % 231A %
-    cps = [2381,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D x 0308 % 231A %
-    cps = [2381,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D x 0300 %
-    cps = [2381,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 094D x 0308 x 0300 %
-    cps = [2381,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 094D x 093C %
-    cps = [2381,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 094D x 0308 x 093C %
-    cps = [2381,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 094D x 094D %
-    cps = [2381,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 094D x 0308 x 094D %
-    cps = [2381,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 094D x 200D %
-    cps = [2381,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 094D x 0308 x 200D %
-    cps = [2381,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 094D % 0378 %
-    cps = [2381,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 094D x 0308 % 0378 %
-    cps = [2381,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D % 0020 %
-    cps = [8205,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D x 0308 % 0020 %
-    cps = [8205,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D % 000D %
-    cps = [8205,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D x 0308 % 000D %
-    cps = [8205,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D % 000A %
-    cps = [8205,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D x 0308 % 000A %
-    cps = [8205,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D % 0001 %
-    cps = [8205,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D x 0308 % 0001 %
-    cps = [8205,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D x 034F %
-    cps = [8205,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 200D x 0308 x 034F %
-    cps = [8205,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 200D % 1F1E6 %
-    cps = [8205,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D x 0308 % 1F1E6 %
-    cps = [8205,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D % 0600 %
-    cps = [8205,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D x 0308 % 0600 %
-    cps = [8205,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D x 0A03 %
-    cps = [8205,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 200D x 0308 x 0A03 %
-    cps = [8205,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 200D % 1100 %
-    cps = [8205,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D x 0308 % 1100 %
-    cps = [8205,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D % 1160 %
-    cps = [8205,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D x 0308 % 1160 %
-    cps = [8205,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D % 11A8 %
-    cps = [8205,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D x 0308 % 11A8 %
-    cps = [8205,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D % AC00 %
-    cps = [8205,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D x 0308 % AC00 %
-    cps = [8205,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D % AC01 %
-    cps = [8205,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D x 0308 % AC01 %
-    cps = [8205,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D x 0900 %
-    cps = [8205,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 200D x 0308 x 0900 %
-    cps = [8205,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 200D x 0903 %
-    cps = [8205,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 200D x 0308 x 0903 %
-    cps = [8205,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 200D % 0904 %
-    cps = [8205,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D x 0308 % 0904 %
-    cps = [8205,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D % 0D4E %
-    cps = [8205,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D x 0308 % 0D4E %
-    cps = [8205,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D % 0915 %
-    cps = [8205,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D x 0308 % 0915 %
-    cps = [8205,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D % 231A %
-    cps = [8205,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D x 0308 % 231A %
-    cps = [8205,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D x 0300 %
-    cps = [8205,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 200D x 0308 x 0300 %
-    cps = [8205,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 200D x 093C %
-    cps = [8205,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 200D x 0308 x 093C %
-    cps = [8205,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 200D x 094D %
-    cps = [8205,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 200D x 0308 x 094D %
-    cps = [8205,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 200D x 200D %
-    cps = [8205,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 200D x 0308 x 200D %
-    cps = [8205,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 200D % 0378 %
-    cps = [8205,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 200D x 0308 % 0378 %
-    cps = [8205,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 % 0020 %
-    cps = [888,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 x 0308 % 0020 %
-    cps = [888,776,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 % 000D %
-    cps = [888,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 x 0308 % 000D %
-    cps = [888,776,13] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 % 000A %
-    cps = [888,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 x 0308 % 000A %
-    cps = [888,776,10] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 % 0001 %
-    cps = [888,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 x 0308 % 0001 %
-    cps = [888,776,1] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 x 034F %
-    cps = [888,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0378 x 0308 x 034F %
-    cps = [888,776,847] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0378 % 1F1E6 %
-    cps = [888,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 x 0308 % 1F1E6 %
-    cps = [888,776,127462] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 % 0600 %
-    cps = [888,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 x 0308 % 0600 %
-    cps = [888,776,1536] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 x 0A03 %
-    cps = [888,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0378 x 0308 x 0A03 %
-    cps = [888,776,2563] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0378 % 1100 %
-    cps = [888,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 x 0308 % 1100 %
-    cps = [888,776,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 % 1160 %
-    cps = [888,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 x 0308 % 1160 %
-    cps = [888,776,4448] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 % 11A8 %
-    cps = [888,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 x 0308 % 11A8 %
-    cps = [888,776,4520] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 % AC00 %
-    cps = [888,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 x 0308 % AC00 %
-    cps = [888,776,44032] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 % AC01 %
-    cps = [888,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 x 0308 % AC01 %
-    cps = [888,776,44033] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 x 0900 %
-    cps = [888,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0378 x 0308 x 0900 %
-    cps = [888,776,2304] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0378 x 0903 %
-    cps = [888,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0378 x 0308 x 0903 %
-    cps = [888,776,2307] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0378 % 0904 %
-    cps = [888,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 x 0308 % 0904 %
-    cps = [888,776,2308] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 % 0D4E %
-    cps = [888,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 x 0308 % 0D4E %
-    cps = [888,776,3406] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 % 0915 %
-    cps = [888,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 x 0308 % 0915 %
-    cps = [888,776,2325] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 % 231A %
-    cps = [888,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 x 0308 % 231A %
-    cps = [888,776,8986] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 x 0300 %
-    cps = [888,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0378 x 0308 x 0300 %
-    cps = [888,776,768] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0378 x 093C %
-    cps = [888,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0378 x 0308 x 093C %
-    cps = [888,776,2364] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0378 x 094D %
-    cps = [888,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0378 x 0308 x 094D %
-    cps = [888,776,2381] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0378 x 200D %
-    cps = [888,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0378 x 0308 x 200D %
-    cps = [888,776,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0378 % 0378 %
-    cps = [888,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0378 x 0308 % 0378 %
-    cps = [888,776,888] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 000D x 000A % 0061 % 000A % 0308 %
-    cps = [13,10,97,10,776] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 4
-
-expect # test % 0061 x 0308 %
-    cps = [97,776] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0020 x 200D % 0646 %
-    cps = [32,8205,1606] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0646 x 200D % 0020 %
-    cps = [1606,8205,32] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1100 x 1100 %
-    cps = [4352,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % AC00 x 11A8 % 1100 %
-    cps = [44032,4520,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % AC01 x 11A8 % 1100 %
-    cps = [44033,4520,4352] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F1E6 x 1F1E7 % 1F1E8 % 0062 %
-    cps = [127462,127463,127464,98] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 3
-
-expect # test % 0061 % 1F1E6 x 1F1E7 % 1F1E8 % 0062 %
-    cps = [97,127462,127463,127464,98] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 4
-
-expect # test % 0061 % 1F1E6 x 1F1E7 x 200D % 1F1E8 % 0062 %
-    cps = [97,127462,127463,8205,127464,98] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 4
-
-expect # test % 0061 % 1F1E6 x 200D % 1F1E7 x 1F1E8 % 0062 %
-    cps = [97,127462,8205,127463,127464,98] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 4
-
-expect # test % 0061 % 1F1E6 x 1F1E7 % 1F1E8 x 1F1E9 % 0062 %
-    cps = [97,127462,127463,127464,127465,98] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 4
-
-expect # test % 0061 x 200D %
-    cps = [97,8205] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0061 x 0308 % 0062 %
-    cps = [97,776,98] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0061 x 0903 % 0062 %
-    cps = [97,2307,98] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0061 % 0600 x 0062 %
-    cps = [97,1536,98] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F476 x 1F3FF % 1F476 %
-    cps = [128118,127999,128118] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0061 x 1F3FF % 1F476 %
-    cps = [97,127999,128118] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0061 x 1F3FF % 1F476 x 200D x 1F6D1 %
-    cps = [97,127999,128118,8205,128721] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 1F476 x 1F3FF x 0308 x 200D x 1F476 x 1F3FF %
-    cps = [128118,127999,776,8205,128118,127999] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 1F6D1 x 200D x 1F6D1 %
-    cps = [128721,8205,128721] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0061 x 200D % 1F6D1 %
-    cps = [97,8205,128721] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 2701 x 200D x 2701 %
-    cps = [9985,8205,9985] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0061 x 200D % 2701 %
-    cps = [97,8205,9985] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 % 0924 %
-    cps = [2325,2340] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 x 094D x 0924 %
-    cps = [2325,2381,2340] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0915 x 094D x 094D x 0924 %
-    cps = [2325,2381,2381,2340] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0915 x 094D x 200D x 0924 %
-    cps = [2325,2381,8205,2340] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0915 x 093C x 200D x 094D x 0924 %
-    cps = [2325,2364,8205,2381,2340] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0915 x 093C x 094D x 200D x 0924 %
-    cps = [2325,2364,2381,8205,2340] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0915 x 094D x 0924 x 094D x 092F %
-    cps = [2325,2381,2340,2381,2351] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
-
-expect # test % 0915 x 094D % 0061 %
-    cps = [2325,2381,97] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0061 x 094D % 0924 %
-    cps = [97,2381,2340] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 003F x 094D % 0924 %
-    cps = [63,2381,2340] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 2
-
-expect # test % 0915 x 094D x 094D x 0924 %
-    cps = [2325,2381,2381,2340] |> List.map InternalCP.fromU32Unchecked
-    result = cps |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map List.len
-    result == Ok 1
+toCodePointList : List Str -> List (List U32)
+toCodePointList = \strings ->
+    strings |> List.map \str -> 
+        when str |> Str.toUtf8 |> CodePoint.parseUtf8 is 
+            Ok cps -> List.map cps CodePoint.toU32
+            Err _ -> crash "expected valid utf8"
+
+
+expect # test % 0020 % 0020 % line 25 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32],[32]]
+    result = [32,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 % 0020 % line 26 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776],[32]]
+    result = [32,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 % 000D % line 27 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32],[13]]
+    result = [32,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 % 000D % line 28 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776],[13]]
+    result = [32,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 % 000A % line 29 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32],[10]]
+    result = [32,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 % 000A % line 30 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776],[10]]
+    result = [32,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 % 0001 % line 31 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32],[1]]
+    result = [32,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 % 0001 % line 32 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776],[1]]
+    result = [32,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 034F % line 33 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,847]]
+    result = [32,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 x 034F % line 34 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776,847]]
+    result = [32,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 % 1F1E6 % line 35 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32],[127462]]
+    result = [32,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 % 1F1E6 % line 36 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776],[127462]]
+    result = [32,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 % 0600 % line 37 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32],[1536]]
+    result = [32,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 % 0600 % line 38 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776],[1536]]
+    result = [32,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0A03 % line 39 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,2563]]
+    result = [32,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 x 0A03 % line 40 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776,2563]]
+    result = [32,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 % 1100 % line 41 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32],[4352]]
+    result = [32,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 % 1100 % line 42 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776],[4352]]
+    result = [32,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 % 1160 % line 43 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32],[4448]]
+    result = [32,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 % 1160 % line 44 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776],[4448]]
+    result = [32,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 % 11A8 % line 45 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32],[4520]]
+    result = [32,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 % 11A8 % line 46 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776],[4520]]
+    result = [32,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 % AC00 % line 47 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32],[44032]]
+    result = [32,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 % AC00 % line 48 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776],[44032]]
+    result = [32,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 % AC01 % line 49 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32],[44033]]
+    result = [32,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 % AC01 % line 50 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776],[44033]]
+    result = [32,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0900 % line 51 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,2304]]
+    result = [32,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 x 0900 % line 52 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776,2304]]
+    result = [32,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0903 % line 53 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,2307]]
+    result = [32,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 x 0903 % line 54 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776,2307]]
+    result = [32,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 % 0904 % line 55 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32],[2308]]
+    result = [32,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 % 0904 % line 56 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776],[2308]]
+    result = [32,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 % 0D4E % line 57 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32],[3406]]
+    result = [32,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 % 0D4E % line 58 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776],[3406]]
+    result = [32,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 % 0915 % line 59 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32],[2325]]
+    result = [32,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 % 0915 % line 60 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776],[2325]]
+    result = [32,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 % 231A % line 61 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32],[8986]]
+    result = [32,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 % 231A % line 62 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776],[8986]]
+    result = [32,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0300 % line 63 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,768]]
+    result = [32,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 x 0300 % line 64 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776,768]]
+    result = [32,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 093C % line 65 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,2364]]
+    result = [32,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 x 093C % line 66 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776,2364]]
+    result = [32,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 094D % line 67 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,2381]]
+    result = [32,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 x 094D % line 68 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776,2381]]
+    result = [32,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 200D % line 69 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,8205]]
+    result = [32,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 x 200D % line 70 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776,8205]]
+    result = [32,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 % 0378 % line 71 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32],[888]]
+    result = [32,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 0308 % 0378 % line 72 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,776],[888]]
+    result = [32,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0020 % line 73 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[32]]
+    result = [13,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 % 0020 % line 74 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776],[32]]
+    result = [13,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 000D % line 75 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[13]]
+    result = [13,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 % 000D % line 76 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776],[13]]
+    result = [13,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D x 000A % line 77 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13,10]]
+    result = [13,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 % 000A % line 78 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776],[10]]
+    result = [13,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0001 % line 79 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[1]]
+    result = [13,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 % 0001 % line 80 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776],[1]]
+    result = [13,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 034F % line 81 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[847]]
+    result = [13,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 x 034F % line 82 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776,847]]
+    result = [13,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 1F1E6 % line 83 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[127462]]
+    result = [13,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 % 1F1E6 % line 84 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776],[127462]]
+    result = [13,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0600 % line 85 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[1536]]
+    result = [13,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 % 0600 % line 86 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776],[1536]]
+    result = [13,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0A03 % line 87 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[2563]]
+    result = [13,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 x 0A03 % line 88 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776,2563]]
+    result = [13,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 1100 % line 89 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[4352]]
+    result = [13,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 % 1100 % line 90 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776],[4352]]
+    result = [13,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 1160 % line 91 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[4448]]
+    result = [13,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 % 1160 % line 92 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776],[4448]]
+    result = [13,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 11A8 % line 93 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[4520]]
+    result = [13,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 % 11A8 % line 94 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776],[4520]]
+    result = [13,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % AC00 % line 95 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[44032]]
+    result = [13,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 % AC00 % line 96 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776],[44032]]
+    result = [13,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % AC01 % line 97 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[44033]]
+    result = [13,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 % AC01 % line 98 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776],[44033]]
+    result = [13,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0900 % line 99 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[2304]]
+    result = [13,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 x 0900 % line 100 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776,2304]]
+    result = [13,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0903 % line 101 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[2307]]
+    result = [13,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 x 0903 % line 102 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776,2307]]
+    result = [13,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0904 % line 103 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[2308]]
+    result = [13,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 % 0904 % line 104 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776],[2308]]
+    result = [13,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0D4E % line 105 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[3406]]
+    result = [13,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 % 0D4E % line 106 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776],[3406]]
+    result = [13,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0915 % line 107 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[2325]]
+    result = [13,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 % 0915 % line 108 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776],[2325]]
+    result = [13,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 231A % line 109 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[8986]]
+    result = [13,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 % 231A % line 110 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776],[8986]]
+    result = [13,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0300 % line 111 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[768]]
+    result = [13,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 x 0300 % line 112 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776,768]]
+    result = [13,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 093C % line 113 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[2364]]
+    result = [13,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 x 093C % line 114 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776,2364]]
+    result = [13,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 094D % line 115 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[2381]]
+    result = [13,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 x 094D % line 116 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776,2381]]
+    result = [13,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 200D % line 117 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[8205]]
+    result = [13,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 x 200D % line 118 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776,8205]]
+    result = [13,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0378 % line 119 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[888]]
+    result = [13,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D % 0308 % 0378 % line 120 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13],[776],[888]]
+    result = [13,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0020 % line 121 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[32]]
+    result = [10,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 % 0020 % line 122 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776],[32]]
+    result = [10,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 000D % line 123 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[13]]
+    result = [10,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 % 000D % line 124 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776],[13]]
+    result = [10,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 000A % line 125 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[10]]
+    result = [10,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 % 000A % line 126 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776],[10]]
+    result = [10,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0001 % line 127 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[1]]
+    result = [10,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 % 0001 % line 128 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776],[1]]
+    result = [10,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 034F % line 129 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[847]]
+    result = [10,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 x 034F % line 130 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776,847]]
+    result = [10,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 1F1E6 % line 131 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[127462]]
+    result = [10,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 % 1F1E6 % line 132 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776],[127462]]
+    result = [10,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0600 % line 133 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[1536]]
+    result = [10,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 % 0600 % line 134 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776],[1536]]
+    result = [10,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0A03 % line 135 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[2563]]
+    result = [10,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 x 0A03 % line 136 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776,2563]]
+    result = [10,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 1100 % line 137 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[4352]]
+    result = [10,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 % 1100 % line 138 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776],[4352]]
+    result = [10,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 1160 % line 139 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[4448]]
+    result = [10,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 % 1160 % line 140 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776],[4448]]
+    result = [10,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 11A8 % line 141 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[4520]]
+    result = [10,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 % 11A8 % line 142 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776],[4520]]
+    result = [10,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % AC00 % line 143 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[44032]]
+    result = [10,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 % AC00 % line 144 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776],[44032]]
+    result = [10,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % AC01 % line 145 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[44033]]
+    result = [10,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 % AC01 % line 146 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776],[44033]]
+    result = [10,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0900 % line 147 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[2304]]
+    result = [10,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 x 0900 % line 148 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776,2304]]
+    result = [10,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0903 % line 149 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[2307]]
+    result = [10,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 x 0903 % line 150 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776,2307]]
+    result = [10,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0904 % line 151 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[2308]]
+    result = [10,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 % 0904 % line 152 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776],[2308]]
+    result = [10,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0D4E % line 153 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[3406]]
+    result = [10,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 % 0D4E % line 154 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776],[3406]]
+    result = [10,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0915 % line 155 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[2325]]
+    result = [10,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 % 0915 % line 156 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776],[2325]]
+    result = [10,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 231A % line 157 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[8986]]
+    result = [10,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 % 231A % line 158 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776],[8986]]
+    result = [10,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0300 % line 159 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[768]]
+    result = [10,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 x 0300 % line 160 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776,768]]
+    result = [10,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 093C % line 161 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[2364]]
+    result = [10,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 x 093C % line 162 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776,2364]]
+    result = [10,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 094D % line 163 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[2381]]
+    result = [10,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 x 094D % line 164 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776,2381]]
+    result = [10,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 200D % line 165 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[8205]]
+    result = [10,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 x 200D % line 166 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776,8205]]
+    result = [10,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0378 % line 167 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[888]]
+    result = [10,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000A % 0308 % 0378 % line 168 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[10],[776],[888]]
+    result = [10,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0020 % line 169 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[32]]
+    result = [1,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 % 0020 % line 170 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776],[32]]
+    result = [1,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 000D % line 171 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[13]]
+    result = [1,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 % 000D % line 172 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776],[13]]
+    result = [1,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 000A % line 173 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[10]]
+    result = [1,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 % 000A % line 174 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776],[10]]
+    result = [1,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0001 % line 175 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[1]]
+    result = [1,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 % 0001 % line 176 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776],[1]]
+    result = [1,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 034F % line 177 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[847]]
+    result = [1,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 x 034F % line 178 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776,847]]
+    result = [1,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 1F1E6 % line 179 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[127462]]
+    result = [1,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 % 1F1E6 % line 180 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776],[127462]]
+    result = [1,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0600 % line 181 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[1536]]
+    result = [1,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 % 0600 % line 182 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776],[1536]]
+    result = [1,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0A03 % line 183 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[2563]]
+    result = [1,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 x 0A03 % line 184 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776,2563]]
+    result = [1,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 1100 % line 185 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[4352]]
+    result = [1,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 % 1100 % line 186 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776],[4352]]
+    result = [1,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 1160 % line 187 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[4448]]
+    result = [1,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 % 1160 % line 188 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776],[4448]]
+    result = [1,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 11A8 % line 189 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[4520]]
+    result = [1,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 % 11A8 % line 190 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776],[4520]]
+    result = [1,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % AC00 % line 191 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[44032]]
+    result = [1,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 % AC00 % line 192 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776],[44032]]
+    result = [1,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % AC01 % line 193 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[44033]]
+    result = [1,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 % AC01 % line 194 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776],[44033]]
+    result = [1,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0900 % line 195 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[2304]]
+    result = [1,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 x 0900 % line 196 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776,2304]]
+    result = [1,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0903 % line 197 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[2307]]
+    result = [1,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 x 0903 % line 198 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776,2307]]
+    result = [1,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0904 % line 199 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[2308]]
+    result = [1,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 % 0904 % line 200 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776],[2308]]
+    result = [1,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0D4E % line 201 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[3406]]
+    result = [1,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 % 0D4E % line 202 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776],[3406]]
+    result = [1,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0915 % line 203 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[2325]]
+    result = [1,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 % 0915 % line 204 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776],[2325]]
+    result = [1,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 231A % line 205 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[8986]]
+    result = [1,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 % 231A % line 206 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776],[8986]]
+    result = [1,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0300 % line 207 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[768]]
+    result = [1,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 x 0300 % line 208 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776,768]]
+    result = [1,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 093C % line 209 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[2364]]
+    result = [1,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 x 093C % line 210 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776,2364]]
+    result = [1,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 094D % line 211 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[2381]]
+    result = [1,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 x 094D % line 212 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776,2381]]
+    result = [1,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 200D % line 213 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[8205]]
+    result = [1,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 x 200D % line 214 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776,8205]]
+    result = [1,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0378 % line 215 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[888]]
+    result = [1,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0001 % 0308 % 0378 % line 216 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1],[776],[888]]
+    result = [1,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F % 0020 % line 217 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847],[32]]
+    result = [847,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 % 0020 % line 218 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776],[32]]
+    result = [847,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F % 000D % line 219 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847],[13]]
+    result = [847,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 % 000D % line 220 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776],[13]]
+    result = [847,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F % 000A % line 221 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847],[10]]
+    result = [847,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 % 000A % line 222 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776],[10]]
+    result = [847,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F % 0001 % line 223 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847],[1]]
+    result = [847,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 % 0001 % line 224 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776],[1]]
+    result = [847,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 034F % line 225 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,847]]
+    result = [847,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 x 034F % line 226 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776,847]]
+    result = [847,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F % 1F1E6 % line 227 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847],[127462]]
+    result = [847,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 % 1F1E6 % line 228 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776],[127462]]
+    result = [847,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F % 0600 % line 229 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847],[1536]]
+    result = [847,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 % 0600 % line 230 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776],[1536]]
+    result = [847,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0A03 % line 231 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,2563]]
+    result = [847,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 x 0A03 % line 232 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776,2563]]
+    result = [847,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F % 1100 % line 233 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847],[4352]]
+    result = [847,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 % 1100 % line 234 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776],[4352]]
+    result = [847,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F % 1160 % line 235 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847],[4448]]
+    result = [847,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 % 1160 % line 236 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776],[4448]]
+    result = [847,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F % 11A8 % line 237 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847],[4520]]
+    result = [847,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 % 11A8 % line 238 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776],[4520]]
+    result = [847,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F % AC00 % line 239 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847],[44032]]
+    result = [847,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 % AC00 % line 240 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776],[44032]]
+    result = [847,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F % AC01 % line 241 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847],[44033]]
+    result = [847,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 % AC01 % line 242 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776],[44033]]
+    result = [847,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0900 % line 243 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,2304]]
+    result = [847,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 x 0900 % line 244 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776,2304]]
+    result = [847,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0903 % line 245 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,2307]]
+    result = [847,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 x 0903 % line 246 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776,2307]]
+    result = [847,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F % 0904 % line 247 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847],[2308]]
+    result = [847,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 % 0904 % line 248 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776],[2308]]
+    result = [847,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F % 0D4E % line 249 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847],[3406]]
+    result = [847,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 % 0D4E % line 250 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776],[3406]]
+    result = [847,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F % 0915 % line 251 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847],[2325]]
+    result = [847,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 % 0915 % line 252 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776],[2325]]
+    result = [847,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F % 231A % line 253 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847],[8986]]
+    result = [847,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 % 231A % line 254 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776],[8986]]
+    result = [847,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0300 % line 255 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,768]]
+    result = [847,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 x 0300 % line 256 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776,768]]
+    result = [847,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 093C % line 257 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,2364]]
+    result = [847,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 x 093C % line 258 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776,2364]]
+    result = [847,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 094D % line 259 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,2381]]
+    result = [847,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 x 094D % line 260 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776,2381]]
+    result = [847,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 200D % line 261 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,8205]]
+    result = [847,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 x 200D % line 262 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776,8205]]
+    result = [847,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F % 0378 % line 263 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847],[888]]
+    result = [847,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 034F x 0308 % 0378 % line 264 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[847,776],[888]]
+    result = [847,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 % 0020 % line 265 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462],[32]]
+    result = [127462,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 % 0020 % line 266 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776],[32]]
+    result = [127462,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 % 000D % line 267 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462],[13]]
+    result = [127462,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 % 000D % line 268 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776],[13]]
+    result = [127462,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 % 000A % line 269 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462],[10]]
+    result = [127462,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 % 000A % line 270 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776],[10]]
+    result = [127462,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 % 0001 % line 271 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462],[1]]
+    result = [127462,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 % 0001 % line 272 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776],[1]]
+    result = [127462,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 034F % line 273 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,847]]
+    result = [127462,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 x 034F % line 274 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776,847]]
+    result = [127462,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 1F1E6 % line 275 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,127462]]
+    result = [127462,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 % 1F1E6 % line 276 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776],[127462]]
+    result = [127462,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 % 0600 % line 277 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462],[1536]]
+    result = [127462,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 % 0600 % line 278 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776],[1536]]
+    result = [127462,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0A03 % line 279 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,2563]]
+    result = [127462,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 x 0A03 % line 280 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776,2563]]
+    result = [127462,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 % 1100 % line 281 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462],[4352]]
+    result = [127462,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 % 1100 % line 282 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776],[4352]]
+    result = [127462,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 % 1160 % line 283 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462],[4448]]
+    result = [127462,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 % 1160 % line 284 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776],[4448]]
+    result = [127462,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 % 11A8 % line 285 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462],[4520]]
+    result = [127462,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 % 11A8 % line 286 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776],[4520]]
+    result = [127462,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 % AC00 % line 287 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462],[44032]]
+    result = [127462,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 % AC00 % line 288 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776],[44032]]
+    result = [127462,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 % AC01 % line 289 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462],[44033]]
+    result = [127462,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 % AC01 % line 290 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776],[44033]]
+    result = [127462,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0900 % line 291 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,2304]]
+    result = [127462,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 x 0900 % line 292 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776,2304]]
+    result = [127462,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0903 % line 293 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,2307]]
+    result = [127462,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 x 0903 % line 294 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776,2307]]
+    result = [127462,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 % 0904 % line 295 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462],[2308]]
+    result = [127462,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 % 0904 % line 296 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776],[2308]]
+    result = [127462,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 % 0D4E % line 297 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462],[3406]]
+    result = [127462,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 % 0D4E % line 298 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776],[3406]]
+    result = [127462,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 % 0915 % line 299 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462],[2325]]
+    result = [127462,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 % 0915 % line 300 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776],[2325]]
+    result = [127462,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 % 231A % line 301 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462],[8986]]
+    result = [127462,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 % 231A % line 302 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776],[8986]]
+    result = [127462,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0300 % line 303 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,768]]
+    result = [127462,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 x 0300 % line 304 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776,768]]
+    result = [127462,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 093C % line 305 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,2364]]
+    result = [127462,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 x 093C % line 306 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776,2364]]
+    result = [127462,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 094D % line 307 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,2381]]
+    result = [127462,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 x 094D % line 308 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776,2381]]
+    result = [127462,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 200D % line 309 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,8205]]
+    result = [127462,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 x 200D % line 310 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776,8205]]
+    result = [127462,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 % 0378 % line 311 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462],[888]]
+    result = [127462,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 0308 % 0378 % line 312 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,776],[888]]
+    result = [127462,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0020 % line 313 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,32]]
+    result = [1536,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 % 0020 % line 314 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776],[32]]
+    result = [1536,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 % 000D % line 315 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536],[13]]
+    result = [1536,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 % 000D % line 316 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776],[13]]
+    result = [1536,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 % 000A % line 317 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536],[10]]
+    result = [1536,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 % 000A % line 318 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776],[10]]
+    result = [1536,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 % 0001 % line 319 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536],[1]]
+    result = [1536,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 % 0001 % line 320 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776],[1]]
+    result = [1536,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 034F % line 321 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,847]]
+    result = [1536,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 x 034F % line 322 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776,847]]
+    result = [1536,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 1F1E6 % line 323 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,127462]]
+    result = [1536,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 % 1F1E6 % line 324 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776],[127462]]
+    result = [1536,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0600 % line 325 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,1536]]
+    result = [1536,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 % 0600 % line 326 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776],[1536]]
+    result = [1536,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0A03 % line 327 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,2563]]
+    result = [1536,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 x 0A03 % line 328 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776,2563]]
+    result = [1536,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 1100 % line 329 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,4352]]
+    result = [1536,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 % 1100 % line 330 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776],[4352]]
+    result = [1536,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 1160 % line 331 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,4448]]
+    result = [1536,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 % 1160 % line 332 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776],[4448]]
+    result = [1536,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 11A8 % line 333 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,4520]]
+    result = [1536,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 % 11A8 % line 334 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776],[4520]]
+    result = [1536,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x AC00 % line 335 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,44032]]
+    result = [1536,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 % AC00 % line 336 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776],[44032]]
+    result = [1536,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x AC01 % line 337 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,44033]]
+    result = [1536,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 % AC01 % line 338 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776],[44033]]
+    result = [1536,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0900 % line 339 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,2304]]
+    result = [1536,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 x 0900 % line 340 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776,2304]]
+    result = [1536,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0903 % line 341 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,2307]]
+    result = [1536,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 x 0903 % line 342 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776,2307]]
+    result = [1536,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0904 % line 343 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,2308]]
+    result = [1536,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 % 0904 % line 344 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776],[2308]]
+    result = [1536,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0D4E % line 345 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,3406]]
+    result = [1536,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 % 0D4E % line 346 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776],[3406]]
+    result = [1536,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0915 % line 347 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,2325]]
+    result = [1536,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 % 0915 % line 348 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776],[2325]]
+    result = [1536,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 231A % line 349 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,8986]]
+    result = [1536,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 % 231A % line 350 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776],[8986]]
+    result = [1536,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0300 % line 351 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,768]]
+    result = [1536,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 x 0300 % line 352 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776,768]]
+    result = [1536,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 093C % line 353 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,2364]]
+    result = [1536,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 x 093C % line 354 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776,2364]]
+    result = [1536,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 094D % line 355 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,2381]]
+    result = [1536,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 x 094D % line 356 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776,2381]]
+    result = [1536,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 200D % line 357 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,8205]]
+    result = [1536,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 x 200D % line 358 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776,8205]]
+    result = [1536,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0378 % line 359 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,888]]
+    result = [1536,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0600 x 0308 % 0378 % line 360 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1536,776],[888]]
+    result = [1536,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 % 0020 % line 361 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563],[32]]
+    result = [2563,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 % 0020 % line 362 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776],[32]]
+    result = [2563,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 % 000D % line 363 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563],[13]]
+    result = [2563,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 % 000D % line 364 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776],[13]]
+    result = [2563,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 % 000A % line 365 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563],[10]]
+    result = [2563,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 % 000A % line 366 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776],[10]]
+    result = [2563,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 % 0001 % line 367 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563],[1]]
+    result = [2563,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 % 0001 % line 368 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776],[1]]
+    result = [2563,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 034F % line 369 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,847]]
+    result = [2563,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 x 034F % line 370 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776,847]]
+    result = [2563,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 % 1F1E6 % line 371 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563],[127462]]
+    result = [2563,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 % 1F1E6 % line 372 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776],[127462]]
+    result = [2563,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 % 0600 % line 373 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563],[1536]]
+    result = [2563,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 % 0600 % line 374 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776],[1536]]
+    result = [2563,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0A03 % line 375 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,2563]]
+    result = [2563,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 x 0A03 % line 376 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776,2563]]
+    result = [2563,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 % 1100 % line 377 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563],[4352]]
+    result = [2563,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 % 1100 % line 378 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776],[4352]]
+    result = [2563,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 % 1160 % line 379 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563],[4448]]
+    result = [2563,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 % 1160 % line 380 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776],[4448]]
+    result = [2563,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 % 11A8 % line 381 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563],[4520]]
+    result = [2563,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 % 11A8 % line 382 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776],[4520]]
+    result = [2563,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 % AC00 % line 383 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563],[44032]]
+    result = [2563,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 % AC00 % line 384 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776],[44032]]
+    result = [2563,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 % AC01 % line 385 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563],[44033]]
+    result = [2563,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 % AC01 % line 386 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776],[44033]]
+    result = [2563,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0900 % line 387 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,2304]]
+    result = [2563,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 x 0900 % line 388 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776,2304]]
+    result = [2563,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0903 % line 389 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,2307]]
+    result = [2563,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 x 0903 % line 390 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776,2307]]
+    result = [2563,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 % 0904 % line 391 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563],[2308]]
+    result = [2563,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 % 0904 % line 392 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776],[2308]]
+    result = [2563,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 % 0D4E % line 393 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563],[3406]]
+    result = [2563,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 % 0D4E % line 394 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776],[3406]]
+    result = [2563,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 % 0915 % line 395 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563],[2325]]
+    result = [2563,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 % 0915 % line 396 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776],[2325]]
+    result = [2563,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 % 231A % line 397 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563],[8986]]
+    result = [2563,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 % 231A % line 398 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776],[8986]]
+    result = [2563,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0300 % line 399 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,768]]
+    result = [2563,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 x 0300 % line 400 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776,768]]
+    result = [2563,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 093C % line 401 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,2364]]
+    result = [2563,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 x 093C % line 402 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776,2364]]
+    result = [2563,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 094D % line 403 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,2381]]
+    result = [2563,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 x 094D % line 404 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776,2381]]
+    result = [2563,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 200D % line 405 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,8205]]
+    result = [2563,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 x 200D % line 406 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776,8205]]
+    result = [2563,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 % 0378 % line 407 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563],[888]]
+    result = [2563,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0A03 x 0308 % 0378 % line 408 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2563,776],[888]]
+    result = [2563,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 % 0020 % line 409 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352],[32]]
+    result = [4352,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 % 0020 % line 410 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776],[32]]
+    result = [4352,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 % 000D % line 411 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352],[13]]
+    result = [4352,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 % 000D % line 412 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776],[13]]
+    result = [4352,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 % 000A % line 413 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352],[10]]
+    result = [4352,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 % 000A % line 414 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776],[10]]
+    result = [4352,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 % 0001 % line 415 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352],[1]]
+    result = [4352,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 % 0001 % line 416 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776],[1]]
+    result = [4352,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 034F % line 417 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,847]]
+    result = [4352,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 x 034F % line 418 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776,847]]
+    result = [4352,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 % 1F1E6 % line 419 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352],[127462]]
+    result = [4352,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 % 1F1E6 % line 420 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776],[127462]]
+    result = [4352,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 % 0600 % line 421 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352],[1536]]
+    result = [4352,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 % 0600 % line 422 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776],[1536]]
+    result = [4352,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0A03 % line 423 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,2563]]
+    result = [4352,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 x 0A03 % line 424 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776,2563]]
+    result = [4352,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 1100 % line 425 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,4352]]
+    result = [4352,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 % 1100 % line 426 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776],[4352]]
+    result = [4352,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 1160 % line 427 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,4448]]
+    result = [4352,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 % 1160 % line 428 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776],[4448]]
+    result = [4352,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 % 11A8 % line 429 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352],[4520]]
+    result = [4352,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 % 11A8 % line 430 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776],[4520]]
+    result = [4352,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x AC00 % line 431 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,44032]]
+    result = [4352,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 % AC00 % line 432 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776],[44032]]
+    result = [4352,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x AC01 % line 433 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,44033]]
+    result = [4352,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 % AC01 % line 434 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776],[44033]]
+    result = [4352,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0900 % line 435 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,2304]]
+    result = [4352,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 x 0900 % line 436 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776,2304]]
+    result = [4352,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0903 % line 437 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,2307]]
+    result = [4352,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 x 0903 % line 438 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776,2307]]
+    result = [4352,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 % 0904 % line 439 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352],[2308]]
+    result = [4352,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 % 0904 % line 440 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776],[2308]]
+    result = [4352,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 % 0D4E % line 441 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352],[3406]]
+    result = [4352,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 % 0D4E % line 442 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776],[3406]]
+    result = [4352,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 % 0915 % line 443 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352],[2325]]
+    result = [4352,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 % 0915 % line 444 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776],[2325]]
+    result = [4352,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 % 231A % line 445 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352],[8986]]
+    result = [4352,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 % 231A % line 446 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776],[8986]]
+    result = [4352,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0300 % line 447 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,768]]
+    result = [4352,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 x 0300 % line 448 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776,768]]
+    result = [4352,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 093C % line 449 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,2364]]
+    result = [4352,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 x 093C % line 450 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776,2364]]
+    result = [4352,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 094D % line 451 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,2381]]
+    result = [4352,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 x 094D % line 452 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776,2381]]
+    result = [4352,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 200D % line 453 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,8205]]
+    result = [4352,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 x 200D % line 454 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776,8205]]
+    result = [4352,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 % 0378 % line 455 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352],[888]]
+    result = [4352,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 0308 % 0378 % line 456 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,776],[888]]
+    result = [4352,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 % 0020 % line 457 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448],[32]]
+    result = [4448,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 % 0020 % line 458 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776],[32]]
+    result = [4448,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 % 000D % line 459 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448],[13]]
+    result = [4448,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 % 000D % line 460 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776],[13]]
+    result = [4448,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 % 000A % line 461 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448],[10]]
+    result = [4448,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 % 000A % line 462 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776],[10]]
+    result = [4448,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 % 0001 % line 463 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448],[1]]
+    result = [4448,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 % 0001 % line 464 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776],[1]]
+    result = [4448,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 034F % line 465 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,847]]
+    result = [4448,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 x 034F % line 466 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776,847]]
+    result = [4448,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 % 1F1E6 % line 467 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448],[127462]]
+    result = [4448,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 % 1F1E6 % line 468 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776],[127462]]
+    result = [4448,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 % 0600 % line 469 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448],[1536]]
+    result = [4448,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 % 0600 % line 470 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776],[1536]]
+    result = [4448,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0A03 % line 471 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,2563]]
+    result = [4448,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 x 0A03 % line 472 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776,2563]]
+    result = [4448,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 % 1100 % line 473 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448],[4352]]
+    result = [4448,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 % 1100 % line 474 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776],[4352]]
+    result = [4448,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 1160 % line 475 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,4448]]
+    result = [4448,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 % 1160 % line 476 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776],[4448]]
+    result = [4448,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 11A8 % line 477 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,4520]]
+    result = [4448,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 % 11A8 % line 478 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776],[4520]]
+    result = [4448,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 % AC00 % line 479 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448],[44032]]
+    result = [4448,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 % AC00 % line 480 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776],[44032]]
+    result = [4448,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 % AC01 % line 481 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448],[44033]]
+    result = [4448,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 % AC01 % line 482 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776],[44033]]
+    result = [4448,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0900 % line 483 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,2304]]
+    result = [4448,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 x 0900 % line 484 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776,2304]]
+    result = [4448,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0903 % line 485 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,2307]]
+    result = [4448,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 x 0903 % line 486 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776,2307]]
+    result = [4448,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 % 0904 % line 487 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448],[2308]]
+    result = [4448,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 % 0904 % line 488 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776],[2308]]
+    result = [4448,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 % 0D4E % line 489 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448],[3406]]
+    result = [4448,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 % 0D4E % line 490 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776],[3406]]
+    result = [4448,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 % 0915 % line 491 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448],[2325]]
+    result = [4448,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 % 0915 % line 492 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776],[2325]]
+    result = [4448,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 % 231A % line 493 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448],[8986]]
+    result = [4448,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 % 231A % line 494 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776],[8986]]
+    result = [4448,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0300 % line 495 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,768]]
+    result = [4448,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 x 0300 % line 496 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776,768]]
+    result = [4448,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 093C % line 497 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,2364]]
+    result = [4448,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 x 093C % line 498 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776,2364]]
+    result = [4448,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 094D % line 499 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,2381]]
+    result = [4448,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 x 094D % line 500 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776,2381]]
+    result = [4448,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 200D % line 501 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,8205]]
+    result = [4448,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 x 200D % line 502 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776,8205]]
+    result = [4448,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 % 0378 % line 503 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448],[888]]
+    result = [4448,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1160 x 0308 % 0378 % line 504 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4448,776],[888]]
+    result = [4448,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 % 0020 % line 505 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520],[32]]
+    result = [4520,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 % 0020 % line 506 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776],[32]]
+    result = [4520,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 % 000D % line 507 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520],[13]]
+    result = [4520,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 % 000D % line 508 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776],[13]]
+    result = [4520,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 % 000A % line 509 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520],[10]]
+    result = [4520,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 % 000A % line 510 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776],[10]]
+    result = [4520,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 % 0001 % line 511 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520],[1]]
+    result = [4520,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 % 0001 % line 512 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776],[1]]
+    result = [4520,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 034F % line 513 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,847]]
+    result = [4520,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 x 034F % line 514 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776,847]]
+    result = [4520,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 % 1F1E6 % line 515 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520],[127462]]
+    result = [4520,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 % 1F1E6 % line 516 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776],[127462]]
+    result = [4520,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 % 0600 % line 517 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520],[1536]]
+    result = [4520,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 % 0600 % line 518 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776],[1536]]
+    result = [4520,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0A03 % line 519 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,2563]]
+    result = [4520,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 x 0A03 % line 520 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776,2563]]
+    result = [4520,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 % 1100 % line 521 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520],[4352]]
+    result = [4520,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 % 1100 % line 522 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776],[4352]]
+    result = [4520,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 % 1160 % line 523 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520],[4448]]
+    result = [4520,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 % 1160 % line 524 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776],[4448]]
+    result = [4520,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 11A8 % line 525 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,4520]]
+    result = [4520,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 % 11A8 % line 526 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776],[4520]]
+    result = [4520,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 % AC00 % line 527 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520],[44032]]
+    result = [4520,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 % AC00 % line 528 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776],[44032]]
+    result = [4520,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 % AC01 % line 529 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520],[44033]]
+    result = [4520,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 % AC01 % line 530 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776],[44033]]
+    result = [4520,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0900 % line 531 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,2304]]
+    result = [4520,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 x 0900 % line 532 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776,2304]]
+    result = [4520,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0903 % line 533 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,2307]]
+    result = [4520,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 x 0903 % line 534 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776,2307]]
+    result = [4520,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 % 0904 % line 535 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520],[2308]]
+    result = [4520,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 % 0904 % line 536 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776],[2308]]
+    result = [4520,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 % 0D4E % line 537 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520],[3406]]
+    result = [4520,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 % 0D4E % line 538 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776],[3406]]
+    result = [4520,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 % 0915 % line 539 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520],[2325]]
+    result = [4520,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 % 0915 % line 540 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776],[2325]]
+    result = [4520,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 % 231A % line 541 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520],[8986]]
+    result = [4520,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 % 231A % line 542 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776],[8986]]
+    result = [4520,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0300 % line 543 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,768]]
+    result = [4520,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 x 0300 % line 544 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776,768]]
+    result = [4520,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 093C % line 545 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,2364]]
+    result = [4520,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 x 093C % line 546 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776,2364]]
+    result = [4520,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 094D % line 547 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,2381]]
+    result = [4520,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 x 094D % line 548 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776,2381]]
+    result = [4520,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 200D % line 549 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,8205]]
+    result = [4520,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 x 200D % line 550 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776,8205]]
+    result = [4520,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 % 0378 % line 551 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520],[888]]
+    result = [4520,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 11A8 x 0308 % 0378 % line 552 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4520,776],[888]]
+    result = [4520,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 % 0020 % line 553 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032],[32]]
+    result = [44032,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 % 0020 % line 554 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776],[32]]
+    result = [44032,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 % 000D % line 555 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032],[13]]
+    result = [44032,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 % 000D % line 556 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776],[13]]
+    result = [44032,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 % 000A % line 557 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032],[10]]
+    result = [44032,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 % 000A % line 558 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776],[10]]
+    result = [44032,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 % 0001 % line 559 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032],[1]]
+    result = [44032,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 % 0001 % line 560 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776],[1]]
+    result = [44032,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 034F % line 561 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,847]]
+    result = [44032,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 x 034F % line 562 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776,847]]
+    result = [44032,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 % 1F1E6 % line 563 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032],[127462]]
+    result = [44032,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 % 1F1E6 % line 564 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776],[127462]]
+    result = [44032,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 % 0600 % line 565 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032],[1536]]
+    result = [44032,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 % 0600 % line 566 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776],[1536]]
+    result = [44032,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0A03 % line 567 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,2563]]
+    result = [44032,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 x 0A03 % line 568 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776,2563]]
+    result = [44032,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 % 1100 % line 569 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032],[4352]]
+    result = [44032,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 % 1100 % line 570 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776],[4352]]
+    result = [44032,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 1160 % line 571 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,4448]]
+    result = [44032,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 % 1160 % line 572 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776],[4448]]
+    result = [44032,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 11A8 % line 573 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,4520]]
+    result = [44032,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 % 11A8 % line 574 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776],[4520]]
+    result = [44032,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 % AC00 % line 575 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032],[44032]]
+    result = [44032,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 % AC00 % line 576 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776],[44032]]
+    result = [44032,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 % AC01 % line 577 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032],[44033]]
+    result = [44032,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 % AC01 % line 578 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776],[44033]]
+    result = [44032,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0900 % line 579 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,2304]]
+    result = [44032,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 x 0900 % line 580 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776,2304]]
+    result = [44032,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0903 % line 581 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,2307]]
+    result = [44032,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 x 0903 % line 582 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776,2307]]
+    result = [44032,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 % 0904 % line 583 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032],[2308]]
+    result = [44032,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 % 0904 % line 584 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776],[2308]]
+    result = [44032,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 % 0D4E % line 585 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032],[3406]]
+    result = [44032,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 % 0D4E % line 586 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776],[3406]]
+    result = [44032,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 % 0915 % line 587 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032],[2325]]
+    result = [44032,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 % 0915 % line 588 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776],[2325]]
+    result = [44032,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 % 231A % line 589 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032],[8986]]
+    result = [44032,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 % 231A % line 590 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776],[8986]]
+    result = [44032,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0300 % line 591 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,768]]
+    result = [44032,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 x 0300 % line 592 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776,768]]
+    result = [44032,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 093C % line 593 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,2364]]
+    result = [44032,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 x 093C % line 594 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776,2364]]
+    result = [44032,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 094D % line 595 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,2381]]
+    result = [44032,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 x 094D % line 596 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776,2381]]
+    result = [44032,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 200D % line 597 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,8205]]
+    result = [44032,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 x 200D % line 598 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776,8205]]
+    result = [44032,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 % 0378 % line 599 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032],[888]]
+    result = [44032,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 0308 % 0378 % line 600 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,776],[888]]
+    result = [44032,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 % 0020 % line 601 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033],[32]]
+    result = [44033,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 % 0020 % line 602 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776],[32]]
+    result = [44033,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 % 000D % line 603 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033],[13]]
+    result = [44033,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 % 000D % line 604 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776],[13]]
+    result = [44033,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 % 000A % line 605 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033],[10]]
+    result = [44033,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 % 000A % line 606 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776],[10]]
+    result = [44033,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 % 0001 % line 607 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033],[1]]
+    result = [44033,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 % 0001 % line 608 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776],[1]]
+    result = [44033,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 034F % line 609 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,847]]
+    result = [44033,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 x 034F % line 610 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776,847]]
+    result = [44033,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 % 1F1E6 % line 611 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033],[127462]]
+    result = [44033,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 % 1F1E6 % line 612 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776],[127462]]
+    result = [44033,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 % 0600 % line 613 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033],[1536]]
+    result = [44033,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 % 0600 % line 614 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776],[1536]]
+    result = [44033,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0A03 % line 615 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,2563]]
+    result = [44033,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 x 0A03 % line 616 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776,2563]]
+    result = [44033,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 % 1100 % line 617 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033],[4352]]
+    result = [44033,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 % 1100 % line 618 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776],[4352]]
+    result = [44033,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 % 1160 % line 619 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033],[4448]]
+    result = [44033,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 % 1160 % line 620 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776],[4448]]
+    result = [44033,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 11A8 % line 621 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,4520]]
+    result = [44033,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 % 11A8 % line 622 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776],[4520]]
+    result = [44033,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 % AC00 % line 623 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033],[44032]]
+    result = [44033,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 % AC00 % line 624 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776],[44032]]
+    result = [44033,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 % AC01 % line 625 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033],[44033]]
+    result = [44033,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 % AC01 % line 626 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776],[44033]]
+    result = [44033,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0900 % line 627 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,2304]]
+    result = [44033,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 x 0900 % line 628 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776,2304]]
+    result = [44033,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0903 % line 629 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,2307]]
+    result = [44033,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 x 0903 % line 630 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776,2307]]
+    result = [44033,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 % 0904 % line 631 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033],[2308]]
+    result = [44033,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 % 0904 % line 632 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776],[2308]]
+    result = [44033,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 % 0D4E % line 633 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033],[3406]]
+    result = [44033,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 % 0D4E % line 634 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776],[3406]]
+    result = [44033,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 % 0915 % line 635 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033],[2325]]
+    result = [44033,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 % 0915 % line 636 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776],[2325]]
+    result = [44033,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 % 231A % line 637 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033],[8986]]
+    result = [44033,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 % 231A % line 638 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776],[8986]]
+    result = [44033,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0300 % line 639 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,768]]
+    result = [44033,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 x 0300 % line 640 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776,768]]
+    result = [44033,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 093C % line 641 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,2364]]
+    result = [44033,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 x 093C % line 642 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776,2364]]
+    result = [44033,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 094D % line 643 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,2381]]
+    result = [44033,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 x 094D % line 644 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776,2381]]
+    result = [44033,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 200D % line 645 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,8205]]
+    result = [44033,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 x 200D % line 646 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776,8205]]
+    result = [44033,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 % 0378 % line 647 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033],[888]]
+    result = [44033,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 0308 % 0378 % line 648 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,776],[888]]
+    result = [44033,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 % 0020 % line 649 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304],[32]]
+    result = [2304,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 % 0020 % line 650 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776],[32]]
+    result = [2304,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 % 000D % line 651 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304],[13]]
+    result = [2304,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 % 000D % line 652 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776],[13]]
+    result = [2304,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 % 000A % line 653 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304],[10]]
+    result = [2304,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 % 000A % line 654 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776],[10]]
+    result = [2304,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 % 0001 % line 655 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304],[1]]
+    result = [2304,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 % 0001 % line 656 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776],[1]]
+    result = [2304,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 034F % line 657 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,847]]
+    result = [2304,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 x 034F % line 658 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776,847]]
+    result = [2304,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 % 1F1E6 % line 659 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304],[127462]]
+    result = [2304,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 % 1F1E6 % line 660 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776],[127462]]
+    result = [2304,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 % 0600 % line 661 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304],[1536]]
+    result = [2304,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 % 0600 % line 662 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776],[1536]]
+    result = [2304,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0A03 % line 663 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,2563]]
+    result = [2304,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 x 0A03 % line 664 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776,2563]]
+    result = [2304,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 % 1100 % line 665 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304],[4352]]
+    result = [2304,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 % 1100 % line 666 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776],[4352]]
+    result = [2304,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 % 1160 % line 667 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304],[4448]]
+    result = [2304,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 % 1160 % line 668 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776],[4448]]
+    result = [2304,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 % 11A8 % line 669 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304],[4520]]
+    result = [2304,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 % 11A8 % line 670 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776],[4520]]
+    result = [2304,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 % AC00 % line 671 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304],[44032]]
+    result = [2304,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 % AC00 % line 672 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776],[44032]]
+    result = [2304,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 % AC01 % line 673 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304],[44033]]
+    result = [2304,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 % AC01 % line 674 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776],[44033]]
+    result = [2304,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0900 % line 675 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,2304]]
+    result = [2304,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 x 0900 % line 676 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776,2304]]
+    result = [2304,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0903 % line 677 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,2307]]
+    result = [2304,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 x 0903 % line 678 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776,2307]]
+    result = [2304,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 % 0904 % line 679 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304],[2308]]
+    result = [2304,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 % 0904 % line 680 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776],[2308]]
+    result = [2304,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 % 0D4E % line 681 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304],[3406]]
+    result = [2304,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 % 0D4E % line 682 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776],[3406]]
+    result = [2304,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 % 0915 % line 683 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304],[2325]]
+    result = [2304,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 % 0915 % line 684 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776],[2325]]
+    result = [2304,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 % 231A % line 685 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304],[8986]]
+    result = [2304,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 % 231A % line 686 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776],[8986]]
+    result = [2304,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0300 % line 687 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,768]]
+    result = [2304,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 x 0300 % line 688 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776,768]]
+    result = [2304,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 093C % line 689 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,2364]]
+    result = [2304,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 x 093C % line 690 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776,2364]]
+    result = [2304,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 094D % line 691 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,2381]]
+    result = [2304,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 x 094D % line 692 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776,2381]]
+    result = [2304,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 200D % line 693 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,8205]]
+    result = [2304,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 x 200D % line 694 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776,8205]]
+    result = [2304,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 % 0378 % line 695 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304],[888]]
+    result = [2304,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0900 x 0308 % 0378 % line 696 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2304,776],[888]]
+    result = [2304,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 % 0020 % line 697 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307],[32]]
+    result = [2307,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 % 0020 % line 698 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776],[32]]
+    result = [2307,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 % 000D % line 699 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307],[13]]
+    result = [2307,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 % 000D % line 700 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776],[13]]
+    result = [2307,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 % 000A % line 701 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307],[10]]
+    result = [2307,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 % 000A % line 702 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776],[10]]
+    result = [2307,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 % 0001 % line 703 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307],[1]]
+    result = [2307,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 % 0001 % line 704 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776],[1]]
+    result = [2307,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 034F % line 705 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,847]]
+    result = [2307,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 x 034F % line 706 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776,847]]
+    result = [2307,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 % 1F1E6 % line 707 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307],[127462]]
+    result = [2307,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 % 1F1E6 % line 708 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776],[127462]]
+    result = [2307,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 % 0600 % line 709 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307],[1536]]
+    result = [2307,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 % 0600 % line 710 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776],[1536]]
+    result = [2307,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0A03 % line 711 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,2563]]
+    result = [2307,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 x 0A03 % line 712 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776,2563]]
+    result = [2307,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 % 1100 % line 713 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307],[4352]]
+    result = [2307,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 % 1100 % line 714 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776],[4352]]
+    result = [2307,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 % 1160 % line 715 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307],[4448]]
+    result = [2307,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 % 1160 % line 716 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776],[4448]]
+    result = [2307,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 % 11A8 % line 717 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307],[4520]]
+    result = [2307,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 % 11A8 % line 718 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776],[4520]]
+    result = [2307,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 % AC00 % line 719 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307],[44032]]
+    result = [2307,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 % AC00 % line 720 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776],[44032]]
+    result = [2307,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 % AC01 % line 721 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307],[44033]]
+    result = [2307,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 % AC01 % line 722 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776],[44033]]
+    result = [2307,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0900 % line 723 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,2304]]
+    result = [2307,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 x 0900 % line 724 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776,2304]]
+    result = [2307,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0903 % line 725 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,2307]]
+    result = [2307,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 x 0903 % line 726 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776,2307]]
+    result = [2307,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 % 0904 % line 727 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307],[2308]]
+    result = [2307,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 % 0904 % line 728 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776],[2308]]
+    result = [2307,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 % 0D4E % line 729 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307],[3406]]
+    result = [2307,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 % 0D4E % line 730 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776],[3406]]
+    result = [2307,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 % 0915 % line 731 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307],[2325]]
+    result = [2307,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 % 0915 % line 732 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776],[2325]]
+    result = [2307,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 % 231A % line 733 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307],[8986]]
+    result = [2307,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 % 231A % line 734 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776],[8986]]
+    result = [2307,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0300 % line 735 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,768]]
+    result = [2307,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 x 0300 % line 736 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776,768]]
+    result = [2307,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 093C % line 737 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,2364]]
+    result = [2307,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 x 093C % line 738 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776,2364]]
+    result = [2307,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 094D % line 739 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,2381]]
+    result = [2307,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 x 094D % line 740 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776,2381]]
+    result = [2307,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 200D % line 741 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,8205]]
+    result = [2307,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 x 200D % line 742 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776,8205]]
+    result = [2307,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 % 0378 % line 743 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307],[888]]
+    result = [2307,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0903 x 0308 % 0378 % line 744 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2307,776],[888]]
+    result = [2307,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 % 0020 % line 745 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308],[32]]
+    result = [2308,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 % 0020 % line 746 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776],[32]]
+    result = [2308,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 % 000D % line 747 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308],[13]]
+    result = [2308,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 % 000D % line 748 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776],[13]]
+    result = [2308,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 % 000A % line 749 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308],[10]]
+    result = [2308,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 % 000A % line 750 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776],[10]]
+    result = [2308,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 % 0001 % line 751 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308],[1]]
+    result = [2308,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 % 0001 % line 752 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776],[1]]
+    result = [2308,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 034F % line 753 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,847]]
+    result = [2308,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 x 034F % line 754 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776,847]]
+    result = [2308,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 % 1F1E6 % line 755 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308],[127462]]
+    result = [2308,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 % 1F1E6 % line 756 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776],[127462]]
+    result = [2308,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 % 0600 % line 757 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308],[1536]]
+    result = [2308,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 % 0600 % line 758 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776],[1536]]
+    result = [2308,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0A03 % line 759 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,2563]]
+    result = [2308,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 x 0A03 % line 760 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776,2563]]
+    result = [2308,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 % 1100 % line 761 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308],[4352]]
+    result = [2308,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 % 1100 % line 762 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776],[4352]]
+    result = [2308,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 % 1160 % line 763 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308],[4448]]
+    result = [2308,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 % 1160 % line 764 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776],[4448]]
+    result = [2308,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 % 11A8 % line 765 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308],[4520]]
+    result = [2308,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 % 11A8 % line 766 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776],[4520]]
+    result = [2308,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 % AC00 % line 767 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308],[44032]]
+    result = [2308,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 % AC00 % line 768 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776],[44032]]
+    result = [2308,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 % AC01 % line 769 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308],[44033]]
+    result = [2308,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 % AC01 % line 770 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776],[44033]]
+    result = [2308,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0900 % line 771 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,2304]]
+    result = [2308,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 x 0900 % line 772 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776,2304]]
+    result = [2308,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0903 % line 773 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,2307]]
+    result = [2308,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 x 0903 % line 774 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776,2307]]
+    result = [2308,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 % 0904 % line 775 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308],[2308]]
+    result = [2308,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 % 0904 % line 776 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776],[2308]]
+    result = [2308,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 % 0D4E % line 777 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308],[3406]]
+    result = [2308,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 % 0D4E % line 778 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776],[3406]]
+    result = [2308,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 % 0915 % line 779 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308],[2325]]
+    result = [2308,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 % 0915 % line 780 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776],[2325]]
+    result = [2308,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 % 231A % line 781 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308],[8986]]
+    result = [2308,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 % 231A % line 782 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776],[8986]]
+    result = [2308,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0300 % line 783 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,768]]
+    result = [2308,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 x 0300 % line 784 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776,768]]
+    result = [2308,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 093C % line 785 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,2364]]
+    result = [2308,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 x 093C % line 786 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776,2364]]
+    result = [2308,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 094D % line 787 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,2381]]
+    result = [2308,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 x 094D % line 788 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776,2381]]
+    result = [2308,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 200D % line 789 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,8205]]
+    result = [2308,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 x 200D % line 790 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776,8205]]
+    result = [2308,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 % 0378 % line 791 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308],[888]]
+    result = [2308,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0904 x 0308 % 0378 % line 792 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2308,776],[888]]
+    result = [2308,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0020 % line 793 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,32]]
+    result = [3406,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 % 0020 % line 794 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776],[32]]
+    result = [3406,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E % 000D % line 795 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406],[13]]
+    result = [3406,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 % 000D % line 796 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776],[13]]
+    result = [3406,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E % 000A % line 797 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406],[10]]
+    result = [3406,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 % 000A % line 798 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776],[10]]
+    result = [3406,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E % 0001 % line 799 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406],[1]]
+    result = [3406,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 % 0001 % line 800 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776],[1]]
+    result = [3406,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 034F % line 801 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,847]]
+    result = [3406,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 x 034F % line 802 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776,847]]
+    result = [3406,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 1F1E6 % line 803 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,127462]]
+    result = [3406,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 % 1F1E6 % line 804 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776],[127462]]
+    result = [3406,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0600 % line 805 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,1536]]
+    result = [3406,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 % 0600 % line 806 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776],[1536]]
+    result = [3406,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0A03 % line 807 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,2563]]
+    result = [3406,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 x 0A03 % line 808 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776,2563]]
+    result = [3406,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 1100 % line 809 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,4352]]
+    result = [3406,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 % 1100 % line 810 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776],[4352]]
+    result = [3406,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 1160 % line 811 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,4448]]
+    result = [3406,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 % 1160 % line 812 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776],[4448]]
+    result = [3406,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 11A8 % line 813 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,4520]]
+    result = [3406,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 % 11A8 % line 814 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776],[4520]]
+    result = [3406,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x AC00 % line 815 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,44032]]
+    result = [3406,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 % AC00 % line 816 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776],[44032]]
+    result = [3406,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x AC01 % line 817 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,44033]]
+    result = [3406,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 % AC01 % line 818 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776],[44033]]
+    result = [3406,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0900 % line 819 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,2304]]
+    result = [3406,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 x 0900 % line 820 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776,2304]]
+    result = [3406,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0903 % line 821 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,2307]]
+    result = [3406,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 x 0903 % line 822 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776,2307]]
+    result = [3406,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0904 % line 823 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,2308]]
+    result = [3406,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 % 0904 % line 824 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776],[2308]]
+    result = [3406,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0D4E % line 825 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,3406]]
+    result = [3406,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 % 0D4E % line 826 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776],[3406]]
+    result = [3406,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0915 % line 827 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,2325]]
+    result = [3406,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 % 0915 % line 828 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776],[2325]]
+    result = [3406,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 231A % line 829 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,8986]]
+    result = [3406,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 % 231A % line 830 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776],[8986]]
+    result = [3406,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0300 % line 831 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,768]]
+    result = [3406,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 x 0300 % line 832 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776,768]]
+    result = [3406,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 093C % line 833 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,2364]]
+    result = [3406,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 x 093C % line 834 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776,2364]]
+    result = [3406,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 094D % line 835 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,2381]]
+    result = [3406,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 x 094D % line 836 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776,2381]]
+    result = [3406,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 200D % line 837 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,8205]]
+    result = [3406,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 x 200D % line 838 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776,8205]]
+    result = [3406,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0378 % line 839 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,888]]
+    result = [3406,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0D4E x 0308 % 0378 % line 840 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[3406,776],[888]]
+    result = [3406,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 % 0020 % line 841 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325],[32]]
+    result = [2325,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 % 0020 % line 842 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776],[32]]
+    result = [2325,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 % 000D % line 843 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325],[13]]
+    result = [2325,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 % 000D % line 844 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776],[13]]
+    result = [2325,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 % 000A % line 845 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325],[10]]
+    result = [2325,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 % 000A % line 846 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776],[10]]
+    result = [2325,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 % 0001 % line 847 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325],[1]]
+    result = [2325,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 % 0001 % line 848 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776],[1]]
+    result = [2325,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 034F % line 849 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,847]]
+    result = [2325,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 x 034F % line 850 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776,847]]
+    result = [2325,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 % 1F1E6 % line 851 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325],[127462]]
+    result = [2325,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 % 1F1E6 % line 852 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776],[127462]]
+    result = [2325,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 % 0600 % line 853 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325],[1536]]
+    result = [2325,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 % 0600 % line 854 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776],[1536]]
+    result = [2325,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0A03 % line 855 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,2563]]
+    result = [2325,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 x 0A03 % line 856 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776,2563]]
+    result = [2325,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 % 1100 % line 857 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325],[4352]]
+    result = [2325,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 % 1100 % line 858 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776],[4352]]
+    result = [2325,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 % 1160 % line 859 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325],[4448]]
+    result = [2325,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 % 1160 % line 860 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776],[4448]]
+    result = [2325,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 % 11A8 % line 861 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325],[4520]]
+    result = [2325,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 % 11A8 % line 862 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776],[4520]]
+    result = [2325,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 % AC00 % line 863 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325],[44032]]
+    result = [2325,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 % AC00 % line 864 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776],[44032]]
+    result = [2325,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 % AC01 % line 865 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325],[44033]]
+    result = [2325,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 % AC01 % line 866 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776],[44033]]
+    result = [2325,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0900 % line 867 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,2304]]
+    result = [2325,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 x 0900 % line 868 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776,2304]]
+    result = [2325,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0903 % line 869 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,2307]]
+    result = [2325,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 x 0903 % line 870 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776,2307]]
+    result = [2325,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 % 0904 % line 871 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325],[2308]]
+    result = [2325,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 % 0904 % line 872 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776],[2308]]
+    result = [2325,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 % 0D4E % line 873 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325],[3406]]
+    result = [2325,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 % 0D4E % line 874 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776],[3406]]
+    result = [2325,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 % 0915 % line 875 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325],[2325]]
+    result = [2325,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 % 0915 % line 876 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776],[2325]]
+    result = [2325,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 % 231A % line 877 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325],[8986]]
+    result = [2325,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 % 231A % line 878 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776],[8986]]
+    result = [2325,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0300 % line 879 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,768]]
+    result = [2325,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 x 0300 % line 880 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776,768]]
+    result = [2325,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 093C % line 881 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,2364]]
+    result = [2325,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 x 093C % line 882 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776,2364]]
+    result = [2325,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 094D % line 883 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,2381]]
+    result = [2325,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 x 094D % line 884 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776,2381]]
+    result = [2325,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 200D % line 885 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,8205]]
+    result = [2325,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 x 200D % line 886 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776,8205]]
+    result = [2325,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 % 0378 % line 887 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325],[888]]
+    result = [2325,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 0308 % 0378 % line 888 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,776],[888]]
+    result = [2325,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A % 0020 % line 889 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986],[32]]
+    result = [8986,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 % 0020 % line 890 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776],[32]]
+    result = [8986,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A % 000D % line 891 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986],[13]]
+    result = [8986,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 % 000D % line 892 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776],[13]]
+    result = [8986,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A % 000A % line 893 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986],[10]]
+    result = [8986,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 % 000A % line 894 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776],[10]]
+    result = [8986,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A % 0001 % line 895 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986],[1]]
+    result = [8986,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 % 0001 % line 896 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776],[1]]
+    result = [8986,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 034F % line 897 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,847]]
+    result = [8986,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 x 034F % line 898 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776,847]]
+    result = [8986,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A % 1F1E6 % line 899 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986],[127462]]
+    result = [8986,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 % 1F1E6 % line 900 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776],[127462]]
+    result = [8986,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A % 0600 % line 901 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986],[1536]]
+    result = [8986,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 % 0600 % line 902 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776],[1536]]
+    result = [8986,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0A03 % line 903 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,2563]]
+    result = [8986,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 x 0A03 % line 904 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776,2563]]
+    result = [8986,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A % 1100 % line 905 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986],[4352]]
+    result = [8986,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 % 1100 % line 906 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776],[4352]]
+    result = [8986,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A % 1160 % line 907 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986],[4448]]
+    result = [8986,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 % 1160 % line 908 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776],[4448]]
+    result = [8986,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A % 11A8 % line 909 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986],[4520]]
+    result = [8986,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 % 11A8 % line 910 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776],[4520]]
+    result = [8986,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A % AC00 % line 911 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986],[44032]]
+    result = [8986,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 % AC00 % line 912 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776],[44032]]
+    result = [8986,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A % AC01 % line 913 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986],[44033]]
+    result = [8986,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 % AC01 % line 914 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776],[44033]]
+    result = [8986,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0900 % line 915 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,2304]]
+    result = [8986,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 x 0900 % line 916 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776,2304]]
+    result = [8986,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0903 % line 917 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,2307]]
+    result = [8986,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 x 0903 % line 918 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776,2307]]
+    result = [8986,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A % 0904 % line 919 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986],[2308]]
+    result = [8986,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 % 0904 % line 920 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776],[2308]]
+    result = [8986,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A % 0D4E % line 921 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986],[3406]]
+    result = [8986,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 % 0D4E % line 922 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776],[3406]]
+    result = [8986,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A % 0915 % line 923 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986],[2325]]
+    result = [8986,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 % 0915 % line 924 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776],[2325]]
+    result = [8986,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A % 231A % line 925 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986],[8986]]
+    result = [8986,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 % 231A % line 926 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776],[8986]]
+    result = [8986,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0300 % line 927 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,768]]
+    result = [8986,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 x 0300 % line 928 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776,768]]
+    result = [8986,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 093C % line 929 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,2364]]
+    result = [8986,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 x 093C % line 930 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776,2364]]
+    result = [8986,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 094D % line 931 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,2381]]
+    result = [8986,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 x 094D % line 932 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776,2381]]
+    result = [8986,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 200D % line 933 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,8205]]
+    result = [8986,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 x 200D % line 934 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776,8205]]
+    result = [8986,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A % 0378 % line 935 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986],[888]]
+    result = [8986,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 231A x 0308 % 0378 % line 936 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8986,776],[888]]
+    result = [8986,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 % 0020 % line 937 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768],[32]]
+    result = [768,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 % 0020 % line 938 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776],[32]]
+    result = [768,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 % 000D % line 939 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768],[13]]
+    result = [768,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 % 000D % line 940 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776],[13]]
+    result = [768,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 % 000A % line 941 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768],[10]]
+    result = [768,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 % 000A % line 942 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776],[10]]
+    result = [768,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 % 0001 % line 943 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768],[1]]
+    result = [768,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 % 0001 % line 944 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776],[1]]
+    result = [768,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 034F % line 945 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,847]]
+    result = [768,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 x 034F % line 946 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776,847]]
+    result = [768,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 % 1F1E6 % line 947 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768],[127462]]
+    result = [768,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 % 1F1E6 % line 948 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776],[127462]]
+    result = [768,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 % 0600 % line 949 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768],[1536]]
+    result = [768,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 % 0600 % line 950 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776],[1536]]
+    result = [768,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0A03 % line 951 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,2563]]
+    result = [768,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 x 0A03 % line 952 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776,2563]]
+    result = [768,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 % 1100 % line 953 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768],[4352]]
+    result = [768,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 % 1100 % line 954 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776],[4352]]
+    result = [768,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 % 1160 % line 955 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768],[4448]]
+    result = [768,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 % 1160 % line 956 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776],[4448]]
+    result = [768,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 % 11A8 % line 957 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768],[4520]]
+    result = [768,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 % 11A8 % line 958 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776],[4520]]
+    result = [768,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 % AC00 % line 959 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768],[44032]]
+    result = [768,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 % AC00 % line 960 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776],[44032]]
+    result = [768,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 % AC01 % line 961 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768],[44033]]
+    result = [768,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 % AC01 % line 962 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776],[44033]]
+    result = [768,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0900 % line 963 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,2304]]
+    result = [768,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 x 0900 % line 964 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776,2304]]
+    result = [768,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0903 % line 965 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,2307]]
+    result = [768,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 x 0903 % line 966 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776,2307]]
+    result = [768,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 % 0904 % line 967 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768],[2308]]
+    result = [768,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 % 0904 % line 968 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776],[2308]]
+    result = [768,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 % 0D4E % line 969 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768],[3406]]
+    result = [768,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 % 0D4E % line 970 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776],[3406]]
+    result = [768,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 % 0915 % line 971 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768],[2325]]
+    result = [768,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 % 0915 % line 972 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776],[2325]]
+    result = [768,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 % 231A % line 973 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768],[8986]]
+    result = [768,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 % 231A % line 974 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776],[8986]]
+    result = [768,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0300 % line 975 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,768]]
+    result = [768,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 x 0300 % line 976 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776,768]]
+    result = [768,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 093C % line 977 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,2364]]
+    result = [768,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 x 093C % line 978 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776,2364]]
+    result = [768,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 094D % line 979 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,2381]]
+    result = [768,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 x 094D % line 980 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776,2381]]
+    result = [768,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 200D % line 981 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,8205]]
+    result = [768,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 x 200D % line 982 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776,8205]]
+    result = [768,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 % 0378 % line 983 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768],[888]]
+    result = [768,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0300 x 0308 % 0378 % line 984 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[768,776],[888]]
+    result = [768,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C % 0020 % line 985 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364],[32]]
+    result = [2364,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 % 0020 % line 986 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776],[32]]
+    result = [2364,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C % 000D % line 987 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364],[13]]
+    result = [2364,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 % 000D % line 988 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776],[13]]
+    result = [2364,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C % 000A % line 989 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364],[10]]
+    result = [2364,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 % 000A % line 990 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776],[10]]
+    result = [2364,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C % 0001 % line 991 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364],[1]]
+    result = [2364,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 % 0001 % line 992 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776],[1]]
+    result = [2364,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 034F % line 993 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,847]]
+    result = [2364,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 x 034F % line 994 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776,847]]
+    result = [2364,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C % 1F1E6 % line 995 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364],[127462]]
+    result = [2364,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 % 1F1E6 % line 996 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776],[127462]]
+    result = [2364,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C % 0600 % line 997 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364],[1536]]
+    result = [2364,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 % 0600 % line 998 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776],[1536]]
+    result = [2364,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0A03 % line 999 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,2563]]
+    result = [2364,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 x 0A03 % line 1000 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776,2563]]
+    result = [2364,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C % 1100 % line 1001 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364],[4352]]
+    result = [2364,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 % 1100 % line 1002 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776],[4352]]
+    result = [2364,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C % 1160 % line 1003 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364],[4448]]
+    result = [2364,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 % 1160 % line 1004 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776],[4448]]
+    result = [2364,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C % 11A8 % line 1005 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364],[4520]]
+    result = [2364,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 % 11A8 % line 1006 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776],[4520]]
+    result = [2364,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C % AC00 % line 1007 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364],[44032]]
+    result = [2364,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 % AC00 % line 1008 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776],[44032]]
+    result = [2364,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C % AC01 % line 1009 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364],[44033]]
+    result = [2364,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 % AC01 % line 1010 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776],[44033]]
+    result = [2364,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0900 % line 1011 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,2304]]
+    result = [2364,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 x 0900 % line 1012 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776,2304]]
+    result = [2364,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0903 % line 1013 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,2307]]
+    result = [2364,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 x 0903 % line 1014 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776,2307]]
+    result = [2364,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C % 0904 % line 1015 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364],[2308]]
+    result = [2364,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 % 0904 % line 1016 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776],[2308]]
+    result = [2364,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C % 0D4E % line 1017 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364],[3406]]
+    result = [2364,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 % 0D4E % line 1018 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776],[3406]]
+    result = [2364,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C % 0915 % line 1019 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364],[2325]]
+    result = [2364,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 % 0915 % line 1020 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776],[2325]]
+    result = [2364,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C % 231A % line 1021 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364],[8986]]
+    result = [2364,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 % 231A % line 1022 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776],[8986]]
+    result = [2364,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0300 % line 1023 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,768]]
+    result = [2364,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 x 0300 % line 1024 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776,768]]
+    result = [2364,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 093C % line 1025 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,2364]]
+    result = [2364,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 x 093C % line 1026 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776,2364]]
+    result = [2364,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 094D % line 1027 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,2381]]
+    result = [2364,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 x 094D % line 1028 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776,2381]]
+    result = [2364,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 200D % line 1029 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,8205]]
+    result = [2364,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 x 200D % line 1030 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776,8205]]
+    result = [2364,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C % 0378 % line 1031 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364],[888]]
+    result = [2364,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 093C x 0308 % 0378 % line 1032 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2364,776],[888]]
+    result = [2364,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D % 0020 % line 1033 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381],[32]]
+    result = [2381,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 % 0020 % line 1034 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776],[32]]
+    result = [2381,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D % 000D % line 1035 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381],[13]]
+    result = [2381,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 % 000D % line 1036 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776],[13]]
+    result = [2381,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D % 000A % line 1037 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381],[10]]
+    result = [2381,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 % 000A % line 1038 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776],[10]]
+    result = [2381,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D % 0001 % line 1039 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381],[1]]
+    result = [2381,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 % 0001 % line 1040 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776],[1]]
+    result = [2381,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 034F % line 1041 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,847]]
+    result = [2381,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 x 034F % line 1042 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776,847]]
+    result = [2381,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D % 1F1E6 % line 1043 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381],[127462]]
+    result = [2381,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 % 1F1E6 % line 1044 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776],[127462]]
+    result = [2381,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D % 0600 % line 1045 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381],[1536]]
+    result = [2381,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 % 0600 % line 1046 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776],[1536]]
+    result = [2381,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0A03 % line 1047 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,2563]]
+    result = [2381,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 x 0A03 % line 1048 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776,2563]]
+    result = [2381,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D % 1100 % line 1049 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381],[4352]]
+    result = [2381,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 % 1100 % line 1050 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776],[4352]]
+    result = [2381,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D % 1160 % line 1051 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381],[4448]]
+    result = [2381,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 % 1160 % line 1052 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776],[4448]]
+    result = [2381,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D % 11A8 % line 1053 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381],[4520]]
+    result = [2381,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 % 11A8 % line 1054 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776],[4520]]
+    result = [2381,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D % AC00 % line 1055 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381],[44032]]
+    result = [2381,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 % AC00 % line 1056 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776],[44032]]
+    result = [2381,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D % AC01 % line 1057 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381],[44033]]
+    result = [2381,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 % AC01 % line 1058 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776],[44033]]
+    result = [2381,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0900 % line 1059 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,2304]]
+    result = [2381,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 x 0900 % line 1060 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776,2304]]
+    result = [2381,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0903 % line 1061 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,2307]]
+    result = [2381,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 x 0903 % line 1062 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776,2307]]
+    result = [2381,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D % 0904 % line 1063 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381],[2308]]
+    result = [2381,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 % 0904 % line 1064 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776],[2308]]
+    result = [2381,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D % 0D4E % line 1065 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381],[3406]]
+    result = [2381,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 % 0D4E % line 1066 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776],[3406]]
+    result = [2381,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D % 0915 % line 1067 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381],[2325]]
+    result = [2381,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 % 0915 % line 1068 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776],[2325]]
+    result = [2381,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D % 231A % line 1069 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381],[8986]]
+    result = [2381,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 % 231A % line 1070 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776],[8986]]
+    result = [2381,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0300 % line 1071 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,768]]
+    result = [2381,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 x 0300 % line 1072 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776,768]]
+    result = [2381,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 093C % line 1073 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,2364]]
+    result = [2381,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 x 093C % line 1074 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776,2364]]
+    result = [2381,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 094D % line 1075 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,2381]]
+    result = [2381,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 x 094D % line 1076 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776,2381]]
+    result = [2381,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 200D % line 1077 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,8205]]
+    result = [2381,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 x 200D % line 1078 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776,8205]]
+    result = [2381,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D % 0378 % line 1079 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381],[888]]
+    result = [2381,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 094D x 0308 % 0378 % line 1080 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2381,776],[888]]
+    result = [2381,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D % 0020 % line 1081 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205],[32]]
+    result = [8205,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 % 0020 % line 1082 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776],[32]]
+    result = [8205,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D % 000D % line 1083 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205],[13]]
+    result = [8205,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 % 000D % line 1084 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776],[13]]
+    result = [8205,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D % 000A % line 1085 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205],[10]]
+    result = [8205,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 % 000A % line 1086 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776],[10]]
+    result = [8205,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D % 0001 % line 1087 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205],[1]]
+    result = [8205,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 % 0001 % line 1088 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776],[1]]
+    result = [8205,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 034F % line 1089 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,847]]
+    result = [8205,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 x 034F % line 1090 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776,847]]
+    result = [8205,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D % 1F1E6 % line 1091 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205],[127462]]
+    result = [8205,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 % 1F1E6 % line 1092 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776],[127462]]
+    result = [8205,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D % 0600 % line 1093 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205],[1536]]
+    result = [8205,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 % 0600 % line 1094 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776],[1536]]
+    result = [8205,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0A03 % line 1095 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,2563]]
+    result = [8205,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 x 0A03 % line 1096 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776,2563]]
+    result = [8205,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D % 1100 % line 1097 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205],[4352]]
+    result = [8205,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 % 1100 % line 1098 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776],[4352]]
+    result = [8205,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D % 1160 % line 1099 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205],[4448]]
+    result = [8205,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 % 1160 % line 1100 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776],[4448]]
+    result = [8205,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D % 11A8 % line 1101 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205],[4520]]
+    result = [8205,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 % 11A8 % line 1102 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776],[4520]]
+    result = [8205,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D % AC00 % line 1103 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205],[44032]]
+    result = [8205,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 % AC00 % line 1104 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776],[44032]]
+    result = [8205,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D % AC01 % line 1105 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205],[44033]]
+    result = [8205,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 % AC01 % line 1106 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776],[44033]]
+    result = [8205,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0900 % line 1107 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,2304]]
+    result = [8205,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 x 0900 % line 1108 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776,2304]]
+    result = [8205,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0903 % line 1109 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,2307]]
+    result = [8205,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 x 0903 % line 1110 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776,2307]]
+    result = [8205,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D % 0904 % line 1111 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205],[2308]]
+    result = [8205,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 % 0904 % line 1112 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776],[2308]]
+    result = [8205,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D % 0D4E % line 1113 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205],[3406]]
+    result = [8205,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 % 0D4E % line 1114 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776],[3406]]
+    result = [8205,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D % 0915 % line 1115 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205],[2325]]
+    result = [8205,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 % 0915 % line 1116 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776],[2325]]
+    result = [8205,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D % 231A % line 1117 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205],[8986]]
+    result = [8205,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 % 231A % line 1118 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776],[8986]]
+    result = [8205,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0300 % line 1119 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,768]]
+    result = [8205,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 x 0300 % line 1120 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776,768]]
+    result = [8205,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 093C % line 1121 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,2364]]
+    result = [8205,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 x 093C % line 1122 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776,2364]]
+    result = [8205,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 094D % line 1123 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,2381]]
+    result = [8205,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 x 094D % line 1124 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776,2381]]
+    result = [8205,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 200D % line 1125 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,8205]]
+    result = [8205,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 x 200D % line 1126 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776,8205]]
+    result = [8205,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D % 0378 % line 1127 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205],[888]]
+    result = [8205,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 200D x 0308 % 0378 % line 1128 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[8205,776],[888]]
+    result = [8205,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 % 0020 % line 1129 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888],[32]]
+    result = [888,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 % 0020 % line 1130 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776],[32]]
+    result = [888,776,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 % 000D % line 1131 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888],[13]]
+    result = [888,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 % 000D % line 1132 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776],[13]]
+    result = [888,776,13] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 % 000A % line 1133 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888],[10]]
+    result = [888,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 % 000A % line 1134 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776],[10]]
+    result = [888,776,10] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 % 0001 % line 1135 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888],[1]]
+    result = [888,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 % 0001 % line 1136 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776],[1]]
+    result = [888,776,1] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 034F % line 1137 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,847]]
+    result = [888,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 x 034F % line 1138 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776,847]]
+    result = [888,776,847] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 % 1F1E6 % line 1139 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888],[127462]]
+    result = [888,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 % 1F1E6 % line 1140 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776],[127462]]
+    result = [888,776,127462] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 % 0600 % line 1141 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888],[1536]]
+    result = [888,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 % 0600 % line 1142 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776],[1536]]
+    result = [888,776,1536] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0A03 % line 1143 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,2563]]
+    result = [888,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 x 0A03 % line 1144 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776,2563]]
+    result = [888,776,2563] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 % 1100 % line 1145 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888],[4352]]
+    result = [888,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 % 1100 % line 1146 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776],[4352]]
+    result = [888,776,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 % 1160 % line 1147 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888],[4448]]
+    result = [888,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 % 1160 % line 1148 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776],[4448]]
+    result = [888,776,4448] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 % 11A8 % line 1149 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888],[4520]]
+    result = [888,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 % 11A8 % line 1150 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776],[4520]]
+    result = [888,776,4520] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 % AC00 % line 1151 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888],[44032]]
+    result = [888,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 % AC00 % line 1152 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776],[44032]]
+    result = [888,776,44032] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 % AC01 % line 1153 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888],[44033]]
+    result = [888,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 % AC01 % line 1154 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776],[44033]]
+    result = [888,776,44033] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0900 % line 1155 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,2304]]
+    result = [888,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 x 0900 % line 1156 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776,2304]]
+    result = [888,776,2304] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0903 % line 1157 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,2307]]
+    result = [888,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 x 0903 % line 1158 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776,2307]]
+    result = [888,776,2307] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 % 0904 % line 1159 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888],[2308]]
+    result = [888,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 % 0904 % line 1160 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776],[2308]]
+    result = [888,776,2308] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 % 0D4E % line 1161 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888],[3406]]
+    result = [888,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 % 0D4E % line 1162 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776],[3406]]
+    result = [888,776,3406] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 % 0915 % line 1163 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888],[2325]]
+    result = [888,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 % 0915 % line 1164 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776],[2325]]
+    result = [888,776,2325] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 % 231A % line 1165 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888],[8986]]
+    result = [888,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 % 231A % line 1166 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776],[8986]]
+    result = [888,776,8986] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0300 % line 1167 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,768]]
+    result = [888,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 x 0300 % line 1168 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776,768]]
+    result = [888,776,768] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 093C % line 1169 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,2364]]
+    result = [888,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 x 093C % line 1170 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776,2364]]
+    result = [888,776,2364] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 094D % line 1171 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,2381]]
+    result = [888,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 x 094D % line 1172 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776,2381]]
+    result = [888,776,2381] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 200D % line 1173 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,8205]]
+    result = [888,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 x 200D % line 1174 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776,8205]]
+    result = [888,776,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 % 0378 % line 1175 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888],[888]]
+    result = [888,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0378 x 0308 % 0378 % line 1176 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[888,776],[888]]
+    result = [888,776,888] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 000D x 000A % 0061 % 000A % 0308 % line 1177 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[13,10],[97],[10],[776]]
+    result = [13,10,97,10,776] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0061 x 0308 % line 1178 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[97,776]]
+    result = [97,776] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0020 x 200D % 0646 % line 1179 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[32,8205],[1606]]
+    result = [32,8205,1606] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0646 x 200D % 0020 % line 1180 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[1606,8205],[32]]
+    result = [1606,8205,32] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1100 x 1100 % line 1181 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[4352,4352]]
+    result = [4352,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC00 x 11A8 % 1100 % line 1182 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44032,4520],[4352]]
+    result = [44032,4520,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % AC01 x 11A8 % 1100 % line 1183 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[44033,4520],[4352]]
+    result = [44033,4520,4352] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F1E6 x 1F1E7 % 1F1E8 % 0062 % line 1184 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[127462,127463],[127464],[98]]
+    result = [127462,127463,127464,98] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0061 % 1F1E6 x 1F1E7 % 1F1E8 % 0062 % line 1185 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[97],[127462,127463],[127464],[98]]
+    result = [97,127462,127463,127464,98] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0061 % 1F1E6 x 1F1E7 x 200D % 1F1E8 % 0062 % line 1186 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[97],[127462,127463,8205],[127464],[98]]
+    result = [97,127462,127463,8205,127464,98] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0061 % 1F1E6 x 200D % 1F1E7 x 1F1E8 % 0062 % line 1187 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[97],[127462,8205],[127463,127464],[98]]
+    result = [97,127462,8205,127463,127464,98] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0061 % 1F1E6 x 1F1E7 % 1F1E8 x 1F1E9 % 0062 % line 1188 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[97],[127462,127463],[127464,127465],[98]]
+    result = [97,127462,127463,127464,127465,98] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0061 x 200D % line 1189 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[97,8205]]
+    result = [97,8205] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0061 x 0308 % 0062 % line 1190 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[97,776],[98]]
+    result = [97,776,98] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0061 x 0903 % 0062 % line 1191 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[97,2307],[98]]
+    result = [97,2307,98] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0061 % 0600 x 0062 % line 1192 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[97],[1536,98]]
+    result = [97,1536,98] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F476 x 1F3FF % 1F476 % line 1193 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[128118,127999],[128118]]
+    result = [128118,127999,128118] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0061 x 1F3FF % 1F476 % line 1194 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[97,127999],[128118]]
+    result = [97,127999,128118] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0061 x 1F3FF % 1F476 x 200D x 1F6D1 % line 1195 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[97,127999],[128118,8205,128721]]
+    result = [97,127999,128118,8205,128721] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F476 x 1F3FF x 0308 x 200D x 1F476 x 1F3FF % line 1196 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[128118,127999,776,8205,128118,127999]]
+    result = [128118,127999,776,8205,128118,127999] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 1F6D1 x 200D x 1F6D1 % line 1197 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[128721,8205,128721]]
+    result = [128721,8205,128721] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0061 x 200D % 1F6D1 % line 1198 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[97,8205],[128721]]
+    result = [97,8205,128721] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 2701 x 200D x 2701 % line 1199 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[9985,8205,9985]]
+    result = [9985,8205,9985] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0061 x 200D % 2701 % line 1200 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[97,8205],[9985]]
+    result = [97,8205,9985] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 % 0924 % line 1201 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325],[2340]]
+    result = [2325,2340] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 094D x 0924 % line 1202 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,2381,2340]]
+    result = [2325,2381,2340] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 094D x 094D x 0924 % line 1203 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,2381,2381,2340]]
+    result = [2325,2381,2381,2340] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 094D x 200D x 0924 % line 1204 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,2381,8205,2340]]
+    result = [2325,2381,8205,2340] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 093C x 200D x 094D x 0924 % line 1205 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,2364,8205,2381,2340]]
+    result = [2325,2364,8205,2381,2340] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 093C x 094D x 200D x 0924 % line 1206 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,2364,2381,8205,2340]]
+    result = [2325,2364,2381,8205,2340] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 094D x 0924 x 094D x 092F % line 1207 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,2381,2340,2381,2351]]
+    result = [2325,2381,2340,2381,2351] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 094D % 0061 % line 1208 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,2381],[97]]
+    result = [2325,2381,97] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0061 x 094D % 0924 % line 1209 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[97,2381],[2340]]
+    result = [97,2381,2340] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 003F x 094D % 0924 % line 1210 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[63,2381],[2340]]
+    result = [63,2381,2340] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer
+
+expect # test % 0915 x 094D x 094D x 0924 % line 1211 of GraphemeBreakTest-15.1.0.txt
+    answer = Ok [[2325,2381,2381,2340]]
+    result = [2325,2381,2381,2340] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
+    result == answer

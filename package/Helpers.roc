@@ -8,6 +8,7 @@ interface Helpers
         hexToDec,
         startsWithHex,
         hexBytesToU32,
+        hexStrToU32,
         properyMapFromFile,
         filterPropertyMap,
         metaToExpression,
@@ -28,7 +29,7 @@ removeTrailingSlash = \str ->
     when reversed is
         [a, ..] if a == '/' ->
             reversed
-            |> List.drop 1
+            |> List.dropFirst 1
             |> List.reverse
             |> Str.fromUtf8
             |> Result.withDefault ""
@@ -47,7 +48,7 @@ takeHexBytes = \input ->
                 # take the first hex byte and continue
                 takeHexBytes {
                     val: input.val |> List.append first,
-                    rest: input.rest |> List.drop 1,
+                    rest: input.rest |> List.dropFirst 1,
                 }
             else
                 input
@@ -77,6 +78,10 @@ startsWithHex = \str ->
 
 expect startsWithHex "# ===" == Err NonHex
 expect startsWithHex "0000.." == Ok "0000.."
+
+hexStrToU32 : Str -> U32
+hexStrToU32 = \str ->
+    str |> Str.toUtf8 |> hexBytesToU32
 
 hexBytesToU32 : List U8 -> U32
 hexBytesToU32 = \bytes ->

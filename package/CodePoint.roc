@@ -266,7 +266,7 @@ parseUtf8Help = \rest, cps ->
     else
         parsePartialUtf8 rest
         |> Result.try \{ codePoint, bytesParsed } ->
-            parseUtf8Help (List.drop rest bytesParsed) (List.append cps codePoint)
+            parseUtf8Help (List.dropFirst rest bytesParsed) (List.append cps codePoint)
 
 # test simple ASCII "Hello"
 expect
@@ -358,7 +358,7 @@ cpsToStrHelp = \cps, bytes ->
         [] -> bytes
         [cp,..] -> 
             cpsToStrHelp 
-                (List.drop cps 1)
+                (List.dropFirst cps 1)
                 (CodePoint.appendUtf8 bytes cp)
             
 expect # test toStr 
