@@ -63,7 +63,7 @@ lines =
                             |> Str.joinWith "],["
 
                         sanitised = 
-                            exampleStr
+                            l
                             |> Str.replaceEach "÷" "%" # replace %
                             |> Str.replaceEach "×" "x" # replace X
                             |> Str.replaceEach "	" "" # remove tabs
@@ -72,7 +72,7 @@ lines =
                             
                         """
 
-                        expect # test \(sanitised) line \(testFileLineNumber) of GraphemeBreakTest-15.1.0.txt
+                        expect # line \(testFileLineNumber) of GraphemeBreakTest-15.1.0.txt -- \(sanitised)
                             answer = Ok [[\(strsStr)]]
                             result = [\(cpsStr)] |> List.map InternalCP.fromU32Unchecked |> CodePoint.toStr |> Result.try Grapheme.split |> Result.map toCodePointList
                             result == answer
