@@ -54,20 +54,43 @@ splitHelp : State, List CodePoint, List GBP, OutState -> OutState
 splitHelp = \state, codePoints, breakPoints, acc ->
     nextCPs = List.dropFirst codePoints 1
     nextBPs = List.dropFirst breakPoints 1
-    when (state, codePoints, breakPoints) is
-        (_, [], []) -> List.append acc (BR GB2) # base case
-        (Next, [cp, ..], [bp, ..]) if bp == CR -> splitHelp (AfterCR cp) nextCPs nextBPs acc
-        (Next, [cp, ..], _) -> splitHelp Break nextCPs nextBPs (List.append acc (CP cp))
-        (AfterCR prev, [cp, ..], [bp, ..]) if bp == LF -> splitHelp (AfterCR cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB3, CP cp])
-        (AfterCR prev, [cp, ..], _) -> splitHelp (AfterCR cp) nextCPs nextBPs (List.concat acc [CP prev, BR GB4, CP cp])
-        (Break, _, _) -> splitHelp Next codePoints breakPoints (List.append acc (BR GB999))
 
-        _ -> splitHelp Break nextCPs nextBPs acc
+    # HELPFUL FOR DEBUGGIN - REMOVE ME 
+    # dbgMe = T (List.first codePoints |> Result.map CodePoint.toU32) (List.first breakPoints)
+    # dbg dbgMe
+
+    when (state, codePoints, breakPoints) is 
+
+        # No codepoints remaining 
+        (_, [], []) -> (List.append acc (BR GB2))
+
+        # Special handling for some last remaining codepoint types
+        (Next, [cp], [bp]) if bp == CR -> (List.concat acc [CP cp, BR GB2])
+        (Next, [cp], _) -> (List.concat acc [CP cp, BR GB2])
+        
+        # Looking at current breakpoint property 
+        (Next, [cp, ..], [bp, ..]) if bp == CR -> splitHelp (AfterCR cp) nextCPs nextBPs acc
+        (Next, [cp, ..], [bp, ..]) if bp == Control -> splitHelp Next nextCPs nextBPs (List.concat acc [CP cp, BR GB4])
+        (Next, [cp, ..], _) -> splitHelp Next nextCPs nextBPs (List.concat acc [CP cp, BR GB999])
+
+        # Looking ahead at next, given previous breakpoint property
+        (AfterCR prev, _, [bp, ..]) if bp == LF -> splitHelp Next codePoints breakPoints (List.concat acc [CP prev, NB GB3])
+        (AfterCR prev, _, _) -> splitHelp Next codePoints breakPoints (List.concat acc [CP prev, BR GB4])
+
+        _ ->
+            crash 
+                """
+                This is definitely a bug in the roc-lang/unicode package, caused by an unhandled edge case in grapheme text segmentation.
+
+                It is difficult to track down and catch every possible combination, so it would be helpful if you could log this as an issue with a reproduction.
+
+                Grapheme.split state machine state at the time was:
+                \(Inspect.toStr (state, List.map codePoints CodePoint.toU32, breakPoints))
+                """
 
 State : [
     Next,
-    Break, # otherwise break everywhere
-    AfterCR CodePoint, # need to look ahead to next gbp
+    AfterCR CodePoint,
     AfterHungulL,
     AfterHungulLVorV,
     AfterHungulLVTorT,
@@ -90,6 +113,18 @@ expect
 expect 
     a = testHelp [[888], [13, 10]]
     b = [BR GB1, CP (fromU32Unchecked 888), BR GB999, CP (fromU32Unchecked 13), NB GB3, CP (fromU32Unchecked 10), BR GB2]
+    a == b
+
+# Test break after control with a CR as last character
+expect 
+    a = testHelp [[1], [13]]
+    b = [BR GB1, CP (fromU32Unchecked 1), BR GB4, CP (fromU32Unchecked 13), BR GB2]
+    a == b
+
+# Break after starting CR, don't break remaining characters 
+expect 
+    a = testHelp [[13], [776], [888]]
+    b = [BR GB1, CP (fromU32Unchecked 13), BR GB4, CP (fromU32Unchecked 776), BR GB999, CP (fromU32Unchecked 888), BR GB2]
     a == b
 
 testHelp : List (List U32) -> OutState
