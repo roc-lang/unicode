@@ -13609,12 +13609,64 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 1195
+# % 0061 x 1F3FF % 1F476 x 200D x 1F6D1 % #  % [0.2] LATIN SMALL LETTER A (Other) x [9.0] EMOJI MODIFIER FITZPATRICK TYPE-6 (Extend) % [999.0] BABY (ExtPict) x [9.0] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) x [11.0] OCTAGONAL SIGN (ExtPict) % [0.3]
+expect     
+    exp = Ok [[97, 127999], [128118, 8205, 128721]]
+    got = 
+        [97, 127999, 128118, 8205, 128721] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 1196
+# % 1F476 x 1F3FF x 0308 x 200D x 1F476 x 1F3FF % #  % [0.2] BABY (ExtPict) x [9.0] EMOJI MODIFIER FITZPATRICK TYPE-6 (Extend) x [9.0] COMBINING DIAERESIS (Extend_ExtCccZwj) x [9.0] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) x [11.0] BABY (ExtPict) x [9.0] EMOJI MODIFIER FITZPATRICK TYPE-6 (Extend) % [0.3]
+expect     
+    exp = Ok [[128118, 127999, 776, 8205, 128118, 127999]]
+    got = 
+        [128118, 127999, 776, 8205, 128118, 127999] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 1197
+# % 1F6D1 x 200D x 1F6D1 % #  % [0.2] OCTAGONAL SIGN (ExtPict) x [9.0] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) x [11.0] OCTAGONAL SIGN (ExtPict) % [0.3]
+expect     
+    exp = Ok [[128721, 8205, 128721]]
+    got = 
+        [128721, 8205, 128721] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 1198
 # % 0061 x 200D % 1F6D1 % #  % [0.2] LATIN SMALL LETTER A (Other) x [9.0] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) % [999.0] OCTAGONAL SIGN (ExtPict) % [0.3]
 expect     
     exp = Ok [[97, 8205], [128721]]
     got = 
         [97, 8205, 128721] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 1199
+# % 2701 x 200D x 2701 % #  % [0.2] UPPER BLADE SCISSORS (Other) x [9.0] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) x [11.0] UPPER BLADE SCISSORS (Other) % [0.3]
+expect     
+    exp = Ok [[9985, 8205, 9985]]
+    got = 
+        [9985, 8205, 9985] 
         |> List.map InternalCP.fromU32Unchecked 
         |> CodePoint.toStr 
         |> Result.try Grapheme2.split

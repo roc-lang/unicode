@@ -7,7 +7,7 @@ interface Grapheme2
         CodePoint.{ CodePoint, Utf8ParseErr },
         InternalGBP.{ GBP },
         InternalCP.{fromU32Unchecked},
-        # InternalEmoji,
+        InternalEmoji,
     ]
 
 ## Extended Grapheme Cluster
@@ -62,6 +62,9 @@ splitHelp = \state, codePoints, breakPoints, acc ->
     # dbgMe = T (List.first codePoints |> Result.map CodePoint.toU32) (List.first breakPoints)
     # dbg dbgMe
 
+    # codePointsStr = Inspect.toStr (codePoints |> List.map CodePoint.toU32)    
+    # breakPointsStr = Inspect.toStr (breakPoints)    
+
     when (state, codePoints, breakPoints) is 
 
         # Special handling for last codepoint
@@ -73,8 +76,25 @@ splitHelp = \state, codePoints, breakPoints, acc ->
         (AfterHungulLVorV prev, [_], [_]) -> splitHelp (LastWithPrev prev) codePoints breakPoints acc
         (AfterHungulLVTorT prev, [_], [_]) -> splitHelp (LastWithPrev prev) codePoints breakPoints acc
         (LastWithPrev prev, [cp], [bp]) if bp == Control || bp == CR || bp == LF -> (List.concat acc [CP prev, BR GB5, CP cp, BR GB2])
-        (LastWithPrev prev, [cp], [bp]) if bp == ZWJ || bp == Extend -> (List.concat acc [CP prev, NB GB9, CP cp, BR GB2])
+        (LastWithPrev prev, [cp], [bp]) if bp == Extend -> (List.concat acc [CP prev, NB GB9, CP cp, BR GB2])
+        (LastWithPrev prev, [cp], [bp]) if bp == ZWJ -> 
+            
+            if prev |> InternalEmoji.fromCP |> Result.isOk then 
+                (List.concat acc [CP prev, NB GB11, CP cp, BR GB2])
+            else
+                (List.concat acc [CP prev, NB GB9, CP cp, BR GB2])
+
         (LastWithPrev prev, [cp], [_]) -> (List.concat acc [CP prev, BR GB999, CP cp, BR GB2])
+        (AfterExtend prev, [],[]) -> 
+            # dbg "AND HERE WE ARE \(codePointsStr) \(breakPointsStr)"
+            (List.concat acc [CP prev, BR GB2])
+        (AfterExtend prev, [cp],[_]) -> 
+            # dbg "WHY NOT ANOTHER ONe \(codePointsStr) \(breakPointsStr)"
+            (List.concat acc [CP prev, BR GB999, CP cp, BR GB2])
+        (EmojiSeqNext prev, [cp],[_]) -> (List.concat acc [CP prev, NB GB11, CP cp, BR GB2])
+        (EmojiSeqZWJ prev, [_],[_]) -> 
+            # dbg "EmojiSeqZWJ LAST THING \(codePointsStr) \(breakPointsStr)" 
+            splitHelp (LastWithPrev prev) codePoints breakPoints acc
 
         # Looking at current breakpoint property 
         (Next, [cp, ..], [bp, ..]) if bp == CR -> splitHelp (AfterCR cp) nextCPs nextBPs acc
@@ -82,14 +102,64 @@ splitHelp = \state, codePoints, breakPoints, acc ->
         (Next, [cp, ..], [bp, ..]) if bp == L -> splitHelp (AfterHungulL cp) nextCPs nextBPs acc
         (Next, [cp, ..], [bp, ..]) if bp == V || bp == LV -> splitHelp (AfterHungulLVorV cp) nextCPs nextBPs acc
         (Next, [cp, ..], [bp, ..]) if bp == LVT || bp == T -> splitHelp (AfterHungulLVTorT cp) nextCPs nextBPs acc
-
+        
         # Advance to next, this is requred so that we can apply rules which break before
         (Next, [cp, ..], _) -> splitHelp (LookAtNext cp) nextCPs nextBPs acc
 
         # Looking ahead at next, given previous
-        (LookAtNext prev, _, [bp, ..]) if bp == Control || bp == CR || bp == LF -> splitHelp Next codePoints breakPoints (List.concat acc [CP prev, BR GB5])
-        (LookAtNext prev, _, [bp, ..]) if bp == ZWJ || bp == Extend -> splitHelp Next codePoints breakPoints (List.concat acc [CP prev, NB GB9])
-        (LookAtNext prev, _, _) -> splitHelp Next codePoints breakPoints (List.concat acc [CP prev, BR GB999])
+        (LookAtNext prev, _, [bp, ..]) if bp == Control || bp == CR || bp == LF -> 
+            # dbg "LookAtNext with CONTROL CR LF \(codePointsStr) \(breakPointsStr)"
+            splitHelp Next codePoints breakPoints (List.concat acc [CP prev, BR GB5])
+        (LookAtNext prev, [cp, ..], [bp, ..]) if bp == Extend -> 
+            # dbg "LookAtNext with an EXTEND \(codePointsStr) \(breakPointsStr)"
+            splitHelp (AfterExtend cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB9])
+        (LookAtNext prev, [cp, ..], [bp, ..]) if bp == ZWJ -> 
+            # dbg "LookAtNext with an ZWJ \(codePointsStr) \(breakPointsStr)"
+            if prev |> InternalEmoji.fromCP |> Result.isOk then 
+                # enter emoji sequence
+                # dbg "ENTERING SEQUENCE"
+                splitHelp (EmojiSeqNext cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB9])
+            else
+                splitHelp (LookAtNext cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB9])   
+        
+        # W
+        (EmojiSeqZWJ prev, [cp, ..], [bp, ..]) -> 
+
+            # got another ZWJ continue the sequence
+            if bp == ZWJ then 
+                # dbg "EmojiSeqZWJ IS ZWJ \(codePointsStr) \(breakPointsStr)"
+                splitHelp (EmojiSeqNext cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB11])
+            else
+                # splitHelp (LookAtNext prev) codePoints breakPoints acc
+                # dbg "EmojiSeqZWJ NOT ZWJ \(codePointsStr) \(breakPointsStr)"
+                splitHelp Next codePoints breakPoints acc
+
+        # We have had a ZWJ and so now we expect an EMOJI next in the sequence
+        (EmojiSeqNext prev, [cp, ..], [_, ..]) -> 
+                
+                if cp |> InternalEmoji.fromCP |> Result.isOk then 
+                    # got another emoji, continue the sequence
+                    # dbg "EmojiSeqNext IS EMOJI \(codePointsStr) \(breakPointsStr)"
+                    splitHelp (EmojiSeqZWJ cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB11])
+                else
+                    # dbg "EmojiSeqNext NOT EMOJI \(codePointsStr) \(breakPointsStr)"
+                    splitHelp (LookAtNext cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB999])
+    
+        (AfterExtend prev, [cp, ..], [bp, ..]) if bp == ZWJ -> 
+            # dbg "AFTER EXTEND IS ZWJ \(codePointsStr) \(breakPointsStr)"
+            splitHelp (EmojiSeqNext cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB9])
+
+        (AfterExtend prev, [cp, ..], [bp, ..]) if bp == Extend -> 
+            # dbg "AFTER EXTEND GOT ANOTHER EXTEND \(codePointsStr) \(breakPointsStr)"
+            splitHelp (AfterExtend cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB9])
+
+        (AfterExtend prev, [_, ..], [_, ..]) -> 
+            # dbg "AFTER EXTEND NOT ZWJ \(codePointsStr) \(breakPointsStr)"
+            splitHelp Next nextCPs nextBPs (List.concat acc [CP prev, NB GB9])
+
+        (LookAtNext prev, _, _) -> 
+            # dbg "LookAtNext CATCHALL \(codePointsStr) \(breakPointsStr)"
+            splitHelp Next codePoints breakPoints (List.concat acc [CP prev, BR GB999])
         
         # Looking ahead, given previous was CR
         (AfterCR prev, _, [bp, ..]) if bp == LF -> splitHelp Next codePoints breakPoints (List.concat acc [CP prev, NB GB3])
@@ -99,11 +169,14 @@ splitHelp = \state, codePoints, breakPoints, acc ->
         (AfterHungulL prev, [cp, ..], [bp, ..]) if bp == L -> splitHelp (AfterHungulL cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB6])
         (AfterHungulL prev, [cp, ..], [bp, ..]) if bp == V || bp == LV -> splitHelp (AfterHungulLVorV cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB6])
         (AfterHungulL prev, [cp, ..], [bp, ..]) if bp == LVT -> splitHelp (AfterHungulLVTorT cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB6])
+        (AfterHungulL prev, _, [bp, ..]) if bp == ZWJ -> splitHelp (AfterZWJ prev) codePoints breakPoints acc
         (AfterHungulL prev, _, _) -> splitHelp (LookAtNext prev) codePoints breakPoints acc
         (AfterHungulLVorV prev, [cp, ..], [bp, ..]) if bp == V -> splitHelp (AfterHungulLVorV cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB7])
         (AfterHungulLVorV prev, [cp, ..], [bp, ..]) if bp == T -> splitHelp (AfterHungulLVTorT cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB7])
+        (AfterHungulLVorV prev, _, [bp, ..]) if bp == ZWJ -> splitHelp (AfterZWJ prev) codePoints breakPoints acc
         (AfterHungulLVorV prev, _, _) -> splitHelp (LookAtNext prev) codePoints breakPoints acc
         (AfterHungulLVTorT prev, [cp, ..], [bp, ..]) if bp == T -> splitHelp (AfterHungulLVTorT cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB8])
+        (AfterHungulLVTorT prev, _, [bp, ..]) if bp == ZWJ -> splitHelp (AfterZWJ prev) codePoints breakPoints acc
         (AfterHungulLVTorT prev, _, _) -> splitHelp (LookAtNext prev) codePoints breakPoints acc
 
         _ ->
@@ -234,6 +307,48 @@ expect
 expect 
     a = testHelp [[44033, 8205]]
     b = [BR GB1, CP (fromU32Unchecked 44033), NB GB9, CP (fromU32Unchecked 8205), BR GB2]
+    a == b
+
+# GB11 Do not break before extending characters or ZWJ
+# # % 2701 x 200D x 2701 % #  % [0.2] UPPER BLADE SCISSORS (Other) x [9.0] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) x [11.0] UPPER BLADE SCISSORS (Other) % [0.3]
+expect 
+    a = testHelp [[9985, 8205, 9985]]
+    b = [BR GB1, CP (fromU32Unchecked 9985), NB GB9, CP (fromU32Unchecked 8205), NB GB11, CP (fromU32Unchecked 9985), BR GB2]
+    a == b
+
+# GB11 emoji last position but INVALID sequence
+# % 0061 x 200D % 2701 % #  % [0.2] LATIN SMALL LETTER A (Other) x [9.0] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) % [999.0] UPPER BLADE SCISSORS (Other) % [0.3]
+expect 
+    a = testHelp [[97, 8205], [9985]]
+    b = [BR GB1, CP (fromU32Unchecked 97), NB GB9, CP (fromU32Unchecked 8205), BR GB999, CP (fromU32Unchecked 9985), BR GB2]
+    a == b
+
+# # GB9 & GB11 stress test lots of emoji with both ZWJ and Extends
+# % 1F476 x 1F3FF x 0308 x 200D x 1F476 x 1F3FF % #  % 
+# [0.2] BABY (ExtPict) x 
+# [9.0] EMOJI MODIFIER FITZPATRICK TYPE-6 (Extend) x 
+# [9.0] COMBINING DIAERESIS (Extend_ExtCccZwj) x 
+# [9.0] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) x 
+# [11.0] BABY (ExtPict) x 
+# [9.0] EMOJI MODIFIER FITZPATRICK TYPE-6 (Extend) % 
+# [0.3]
+expect 
+    a = testHelp [[128118, 127999, 776, 8205, 128118, 127999]]
+    b = [
+        BR GB1, 
+        CP (fromU32Unchecked 128118), # BABY (ExtPict) >> has GBP of (Other)
+        NB GB9, 
+        CP (fromU32Unchecked 127999), # EMOJI MODIFIER FITZPATRICK TYPE-6 (Extend) >> has GBP of (Extend)
+        NB GB9, 
+        CP (fromU32Unchecked 776), # COMBINING DIAERESIS (Extend_ExtCccZwj) >> has GBP of (Extend)
+        NB GB9, 
+        CP (fromU32Unchecked 8205), # ZERO WIDTH JOINER (ZWJ_ExtCccZwj) >> has GBP of (ZWJ)
+        NB GB11, 
+        CP (fromU32Unchecked 128118), # BABY (ExtPict) >> has GBP of (Other)
+        NB GB9, 
+        CP (fromU32Unchecked 127999), # EMOJI MODIFIER FITZPATRICK TYPE-6 (Extend) >> has GBP of (Extend)
+        BR GB2,
+    ]
     a == b
 
 testHelp : List (List U32) -> OutState
