@@ -1,3 +1,7 @@
+## The purpose of this file is to generate the InternalGBP.roc file.
+## 
+## This file will read the test data from `data/GraphemeBreakProperty-15.1.0.txt` 
+## parse it and then generate the implementation for each of the GBP properties.
 app "gen"
     packages {
         pf: "https://github.com/roc-lang/basic-cli/releases/download/0.7.0/bkGby8jb0tmZYsy2hg1E_B2QrCgcSTxdUlHtETwm5m4.tar.br",
@@ -44,7 +48,6 @@ listMeta =
         { fromBytes: Str.toUtf8 "Other", property: Other, toStr: "Other" },
     ]
     
-# TASKS
 # TODO move these to a common helper file once module changes and builtin Task are available
 
 getFilePath : Task Path Str
@@ -60,8 +63,6 @@ writeToFile = \path ->
     File.writeUtf8 path template
     |> Task.mapErr \_ -> "ERROR: unable to write to \(Path.display path)"
     |> Task.await \_ -> Stdout.line "\nSucessfully wrote to \(Path.display path)\n"
-
-# TEMPLATES
 
 template =
     """
