@@ -61,9 +61,8 @@ splitHelp = \state, codePoints, breakPoints, acc ->
     # HELPFUL FOR DEBUGGIN - REMOVE ME 
     # dbgMe = T (List.first codePoints |> Result.map CodePoint.toU32) (List.first breakPoints)
     # dbg dbgMe
-
-    # codePointsStr = Inspect.toStr (codePoints |> List.map CodePoint.toU32)    
-    # breakPointsStr = Inspect.toStr (breakPoints)    
+    codePointsStr = Inspect.toStr (codePoints |> List.map CodePoint.toU32)    
+    breakPointsStr = Inspect.toStr (breakPoints)    
 
     when (state, codePoints, breakPoints) is 
 
@@ -85,12 +84,15 @@ splitHelp = \state, codePoints, breakPoints, acc ->
                 (List.concat acc [CP prev, NB GB9, CP cp, BR GB2])
 
         (LastWithPrev prev, [cp], [_]) -> (List.concat acc [CP prev, BR GB999, CP cp, BR GB2])
-        (AfterExtend prev, [],[]) -> 
+        (AfterExtend prev, [],[]) -> (List.concat acc [CP prev, BR GB2])
+        (AfterExtend prev, [_],[_]) ->  splitHelp (LastWithPrev prev) codePoints breakPoints acc
             # dbg "AND HERE WE ARE \(codePointsStr) \(breakPointsStr)"
-            (List.concat acc [CP prev, BR GB2])
-        (AfterExtend prev, [cp],[_]) -> 
-            # dbg "WHY NOT ANOTHER ONe \(codePointsStr) \(breakPointsStr)"
-            (List.concat acc [CP prev, BR GB999, CP cp, BR GB2])
+        #     (List.concat acc [CP prev, BR GB2])
+        # (AfterExtend prev, [cp],[bp]) if bp == ZWJ -> (List.concat acc [CP prev, NB GB9, CP cp, BR GB2])
+        # (AfterExtend prev, [cp],[_]) -> 
+        #     # dbg "WHY NOT ANOTHER ONe \(codePointsStr) \(breakPointsStr)"
+        #     (List.concat acc [CP prev, BR GB999, CP cp, BR GB2])
+        (EmojiSeqNext prev, [],[]) -> (List.concat acc [CP prev, BR GB2])
         (EmojiSeqNext prev, [cp],[_]) -> (List.concat acc [CP prev, NB GB11, CP cp, BR GB2])
         (EmojiSeqZWJ prev, [_],[_]) -> 
             # dbg "EmojiSeqZWJ LAST THING \(codePointsStr) \(breakPointsStr)" 
@@ -120,7 +122,7 @@ splitHelp = \state, codePoints, breakPoints, acc ->
                 # dbg "ENTERING SEQUENCE"
                 splitHelp (EmojiSeqNext cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB9])
             else
-                splitHelp (LookAtNext cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB9])   
+                splitHelp Next codePoints breakPoints (List.concat acc [CP prev, NB GB9])   
         
         # W
         (EmojiSeqZWJ prev, [cp, ..], [bp, ..]) -> 
@@ -149,12 +151,20 @@ splitHelp = \state, codePoints, breakPoints, acc ->
             # dbg "AFTER EXTEND IS ZWJ \(codePointsStr) \(breakPointsStr)"
             splitHelp (EmojiSeqNext cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB9])
 
+            # if cp |> InternalEmoji.fromCP |> Result.isOk then 
+            #     # got another emoji, continue the sequence
+            #     # dbg "EmojiSeqNext IS EMOJI \(codePointsStr) \(breakPointsStr)"
+                
+            # else
+                # dbg "EmojiSeqNext NOT EMOJI \(codePointsStr) \(breakPointsStr)"
+                # splitHelp (LookAtNext cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB9])
+
         (AfterExtend prev, [cp, ..], [bp, ..]) if bp == Extend -> 
             # dbg "AFTER EXTEND GOT ANOTHER EXTEND \(codePointsStr) \(breakPointsStr)"
             splitHelp (AfterExtend cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB9])
 
         (AfterExtend prev, [_, ..], [_, ..]) -> 
-            # dbg "AFTER EXTEND NOT ZWJ \(codePointsStr) \(breakPointsStr)"
+            # dbg "AFTER EXTEND CATCHALL \(codePointsStr) \(breakPointsStr)"
             splitHelp Next nextCPs nextBPs (List.concat acc [CP prev, NB GB9])
 
         (LookAtNext prev, _, _) -> 
@@ -190,167 +200,6 @@ splitHelp = \state, codePoints, breakPoints, acc ->
                 \(Inspect.toStr (state, List.map codePoints CodePoint.toU32, breakPoints))
                 """
 
-# GB999 Test break everywhere
-expect 
-    a = testHelp [[888], [888]]
-    b = [BR GB1, CP (fromU32Unchecked 888), BR GB999, CP (fromU32Unchecked 888), BR GB2]
-    a == b
-
-# GB3 & GB5 Test no break between CRLF starting character
-expect 
-    a = testHelp [[888], [13, 10]]
-    b = [BR GB1, CP (fromU32Unchecked 888), BR GB5, CP (fromU32Unchecked 13), NB GB3, CP (fromU32Unchecked 10), BR GB2]
-    a == b
-
-# GB4 Test break after control with a CR as last character
-expect 
-    a = testHelp [[1], [13]]
-    b = [BR GB1, CP (fromU32Unchecked 1), BR GB4, CP (fromU32Unchecked 13), BR GB2]
-    a == b
-
-# GB4 Break after starting CR, don't break remaining characters 
-expect 
-    a = testHelp [[13], [776], [888]]
-    b = [BR GB1, CP (fromU32Unchecked 13), BR GB4, CP (fromU32Unchecked 776), BR GB999, CP (fromU32Unchecked 888), BR GB2]
-    a == b
-
-# GB5 Break before CR 
-# % 0020 % 000D % #  % [0.2] SPACE (Other) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
-expect 
-    a = testHelp [[32], [13]]
-    b = [BR GB1, CP (fromU32Unchecked 32), BR GB5, CP (fromU32Unchecked 13), BR GB2]
-    a == b
-
-# GB4 & GB5 Break after LF and before CR in last position
-# % 000A % 0308 % 000D % #  % [0.2] <LINE FEED (LF)> (LF) % [4.0] COMBINING DIAERESIS (Extend_ExtCccZwj) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
-expect 
-    a = testHelp [[10], [776], [13]]
-    b = [BR GB1, CP (fromU32Unchecked 10), BR GB4, CP (fromU32Unchecked 776),BR GB5, CP (fromU32Unchecked 13), BR GB2]
-    a == b
-
-# GB6 Don't break Hangul sequences
-# % 1100 x 1100 % #  % [0.2] HANGUL CHOSEONG KIYEOK (L) x [6.0] HANGUL CHOSEONG KIYEOK (L) % [0.3]
-expect 
-    a = testHelp [[4352, 4352]]
-    b = [BR GB1, CP (fromU32Unchecked 4352), NB GB6, CP (fromU32Unchecked 4352), BR GB2]
-    a == b
-
-# GB6 Don't break Hangul sequences L then V
-expect 
-    a = testHelp [[4352, 4448]]
-    b = [BR GB1, CP (fromU32Unchecked 4352), NB GB6, CP (fromU32Unchecked 4448), BR GB2]
-    a == b
-
-# GB6 Don't break Hangul sequences L then LV
-expect 
-    a = testHelp [[4352, 44509]]
-    b = [BR GB1, CP (fromU32Unchecked 4352), NB GB6, CP (fromU32Unchecked 44509), BR GB2]
-    a == b
-
-# GB6 Don't break Hangul sequences L then LVT
-expect 
-    a = testHelp [[4352, 45739]]
-    b = [BR GB1, CP (fromU32Unchecked 4352), NB GB6, CP (fromU32Unchecked 45739), BR GB2]
-    a == b
-
-# GB6 Break after Hangul L
-expect 
-    a = testHelp [[4352, 888]]
-    b = [BR GB1, CP (fromU32Unchecked 4352), BR GB999, CP (fromU32Unchecked 888), BR GB2]
-    a == b
-
-# GB7 Don't break Hangul sequences V then V
-expect 
-    a = testHelp [[4448, 4448]]
-    b = [BR GB1, CP (fromU32Unchecked 4448), NB GB7, CP (fromU32Unchecked 4448), BR GB2]
-    a == b
-
-# GB7 Don't break Hangul sequences LV then T
-expect 
-    a = testHelp [[45236, 55243]]
-    b = [BR GB1, CP (fromU32Unchecked 45236), NB GB7, CP (fromU32Unchecked 55243), BR GB2]
-    a == b
-
-# GB7 Break after Hangul LV
-expect 
-    a = testHelp [[45236, 888]]
-    b = [BR GB1, CP (fromU32Unchecked 45236), BR GB999, CP (fromU32Unchecked 888), BR GB2]
-    a == b
-
-# GB8 Don't break Hangul sequences LVT then T
-expect 
-    a = testHelp [[44619, 55243]]
-    b = [BR GB1, CP (fromU32Unchecked 44619), NB GB8, CP (fromU32Unchecked 55243), BR GB2]
-    a == b
-
-# GB8 Don't break Hangul sequences T then T
-expect 
-    a = testHelp [[4607, 55243]]
-    b = [BR GB1, CP (fromU32Unchecked 4607), NB GB8, CP (fromU32Unchecked 55243), BR GB2]
-    a == b
-
-# GB8 & GB5 Break after Hangul sequence T before CR
-expect 
-    a = testHelp [[4607, 13]]
-    b = [BR GB1, CP (fromU32Unchecked 4607), BR GB5, CP (fromU32Unchecked 13), BR GB2]
-    a == b
-
-# GB9 Do not break before extending characters or ZWJ in the middle of a sequence
-# % 003F x 094D % 0924 % #  % [0.2] QUESTION MARK (Other) x [9.0] DEVANAGARI SIGN VIRAMA (Extend_ConjunctLinkingScripts_ConjunctLinker_ExtCccZwj) % [999.0] DEVANAGARI LETTER TA (ConjunctLinkingScripts_LinkingConsonant) % [0.3]
-expect 
-    a = testHelp [[63, 2381], [2340]]
-    b = [BR GB1, CP (fromU32Unchecked 63), NB GB9, CP (fromU32Unchecked 2381), BR GB999, CP (fromU32Unchecked 2340), BR GB2]
-    a == b
-
-# GB9 Do not break before extending characters or ZWJ in last position
-# % AC01 x 200D % #  % [0.2] HANGUL SYLLABLE GAG (LVT) x [9.0] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) % [0.3]
-expect 
-    a = testHelp [[44033, 8205]]
-    b = [BR GB1, CP (fromU32Unchecked 44033), NB GB9, CP (fromU32Unchecked 8205), BR GB2]
-    a == b
-
-# GB11 Do not break before extending characters or ZWJ
-# # % 2701 x 200D x 2701 % #  % [0.2] UPPER BLADE SCISSORS (Other) x [9.0] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) x [11.0] UPPER BLADE SCISSORS (Other) % [0.3]
-expect 
-    a = testHelp [[9985, 8205, 9985]]
-    b = [BR GB1, CP (fromU32Unchecked 9985), NB GB9, CP (fromU32Unchecked 8205), NB GB11, CP (fromU32Unchecked 9985), BR GB2]
-    a == b
-
-# GB11 emoji last position but INVALID sequence
-# % 0061 x 200D % 2701 % #  % [0.2] LATIN SMALL LETTER A (Other) x [9.0] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) % [999.0] UPPER BLADE SCISSORS (Other) % [0.3]
-expect 
-    a = testHelp [[97, 8205], [9985]]
-    b = [BR GB1, CP (fromU32Unchecked 97), NB GB9, CP (fromU32Unchecked 8205), BR GB999, CP (fromU32Unchecked 9985), BR GB2]
-    a == b
-
-# # GB9 & GB11 stress test lots of emoji with both ZWJ and Extends
-# % 1F476 x 1F3FF x 0308 x 200D x 1F476 x 1F3FF % #  % 
-# [0.2] BABY (ExtPict) x 
-# [9.0] EMOJI MODIFIER FITZPATRICK TYPE-6 (Extend) x 
-# [9.0] COMBINING DIAERESIS (Extend_ExtCccZwj) x 
-# [9.0] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) x 
-# [11.0] BABY (ExtPict) x 
-# [9.0] EMOJI MODIFIER FITZPATRICK TYPE-6 (Extend) % 
-# [0.3]
-expect 
-    a = testHelp [[128118, 127999, 776, 8205, 128118, 127999]]
-    b = [
-        BR GB1, 
-        CP (fromU32Unchecked 128118), # BABY (ExtPict) >> has GBP of (Other)
-        NB GB9, 
-        CP (fromU32Unchecked 127999), # EMOJI MODIFIER FITZPATRICK TYPE-6 (Extend) >> has GBP of (Extend)
-        NB GB9, 
-        CP (fromU32Unchecked 776), # COMBINING DIAERESIS (Extend_ExtCccZwj) >> has GBP of (Extend)
-        NB GB9, 
-        CP (fromU32Unchecked 8205), # ZERO WIDTH JOINER (ZWJ_ExtCccZwj) >> has GBP of (ZWJ)
-        NB GB11, 
-        CP (fromU32Unchecked 128118), # BABY (ExtPict) >> has GBP of (Other)
-        NB GB9, 
-        CP (fromU32Unchecked 127999), # EMOJI MODIFIER FITZPATRICK TYPE-6 (Extend) >> has GBP of (Extend)
-        BR GB2,
-    ]
-    a == b
-
 testHelp : List (List U32) -> OutState
 testHelp = \u32List -> 
     codePoints = u32List |> List.join |> List.map fromU32Unchecked
@@ -358,3 +207,172 @@ testHelp = \u32List ->
     
     splitHelp Next codePoints breakPoints [BR GB1]
     
+# # GB999 Test break everywhere
+# expect 
+#     a = testHelp [[888], [888]]
+#     b = [BR GB1, CP (fromU32Unchecked 888), BR GB999, CP (fromU32Unchecked 888), BR GB2]
+#     a == b
+
+# # GB3 & GB5 Test no break between CRLF starting character
+# expect 
+#     a = testHelp [[888], [13, 10]]
+#     b = [BR GB1, CP (fromU32Unchecked 888), BR GB5, CP (fromU32Unchecked 13), NB GB3, CP (fromU32Unchecked 10), BR GB2]
+#     a == b
+
+# # GB4 Test break after control with a CR as last character
+# expect 
+#     a = testHelp [[1], [13]]
+#     b = [BR GB1, CP (fromU32Unchecked 1), BR GB4, CP (fromU32Unchecked 13), BR GB2]
+#     a == b
+
+# # GB4 Break after starting CR, don't break remaining characters 
+# expect 
+#     a = testHelp [[13], [776], [888]]
+#     b = [BR GB1, CP (fromU32Unchecked 13), BR GB4, CP (fromU32Unchecked 776), BR GB999, CP (fromU32Unchecked 888), BR GB2]
+#     a == b
+
+# # GB5 Break before CR 
+# # % 0020 % 000D % #  % [0.2] SPACE (Other) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+# expect 
+#     a = testHelp [[32], [13]]
+#     b = [BR GB1, CP (fromU32Unchecked 32), BR GB5, CP (fromU32Unchecked 13), BR GB2]
+#     a == b
+
+# # GB4 & GB5 Break after LF and before CR in last position
+# # % 000A % 0308 % 000D % #  % [0.2] <LINE FEED (LF)> (LF) % [4.0] COMBINING DIAERESIS (Extend_ExtCccZwj) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+# expect 
+#     a = testHelp [[10], [776], [13]]
+#     b = [BR GB1, CP (fromU32Unchecked 10), BR GB4, CP (fromU32Unchecked 776),BR GB5, CP (fromU32Unchecked 13), BR GB2]
+#     a == b
+
+# # GB6 Don't break Hangul sequences
+# # % 1100 x 1100 % #  % [0.2] HANGUL CHOSEONG KIYEOK (L) x [6.0] HANGUL CHOSEONG KIYEOK (L) % [0.3]
+# expect 
+#     a = testHelp [[4352, 4352]]
+#     b = [BR GB1, CP (fromU32Unchecked 4352), NB GB6, CP (fromU32Unchecked 4352), BR GB2]
+#     a == b
+
+# # GB6 Don't break Hangul sequences L then V
+# expect 
+#     a = testHelp [[4352, 4448]]
+#     b = [BR GB1, CP (fromU32Unchecked 4352), NB GB6, CP (fromU32Unchecked 4448), BR GB2]
+#     a == b
+
+# # GB6 Don't break Hangul sequences L then LV
+# expect 
+#     a = testHelp [[4352, 44509]]
+#     b = [BR GB1, CP (fromU32Unchecked 4352), NB GB6, CP (fromU32Unchecked 44509), BR GB2]
+#     a == b
+
+# # GB6 Don't break Hangul sequences L then LVT
+# expect 
+#     a = testHelp [[4352, 45739]]
+#     b = [BR GB1, CP (fromU32Unchecked 4352), NB GB6, CP (fromU32Unchecked 45739), BR GB2]
+#     a == b
+
+# # GB6 Break after Hangul L
+# expect 
+#     a = testHelp [[4352, 888]]
+#     b = [BR GB1, CP (fromU32Unchecked 4352), BR GB999, CP (fromU32Unchecked 888), BR GB2]
+#     a == b
+
+# # GB7 Don't break Hangul sequences V then V
+# expect 
+#     a = testHelp [[4448, 4448]]
+#     b = [BR GB1, CP (fromU32Unchecked 4448), NB GB7, CP (fromU32Unchecked 4448), BR GB2]
+#     a == b
+
+# # GB7 Don't break Hangul sequences LV then T
+# expect 
+#     a = testHelp [[45236, 55243]]
+#     b = [BR GB1, CP (fromU32Unchecked 45236), NB GB7, CP (fromU32Unchecked 55243), BR GB2]
+#     a == b
+
+# # GB7 Break after Hangul LV
+# expect 
+#     a = testHelp [[45236, 888]]
+#     b = [BR GB1, CP (fromU32Unchecked 45236), BR GB999, CP (fromU32Unchecked 888), BR GB2]
+#     a == b
+
+# # GB8 Don't break Hangul sequences LVT then T
+# expect 
+#     a = testHelp [[44619, 55243]]
+#     b = [BR GB1, CP (fromU32Unchecked 44619), NB GB8, CP (fromU32Unchecked 55243), BR GB2]
+#     a == b
+
+# # GB8 Don't break Hangul sequences T then T
+# expect 
+#     a = testHelp [[4607, 55243]]
+#     b = [BR GB1, CP (fromU32Unchecked 4607), NB GB8, CP (fromU32Unchecked 55243), BR GB2]
+#     a == b
+
+# # GB8 & GB5 Break after Hangul sequence T before CR
+# expect 
+#     a = testHelp [[4607, 13]]
+#     b = [BR GB1, CP (fromU32Unchecked 4607), BR GB5, CP (fromU32Unchecked 13), BR GB2]
+#     a == b
+
+# # GB9  
+# # % [0.2] <reserved-0378> (Other) x [9.0] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) % [0.3]
+# expect 
+#     a = testHelp [[888, 8205]]
+#     b = [BR GB1, CP (fromU32Unchecked 888), NB GB9, CP (fromU32Unchecked 8205), BR GB2]
+#     a == b
+
+# # GB9 Do not break before extending characters or ZWJ in the middle of a sequence
+# # % [0.2] QUESTION MARK (Other) x [9.0] DEVANAGARI SIGN VIRAMA (Extend_ConjunctLinkingScripts_ConjunctLinker_ExtCccZwj) % [999.0] DEVANAGARI LETTER TA (ConjunctLinkingScripts_LinkingConsonant) % [0.3]
+# expect 
+#     a = testHelp [[63, 2381], [2340]]
+#     b = [BR GB1, CP (fromU32Unchecked 63), NB GB9, CP (fromU32Unchecked 2381), BR GB999, CP (fromU32Unchecked 2340), BR GB2]
+#     a == b
+
+# # GB9 Do not break before extending characters or ZWJ in last position
+# # % [0.2] HANGUL SYLLABLE GAG (LVT) x [9.0] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) % [0.3]
+# expect 
+#     a = testHelp [[44033, 8205]]
+#     b = [BR GB1, CP (fromU32Unchecked 44033), NB GB9, CP (fromU32Unchecked 8205), BR GB2]
+#     a == b
+
+x = 1
+# GB9 
+# % [0.2] <reserved-0378> (Other) x [9.0] COMBINING DIAERESIS (Extend_ExtCccZwj) x [9.0] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) % [0.3]
+expect 
+    a = testHelp [[888, 776, 8205]]
+    b = [BR GB1, CP (fromU32Unchecked 888), NB GB9, CP (fromU32Unchecked 776), NB GB9, CP (fromU32Unchecked 8205), BR GB2]
+    a == b
+
+# # GB11 Do not break before extending characters or ZWJ
+# # % [0.2] UPPER BLADE SCISSORS (Other) x [9.0] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) x [11.0] UPPER BLADE SCISSORS (Other) % [0.3]
+# expect 
+#     a = testHelp [[9985, 8205, 9985]]
+#     b = [BR GB1, CP (fromU32Unchecked 9985), NB GB9, CP (fromU32Unchecked 8205), NB GB11, CP (fromU32Unchecked 9985), BR GB2]
+#     a == b
+
+# # GB11 emoji last position but INVALID sequence
+# # % [0.2] LATIN SMALL LETTER A (Other) x [9.0] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) % [999.0] UPPER BLADE SCISSORS (Other) % [0.3]
+# expect 
+#     a = testHelp [[97, 8205], [9985]]
+#     b = [BR GB1, CP (fromU32Unchecked 97), NB GB9, CP (fromU32Unchecked 8205), BR GB999, CP (fromU32Unchecked 9985), BR GB2]
+#     a == b
+
+# # GB9 & GB11 stress test lots of emoji with both ZWJ and Extends 
+# # % [0.2] BABY (ExtPict) x  [9.0] EMOJI MODIFIER FITZPATRICK TYPE-6 (Extend) x  [9.0] COMBINING DIAERESIS (Extend_ExtCccZwj) x  [9.0] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) x  [11.0] BABY (ExtPict) x  [9.0] EMOJI MODIFIER FITZPATRICK TYPE-6 (Extend) %  [0.3]
+# expect 
+#     a = testHelp [[128118, 127999, 776, 8205, 128118, 127999]]
+#     b = [
+#         BR GB1, 
+#         CP (fromU32Unchecked 128118), # BABY (ExtPict) >> has GBP of (Other)
+#         NB GB9, 
+#         CP (fromU32Unchecked 127999), # EMOJI MODIFIER FITZPATRICK TYPE-6 (Extend) >> has GBP of (Extend)
+#         NB GB9, 
+#         CP (fromU32Unchecked 776), # COMBINING DIAERESIS (Extend_ExtCccZwj) >> has GBP of (Extend)
+#         NB GB9, 
+#         CP (fromU32Unchecked 8205), # ZERO WIDTH JOINER (ZWJ_ExtCccZwj) >> has GBP of (ZWJ)
+#         NB GB11, 
+#         CP (fromU32Unchecked 128118), # BABY (ExtPict) >> has GBP of (Other)
+#         NB GB9, 
+#         CP (fromU32Unchecked 127999), # EMOJI MODIFIER FITZPATRICK TYPE-6 (Extend) >> has GBP of (Extend)
+#         BR GB2,
+#     ]
+#     a == b
+
