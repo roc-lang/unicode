@@ -36,8 +36,8 @@ template =
             test.parsed
             |> List.keepIf \token ->
                 when token is
-                    BR rule if rule == GB9a || rule == GB9b || rule == GB9c || rule == GB12 || rule == GB13 -> Bool.true
-                    NB rule if rule == GB9a || rule == GB9b || rule == GB9c || rule == GB12 || rule == GB13 -> Bool.true
+                    BR rule if rule == GB9a || rule == GB9b || rule == GB9c -> Bool.true
+                    NB rule if rule == GB9a || rule == GB9b || rule == GB9c -> Bool.true
                     _ -> Bool.false
             |> List.isEmpty
         |> List.map \test ->

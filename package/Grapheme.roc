@@ -62,8 +62,8 @@ splitHelp = \state, codePoints, breakPoints, acc ->
     # HELPFUL FOR DEBUGGIN - REMOVE ME
     # dbgMe = T (List.first codePoints |> Result.map CodePoint.toU32) (List.first breakPoints)
     # dbg dbgMe
-    # codePointsStr = Inspect.toStr (codePoints |> List.map CodePoint.toU32)
-    # breakPointsStr = Inspect.toStr (breakPoints)
+    codePointsStr = Inspect.toStr (codePoints |> List.map CodePoint.toU32)
+    breakPointsStr = Inspect.toStr (breakPoints)
     # dbg "\(codePointsStr) \(breakPointsStr)"
 
     when (state, codePoints, breakPoints) is
@@ -92,11 +92,15 @@ splitHelp = \state, codePoints, breakPoints, acc ->
         # (AfterExtend prev, [cp],[_]) ->
         #     # dbg "WHY NOT ANOTHER ONe \(codePointsStr) \(breakPointsStr)"
         #     (List.concat acc [CP prev, BR GB999, CP cp, BR GB2])
+
         (EmojiSeqNext prev, [], []) -> List.concat acc [CP prev, BR GB2]
         (EmojiSeqNext prev, [cp], [_]) -> List.concat acc [CP prev, NB GB11, CP cp, BR GB2]
         (EmojiSeqZWJ prev, [_], [_]) ->
             # dbg "EmojiSeqZWJ LAST THING \(codePointsStr) \(breakPointsStr)"
             splitHelp (LastWithPrev prev) codePoints breakPoints acc
+
+        (AfterEvenRI prev, [], []) -> List.concat acc [CP prev, BR GB2]
+        (AfterOddRI prev, [], []) -> List.concat acc [CP prev, BR GB2]
 
         # Looking at current breakpoint property
         (Next, [cp, ..], [bp, ..]) if bp == CR -> splitHelp (AfterCR cp) nextCPs nextBPs acc
@@ -104,8 +108,13 @@ splitHelp = \state, codePoints, breakPoints, acc ->
         (Next, [cp, ..], [bp, ..]) if bp == L -> splitHelp (AfterHungulL cp) nextCPs nextBPs acc
         (Next, [cp, ..], [bp, ..]) if bp == V || bp == LV -> splitHelp (AfterHungulLVorV cp) nextCPs nextBPs acc
         (Next, [cp, ..], [bp, ..]) if bp == LVT || bp == T -> splitHelp (AfterHungulLVTorT cp) nextCPs nextBPs acc
+        (Next, [cp, ..], [bp, ..]) if bp == RI -> 
+            # dbg "GOT AN RI \(codePointsStr) \(breakPointsStr)"
+            splitHelp (AfterOddRI cp) nextCPs nextBPs acc
+        
         # Advance to next, this is requred so that we can apply rules which break before
         (Next, [cp, ..], _) -> splitHelp (LookAtNext cp) nextCPs nextBPs acc
+        
         # Looking ahead at next, given previous
         (LookAtNext prev, _, [bp, ..]) if bp == Control || bp == CR || bp == LF ->
             # dbg "LookAtNext with CONTROL CR LF \(codePointsStr) \(breakPointsStr)"
@@ -166,6 +175,23 @@ splitHelp = \state, codePoints, breakPoints, acc ->
         (LookAtNext prev, _, _) ->
             # dbg "LookAtNext CATCHALL \(codePointsStr) \(breakPointsStr)"
             splitHelp Next codePoints breakPoints (List.concat acc [CP prev, BR GB999])
+
+        (AfterOddRI prev, [cp, ..], [bp, ..]) if bp == RI ->
+            # dbg "ODD WITH RI \(codePointsStr) \(breakPointsStr)"
+            splitHelp (AfterEvenRI cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB12])
+
+        (AfterOddRI prev, [_, ..], [_, ..]) ->
+            # dbg "ODD SOMETHING \(codePointsStr) \(breakPointsStr)"
+            splitHelp (LookAtNext prev) codePoints breakPoints acc
+
+        (AfterEvenRI prev, [cp, ..], [bp, ..]) if bp == RI ->
+            # dbg "EVEN WITH RI \(codePointsStr) \(breakPointsStr)"
+            splitHelp (AfterOddRI cp) nextCPs nextBPs (List.concat acc [CP prev, BR GB999])
+        
+        (AfterEvenRI prev, [cp, ..], [bp, ..]) ->
+            # dbg "EVEN SOMETHING \(codePointsStr) \(breakPointsStr)"
+            splitHelp (LookAtNext prev) codePoints breakPoints acc
+        
 
         # Looking ahead, given previous was CR
         (AfterCR prev, _, [bp, ..]) if bp == LF -> splitHelp Next codePoints breakPoints (List.concat acc [CP prev, NB GB3])
@@ -384,4 +410,25 @@ expect
         CP (fromU32Unchecked 128721), # Other
         BR GB2,
     ]
+    a == b
+
+# GB12 Last is even sequence
+# % [0.2] REGIONAL INDICATOR SYMBOL LETTER A (RI) x [12.0] REGIONAL INDICATOR SYMBOL LETTER A (RI) % [0.3]
+expect
+    a = testHelp [[127462, 127462]]
+    b = [BR GB1, CP (fromU32Unchecked 127462), NB GB12, CP (fromU32Unchecked 127462), BR GB2]
+    a == b
+
+# GB12 Last is odd sequence
+# % [0.2] REGIONAL INDICATOR SYMBOL LETTER A (RI) x [12.0] REGIONAL INDICATOR SYMBOL LETTER A (RI) % [0.3]
+expect
+    a = testHelp [[127462, 127462, 127462]]
+    b = [BR GB1, CP (fromU32Unchecked 127462), NB GB12, CP (fromU32Unchecked 127462), BR GB999, CP (fromU32Unchecked 127462), BR GB2]
+    a == b
+
+# GB12
+# % [0.2] REGIONAL INDICATOR SYMBOL LETTER A (RI) x [12.0] REGIONAL INDICATOR SYMBOL LETTER B (RI) % [999.0] REGIONAL INDICATOR SYMBOL LETTER C (RI) % [999.0] LATIN SMALL LETTER B (Other) % [0.3]
+expect
+    a = testHelp [[127462, 127463], [127464], [98]]
+    b = [BR GB1, CP (fromU32Unchecked 127462), NB GB12, CP (fromU32Unchecked 127463), BR GB999, CP (fromU32Unchecked 127464), BR GB999, CP (fromU32Unchecked 98), BR GB2]
     a == b

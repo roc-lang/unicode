@@ -3079,6 +3079,19 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 275
+# % 1F1E6 x 1F1E6 % #  % [0.2] REGIONAL INDICATOR SYMBOL LETTER A (RI) x [12.0] REGIONAL INDICATOR SYMBOL LETTER A (RI) % [0.3]
+expect     
+    exp = Ok [[127462, 127462]]
+    got = 
+        [127462, 127462] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 276
 # % 1F1E6 x 0308 % 1F1E6 % #  % [0.2] REGIONAL INDICATOR SYMBOL LETTER A (RI) x [9.0] COMBINING DIAERESIS (Extend_ExtCccZwj) % [999.0] REGIONAL INDICATOR SYMBOL LETTER A (RI) % [0.3]
 expect     
@@ -13550,6 +13563,71 @@ expect
     exp = Ok [[44033, 4520], [4352]]
     got = 
         [44033, 4520, 4352] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 1184
+# % 1F1E6 x 1F1E7 % 1F1E8 % 0062 % #  % [0.2] REGIONAL INDICATOR SYMBOL LETTER A (RI) x [12.0] REGIONAL INDICATOR SYMBOL LETTER B (RI) % [999.0] REGIONAL INDICATOR SYMBOL LETTER C (RI) % [999.0] LATIN SMALL LETTER B (Other) % [0.3]
+expect     
+    exp = Ok [[127462, 127463], [127464], [98]]
+    got = 
+        [127462, 127463, 127464, 98] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 1185
+# % 0061 % 1F1E6 x 1F1E7 % 1F1E8 % 0062 % #  % [0.2] LATIN SMALL LETTER A (Other) % [999.0] REGIONAL INDICATOR SYMBOL LETTER A (RI) x [13.0] REGIONAL INDICATOR SYMBOL LETTER B (RI) % [999.0] REGIONAL INDICATOR SYMBOL LETTER C (RI) % [999.0] LATIN SMALL LETTER B (Other) % [0.3]
+expect     
+    exp = Ok [[97], [127462, 127463], [127464], [98]]
+    got = 
+        [97, 127462, 127463, 127464, 98] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 1186
+# % 0061 % 1F1E6 x 1F1E7 x 200D % 1F1E8 % 0062 % #  % [0.2] LATIN SMALL LETTER A (Other) % [999.0] REGIONAL INDICATOR SYMBOL LETTER A (RI) x [13.0] REGIONAL INDICATOR SYMBOL LETTER B (RI) x [9.0] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) % [999.0] REGIONAL INDICATOR SYMBOL LETTER C (RI) % [999.0] LATIN SMALL LETTER B (Other) % [0.3]
+expect     
+    exp = Ok [[97], [127462, 127463, 8205], [127464], [98]]
+    got = 
+        [97, 127462, 127463, 8205, 127464, 98] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 1187
+# % 0061 % 1F1E6 x 200D % 1F1E7 x 1F1E8 % 0062 % #  % [0.2] LATIN SMALL LETTER A (Other) % [999.0] REGIONAL INDICATOR SYMBOL LETTER A (RI) x [9.0] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) % [999.0] REGIONAL INDICATOR SYMBOL LETTER B (RI) x [13.0] REGIONAL INDICATOR SYMBOL LETTER C (RI) % [999.0] LATIN SMALL LETTER B (Other) % [0.3]
+expect     
+    exp = Ok [[97], [127462, 8205], [127463, 127464], [98]]
+    got = 
+        [97, 127462, 8205, 127463, 127464, 98] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 1188
+# % 0061 % 1F1E6 x 1F1E7 % 1F1E8 x 1F1E9 % 0062 % #  % [0.2] LATIN SMALL LETTER A (Other) % [999.0] REGIONAL INDICATOR SYMBOL LETTER A (RI) x [13.0] REGIONAL INDICATOR SYMBOL LETTER B (RI) % [999.0] REGIONAL INDICATOR SYMBOL LETTER C (RI) x [13.0] REGIONAL INDICATOR SYMBOL LETTER D (RI) % [999.0] LATIN SMALL LETTER B (Other) % [0.3]
+expect     
+    exp = Ok [[97], [127462, 127463], [127464, 127465], [98]]
+    got = 
+        [97, 127462, 127463, 127464, 127465, 98] 
         |> List.map InternalCP.fromU32Unchecked 
         |> CodePoint.toStr 
         |> Result.try Grapheme.split
