@@ -13,9 +13,9 @@ app "gen"
         parser.Core.{ Parser, const, keep, skip, oneOf, oneOrMore, many, chompWhile },
         parser.String.{ parseStr, string, codeunit, codeunitSatisfies },
         "data/GraphemeBreakTest-15.1.0.txt" as inputFile : Str,
-        Helpers.{hexBytesToU32},
-        CodePoint.{CodePoint},
-        InternalCP.{fromU32Unchecked},
+        Helpers.{ hexBytesToU32 },
+        CodePoint.{ CodePoint },
+        InternalCP.{ fromU32Unchecked },
     ]
     provides [main] to pf
 
@@ -26,30 +26,30 @@ main : Task {} I32
 main = getFilePath |> Task.await writeToFile |> Task.onErr \err -> Stderr.line "\(err)"
 
 template : Str
-template = 
+template =
 
-    tests = 
+    tests =
         testFile
-        |> List.keepIf \test -> 
+        |> List.keepIf \test ->
             # filter out any tests which aren't passing yet
             # progressively add these as support is added
-            test.parsed 
-            |> List.keepIf \token -> 
-                when token is 
+            test.parsed
+            |> List.keepIf \token ->
+                when token is
                     BR rule if rule == GB9a || rule == GB9b || rule == GB9c || rule == GB12 || rule == GB13 -> Bool.true
                     NB rule if rule == GB9a || rule == GB9b || rule == GB9c || rule == GB12 || rule == GB13 -> Bool.true
                     _ -> Bool.false
             |> List.isEmpty
-        |> List.map \test -> 
+        |> List.map \test ->
             # test : {lineNo : U16, lineStr : Str, parsed : List [BR Rule, NB Rule, CP CodePoint]}
 
-            sanitisedLine = 
+            sanitisedLine =
                 test.lineStr
                 |> Str.replaceEach "÷" "%" # replace %
                 |> Str.replaceEach "×" "x" # replace X
                 |> Str.replaceEach "	" " " # reaplce tabs with a space
 
-            codePointsList =  test.parsed |> toU32List
+            codePointsList = test.parsed |> toU32List
 
             """
 
@@ -58,9 +58,9 @@ template =
             expect     
                 exp = Ok \(codePointsList |> Inspect.toStr)
                 got = 
-                    \(codePointsList 
-                    |> List.join 
-                    |> Inspect.toStr) 
+                    \(codePointsList
+            |> List.join
+            |> Inspect.toStr) 
                     |> List.map InternalCP.fromU32Unchecked 
                     |> CodePoint.toStr 
                     |> Result.try Grapheme.split
@@ -68,7 +68,6 @@ template =
 
                 got == exp
             """
-
         |> Str.joinWith "\n"
 
     """
@@ -101,15 +100,15 @@ writeToFile = \path ->
     |> Task.mapErr \_ -> "ERROR: unable to write to \(Path.display path)"
     |> Task.await \_ -> Stdout.line "\nSucessfully wrote to \(Path.display path)\n"
 
-toU32List : TestTokens -> List (List U32) 
+toU32List : TestTokens -> List (List U32)
 toU32List = \tokens ->
 
-    toU32s = \cps -> cps|> List.map CodePoint.toU32
+    toU32s = \cps -> cps |> List.map CodePoint.toU32
 
-    go : TestTokens, List CodePoint, List (List U32) -> List (List U32) 
+    go : TestTokens, List CodePoint, List (List U32) -> List (List U32)
     go = \remaining, acc, strs ->
         next = List.dropFirst remaining 1
-        when remaining is 
+        when remaining is
             [] -> if List.isEmpty acc then strs else List.append strs (toU32s acc)
             [BR _, ..] -> go next [] (if List.isEmpty acc then strs else List.append strs (toU32s acc))
             [NB _, ..] -> go next acc strs
@@ -117,15 +116,15 @@ toU32List = \tokens ->
 
     go tokens [] []
 
-testFile : List {lineNo : U16, lineStr : Str, parsed : TestTokens }
+testFile : List { lineNo : U16, lineStr : Str, parsed : TestTokens }
 testFile =
-    inputFile   
+    inputFile
     |> Str.split "\n"
-    |> List.mapWithIndex \lineStr, idx -> { lineNo : Num.toU16 (idx + 1), lineStr, parsed : []}
+    |> List.mapWithIndex \lineStr, idx -> { lineNo: Num.toU16 (idx + 1), lineStr, parsed: [] }
     |> List.keepIf \test -> Str.startsWith test.lineStr "÷ "
     |> List.map \test ->
-        when parseStr testParser test.lineStr is 
-            Ok (Ok parsed) -> {test & parsed}
+        when parseStr testParser test.lineStr is
+            Ok (Ok parsed) -> { test & parsed }
             Err err | Ok (Err err) -> crash "Unable to parse line \(Num.toStr test.lineNo) got err \(Inspect.toStr err)"
 
 testParser : Parser (List U8) (Result TestTokens _)
@@ -135,24 +134,25 @@ testParser =
     |> skip (string "	#  ")
     |> keep secondHalfParser
 
-expect 
-    parseStr testParser "÷ 0020 ÷ 0020 ÷	#  ÷ [0.2] SPACE (Other) ÷ [999.0] SPACE (Other) ÷ [0.3]" 
+expect
+    parseStr testParser "÷ 0020 ÷ 0020 ÷	#  ÷ [0.2] SPACE (Other) ÷ [999.0] SPACE (Other) ÷ [0.3]"
     == Ok (Ok [BR GB1, CP (fromU32Unchecked 32), BR GB999, CP (fromU32Unchecked 32), BR GB2])
 
-expect 
-    parseStr testParser "÷ 0020 ÷ 000D ÷	#  ÷ [0.2] SPACE (Other) ÷ [5.0] <CARRIAGE RETURN (CR)> (CR) ÷ [0.3]" 
+expect
+    parseStr testParser "÷ 0020 ÷ 000D ÷	#  ÷ [0.2] SPACE (Other) ÷ [5.0] <CARRIAGE RETURN (CR)> (CR) ÷ [0.3]"
     == Ok (Ok [BR GB1, CP (fromU32Unchecked 32), BR GB5, CP (fromU32Unchecked 13), BR GB2])
 
 codePointParser : Parser (List U8) CodePoint
-codePointParser = 
+codePointParser =
 
     isHex = \b -> (b >= '0' && b <= '9') || (b >= 'A' && b <= 'F')
 
-    const (\bytes -> 
-        bytes 
-        |> hexBytesToU32 
-        |> fromU32Unchecked
-    )
+    const
+        (\bytes ->
+            bytes
+            |> hexBytesToU32
+            |> fromU32Unchecked
+        )
     |> keep (oneOrMore (codeunitSatisfies isHex))
 
 expect parseStr codePointParser "094D" == Ok (fromU32Unchecked 2381)
@@ -183,67 +183,69 @@ expect parseStr breakRuleParser "[999.0]" == Ok GB999
 expect parseStr breakRuleParser "[0.2]" == Ok GB1
 
 firstHalfParser : Parser (List U8) (List [BR, NB, CP CodePoint])
-firstHalfParser = 
-    many (oneOf [
-        const BR |> skip (string "÷"),
-        const NB |> skip (string "×"),
-        const CP |> skip (codeunit ' ') |> keep codePointParser |> skip (codeunit ' '),
-    ])
-    
+firstHalfParser =
+    many
+        (
+            oneOf [
+                const BR |> skip (string "÷"),
+                const NB |> skip (string "×"),
+                const CP |> skip (codeunit ' ') |> keep codePointParser |> skip (codeunit ' '),
+            ]
+        )
+
 expect parseStr firstHalfParser "÷ 0020 ÷ 0020 ÷" == Ok [BR, CP (fromU32Unchecked 32), BR, CP (fromU32Unchecked 32), BR]
 
 secondHalfParser : Parser (List U8) (List [BR Rule, NB Rule])
-secondHalfParser = 
+secondHalfParser =
     # NOTE Str.toUtf8 " ÷ " == [32, 195, 183, 32] : List U8
     # NOTE Str.toUtf8 " × " == [32, 195, 151, 32] : List U8
-    many ( oneOf [
-        const BR 
-        |> skip (string "÷") 
-        |> skip (codeunit ' ')
-        |> keep breakRuleParser
-        |> skip (chompWhile \b -> b != 195),
-        const NB 
-        |> skip (string "×") 
-        |> skip (codeunit ' ')
-        |> keep breakRuleParser
-        |> skip (chompWhile \b -> b != 195),
-    ])
+    many
+        (
+            oneOf [
+                const BR
+                |> skip (string "÷")
+                |> skip (codeunit ' ')
+                |> keep breakRuleParser
+                |> skip (chompWhile \b -> b != 195),
+                const NB
+                |> skip (string "×")
+                |> skip (codeunit ' ')
+                |> keep breakRuleParser
+                |> skip (chompWhile \b -> b != 195),
+            ]
+        )
 
-expect parseStr secondHalfParser  "÷ [0.2] SPACE (Other) ÷ [999.0] SPACE (Other) ÷ [0.3]" == Ok [BR GB1, BR GB999, BR GB2]
+expect parseStr secondHalfParser "÷ [0.2] SPACE (Other) ÷ [999.0] SPACE (Other) ÷ [0.3]" == Ok [BR GB1, BR GB999, BR GB2]
 
 # First half of the line with the test has the CodePoints we want, but the second half
-# has the rules used which we also want, let's combine these to make life simpler and 
+# has the rules used which we also want, let's combine these to make life simpler and
 # so we can test our implementation with more confidence by checking we apply the correct
 # rule in the correct locations
 zip : List [BR, NB, CP CodePoint], List [BR Rule, NB Rule] -> Result (List [BR Rule, NB Rule, CP CodePoint]) [Invalid Str]
 zip = \first, second ->
-    when (List.first first, List.first second) is 
-        (Ok BR, Ok (BR rule)) -> 
-            
+    when (List.first first, List.first second) is
+        (Ok BR, Ok (BR rule)) ->
             next <- zip (List.dropFirst first 1) (List.dropFirst second 1) |> Result.try
 
             Ok (List.append next (BR rule))
 
-        (Ok NB, Ok (NB rule)) -> 
-
+        (Ok NB, Ok (NB rule)) ->
             next <- zip (List.dropFirst first 1) (List.dropFirst second 1) |> Result.try
-            
+
             Ok (List.append next (NB rule))
 
-        (Ok (CP cp), _) -> 
-            
+        (Ok (CP cp), _) ->
             next <- zip (List.dropFirst first 1) second |> Result.try
-            
+
             Ok (List.append next (CP cp))
 
         (Err _, Err _) -> Ok [] # base case
-
         _ -> Err (Invalid "expected first and second lists to match exactly got \(Inspect.toStr (T first second))")
 
-expect 
-    answer = 
-        zip [BR, CP (fromU32Unchecked 35), BR, CP (fromU32Unchecked 32), BR] [BR GB1, BR GB999, BR GB2] 
-        |> Result.map List.reverse 
+expect
+    answer =
+        zip [BR, CP (fromU32Unchecked 35), BR, CP (fromU32Unchecked 32), BR] [BR GB1, BR GB999, BR GB2]
+        |> Result.map List.reverse
         |> Result.withDefault []
 
     answer == [BR GB1, CP (fromU32Unchecked 35), BR GB999, CP (fromU32Unchecked 32), BR GB2]

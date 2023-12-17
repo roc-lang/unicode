@@ -6,5 +6,4 @@ examples/simple
 generated-docs
 package/InternalGBPGen
 package/GraphemeTestGen
-package/GraphemeTestGen2
 package/InternalEmojiGen
