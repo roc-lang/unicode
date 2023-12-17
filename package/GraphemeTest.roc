@@ -24,6 +24,45 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 27
+# % 0020 % 000D % #  % [0.2] SPACE (Other) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[32], [13]]
+    got = 
+        [32, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 29
+# % 0020 % 000A % #  % [0.2] SPACE (Other) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[32], [10]]
+    got = 
+        [32, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 31
+# % 0020 % 0001 % #  % [0.2] SPACE (Other) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[32], [1]]
+    got = 
+        [32, 1] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 35
 # % 0020 % 1F1E6 % #  % [0.2] SPACE (Other) % [999.0] REGIONAL INDICATOR SYMBOL LETTER A (RI) % [0.3]
 expect     
@@ -219,6 +258,19 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 76
+# % 000D % 0308 % 000D % #  % [0.2] <CARRIAGE RETURN (CR)> (CR) % [4.0] COMBINING DIAERESIS (Extend_ExtCccZwj) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[13], [776], [13]]
+    got = 
+        [13, 776, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 77
 # % 000D x 000A % #  % [0.2] <CARRIAGE RETURN (CR)> (CR) x [3.0] <LINE FEED (LF)> (LF) % [0.3]
 expect     
@@ -232,12 +284,38 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 78
+# % 000D % 0308 % 000A % #  % [0.2] <CARRIAGE RETURN (CR)> (CR) % [4.0] COMBINING DIAERESIS (Extend_ExtCccZwj) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[13], [776], [10]]
+    got = 
+        [13, 776, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 79
 # % 000D % 0001 % #  % [0.2] <CARRIAGE RETURN (CR)> (CR) % [4.0] <START OF HEADING> (Control) % [0.3]
 expect     
     exp = Ok [[13], [1]]
     got = 
         [13, 1] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 80
+# % 000D % 0308 % 0001 % #  % [0.2] <CARRIAGE RETURN (CR)> (CR) % [4.0] COMBINING DIAERESIS (Extend_ExtCccZwj) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[13], [776], [1]]
+    got = 
+        [13, 776, 1] 
         |> List.map InternalCP.fromU32Unchecked 
         |> CodePoint.toStr 
         |> Result.try Grapheme2.split
@@ -700,6 +778,19 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 124
+# % 000A % 0308 % 000D % #  % [0.2] <LINE FEED (LF)> (LF) % [4.0] COMBINING DIAERESIS (Extend_ExtCccZwj) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[10], [776], [13]]
+    got = 
+        [10, 776, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 125
 # % 000A % 000A % #  % [0.2] <LINE FEED (LF)> (LF) % [4.0] <LINE FEED (LF)> (LF) % [0.3]
 expect     
@@ -713,12 +804,38 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 126
+# % 000A % 0308 % 000A % #  % [0.2] <LINE FEED (LF)> (LF) % [4.0] COMBINING DIAERESIS (Extend_ExtCccZwj) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[10], [776], [10]]
+    got = 
+        [10, 776, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 127
 # % 000A % 0001 % #  % [0.2] <LINE FEED (LF)> (LF) % [4.0] <START OF HEADING> (Control) % [0.3]
 expect     
     exp = Ok [[10], [1]]
     got = 
         [10, 1] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 128
+# % 000A % 0308 % 0001 % #  % [0.2] <LINE FEED (LF)> (LF) % [4.0] COMBINING DIAERESIS (Extend_ExtCccZwj) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[10], [776], [1]]
+    got = 
+        [10, 776, 1] 
         |> List.map InternalCP.fromU32Unchecked 
         |> CodePoint.toStr 
         |> Result.try Grapheme2.split
@@ -1181,6 +1298,19 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 172
+# % 0001 % 0308 % 000D % #  % [0.2] <START OF HEADING> (Control) % [4.0] COMBINING DIAERESIS (Extend_ExtCccZwj) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[1], [776], [13]]
+    got = 
+        [1, 776, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 173
 # % 0001 % 000A % #  % [0.2] <START OF HEADING> (Control) % [4.0] <LINE FEED (LF)> (LF) % [0.3]
 expect     
@@ -1194,12 +1324,38 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 174
+# % 0001 % 0308 % 000A % #  % [0.2] <START OF HEADING> (Control) % [4.0] COMBINING DIAERESIS (Extend_ExtCccZwj) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[1], [776], [10]]
+    got = 
+        [1, 776, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 175
 # % 0001 % 0001 % #  % [0.2] <START OF HEADING> (Control) % [4.0] <START OF HEADING> (Control) % [0.3]
 expect     
     exp = Ok [[1], [1]]
     got = 
         [1, 1] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 176
+# % 0001 % 0308 % 0001 % #  % [0.2] <START OF HEADING> (Control) % [4.0] COMBINING DIAERESIS (Extend_ExtCccZwj) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[1], [776], [1]]
+    got = 
+        [1, 776, 1] 
         |> List.map InternalCP.fromU32Unchecked 
         |> CodePoint.toStr 
         |> Result.try Grapheme2.split
@@ -1636,6 +1792,45 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 219
+# % 034F % 000D % #  % [0.2] COMBINING GRAPHEME JOINER (Extend) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[847], [13]]
+    got = 
+        [847, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 221
+# % 034F % 000A % #  % [0.2] COMBINING GRAPHEME JOINER (Extend) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[847], [10]]
+    got = 
+        [847, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 223
+# % 034F % 0001 % #  % [0.2] COMBINING GRAPHEME JOINER (Extend) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[847], [1]]
+    got = 
+        [847, 1] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 227
 # % 034F % 1F1E6 % #  % [0.2] COMBINING GRAPHEME JOINER (Extend) % [999.0] REGIONAL INDICATOR SYMBOL LETTER A (RI) % [0.3]
 expect     
@@ -1805,6 +2000,45 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 267
+# % 1F1E6 % 000D % #  % [0.2] REGIONAL INDICATOR SYMBOL LETTER A (RI) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[127462], [13]]
+    got = 
+        [127462, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 269
+# % 1F1E6 % 000A % #  % [0.2] REGIONAL INDICATOR SYMBOL LETTER A (RI) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[127462], [10]]
+    got = 
+        [127462, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 271
+# % 1F1E6 % 0001 % #  % [0.2] REGIONAL INDICATOR SYMBOL LETTER A (RI) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[127462], [1]]
+    got = 
+        [127462, 1] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 277
 # % 1F1E6 % 0600 % #  % [0.2] REGIONAL INDICATOR SYMBOL LETTER A (RI) % [999.0] ARABIC NUMBER SIGN (Prepend) % [0.3]
 expect     
@@ -1948,12 +2182,90 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 315
+# % 0600 % 000D % #  % [0.2] ARABIC NUMBER SIGN (Prepend) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[1536], [13]]
+    got = 
+        [1536, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 317
+# % 0600 % 000A % #  % [0.2] ARABIC NUMBER SIGN (Prepend) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[1536], [10]]
+    got = 
+        [1536, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 319
+# % 0600 % 0001 % #  % [0.2] ARABIC NUMBER SIGN (Prepend) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[1536], [1]]
+    got = 
+        [1536, 1] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 361
 # % 0A03 % 0020 % #  % [0.2] GURMUKHI SIGN VISARGA (SpacingMark) % [999.0] SPACE (Other) % [0.3]
 expect     
     exp = Ok [[2563], [32]]
     got = 
         [2563, 32] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 363
+# % 0A03 % 000D % #  % [0.2] GURMUKHI SIGN VISARGA (SpacingMark) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[2563], [13]]
+    got = 
+        [2563, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 365
+# % 0A03 % 000A % #  % [0.2] GURMUKHI SIGN VISARGA (SpacingMark) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[2563], [10]]
+    got = 
+        [2563, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 367
+# % 0A03 % 0001 % #  % [0.2] GURMUKHI SIGN VISARGA (SpacingMark) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[2563], [1]]
+    got = 
+        [2563, 1] 
         |> List.map InternalCP.fromU32Unchecked 
         |> CodePoint.toStr 
         |> Result.try Grapheme2.split
@@ -2130,6 +2442,45 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 411
+# % 1100 % 000D % #  % [0.2] HANGUL CHOSEONG KIYEOK (L) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[4352], [13]]
+    got = 
+        [4352, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 413
+# % 1100 % 000A % #  % [0.2] HANGUL CHOSEONG KIYEOK (L) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[4352], [10]]
+    got = 
+        [4352, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 415
+# % 1100 % 0001 % #  % [0.2] HANGUL CHOSEONG KIYEOK (L) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[4352], [1]]
+    got = 
+        [4352, 1] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 419
 # % 1100 % 1F1E6 % #  % [0.2] HANGUL CHOSEONG KIYEOK (L) % [999.0] REGIONAL INDICATOR SYMBOL LETTER A (RI) % [0.3]
 expect     
@@ -2240,6 +2591,45 @@ expect
     exp = Ok [[4448], [32]]
     got = 
         [4448, 32] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 459
+# % 1160 % 000D % #  % [0.2] HANGUL JUNGSEONG FILLER (V) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[4448], [13]]
+    got = 
+        [4448, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 461
+# % 1160 % 000A % #  % [0.2] HANGUL JUNGSEONG FILLER (V) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[4448], [10]]
+    got = 
+        [4448, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 463
+# % 1160 % 0001 % #  % [0.2] HANGUL JUNGSEONG FILLER (V) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[4448], [1]]
+    got = 
+        [4448, 1] 
         |> List.map InternalCP.fromU32Unchecked 
         |> CodePoint.toStr 
         |> Result.try Grapheme2.split
@@ -2383,6 +2773,45 @@ expect
     exp = Ok [[4520], [32]]
     got = 
         [4520, 32] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 507
+# % 11A8 % 000D % #  % [0.2] HANGUL JONGSEONG KIYEOK (T) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[4520], [13]]
+    got = 
+        [4520, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 509
+# % 11A8 % 000A % #  % [0.2] HANGUL JONGSEONG KIYEOK (T) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[4520], [10]]
+    got = 
+        [4520, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 511
+# % 11A8 % 0001 % #  % [0.2] HANGUL JONGSEONG KIYEOK (T) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[4520], [1]]
+    got = 
+        [4520, 1] 
         |> List.map InternalCP.fromU32Unchecked 
         |> CodePoint.toStr 
         |> Result.try Grapheme2.split
@@ -2546,6 +2975,45 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 555
+# % AC00 % 000D % #  % [0.2] HANGUL SYLLABLE GA (LV) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[44032], [13]]
+    got = 
+        [44032, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 557
+# % AC00 % 000A % #  % [0.2] HANGUL SYLLABLE GA (LV) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[44032], [10]]
+    got = 
+        [44032, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 559
+# % AC00 % 0001 % #  % [0.2] HANGUL SYLLABLE GA (LV) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[44032], [1]]
+    got = 
+        [44032, 1] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 563
 # % AC00 % 1F1E6 % #  % [0.2] HANGUL SYLLABLE GA (LV) % [999.0] REGIONAL INDICATOR SYMBOL LETTER A (RI) % [0.3]
 expect     
@@ -2682,6 +3150,45 @@ expect
     exp = Ok [[44033], [32]]
     got = 
         [44033, 32] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 603
+# % AC01 % 000D % #  % [0.2] HANGUL SYLLABLE GAG (LVT) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[44033], [13]]
+    got = 
+        [44033, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 605
+# % AC01 % 000A % #  % [0.2] HANGUL SYLLABLE GAG (LVT) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[44033], [10]]
+    got = 
+        [44033, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 607
+# % AC01 % 0001 % #  % [0.2] HANGUL SYLLABLE GAG (LVT) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[44033], [1]]
+    got = 
+        [44033, 1] 
         |> List.map InternalCP.fromU32Unchecked 
         |> CodePoint.toStr 
         |> Result.try Grapheme2.split
@@ -2838,6 +3345,45 @@ expect
     exp = Ok [[2304], [32]]
     got = 
         [2304, 32] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 651
+# % 0900 % 000D % #  % [0.2] DEVANAGARI SIGN INVERTED CANDRABINDU (Extend_ConjunctLinkingScripts) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[2304], [13]]
+    got = 
+        [2304, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 653
+# % 0900 % 000A % #  % [0.2] DEVANAGARI SIGN INVERTED CANDRABINDU (Extend_ConjunctLinkingScripts) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[2304], [10]]
+    got = 
+        [2304, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 655
+# % 0900 % 0001 % #  % [0.2] DEVANAGARI SIGN INVERTED CANDRABINDU (Extend_ConjunctLinkingScripts) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[2304], [1]]
+    got = 
+        [2304, 1] 
         |> List.map InternalCP.fromU32Unchecked 
         |> CodePoint.toStr 
         |> Result.try Grapheme2.split
@@ -3014,6 +3560,45 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 699
+# % 0903 % 000D % #  % [0.2] DEVANAGARI SIGN VISARGA (SpacingMark_ConjunctLinkingScripts) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[2307], [13]]
+    got = 
+        [2307, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 701
+# % 0903 % 000A % #  % [0.2] DEVANAGARI SIGN VISARGA (SpacingMark_ConjunctLinkingScripts) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[2307], [10]]
+    got = 
+        [2307, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 703
+# % 0903 % 0001 % #  % [0.2] DEVANAGARI SIGN VISARGA (SpacingMark_ConjunctLinkingScripts) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[2307], [1]]
+    got = 
+        [2307, 1] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 707
 # % 0903 % 1F1E6 % #  % [0.2] DEVANAGARI SIGN VISARGA (SpacingMark_ConjunctLinkingScripts) % [999.0] REGIONAL INDICATOR SYMBOL LETTER A (RI) % [0.3]
 expect     
@@ -3183,6 +3768,45 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 747
+# % 0904 % 000D % #  % [0.2] DEVANAGARI LETTER SHORT A (ConjunctLinkingScripts) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[2308], [13]]
+    got = 
+        [2308, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 749
+# % 0904 % 000A % #  % [0.2] DEVANAGARI LETTER SHORT A (ConjunctLinkingScripts) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[2308], [10]]
+    got = 
+        [2308, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 751
+# % 0904 % 0001 % #  % [0.2] DEVANAGARI LETTER SHORT A (ConjunctLinkingScripts) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[2308], [1]]
+    got = 
+        [2308, 1] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 755
 # % 0904 % 1F1E6 % #  % [0.2] DEVANAGARI LETTER SHORT A (ConjunctLinkingScripts) % [999.0] REGIONAL INDICATOR SYMBOL LETTER A (RI) % [0.3]
 expect     
@@ -3339,12 +3963,90 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 795
+# % 0D4E % 000D % #  % [0.2] MALAYALAM LETTER DOT REPH (Prepend_ConjunctLinkingScripts) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[3406], [13]]
+    got = 
+        [3406, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 797
+# % 0D4E % 000A % #  % [0.2] MALAYALAM LETTER DOT REPH (Prepend_ConjunctLinkingScripts) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[3406], [10]]
+    got = 
+        [3406, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 799
+# % 0D4E % 0001 % #  % [0.2] MALAYALAM LETTER DOT REPH (Prepend_ConjunctLinkingScripts) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[3406], [1]]
+    got = 
+        [3406, 1] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 841
 # % 0915 % 0020 % #  % [0.2] DEVANAGARI LETTER KA (ConjunctLinkingScripts_LinkingConsonant) % [999.0] SPACE (Other) % [0.3]
 expect     
     exp = Ok [[2325], [32]]
     got = 
         [2325, 32] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 843
+# % 0915 % 000D % #  % [0.2] DEVANAGARI LETTER KA (ConjunctLinkingScripts_LinkingConsonant) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[2325], [13]]
+    got = 
+        [2325, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 845
+# % 0915 % 000A % #  % [0.2] DEVANAGARI LETTER KA (ConjunctLinkingScripts_LinkingConsonant) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[2325], [10]]
+    got = 
+        [2325, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 847
+# % 0915 % 0001 % #  % [0.2] DEVANAGARI LETTER KA (ConjunctLinkingScripts_LinkingConsonant) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[2325], [1]]
+    got = 
+        [2325, 1] 
         |> List.map InternalCP.fromU32Unchecked 
         |> CodePoint.toStr 
         |> Result.try Grapheme2.split
@@ -3521,6 +4223,45 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 891
+# % 231A % 000D % #  % [0.2] WATCH (ExtPict) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[8986], [13]]
+    got = 
+        [8986, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 893
+# % 231A % 000A % #  % [0.2] WATCH (ExtPict) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[8986], [10]]
+    got = 
+        [8986, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 895
+# % 231A % 0001 % #  % [0.2] WATCH (ExtPict) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[8986], [1]]
+    got = 
+        [8986, 1] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 899
 # % 231A % 1F1E6 % #  % [0.2] WATCH (ExtPict) % [999.0] REGIONAL INDICATOR SYMBOL LETTER A (RI) % [0.3]
 expect     
@@ -3683,6 +4424,45 @@ expect
     exp = Ok [[768], [32]]
     got = 
         [768, 32] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 939
+# % 0300 % 000D % #  % [0.2] COMBINING GRAVE ACCENT (Extend_ExtCccZwj) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[768], [13]]
+    got = 
+        [768, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 941
+# % 0300 % 000A % #  % [0.2] COMBINING GRAVE ACCENT (Extend_ExtCccZwj) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[768], [10]]
+    got = 
+        [768, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 943
+# % 0300 % 0001 % #  % [0.2] COMBINING GRAVE ACCENT (Extend_ExtCccZwj) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[768], [1]]
+    got = 
+        [768, 1] 
         |> List.map InternalCP.fromU32Unchecked 
         |> CodePoint.toStr 
         |> Result.try Grapheme2.split
@@ -3859,6 +4639,45 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 987
+# % 093C % 000D % #  % [0.2] DEVANAGARI SIGN NUKTA (Extend_ConjunctLinkingScripts_ExtCccZwj) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[2364], [13]]
+    got = 
+        [2364, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 989
+# % 093C % 000A % #  % [0.2] DEVANAGARI SIGN NUKTA (Extend_ConjunctLinkingScripts_ExtCccZwj) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[2364], [10]]
+    got = 
+        [2364, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 991
+# % 093C % 0001 % #  % [0.2] DEVANAGARI SIGN NUKTA (Extend_ConjunctLinkingScripts_ExtCccZwj) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[2364], [1]]
+    got = 
+        [2364, 1] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 995
 # % 093C % 1F1E6 % #  % [0.2] DEVANAGARI SIGN NUKTA (Extend_ConjunctLinkingScripts_ExtCccZwj) % [999.0] REGIONAL INDICATOR SYMBOL LETTER A (RI) % [0.3]
 expect     
@@ -4021,6 +4840,45 @@ expect
     exp = Ok [[2381], [32]]
     got = 
         [2381, 32] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 1035
+# % 094D % 000D % #  % [0.2] DEVANAGARI SIGN VIRAMA (Extend_ConjunctLinkingScripts_ConjunctLinker_ExtCccZwj) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[2381], [13]]
+    got = 
+        [2381, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 1037
+# % 094D % 000A % #  % [0.2] DEVANAGARI SIGN VIRAMA (Extend_ConjunctLinkingScripts_ConjunctLinker_ExtCccZwj) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[2381], [10]]
+    got = 
+        [2381, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 1039
+# % 094D % 0001 % #  % [0.2] DEVANAGARI SIGN VIRAMA (Extend_ConjunctLinkingScripts_ConjunctLinker_ExtCccZwj) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[2381], [1]]
+    got = 
+        [2381, 1] 
         |> List.map InternalCP.fromU32Unchecked 
         |> CodePoint.toStr 
         |> Result.try Grapheme2.split
@@ -4197,6 +5055,45 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 1083
+# % 200D % 000D % #  % [0.2] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[8205], [13]]
+    got = 
+        [8205, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 1085
+# % 200D % 000A % #  % [0.2] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[8205], [10]]
+    got = 
+        [8205, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 1087
+# % 200D % 0001 % #  % [0.2] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[8205], [1]]
+    got = 
+        [8205, 1] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 1091
 # % 200D % 1F1E6 % #  % [0.2] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) % [999.0] REGIONAL INDICATOR SYMBOL LETTER A (RI) % [0.3]
 expect     
@@ -4366,6 +5263,45 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 1131
+# % 0378 % 000D % #  % [0.2] <reserved-0378> (Other) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect     
+    exp = Ok [[888], [13]]
+    got = 
+        [888, 13] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 1133
+# % 0378 % 000A % #  % [0.2] <reserved-0378> (Other) % [5.0] <LINE FEED (LF)> (LF) % [0.3]
+expect     
+    exp = Ok [[888], [10]]
+    got = 
+        [888, 10] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 1135
+# % 0378 % 0001 % #  % [0.2] <reserved-0378> (Other) % [5.0] <START OF HEADING> (Control) % [0.3]
+expect     
+    exp = Ok [[888], [1]]
+    got = 
+        [888, 1] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 1139
 # % 0378 % 1F1E6 % #  % [0.2] <reserved-0378> (Other) % [999.0] REGIONAL INDICATOR SYMBOL LETTER A (RI) % [0.3]
 expect     
@@ -4515,6 +5451,19 @@ expect
     exp = Ok [[888], [888]]
     got = 
         [888, 888] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 1177
+# % 000D x 000A % 0061 % 000A % 0308 % #  % [0.2] <CARRIAGE RETURN (CR)> (CR) x [3.0] <LINE FEED (LF)> (LF) % [4.0] LATIN SMALL LETTER A (Other) % [5.0] <LINE FEED (LF)> (LF) % [4.0] COMBINING DIAERESIS (Extend_ExtCccZwj) % [0.3]
+expect     
+    exp = Ok [[13, 10], [97], [10], [776]]
+    got = 
+        [13, 10, 97, 10, 776] 
         |> List.map InternalCP.fromU32Unchecked 
         |> CodePoint.toStr 
         |> Result.try Grapheme2.split

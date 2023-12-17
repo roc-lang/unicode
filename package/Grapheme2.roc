@@ -50,7 +50,7 @@ toListStr = \outState ->
             Ok str -> str
             Err _ -> crash "unreachable got invalid utf8 when converting CodePoints to Str"
 
-splitHelp : State, List CodePoint, List GBP, OutState -> OutState
+splitHelp : _, List CodePoint, List GBP, OutState -> OutState
 splitHelp = \state, codePoints, breakPoints, acc ->
     nextCPs = List.dropFirst codePoints 1
     nextBPs = List.dropFirst breakPoints 1
@@ -67,13 +67,15 @@ splitHelp = \state, codePoints, breakPoints, acc ->
         # Special handling for some last remaining codepoint types
         (Next, [cp], [bp]) if bp == CR -> (List.concat acc [CP cp, BR GB2])
         (Next, [cp], _) -> (List.concat acc [CP cp, BR GB2])
-        
+
         # Looking at current breakpoint property 
         (Next, [cp, ..], [bp, ..]) if bp == CR -> splitHelp (AfterCR cp) nextCPs nextBPs acc
-        (Next, [cp, ..], [bp, ..]) if bp == Control -> splitHelp Next nextCPs nextBPs (List.concat acc [CP cp, BR GB4])
-        (Next, [cp, ..], _) -> splitHelp Next nextCPs nextBPs (List.concat acc [CP cp, BR GB999])
+        (Next, [cp, ..], [bp, ..]) if bp == Control || bp == LF -> splitHelp Next nextCPs nextBPs (List.concat acc [CP cp, BR GB4])
+        (Next, [cp, ..], _) -> splitHelp (LookAtNext cp) nextCPs nextBPs acc
 
         # Looking ahead at next, given previous breakpoint property
+        (LookAtNext prev, [cp, ..], [bp, ..]) if bp == Control || bp == CR || bp == LF -> splitHelp Next codePoints breakPoints (List.concat acc [CP prev, BR GB5])
+        (LookAtNext prev, [cp, ..], [bp, ..]) -> splitHelp Next codePoints breakPoints (List.concat acc [CP prev, BR GB999])
         (AfterCR prev, _, [bp, ..]) if bp == LF -> splitHelp Next codePoints breakPoints (List.concat acc [CP prev, NB GB3])
         (AfterCR prev, _, _) -> splitHelp Next codePoints breakPoints (List.concat acc [CP prev, BR GB4])
 
@@ -88,43 +90,51 @@ splitHelp = \state, codePoints, breakPoints, acc ->
                 \(Inspect.toStr (state, List.map codePoints CodePoint.toU32, breakPoints))
                 """
 
-State : [
-    Next,
-    AfterCR CodePoint,
-    AfterHungulL,
-    AfterHungulLVorV,
-    AfterHungulLVTorT,
-    AfterRI,
-]
+# State : [
+#     Next,
+#     AfterCR CodePoint,
+#     AfterHungulL,
+#     AfterHungulLVorV,
+#     AfterHungulLVTorT,
+#     AfterRI,
+# ]
 
-# Test break everywhere
+# GB999 Test break everywhere
 expect 
     a = testHelp [[888], [888]]
     b = [BR GB1, CP (fromU32Unchecked 888), BR GB999, CP (fromU32Unchecked 888), BR GB2]
     a == b
 
-# Test no break between CRLF starting character
+# GB3 & GB5 Test no break between CRLF starting character
 expect 
     a = testHelp [[888], [13, 10]]
-    b = [BR GB1, CP (fromU32Unchecked 888), BR GB999, CP (fromU32Unchecked 13), NB GB3, CP (fromU32Unchecked 10), BR GB2]
+    b = [BR GB1, CP (fromU32Unchecked 888), BR GB5, CP (fromU32Unchecked 13), NB GB3, CP (fromU32Unchecked 10), BR GB2]
     a == b
 
-# Test no break between CRLF in the middle of the sequence
-expect 
-    a = testHelp [[888], [13, 10]]
-    b = [BR GB1, CP (fromU32Unchecked 888), BR GB999, CP (fromU32Unchecked 13), NB GB3, CP (fromU32Unchecked 10), BR GB2]
-    a == b
-
-# Test break after control with a CR as last character
+# GB4 Test break after control with a CR as last character
 expect 
     a = testHelp [[1], [13]]
     b = [BR GB1, CP (fromU32Unchecked 1), BR GB4, CP (fromU32Unchecked 13), BR GB2]
     a == b
 
-# Break after starting CR, don't break remaining characters 
+# GB4 Break after starting CR, don't break remaining characters 
 expect 
     a = testHelp [[13], [776], [888]]
     b = [BR GB1, CP (fromU32Unchecked 13), BR GB4, CP (fromU32Unchecked 776), BR GB999, CP (fromU32Unchecked 888), BR GB2]
+    a == b
+
+# GB5 Break before CR 
+# % 0020 % 000D % #  % [0.2] SPACE (Other) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect 
+    a = testHelp [[32], [13]]
+    b = [BR GB1, CP (fromU32Unchecked 32), BR GB5, CP (fromU32Unchecked 13), BR GB2]
+    a == b
+
+# GB4 & GB5 Break after LF and before CR in last position
+# % 000A % 0308 % 000D % #  % [0.2] <LINE FEED (LF)> (LF) % [4.0] COMBINING DIAERESIS (Extend_ExtCccZwj) % [5.0] <CARRIAGE RETURN (CR)> (CR) % [0.3]
+expect 
+    a = testHelp [[10], [776], [13]]
+    b = [BR GB1, CP (fromU32Unchecked 10), BR GB4, CP (fromU32Unchecked 776),BR GB5, CP (fromU32Unchecked 13), BR GB2]
     a == b
 
 testHelp : List (List U32) -> OutState
