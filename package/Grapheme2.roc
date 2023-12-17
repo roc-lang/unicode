@@ -73,6 +73,7 @@ splitHelp = \state, codePoints, breakPoints, acc ->
         (AfterHungulLVorV prev, [_], [_]) -> splitHelp (LastWithPrev prev) codePoints breakPoints acc
         (AfterHungulLVTorT prev, [_], [_]) -> splitHelp (LastWithPrev prev) codePoints breakPoints acc
         (LastWithPrev prev, [cp], [bp]) if bp == Control || bp == CR || bp == LF -> (List.concat acc [CP prev, BR GB5, CP cp, BR GB2])
+        (LastWithPrev prev, [cp], [bp]) if bp == ZWJ || bp == Extend -> (List.concat acc [CP prev, NB GB9, CP cp, BR GB2])
         (LastWithPrev prev, [cp], [_]) -> (List.concat acc [CP prev, BR GB999, CP cp, BR GB2])
 
         # Looking at current breakpoint property 
@@ -87,6 +88,7 @@ splitHelp = \state, codePoints, breakPoints, acc ->
 
         # Looking ahead at next, given previous
         (LookAtNext prev, _, [bp, ..]) if bp == Control || bp == CR || bp == LF -> splitHelp Next codePoints breakPoints (List.concat acc [CP prev, BR GB5])
+        (LookAtNext prev, _, [bp, ..]) if bp == ZWJ || bp == Extend -> splitHelp Next codePoints breakPoints (List.concat acc [CP prev, NB GB9])
         (LookAtNext prev, _, _) -> splitHelp Next codePoints breakPoints (List.concat acc [CP prev, BR GB999])
         
         # Looking ahead, given previous was CR
@@ -218,6 +220,20 @@ expect
 expect 
     a = testHelp [[4607, 13]]
     b = [BR GB1, CP (fromU32Unchecked 4607), BR GB5, CP (fromU32Unchecked 13), BR GB2]
+    a == b
+
+# GB9 Do not break before extending characters or ZWJ in the middle of a sequence
+# % 003F x 094D % 0924 % #  % [0.2] QUESTION MARK (Other) x [9.0] DEVANAGARI SIGN VIRAMA (Extend_ConjunctLinkingScripts_ConjunctLinker_ExtCccZwj) % [999.0] DEVANAGARI LETTER TA (ConjunctLinkingScripts_LinkingConsonant) % [0.3]
+expect 
+    a = testHelp [[63, 2381], [2340]]
+    b = [BR GB1, CP (fromU32Unchecked 63), NB GB9, CP (fromU32Unchecked 2381), BR GB999, CP (fromU32Unchecked 2340), BR GB2]
+    a == b
+
+# GB9 Do not break before extending characters or ZWJ in last position
+# % AC01 x 200D % #  % [0.2] HANGUL SYLLABLE GAG (LVT) x [9.0] ZERO WIDTH JOINER (ZWJ_ExtCccZwj) % [0.3]
+expect 
+    a = testHelp [[44033, 8205]]
+    b = [BR GB1, CP (fromU32Unchecked 44033), NB GB9, CP (fromU32Unchecked 8205), BR GB2]
     a == b
 
 testHelp : List (List U32) -> OutState
