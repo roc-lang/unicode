@@ -2507,12 +2507,64 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 425
+# % 1100 x 1100 % #  % [0.2] HANGUL CHOSEONG KIYEOK (L) x [6.0] HANGUL CHOSEONG KIYEOK (L) % [0.3]
+expect     
+    exp = Ok [[4352, 4352]]
+    got = 
+        [4352, 4352] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 427
+# % 1100 x 1160 % #  % [0.2] HANGUL CHOSEONG KIYEOK (L) x [6.0] HANGUL JUNGSEONG FILLER (V) % [0.3]
+expect     
+    exp = Ok [[4352, 4448]]
+    got = 
+        [4352, 4448] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 429
 # % 1100 % 11A8 % #  % [0.2] HANGUL CHOSEONG KIYEOK (L) % [999.0] HANGUL JONGSEONG KIYEOK (T) % [0.3]
 expect     
     exp = Ok [[4352], [4520]]
     got = 
         [4352, 4520] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 431
+# % 1100 x AC00 % #  % [0.2] HANGUL CHOSEONG KIYEOK (L) x [6.0] HANGUL SYLLABLE GA (LV) % [0.3]
+expect     
+    exp = Ok [[4352, 44032]]
+    got = 
+        [4352, 44032] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 433
+# % 1100 x AC01 % #  % [0.2] HANGUL CHOSEONG KIYEOK (L) x [6.0] HANGUL SYLLABLE GAG (LVT) % [0.3]
+expect     
+    exp = Ok [[4352, 44033]]
+    got = 
+        [4352, 44033] 
         |> List.map InternalCP.fromU32Unchecked 
         |> CodePoint.toStr 
         |> Result.try Grapheme2.split
@@ -2669,6 +2721,32 @@ expect
     exp = Ok [[4448], [4352]]
     got = 
         [4448, 4352] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 475
+# % 1160 x 1160 % #  % [0.2] HANGUL JUNGSEONG FILLER (V) x [7.0] HANGUL JUNGSEONG FILLER (V) % [0.3]
+expect     
+    exp = Ok [[4448, 4448]]
+    got = 
+        [4448, 4448] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 477
+# % 1160 x 11A8 % #  % [0.2] HANGUL JUNGSEONG FILLER (V) x [7.0] HANGUL JONGSEONG KIYEOK (T) % [0.3]
+expect     
+    exp = Ok [[4448, 4520]]
+    got = 
+        [4448, 4520] 
         |> List.map InternalCP.fromU32Unchecked 
         |> CodePoint.toStr 
         |> Result.try Grapheme2.split
@@ -2871,6 +2949,19 @@ expect
 
     got == exp
 
+# GraphemeBreakTest-15.1.0.txt:line 525
+# % 11A8 x 11A8 % #  % [0.2] HANGUL JONGSEONG KIYEOK (T) x [8.0] HANGUL JONGSEONG KIYEOK (T) % [0.3]
+expect     
+    exp = Ok [[4520, 4520]]
+    got = 
+        [4520, 4520] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
 # GraphemeBreakTest-15.1.0.txt:line 527
 # % 11A8 % AC00 % #  % [0.2] HANGUL JONGSEONG KIYEOK (T) % [999.0] HANGUL SYLLABLE GA (LV) % [0.3]
 expect     
@@ -3046,6 +3137,32 @@ expect
     exp = Ok [[44032], [4352]]
     got = 
         [44032, 4352] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 571
+# % AC00 x 1160 % #  % [0.2] HANGUL SYLLABLE GA (LV) x [7.0] HANGUL JUNGSEONG FILLER (V) % [0.3]
+expect     
+    exp = Ok [[44032, 4448]]
+    got = 
+        [44032, 4448] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 573
+# % AC00 x 11A8 % #  % [0.2] HANGUL SYLLABLE GA (LV) x [7.0] HANGUL JONGSEONG KIYEOK (T) % [0.3]
+expect     
+    exp = Ok [[44032, 4520]]
+    got = 
+        [44032, 4520] 
         |> List.map InternalCP.fromU32Unchecked 
         |> CodePoint.toStr 
         |> Result.try Grapheme2.split
@@ -3241,6 +3358,19 @@ expect
     exp = Ok [[44033], [4448]]
     got = 
         [44033, 4448] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 621
+# % AC01 x 11A8 % #  % [0.2] HANGUL SYLLABLE GAG (LVT) x [8.0] HANGUL JONGSEONG KIYEOK (T) % [0.3]
+expect     
+    exp = Ok [[44033, 4520]]
+    got = 
+        [44033, 4520] 
         |> List.map InternalCP.fromU32Unchecked 
         |> CodePoint.toStr 
         |> Result.try Grapheme2.split
@@ -5464,6 +5594,45 @@ expect
     exp = Ok [[13, 10], [97], [10], [776]]
     got = 
         [13, 10, 97, 10, 776] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 1181
+# % 1100 x 1100 % #  % [0.2] HANGUL CHOSEONG KIYEOK (L) x [6.0] HANGUL CHOSEONG KIYEOK (L) % [0.3]
+expect     
+    exp = Ok [[4352, 4352]]
+    got = 
+        [4352, 4352] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 1182
+# % AC00 x 11A8 % 1100 % #  % [0.2] HANGUL SYLLABLE GA (LV) x [7.0] HANGUL JONGSEONG KIYEOK (T) % [999.0] HANGUL CHOSEONG KIYEOK (L) % [0.3]
+expect     
+    exp = Ok [[44032, 4520], [4352]]
+    got = 
+        [44032, 4520, 4352] 
+        |> List.map InternalCP.fromU32Unchecked 
+        |> CodePoint.toStr 
+        |> Result.try Grapheme2.split
+        |> Result.map toCodePointList
+
+    got == exp
+
+# GraphemeBreakTest-15.1.0.txt:line 1183
+# % AC01 x 11A8 % 1100 % #  % [0.2] HANGUL SYLLABLE GAG (LVT) x [8.0] HANGUL JONGSEONG KIYEOK (T) % [999.0] HANGUL CHOSEONG KIYEOK (L) % [0.3]
+expect     
+    exp = Ok [[44033, 4520], [4352]]
+    got = 
+        [44033, 4520, 4352] 
         |> List.map InternalCP.fromU32Unchecked 
         |> CodePoint.toStr 
         |> Result.try Grapheme2.split

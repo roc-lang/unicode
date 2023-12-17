@@ -50,6 +50,9 @@ toListStr = \outState ->
             Ok str -> str
             Err _ -> crash "unreachable got invalid utf8 when converting CodePoints to Str"
 
+# Note we include the Break Rules here so that it is feasible to debug this and ensure algorithm correctness
+# We could remove these and reduce the number of allocations, however it is very difficult then 
+# to understand if the implementation is applying each rule correctly
 splitHelp : _, List CodePoint, List GBP, OutState -> OutState
 splitHelp = \state, codePoints, breakPoints, acc ->
     nextCPs = List.dropFirst codePoints 1
@@ -61,23 +64,45 @@ splitHelp = \state, codePoints, breakPoints, acc ->
 
     when (state, codePoints, breakPoints) is 
 
-        # No codepoints remaining 
-        (_, [], []) -> (List.append acc (BR GB2))
-
-        # Special handling for some last remaining codepoint types
-        (Next, [cp], [bp]) if bp == CR -> (List.concat acc [CP cp, BR GB2])
+        # Special handling for last codepoint
         (Next, [cp], _) -> (List.concat acc [CP cp, BR GB2])
+        (AfterHungulL prev, [cp], [bp]) if bp == L || bp == V || bp == LV || bp == LVT -> (List.concat acc [CP prev, NB GB6, CP cp, BR GB2])
+        (AfterHungulLVorV prev, [cp], [bp]) if bp == V || bp == T -> (List.concat acc [CP prev, NB GB7, CP cp, BR GB2])
+        (AfterHungulLVTorT prev, [cp], [bp]) if bp == T -> (List.concat acc [CP prev, NB GB8, CP cp, BR GB2])
+        (AfterHungulL prev, [_], [_]) -> splitHelp (LastWithPrev prev) codePoints breakPoints acc
+        (AfterHungulLVorV prev, [_], [_]) -> splitHelp (LastWithPrev prev) codePoints breakPoints acc
+        (AfterHungulLVTorT prev, [_], [_]) -> splitHelp (LastWithPrev prev) codePoints breakPoints acc
+        (LastWithPrev prev, [cp], [bp]) if bp == Control || bp == CR || bp == LF -> (List.concat acc [CP prev, BR GB5, CP cp, BR GB2])
+        (LastWithPrev prev, [cp], [_]) -> (List.concat acc [CP prev, BR GB999, CP cp, BR GB2])
 
         # Looking at current breakpoint property 
         (Next, [cp, ..], [bp, ..]) if bp == CR -> splitHelp (AfterCR cp) nextCPs nextBPs acc
         (Next, [cp, ..], [bp, ..]) if bp == Control || bp == LF -> splitHelp Next nextCPs nextBPs (List.concat acc [CP cp, BR GB4])
+        (Next, [cp, ..], [bp, ..]) if bp == L -> splitHelp (AfterHungulL cp) nextCPs nextBPs acc
+        (Next, [cp, ..], [bp, ..]) if bp == V || bp == LV -> splitHelp (AfterHungulLVorV cp) nextCPs nextBPs acc
+        (Next, [cp, ..], [bp, ..]) if bp == LVT || bp == T -> splitHelp (AfterHungulLVTorT cp) nextCPs nextBPs acc
+
+        # Advance to next, this is requred so that we can apply rules which break before
         (Next, [cp, ..], _) -> splitHelp (LookAtNext cp) nextCPs nextBPs acc
 
-        # Looking ahead at next, given previous breakpoint property
-        (LookAtNext prev, [cp, ..], [bp, ..]) if bp == Control || bp == CR || bp == LF -> splitHelp Next codePoints breakPoints (List.concat acc [CP prev, BR GB5])
-        (LookAtNext prev, [cp, ..], [bp, ..]) -> splitHelp Next codePoints breakPoints (List.concat acc [CP prev, BR GB999])
+        # Looking ahead at next, given previous
+        (LookAtNext prev, _, [bp, ..]) if bp == Control || bp == CR || bp == LF -> splitHelp Next codePoints breakPoints (List.concat acc [CP prev, BR GB5])
+        (LookAtNext prev, _, _) -> splitHelp Next codePoints breakPoints (List.concat acc [CP prev, BR GB999])
+        
+        # Looking ahead, given previous was CR
         (AfterCR prev, _, [bp, ..]) if bp == LF -> splitHelp Next codePoints breakPoints (List.concat acc [CP prev, NB GB3])
         (AfterCR prev, _, _) -> splitHelp Next codePoints breakPoints (List.concat acc [CP prev, BR GB4])
+
+        # Looking ahead, given previous was Hangul
+        (AfterHungulL prev, [cp, ..], [bp, ..]) if bp == L -> splitHelp (AfterHungulL cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB6])
+        (AfterHungulL prev, [cp, ..], [bp, ..]) if bp == V || bp == LV -> splitHelp (AfterHungulLVorV cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB6])
+        (AfterHungulL prev, [cp, ..], [bp, ..]) if bp == LVT -> splitHelp (AfterHungulLVTorT cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB6])
+        (AfterHungulL prev, _, _) -> splitHelp (LookAtNext prev) codePoints breakPoints acc
+        (AfterHungulLVorV prev, [cp, ..], [bp, ..]) if bp == V -> splitHelp (AfterHungulLVorV cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB7])
+        (AfterHungulLVorV prev, [cp, ..], [bp, ..]) if bp == T -> splitHelp (AfterHungulLVTorT cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB7])
+        (AfterHungulLVorV prev, _, _) -> splitHelp (LookAtNext prev) codePoints breakPoints acc
+        (AfterHungulLVTorT prev, [cp, ..], [bp, ..]) if bp == T -> splitHelp (AfterHungulLVTorT cp) nextCPs nextBPs (List.concat acc [CP prev, NB GB8])
+        (AfterHungulLVTorT prev, _, _) -> splitHelp (LookAtNext prev) codePoints breakPoints acc
 
         _ ->
             crash 
@@ -89,15 +114,6 @@ splitHelp = \state, codePoints, breakPoints, acc ->
                 Grapheme.split state machine state at the time was:
                 \(Inspect.toStr (state, List.map codePoints CodePoint.toU32, breakPoints))
                 """
-
-# State : [
-#     Next,
-#     AfterCR CodePoint,
-#     AfterHungulL,
-#     AfterHungulLVorV,
-#     AfterHungulLVTorT,
-#     AfterRI,
-# ]
 
 # GB999 Test break everywhere
 expect 
@@ -135,6 +151,73 @@ expect
 expect 
     a = testHelp [[10], [776], [13]]
     b = [BR GB1, CP (fromU32Unchecked 10), BR GB4, CP (fromU32Unchecked 776),BR GB5, CP (fromU32Unchecked 13), BR GB2]
+    a == b
+
+# GB6 Don't break Hangul sequences
+# % 1100 x 1100 % #  % [0.2] HANGUL CHOSEONG KIYEOK (L) x [6.0] HANGUL CHOSEONG KIYEOK (L) % [0.3]
+expect 
+    a = testHelp [[4352, 4352]]
+    b = [BR GB1, CP (fromU32Unchecked 4352), NB GB6, CP (fromU32Unchecked 4352), BR GB2]
+    a == b
+
+# GB6 Don't break Hangul sequences L then V
+expect 
+    a = testHelp [[4352, 4448]]
+    b = [BR GB1, CP (fromU32Unchecked 4352), NB GB6, CP (fromU32Unchecked 4448), BR GB2]
+    a == b
+
+# GB6 Don't break Hangul sequences L then LV
+expect 
+    a = testHelp [[4352, 44509]]
+    b = [BR GB1, CP (fromU32Unchecked 4352), NB GB6, CP (fromU32Unchecked 44509), BR GB2]
+    a == b
+
+# GB6 Don't break Hangul sequences L then LVT
+expect 
+    a = testHelp [[4352, 45739]]
+    b = [BR GB1, CP (fromU32Unchecked 4352), NB GB6, CP (fromU32Unchecked 45739), BR GB2]
+    a == b
+
+# GB6 Break after Hangul L
+expect 
+    a = testHelp [[4352, 888]]
+    b = [BR GB1, CP (fromU32Unchecked 4352), BR GB999, CP (fromU32Unchecked 888), BR GB2]
+    a == b
+
+# GB7 Don't break Hangul sequences V then V
+expect 
+    a = testHelp [[4448, 4448]]
+    b = [BR GB1, CP (fromU32Unchecked 4448), NB GB7, CP (fromU32Unchecked 4448), BR GB2]
+    a == b
+
+# GB7 Don't break Hangul sequences LV then T
+expect 
+    a = testHelp [[45236, 55243]]
+    b = [BR GB1, CP (fromU32Unchecked 45236), NB GB7, CP (fromU32Unchecked 55243), BR GB2]
+    a == b
+
+# GB7 Break after Hangul LV
+expect 
+    a = testHelp [[45236, 888]]
+    b = [BR GB1, CP (fromU32Unchecked 45236), BR GB999, CP (fromU32Unchecked 888), BR GB2]
+    a == b
+
+# GB8 Don't break Hangul sequences LVT then T
+expect 
+    a = testHelp [[44619, 55243]]
+    b = [BR GB1, CP (fromU32Unchecked 44619), NB GB8, CP (fromU32Unchecked 55243), BR GB2]
+    a == b
+
+# GB8 Don't break Hangul sequences T then T
+expect 
+    a = testHelp [[4607, 55243]]
+    b = [BR GB1, CP (fromU32Unchecked 4607), NB GB8, CP (fromU32Unchecked 55243), BR GB2]
+    a == b
+
+# GB8 & GB5 Break after Hangul sequence T before CR
+expect 
+    a = testHelp [[4607, 13]]
+    b = [BR GB1, CP (fromU32Unchecked 4607), BR GB5, CP (fromU32Unchecked 13), BR GB2]
     a == b
 
 testHelp : List (List U32) -> OutState
