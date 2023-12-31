@@ -1,7 +1,9 @@
 
 # Ignore the example binaries
-example
+examples/simple
 
 # Ignore the generated files
 generated-docs
-ucd/gen
+package/InternalGBPGen
+package/GraphemeTestGen
+package/InternalEmojiGen

@@ -1,9 +1,10 @@
 #!/bin/bash
 
-# Generate the GBP internal module
-echo "Generating package/InternalGBP.roc"
-roc run ucd/GBP.roc -- package/
+echo "Generating InternalEmoji.roc"
+roc run package/InternalEmojiGen.roc -- package/
 
-# Test the GBP internal module
-echo "Testing package/InternalGBP.roc"
-roc test package/InternalGBP.roc
+echo "Generating InternalGBP.roc"
+roc run package/InternalGBPGen.roc -- package/
+
+echo "Generating GraphemeTest.roc"
+roc run package/GraphemeTestGen.roc -- package/
