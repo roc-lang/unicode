@@ -11,7 +11,7 @@ app "example"
 
 word = "ẇ͓̞͒͟͡ǫ̠̠̉̏͠͡ͅr̬̺͚̍͛̔͒͢d̠͎̗̳͇͆̋̊͂͐"
 
-maybeLength : Result Nat CodePoint.Utf8ParseErr
+maybeLength : Result U64 CodePoint.Utf8ParseErr
 maybeLength = word |> Str.toUtf8 |> CodePoint.parseUtf8 |> Result.map List.len
 
 main =
