@@ -37,4 +37,4 @@ jobs:
       - run: expect -v
 
       # Run all tests 
-      - run: ./ci/all_tests.sh
+      - run: ROC=./roc_nightly/roc ./ci/all_tests.sh
