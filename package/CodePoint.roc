@@ -60,7 +60,7 @@ isLowSurrogate = \codePoint ->
 
 ## Zig docs: bytes the UTF-8 representation would require
 ## for the given codepoint.
-utf8Len : CodePoint -> Result Nat [InvalidCodePoint]
+utf8Len : CodePoint -> Result U64 [InvalidCodePoint]
 utf8Len = \codePoint ->
     u32 = InternalCP.toU32 codePoint
 
@@ -173,7 +173,7 @@ addContinuation = \original, continuationByte ->
     |> Num.bitwiseOr (Num.toU32 (Num.bitwiseAnd continuationByte 0b00111111))
 
 ## The number of UTF-8 bytes it takes to represent this Scalar.
-countUtf8Bytes : CodePoint -> Nat
+countUtf8Bytes : CodePoint -> U64
 countUtf8Bytes = \codePoint ->
     u32 = InternalCP.toU32 codePoint
 
@@ -276,7 +276,7 @@ expect
 
 ## Parses the first code point found in a list of bytes encoded as UTF-8. Returns `ListWasEmpty`
 ## if the list was empty, or `InvalidUtf8` if the bytes were not valid UTF-8.
-parsePartialUtf8 : List U8 -> Result { codePoint : CodePoint, bytesParsed : Nat } Utf8ParseErr
+parsePartialUtf8 : List U8 -> Result { codePoint : CodePoint, bytesParsed : U64 } Utf8ParseErr
 parsePartialUtf8 = \bytes ->
     # We always try to get the first byte, and if it fails with Err ListWasEmpty, then
     # the whole function should return Err ListWasEmpty. This tells the caller "there's nothing
