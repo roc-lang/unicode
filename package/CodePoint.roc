@@ -34,27 +34,22 @@ fromU32 = \u32 ->
     else
         Err InvalidCodePoint
 
-## Returns false if this is either a [high-surrogate code point](http://www.unicode.org/glossary/#high_surrogate_code_point)
-## or a [low-surrogate code point](http://www.unicode.org/glossary/#high_surrogate_code_point).
-##
-## To check for either of those individually, use [isHighSurrogate] or [isLowSurrogate]
+## Returns false if this is [isHighSurrogate] or [isLowSurrogate]
 isValidScalar : CodePoint -> Bool
 isValidScalar = \codePoint -> !(isHighSurrogate codePoint || isLowSurrogate codePoint)
 
 ## Returns true if this is a [high-surrogate code point](http://www.unicode.org/glossary/#high_surrogate_code_point)
-## (`0xD800` to `0xDBFF`)
+## from U+D800 to U+DBFF
 isHighSurrogate : CodePoint -> Bool
 isHighSurrogate = \codePoint ->
-    u32 = InternalCP.toU32 codePoint
-
-    u32 >= 0xDC00 && u32 <= 0xDFFF
+    u32 = toU32 codePoint
+    u32 >= 0xD800 && u32 <= 0xDBFF
 
 ## Returns true if this is a [low-surrogate code point](https://www.unicode.org/glossary/#low_surrogate_code_point)
-## U+DC00 to U+DFFF
+## from U+DC00 to U+DFFF
 isLowSurrogate : CodePoint -> Bool
 isLowSurrogate = \codePoint ->
-    u32 = InternalCP.toU32 codePoint
-
+    u32 = toU32 codePoint
     u32 >= 0xDC00 && u32 <= 0xDFFF
 
 ## Zig docs: bytes the UTF-8 representation would require
@@ -171,7 +166,7 @@ addContinuation = \original, continuationByte ->
     |> Num.bitwiseOr (Num.toU32 (Num.bitwiseAnd continuationByte 0b00111111))
 
 ## The number of UTF-8 bytes it takes to represent this Scalar.
-countUtf8Bytes : CodePoint -> U32
+countUtf8Bytes : CodePoint -> U8
 countUtf8Bytes = \codePoint ->
     u32 = toU32 codePoint
 
