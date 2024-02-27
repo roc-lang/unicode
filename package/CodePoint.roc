@@ -29,40 +29,34 @@ toU32 = InternalCP.toU32
 ## (that is, it's between `0` and `0x10FFFF`).
 fromU32 : U32 -> Result CodePoint [InvalidCodePoint]
 fromU32 = \u32 ->
-    # Definition: http://www.unicode.org/glossary/#code_point
     if u32 <= 0x10FFFF then
         Ok (fromU32Unchecked u32)
     else
         Err InvalidCodePoint
 
-## Returns false if this is either a [high-surrogate code point](http://www.unicode.org/glossary/#high_surrogate_code_point)
-## or a [low-surrogate code point](http://www.unicode.org/glossary/#high_surrogate_code_point).
-##
-## To check for either of those individually, use [isHighSurrogate] or [isLowSurrogate]
+## Returns false if this is [isHighSurrogate] or [isLowSurrogate]
 isValidScalar : CodePoint -> Bool
 isValidScalar = \codePoint -> !(isHighSurrogate codePoint || isLowSurrogate codePoint)
 
 ## Returns true if this is a [high-surrogate code point](http://www.unicode.org/glossary/#high_surrogate_code_point)
-## (`0xD800` to `0xDBFF`)
+## from U+D800 to U+DBFF
 isHighSurrogate : CodePoint -> Bool
 isHighSurrogate = \codePoint ->
-    u32 = InternalCP.toU32 codePoint
-
-    u32 >= 0xDC00 && u32 <= 0xDFFF
+    u32 = toU32 codePoint
+    u32 >= 0xD800 && u32 <= 0xDBFF
 
 ## Returns true if this is a [low-surrogate code point](https://www.unicode.org/glossary/#low_surrogate_code_point)
-## U+DC00 to U+DFFF
+## from U+DC00 to U+DFFF
 isLowSurrogate : CodePoint -> Bool
 isLowSurrogate = \codePoint ->
-    u32 = InternalCP.toU32 codePoint
-
+    u32 = toU32 codePoint
     u32 >= 0xDC00 && u32 <= 0xDFFF
 
 ## Zig docs: bytes the UTF-8 representation would require
 ## for the given codepoint.
-utf8Len : CodePoint -> Result U64 [InvalidCodePoint]
+utf8Len : CodePoint -> Result U8 [InvalidCodePoint]
 utf8Len = \codePoint ->
-    u32 = InternalCP.toU32 codePoint
+    u32 = toU32 codePoint
 
     if u32 < 0x80 then
         Ok 1
@@ -78,8 +72,7 @@ utf8Len = \codePoint ->
 ## Encode a Scalar as UTF-8 bytes and append those bytes to an existing list of UTF-8 bytes.
 appendUtf8 : List U8, CodePoint -> List U8
 appendUtf8 = \bytes, codePoint ->
-    u32 = InternalCP.toU32 codePoint
-
+    u32 = toU32 codePoint
     if u32 < 0x80 then
         List.append bytes (Num.toU8 u32)
     else if u32 < 0x800 then
@@ -173,9 +166,9 @@ addContinuation = \original, continuationByte ->
     |> Num.bitwiseOr (Num.toU32 (Num.bitwiseAnd continuationByte 0b00111111))
 
 ## The number of UTF-8 bytes it takes to represent this Scalar.
-countUtf8Bytes : CodePoint -> U64
+countUtf8Bytes : CodePoint -> U8
 countUtf8Bytes = \codePoint ->
-    u32 = InternalCP.toU32 codePoint
+    u32 = toU32 codePoint
 
     if u32 < 0x80 then
         1
@@ -252,11 +245,9 @@ Utf8ParseErr : [OverlongEncoding, ExpectedContinuation, EncodesSurrogateHalf, In
 
 parseUtf8 : List U8 -> Result (List CodePoint) Utf8ParseErr
 parseUtf8 = \bytes ->
-
     # we will have at most List.len bytes code points
     listWithCapacity : List CodePoint
     listWithCapacity = List.withCapacity (List.len bytes)
-
     parseUtf8Help bytes listWithCapacity
 
 parseUtf8Help : List U8, List CodePoint -> Result (List CodePoint) Utf8ParseErr
@@ -339,34 +330,34 @@ parsePartialUtf8 = \bytes ->
     else
         Err InvalidUtf8
 
-
-toStr : List CP -> Result Str [BadUtf8]
+toStr : List CodePoint -> Result Str [BadUtf8]
 toStr = \cps ->
 
-    # allocated extra space for the extra bytes as some CPs expand into 
+    # allocated extra space for the extra bytes as some CPs expand into
     # multiple U8s, so this minimises extra allocations
     capacity = List.withCapacity (50 + List.len cps)
 
-    cps 
-    |> cpsToStrHelp capacity 
+    cps
+    |> cpsToStrHelp capacity
     |> Str.fromUtf8
     |> Result.onErr \_ -> Err BadUtf8
 
-cpsToStrHelp : List CP, List U8 -> List U8
+cpsToStrHelp : List CodePoint, List U8 -> List U8
 cpsToStrHelp = \cps, bytes ->
-    when cps is 
+    when cps is
         [] -> bytes
-        [cp,..] -> 
-            cpsToStrHelp 
+        [cp, ..] ->
+            cpsToStrHelp
                 (List.dropFirst cps 1)
                 (CodePoint.appendUtf8 bytes cp)
-            
-expect # test toStr 
-    cr = (fromU32Unchecked 13)
-    lf = (fromU32Unchecked 10)
+
+expect
+    # test toStr
+    cr = fromU32Unchecked 13
+    lf = fromU32Unchecked 10
 
     toStr [cr, lf] == Ok "\r\n"
-                        
+
 ## Empty input
 expect [] |> parsePartialUtf8 == Err ListWasEmpty
 

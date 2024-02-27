@@ -1,4 +1,4 @@
-interface Helpers 
+interface Helpers
     exposes [
         PropertyMap,
         CPMeta,
@@ -9,7 +9,7 @@ interface Helpers
         startsWithHex,
         hexBytesToU32,
         hexStrToU32,
-        properyMapFromFile,
+        propertyMapFromFile,
         filterPropertyMap,
         metaToExpression,
     ]
@@ -124,8 +124,8 @@ hexToDec = \byte ->
 expect hexToDec '0' == 0
 expect hexToDec 'F' == 15
 
-properyMapFromFile : Str, (Str -> Result a [ParsingError]) -> List { cp : CPMeta, prop : a }
-properyMapFromFile = \file, parsePropPart  -> 
+propertyMapFromFile : Str, (Str -> Result a [ParsingError]) -> List { cp : CPMeta, prop : a }
+propertyMapFromFile = \file, parsePropPart ->
     file
     |> Str.split "\n"
     |> List.keepOks Helpers.startsWithHex
@@ -134,9 +134,9 @@ properyMapFromFile = \file, parsePropPart  ->
             [hexPart, propPart] ->
                 when (parseHexPart hexPart, parsePropPart propPart) is
                     (Ok cp, Ok prop) -> { cp, prop }
-                    _ -> crash "Error parsing line -- \(l)"
+                    _ -> crash "Error parsing line -- $(l)"
 
-            _ -> crash "Error unexpected ';' on line -- \(l)"
+            _ -> crash "Error unexpected ';' on line -- $(l)"
 
 parseHexPart : Str -> Result CPMeta [ParsingError]
 parseHexPart = \hexPart ->
@@ -173,5 +173,5 @@ expect codePointParser "# ===" == Err ParsingError
 metaToExpression : CPMeta -> Str
 metaToExpression = \cp ->
     when cp is
-        Single a -> "(u32 == \(Num.toStr a))"
-        Range a b -> "(u32 >= \(Num.toStr a) && u32 <= \(Num.toStr b))"
+        Single a -> "(u32 == $(Num.toStr a))"
+        Range a b -> "(u32 >= $(Num.toStr a) && u32 <= $(Num.toStr b))"

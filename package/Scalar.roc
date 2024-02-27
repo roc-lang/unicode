@@ -3,7 +3,7 @@ interface Scalar
         Scalar,
         toU32,
         toCodePoint,
-        fromCodePt,
+        fromCodePoint,
         fromStr,
         toScalars,
         startsWithScalar,
@@ -18,36 +18,34 @@ interface Scalar
     ]
 
 ## A [Unicode scalar value](http://www.unicode.org/glossary/#unicode_scalar_value) - that is,
-## any [code point](./CodePoint#CodePoint) except for [high-surrogate](http://www.unicode.org/glossary/#high_surrogate_code_point)
-## and [low-surrogate](http://www.unicode.org/glossary/#low_surrogate_code_point) code points.
+## any [code point](./CodePoint#CodePoint) except for [high-surrogate](./CodePoint#isHighSurrogate)
+## and [low-surrogate](./CodePoint#isLowSurrogate) code points.
 Scalar := CodePoint
 
 toU32 : Scalar -> U32
 toU32 = \@Scalar cp -> CodePoint.toU32 cp
 
-## Any Unicode code point except high-surrogate and low-surrogate code points. 
+## Any Unicode code point except high-surrogate and low-surrogate code points.
 ##
 ## Note UTF-8 does not use surrogates as it is a variable-width encoding unlike UTF-16.
 fromU32 : U32 -> Result Scalar [InvalidScalar]
 fromU32 = \u32 ->
-
-    inRangeA = u32 >= 0x000000 && u32 <= 0xD7FF16
-    inRangeB = u32 >= 0xE00016 && u32 <= 0x10FFFF16
-
+    inRangeA = u32 >= 0x0000 && u32 <= 0xD7FF
+    inRangeB = u32 >= 0xE000 && u32 <= 0x10FFFF
     if inRangeA || inRangeB then
         Ok (@Scalar (InternalCP.fromU32Unchecked u32))
     else
         Err InvalidScalar
 
 toCodePoint : Scalar -> CodePoint
-toCodePoint = \@Scalar cp -> cp
+toCodePoint = \@Scalar codePoint -> codePoint
 
 ## Convert a code point to a scalar value. This can fail if the given
 ## code point is
-fromCodePt : CodePoint -> Result Scalar [NonScalarCodePt]
-fromCodePt = \cp ->
-    if isValidScalar cp then
-        Ok (@Scalar cp)
+fromCodePoint : CodePoint -> Result Scalar [NonScalarCodePt]
+fromCodePoint = \codePoint ->
+    if isValidScalar codePoint then
+        Ok (@Scalar codePoint)
     else
         Err NonScalarCodePt
 
@@ -62,7 +60,7 @@ fromStr = \_str ->
 #         Err InvalidScalar ->
 #             u32str = Num.toStr u32
 
-#             crash "appendToStr received a Scalar value of \(u32str). This is an invalid Unicode scalar value, so it should not have been possible to obtain a `Scalar` which wraps it!"
+#             crash "appendToStr received a Scalar value of $(u32str). This is an invalid Unicode scalar value, so it should not have been possible to obtain a `Scalar` which wraps it!"
 
 # TODO WHAT IS THIS?
 # walkStr : Str, state, (state, Scalar -> state) -> state
