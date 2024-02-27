@@ -1,6 +1,6 @@
 ## The purpose of this file is to generate the InternalEmoji.roc file.
-## 
-## This file will read the test data from `data/emoji-data.txt` 
+##
+## This file will read the test data from `data/emoji-data.txt`
 ## parse it and then generate the implementation for each of the Emoji properties.
 app "gen"
     packages {
@@ -14,7 +14,7 @@ app "gen"
         pf.Arg,
         pf.File,
         "data/emoji-data.txt" as file : Str,
-        Helpers.{CPMeta, PropertyMap},
+        Helpers.{ CPMeta, PropertyMap },
     ]
     provides [main] to pf
 
@@ -22,7 +22,7 @@ main : Task {} I32
 main =
     getFilePath
     |> Task.await writeToFile
-    |> Task.onErr \err -> Stderr.line "\(err)"
+    |> Task.onErr \err -> Stderr.line "$(err)"
 
 EMOJIProp : [Emoji, Presentation, Modifier, Base, Component, Pictographic]
 EMOJIMeta : { fromBytes : List U8, property : EMOJIProp, toStr : Str }
@@ -47,14 +47,14 @@ getFilePath =
     args <- Arg.list |> Task.await
 
     when args |> List.get 1 is
-        Ok arg -> Task.ok (Path.fromStr "\(Helpers.removeTrailingSlash arg)/InternalEmoji.roc")
+        Ok arg -> Task.ok (Path.fromStr "$(Helpers.removeTrailingSlash arg)/InternalEmoji.roc")
         Err _ -> Task.err "USAGE: roc run InternalEmoji.roc -- path/to/package/"
 
 writeToFile : Path -> Task {} Str
 writeToFile = \path ->
     File.writeUtf8 path template
-    |> Task.mapErr \_ -> "ERROR: unable to write to \(Path.display path)"
-    |> Task.await \_ -> Stdout.line "\nSucessfully wrote to \(Path.display path)\n"
+    |> Task.mapErr \_ -> "ERROR: unable to write to $(Path.display path)"
+    |> Task.await \_ -> Stdout.line "\nSuccessfully wrote to $(Path.display path)\n"
 
 template =
     """
@@ -63,10 +63,10 @@ template =
         exposes [EMOJI, fromCP, isPictographic]
         imports [InternalCP.{ CP, toU32 }]
 
-    \(propDefTemplate)
-    \(isFuncTemplate)
+    $(propDefTemplate)
+    $(isFuncTemplate)
 
-    \(fromCPTemplate)
+    $(fromCPTemplate)
     """
 
 propDefTemplate : Str
@@ -75,11 +75,11 @@ propDefTemplate =
     propStrs =
         listMeta
         |> List.map .toStr
-        |> List.map \str -> "\(str)"
+        |> List.map \str -> "$(str)"
         |> Str.joinWith ", "
 
     """
-    EMOJI : [\(propStrs)]
+    EMOJI : [$(propStrs)]
     """
 
 isFuncTemplate : Str
@@ -94,13 +94,13 @@ isFuncTemplate =
 
         """
 
-        \(name) : U32 -> Bool
-        \(name) = \\u32 -> \(exp)
+        $(name) : U32 -> Bool
+        $(name) = \\u32 -> $(exp)
         """
 
     # For each EMOJIProp define a function that returns true if the given code point has that property
     listMeta
-    |> List.keepOks \{ property } -> 
+    |> List.keepOks \{ property } ->
         when property is
             Emoji -> help "isEmoji" Emoji |> Ok
             Presentation -> help "isPresentation" Presentation |> Ok
@@ -118,19 +118,19 @@ fromCPTemplate =
         
         u32 = toU32 cp
 
-        \(isXtemp listMeta "")
+        $(isXtemp listMeta "")
     """
 
 # HELPERS
 
 # Parse the file to map between code points and properties
 fileMap : List (PropertyMap EMOJIProp)
-fileMap = Helpers.properyMapFromFile file parsePropPart
+fileMap = Helpers.propertyMapFromFile file parsePropPart
 
 # Make a helper that returns a list of code points for the given property
 cpsForProperty : EMOJIProp -> List CPMeta
 cpsForProperty = \current ->
-    Helpers.filterPropertyMap 
+    Helpers.filterPropertyMap
         fileMap
         \{ cp, prop } -> if prop == current then Ok cp else Err NotNeeded
 
@@ -165,36 +165,40 @@ expect emojiPropParser "Extended_Pictographic" == Ok Pictographic
 expect emojiPropParser "Emoji_Modifier_Base" == Ok Base
 expect emojiPropParser "# ===" == Err ParsingError
 
-
-# For each property, generate a function that returns true if the given code 
-# point has that property 
+# For each property, generate a function that returns true if the given code
+# point has that property
 isXtemp : List EMOJIMeta, Str -> Str
 isXtemp = \props, buf ->
     when List.first props is
         Err ListWasEmpty ->
-            "\(buf)\n        Err NonEmojiCodePoint\n"
+            "$(buf)\n        Err NonEmojiCodePoint\n"
 
         Ok prop ->
             when prop.property is
-                Emoji -> 
+                Emoji ->
                     next = ifXStr "isEmoji" "Emoji"
-                    isXtemp (List.dropFirst props 1) "\(buf)\(next)"
-                Presentation -> 
+                    isXtemp (List.dropFirst props 1) "$(buf)$(next)"
+
+                Presentation ->
                     next = ifXStr "isPresentation" "Presentation"
-                    isXtemp (List.dropFirst props 1) "\(buf)\(next)"
-                Modifier -> 
+                    isXtemp (List.dropFirst props 1) "$(buf)$(next)"
+
+                Modifier ->
                     next = ifXStr "isModifier" "Modifier"
-                    isXtemp (List.dropFirst props 1) "\(buf)\(next)"
-                Base -> 
+                    isXtemp (List.dropFirst props 1) "$(buf)$(next)"
+
+                Base ->
                     next = ifXStr "isBase" "Base"
-                    isXtemp (List.dropFirst props 1) "\(buf)\(next)"
-                Component -> 
+                    isXtemp (List.dropFirst props 1) "$(buf)$(next)"
+
+                Component ->
                     next = ifXStr "isComponent" "Component"
-                    isXtemp (List.dropFirst props 1) "\(buf)\(next)"
-                Pictographic -> 
+                    isXtemp (List.dropFirst props 1) "$(buf)$(next)"
+
+                Pictographic ->
                     next = ifXStr "isPictographic" "Pictographic"
-                    isXtemp (List.dropFirst props 1) "\(buf)\(next)"
+                    isXtemp (List.dropFirst props 1) "$(buf)$(next)"
 
 ifXStr : Str, Str -> Str
 ifXStr = \funcStr, str ->
-    "if \(funcStr) u32 then\n        Ok \(str)\n    else "
+    "if $(funcStr) u32 then\n        Ok $(str)\n    else "

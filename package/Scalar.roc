@@ -60,7 +60,7 @@ fromStr = \_str ->
 #         Err InvalidScalar ->
 #             u32str = Num.toStr u32
 
-#             crash "appendToStr received a Scalar value of \(u32str). This is an invalid Unicode scalar value, so it should not have been possible to obtain a `Scalar` which wraps it!"
+#             crash "appendToStr received a Scalar value of $(u32str). This is an invalid Unicode scalar value, so it should not have been possible to obtain a `Scalar` which wraps it!"
 
 # TODO WHAT IS THIS?
 # walkStr : Str, state, (state, Scalar -> state) -> state

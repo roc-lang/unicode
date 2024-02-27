@@ -1,6 +1,6 @@
 ## The purpose of this file is to generate the InternalGBP.roc file.
-## 
-## This file will read the test data from `data/GraphemeBreakProperty-15.1.0.txt` 
+##
+## This file will read the test data from `data/GraphemeBreakProperty-15.1.0.txt`
 ## parse it and then generate the implementation for each of the GBP properties.
 app "gen"
     packages {
@@ -14,7 +14,7 @@ app "gen"
         pf.Arg,
         pf.File,
         "data/GraphemeBreakProperty-15.1.0.txt" as file : Str,
-        Helpers.{CPMeta, PropertyMap},
+        Helpers.{ CPMeta, PropertyMap },
     ]
     provides [main] to pf
 
@@ -22,7 +22,7 @@ main : Task {} I32
 main =
     getFilePath
     |> Task.await writeToFile
-    |> Task.onErr \err -> Stderr.line "\(err)"
+    |> Task.onErr \err -> Stderr.line "$(err)"
 
 GBPProp : [CR, LF, Control, Extend, ZWJ, RI, Prepend, SpacingMark, L, V, T, LV, LVT, Other]
 GBPMeta : { fromBytes : List U8, property : GBPProp, toStr : Str }
@@ -47,7 +47,7 @@ listMeta =
         { fromBytes: Str.toUtf8 "L", property: L, toStr: "L" },
         { fromBytes: Str.toUtf8 "Other", property: Other, toStr: "Other" },
     ]
-    
+
 # TODO move these to a common helper file once module changes and builtin Task are available
 
 getFilePath : Task Path Str
@@ -55,14 +55,14 @@ getFilePath =
     args <- Arg.list |> Task.await
 
     when args |> List.get 1 is
-        Ok arg -> Task.ok (Path.fromStr "\(Helpers.removeTrailingSlash arg)/InternalGBP.roc")
+        Ok arg -> Task.ok (Path.fromStr "$(Helpers.removeTrailingSlash arg)/InternalGBP.roc")
         Err _ -> Task.err "USAGE: roc run InternalGBP.roc -- path/to/package/"
 
 writeToFile : Path -> Task {} Str
 writeToFile = \path ->
     File.writeUtf8 path template
-    |> Task.mapErr \_ -> "ERROR: unable to write to \(Path.display path)"
-    |> Task.await \_ -> Stdout.line "\nSucessfully wrote to \(Path.display path)\n"
+    |> Task.mapErr \_ -> "ERROR: unable to write to $(Path.display path)"
+    |> Task.await \_ -> Stdout.line "\nSuccessfully wrote to $(Path.display path)\n"
 
 template =
     """
@@ -71,11 +71,11 @@ template =
         exposes [GBP, fromCP, isExtend, isZWJ]
         imports [InternalCP.{ CP, toU32, fromU32Unchecked }]
 
-    \(propDefTemplate)
-    \(isFuncTemplate)
+    $(propDefTemplate)
+    $(isFuncTemplate)
 
-    \(fromCPTemplate)
-    \(testsTemplate)
+    $(fromCPTemplate)
+    $(testsTemplate)
     """
 
 propDefTemplate : Str
@@ -84,11 +84,11 @@ propDefTemplate =
     propStrs =
         listMeta
         |> List.map .toStr
-        |> List.map \str -> "\(str)"
+        |> List.map \str -> "$(str)"
         |> Str.joinWith ", "
 
     """
-    GBP : [\(propStrs)]
+    GBP : [$(propStrs)]
     """
 
 isFuncTemplate : Str
@@ -103,8 +103,8 @@ isFuncTemplate =
 
         """
 
-        \(name) : U32 -> Bool
-        \(name) = \\u32 -> \(exp)
+        $(name) : U32 -> Bool
+        $(name) = \\u32 -> $(exp)
         """
 
     # For each GBPProp define a function that returns true if the given code point has that property
@@ -135,11 +135,11 @@ fromCPTemplate =
         
         u32 = toU32 cp
 
-        \(isXtemp listMeta "")
+        $(isXtemp listMeta "")
     """
 
 testsTemplate : Str
-testsTemplate = 
+testsTemplate =
     [
         ("000D", "CR"),
         ("000A", "LF"),
@@ -162,7 +162,7 @@ testsTemplate =
     ]
     |> List.map unicodeHexToTest
     |> Str.joinWith "\n\n"
-   
+
 # HELPERS
 
 parsePropPart : Str -> Result GBPProp [ParsingError]
@@ -177,95 +177,94 @@ expect parsePropPart " Regional_Indicator # So  [26] REGIONAL INDICATOR SYMBOL L
 
 # Parse the file to map between code points and properties
 fileMap : List (PropertyMap GBPProp)
-fileMap = Helpers.properyMapFromFile file parsePropPart
+fileMap = Helpers.propertyMapFromFile file parsePropPart
 
 # Make a helper that returns a list of code points for the given property
 cpsForProperty : GBPProp -> List CPMeta
 cpsForProperty = \current ->
-    Helpers.filterPropertyMap 
+    Helpers.filterPropertyMap
         fileMap
         \{ cp, prop } -> if prop == current then Ok cp else Err NotNeeded
 
-# For each property, generate a function that returns true if the given code 
-# point has that property 
+# For each property, generate a function that returns true if the given code
+# point has that property
 isXtemp : List GBPMeta, Str -> Str
 isXtemp = \props, buf ->
     when List.first props is
         Err ListWasEmpty ->
-            "\(buf)\n        Other\n"
+            "$(buf)\n        Other\n"
 
         Ok prop ->
             when prop.property is
                 CR ->
                     next = ifXStr "isCR" "CR"
-                    isXtemp (List.dropFirst props 1) ("\(buf)\(next)")
+                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
 
                 LF ->
                     next = ifXStr "isLF" "LF"
-                    isXtemp (List.dropFirst props 1) ("\(buf)\(next)")
+                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
 
                 Control ->
                     next = ifXStr "isControl" "Control"
-                    isXtemp (List.dropFirst props 1) ("\(buf)\(next)")
+                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
 
                 Extend ->
                     next = ifXStr "isExtend" "Extend"
-                    isXtemp (List.dropFirst props 1) ("\(buf)\(next)")
+                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
 
                 ZWJ ->
                     next = ifXStr "isZWJ" "ZWJ"
-                    isXtemp (List.dropFirst props 1) ("\(buf)\(next)")
+                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
 
                 RI ->
                     next = ifXStr "isRI" "RI"
-                    isXtemp (List.dropFirst props 1) ("\(buf)\(next)")
+                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
 
                 Prepend ->
                     next = ifXStr "isPrepend" "Prepend"
-                    isXtemp (List.dropFirst props 1) ("\(buf)\(next)")
+                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
 
                 SpacingMark ->
                     next = ifXStr "isSpacingMark" "SpacingMark"
-                    isXtemp (List.dropFirst props 1) ("\(buf)\(next)")
+                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
 
                 L ->
                     next = ifXStr "isL" "L"
-                    isXtemp (List.dropFirst props 1) ("\(buf)\(next)")
+                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
 
                 V ->
                     next = ifXStr "isV" "V"
-                    isXtemp (List.dropFirst props 1) ("\(buf)\(next)")
+                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
 
                 T ->
                     next = ifXStr "isT" "T"
-                    isXtemp (List.dropFirst props 1) ("\(buf)\(next)")
+                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
 
                 LV ->
                     next = ifXStr "isLV" "LV"
-                    isXtemp (List.dropFirst props 1) ("\(buf)\(next)")
+                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
 
                 LVT ->
                     next = ifXStr "isLVT" "LVT"
-                    isXtemp (List.dropFirst props 1) ("\(buf)\(next)")
+                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
 
                 Other ->
                     isXtemp (List.dropFirst props 1) buf
 
 ifXStr : Str, Str -> Str
 ifXStr = \funcStr, str ->
-    "if \(funcStr) u32 then\n        \(str)\n    else "
+    "if $(funcStr) u32 then\n        $(str)\n    else "
 
-# Helper to manually generate a test 
-unicodeHexToTest : (Str, Str) -> Str 
+# Helper to manually generate a test
+unicodeHexToTest : (Str, Str) -> Str
 unicodeHexToTest = \(hex, gbpExpected) ->
     u32 = hex |> Str.toUtf8 |> Helpers.hexBytesToU32
 
     """
-    expect # test U+\(hex) gives \(gbpExpected)
-        gbp = fromCP (fromU32Unchecked \(Num.toStr u32)) 
-        gbp == \(gbpExpected)
+    expect # test U+$(hex) gives $(gbpExpected)
+        gbp = fromCP (fromU32Unchecked $(Num.toStr u32)) 
+        gbp == $(gbpExpected)
     """
-
 
 gbpPropParser : Str -> Result GBPProp [ParsingError]
 gbpPropParser = \input ->
@@ -291,5 +290,4 @@ expect gbpPropParser "LV" == Ok LV
 expect gbpPropParser "LVT" == Ok LVT
 expect gbpPropParser "Other" == Ok Other
 expect gbpPropParser "# ===" == Err ParsingError
-
 

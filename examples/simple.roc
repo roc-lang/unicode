@@ -16,6 +16,6 @@ maybeLength = word |> Str.toUtf8 |> CodePoint.parseUtf8 |> Result.map List.len
 
 main =
     when maybeLength is
-        Ok count -> Stdout.line "\n\nThere are a total of \(Num.toStr count) code points in \(word)\n\n"
-        Err _ -> crash "ERROR: Unable to parse \(word)!"
+        Ok count -> Stdout.line "\n\nThere are a total of $(Num.toStr count) code points in $(word)\n\n"
+        Err _ -> crash "ERROR: Unable to parse $(word)!"
 

@@ -1,6 +1,6 @@
 ## The purpose of this file is to generate the GraphemeTest.roc test suite.
-## 
-## This file will read the test data from `data/GraphemeBreakTest-15.1.0.txt` 
+##
+## This file will read the test data from `data/GraphemeBreakTest-15.1.0.txt`
 ## parse it and then generate the individual tests.
 app "gen"
     packages {
@@ -27,7 +27,7 @@ Rule : [GB1, GB2, GB3, GB4, GB5, GB6, GB7, GB8, GB9, GB9a, GB9b, GB9c, GB11, GB1
 TestTokens : List [BR Rule, NB Rule, CP CodePoint]
 
 main : Task {} I32
-main = getFilePath |> Task.await writeToFile |> Task.onErr \err -> Stderr.line "\(err)"
+main = getFilePath |> Task.await writeToFile |> Task.onErr \err -> Stderr.line "$(err)"
 
 template : Str
 template =
@@ -51,18 +51,18 @@ template =
                 test.lineStr
                 |> Str.replaceEach "÷" "%" # replace %
                 |> Str.replaceEach "×" "x" # replace X
-                |> Str.replaceEach "	" " " # reaplce tabs with a space
+                |> Str.replaceEach "	" " " # replace tabs with a space
 
             codePointsList = test.parsed |> toU32List
 
             """
 
-            # GraphemeBreakTest-15.1.0.txt:line \(Num.toStr test.lineNo)
-            # \(sanitisedLine)
+            # GraphemeBreakTest-15.1.0.txt:line $(Num.toStr test.lineNo)
+            # $(sanitisedLine)
             expect     
-                exp = Ok \(codePointsList |> Inspect.toStr)
+                exp = Ok $(codePointsList |> Inspect.toStr)
                 got = 
-                    \(codePointsList
+                    $(codePointsList
             |> List.join
             |> Inspect.toStr) 
                     |> List.map InternalCP.fromU32Unchecked 
@@ -87,7 +87,7 @@ template =
                 Ok cps -> List.map cps CodePoint.toU32
                 Err _ -> crash \"expected valid utf8\"
 
-    \(tests)
+    $(tests)
     """
 
 getFilePath : Task Path Str
@@ -95,14 +95,14 @@ getFilePath =
     args <- Arg.list |> Task.await
 
     when args |> List.get 1 is
-        Ok arg -> Task.ok (Path.fromStr "\(Helpers.removeTrailingSlash arg)/GraphemeTest.roc")
+        Ok arg -> Task.ok (Path.fromStr "$(Helpers.removeTrailingSlash arg)/GraphemeTest.roc")
         Err _ -> Task.err "USAGE: roc run GraphemeTest.roc -- path/to/package/"
 
 writeToFile : Path -> Task {} Str
 writeToFile = \path ->
     File.writeUtf8 path template
-    |> Task.mapErr \_ -> "ERROR: unable to write to \(Path.display path)"
-    |> Task.await \_ -> Stdout.line "\nSucessfully wrote to \(Path.display path)\n"
+    |> Task.mapErr \_ -> "ERROR: unable to write to $(Path.display path)"
+    |> Task.await \_ -> Stdout.line "\nSuccessfully wrote to $(Path.display path)\n"
 
 toU32List : TestTokens -> List (List U32)
 toU32List = \tokens ->
@@ -129,7 +129,7 @@ testFile =
     |> List.map \test ->
         when parseStr testParser test.lineStr is
             Ok (Ok parsed) -> { test & parsed }
-            Err err | Ok (Err err) -> crash "Unable to parse line \(Num.toStr test.lineNo) got err \(Inspect.toStr err)"
+            Err err | Ok (Err err) -> crash "Unable to parse line $(Num.toStr test.lineNo) got err $(Inspect.toStr err)"
 
 testParser : Parser (List U8) (Result TestTokens _)
 testParser =
@@ -244,7 +244,7 @@ zip = \first, second ->
             Ok (List.append next (CP cp))
 
         (Err _, Err _) -> Ok [] # base case
-        _ -> Err (Invalid "expected first and second lists to match exactly got \(Inspect.toStr (T first second))")
+        _ -> Err (Invalid "expected first and second lists to match exactly got $(Inspect.toStr (T first second))")
 
 expect
     answer =
