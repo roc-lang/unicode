@@ -7,3 +7,4 @@ generated-docs
 package/InternalGBPGen
 package/GraphemeTestGen
 package/InternalEmojiGen
+package/InternalEAWGen
