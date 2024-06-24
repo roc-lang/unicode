@@ -31,6 +31,8 @@ template =
             H | N | Na -> 1
 
     eastAsianWidthProperty = \\cp -> $(testsStr)
+
+    $(allTests)
     """
 
 # The ranges are specified as its starting point and an optional inclusive end point
@@ -138,3 +140,42 @@ testsStr =
     |> Dict.values
     |> Str.joinWith " else "
     |> Str.concat " else N"
+
+createTest : (U32, Str) -> Str
+createTest = \(cp, eawp) ->
+    "expect eastAsianWidthProperty $(Num.toStr cp) == $(eawp)"
+
+expect
+    test = createTest ('Æ', "A")
+    expected = "expect eastAsianWidthProperty 198 == A"
+    test == expected
+
+allTests =
+    tests = [
+        # Ambiguous
+        ('Æ', "A"),
+        ('ⓩ', "A"),
+        ('☎', "A"),
+        # Halfwidth
+        ('₩', "H"),
+        ('｣', "H"),
+        # Narrow
+        ('¢', "Na"),
+        ('¥', "Na"),
+        ('¬', "Na"),
+        # Wide
+        ('〇', "W"),
+        ('〡', "W"),
+        ('〩', "W"),
+        ('﹄', "W"),
+        ('﹉', "W"),
+        ('你', "W"),
+        # Fullwidth
+        ('Ａ', "F"),
+        ('￦', "F"),
+        # Neutral
+        ('𑈸', "N"),
+        ('𑌓', "N"),
+        ('𑪊', "N"),
+    ]
+    List.map tests createTest |> Str.joinWith "\n\n"

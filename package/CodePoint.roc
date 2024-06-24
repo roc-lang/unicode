@@ -1,21 +1,22 @@
-interface CodePoint
-    exposes [
-        Utf8ParseErr,
-        CodePoint,
-        utf8Len,
-        toU32,
-        fromU32,
-        isHighSurrogate,
-        isLowSurrogate,
-        isValidScalar,
-        appendUtf8,
-        parseUtf8,
-        countUtf8Bytes,
-        toStr,
-    ]
-    imports [
-        InternalCP.{ CP, fromU32Unchecked },
-    ]
+module [
+    Utf8ParseErr,
+    CodePoint,
+    utf8Len,
+    toU32,
+    fromU32,
+    isHighSurrogate,
+    isLowSurrogate,
+    isValidScalar,
+    appendUtf8,
+    parseUtf8,
+    countUtf8Bytes,
+    toStr,
+    eastAsianWidthProperty,
+    visualWidth,
+]
+
+import InternalCP exposing [CP, fromU32Unchecked]
+import InternalEAW
 
 ## A [Unicode code point](http://www.unicode.org/glossary/#code_point).
 CodePoint : CP
@@ -243,6 +244,7 @@ parse4 = \first, second, third, fourth ->
 
 Utf8ParseErr : [OverlongEncoding, ExpectedContinuation, EncodesSurrogateHalf, InvalidUtf8, ListWasEmpty, CodepointTooLarge]
 
+## Parses a list of bytes into a list of code points
 parseUtf8 : List U8 -> Result (List CodePoint) Utf8ParseErr
 parseUtf8 = \bytes ->
     # we will have at most List.len bytes code points
@@ -350,6 +352,30 @@ cpsToStrHelp = \cps, bytes ->
             cpsToStrHelp
                 (List.dropFirst cps 1)
                 (CodePoint.appendUtf8 bytes cp)
+
+## The East Asian Width property in Unicode categorizes characters based on
+## their typical width and display behavior in East Asian typography, helping
+## to ensure proper alignment and spacing in text layout for languages like
+## Chinese, Japanese, and Korean.
+EastAsianProperty : [Fullwidth, Wide, Ambiguous, Halfwidth, Neutral, Narrow]
+
+## Computes the "east asian width" property for a given code point.
+## See https://www.unicode.org/Public/15.1.0/ucd/EastAsianWidth.txt
+eastAsianWidthProperty : CodePoint -> EastAsianProperty
+eastAsianWidthProperty = \cp ->
+    eaw = cp |> toU32 |> InternalEAW.eastAsianWidthProperty
+    when eaw is
+        F -> Fullwidth
+        W -> Wide
+        A -> Ambiguous
+        H -> Halfwidth
+        N -> Neutral
+        Na -> Narrow
+
+## Computes the visual width of a code point as assigned by the Unicode Character Database
+visualWidth : CodePoint -> U32
+visualWidth = \cp ->
+    cp |> toU32 |> InternalEAW.eastAsianWidth
 
 expect
     # test toStr
