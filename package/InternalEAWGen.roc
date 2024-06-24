@@ -12,9 +12,11 @@ import pf.Arg
 import "data/EastAsianWidth-15.1.0.txt" as file : Str
 import Helpers
 
+EawRange : (Str, Str, Str)
+
 main =
     when Arg.list! |> List.get 1 is
-        Err _ -> Task.err (InvalidArguments "USAGE: roc run InternalEAW.roc -- path/to/package/")
+        Err _ -> Task.err (InvalidArguments "USAGE: roc run InternalEAWGen.roc -- path/to/package/")
         Ok arg -> File.writeUtf8 "$(Helpers.removeTrailingSlash arg)/InternalEAW.roc" template
 
 template =
@@ -36,14 +38,21 @@ template =
 # Examples:
 # 0000..001F     ; N    # The property may be followed by comments
 # 0020           ; Na
+parseLine : Str -> Result EawRange _
 parseLine = \line ->
     listToParsingState = \rest -> { val: [], rest }
 
-    startHexBytes = line |> Str.toUtf8 |> listToParsingState |> Helpers.takeHexBytes
+    startHexBytes =
+        line
+        |> Str.toUtf8
+        |> listToParsingState
+        |> Helpers.takeHexBytes
+
     endHexBytes =
         when startHexBytes.rest is
             ['.', '.', .. as rest] -> rest |> listToParsingState |> Helpers.takeHexBytes
             _ -> startHexBytes # This range has length 1. The start will be repeated as the end
+
     endHexBytes.rest
     |> List.splitFirst ';'
     |> Result.map \{ after } -> after
@@ -60,6 +69,10 @@ parseLine = \line ->
         |> Str.fromUtf8
         |> Result.map \end -> (eawp, start, "0x$(end)")
 
+expect parseLine "0020           ; Na # Zs         SPACE" == Ok ("Na", "0x0020", "0x0020")
+expect parseLine "0025..0027     ; Na # Po     [3] PERCENT SIGN..APOSTROPHE" == Ok ("Na", "0x0025", "0x0027")
+
+parsedLines : List (Result EawRange _)
 parsedLines = file |> Str.split "\n" |> List.map parseLine
 
 originalRanges =
@@ -73,33 +86,36 @@ optimizedRanges =
 # The input file contains many consecutive ranges with the same property value.
 # We will merge them into wider ranges to work with a smaller number of ranges.
 mergedRanges =
-    op = \state, currentValue ->
-        { merged, merging } = state
-        if merging.0 == currentValue.0 && (Helpers.hexStrToU32 merging.2) + 1 == (Helpers.hexStrToU32 currentValue.1) then
-            {
-                merged,
-                merging: (merging.0, merging.1, currentValue.2),
-            }
-        else
-            {
-                merged: List.append merged merging,
-                merging: currentValue,
-            }
     headRes = List.first optimizedRanges
     tail = List.dropFirst optimizedRanges 1
     res =
         when headRes is
             Err _ -> crash "Something went wrong while parsing the input."
-            Ok head -> List.walk tail { merged: [], merging: head } op
+            Ok head -> List.walk tail { merged: [], merging: head } mergeOp
+
     List.append res.merged res.merging
+
+mergeOp : { merged : List EawRange, merging : EawRange }, EawRange -> { merged : List EawRange, merging : EawRange }
+mergeOp = \{ merged, merging }, currentValue ->
+    if merging.0 == currentValue.0 && (Helpers.hexStrToU32 merging.2) + 1 == (Helpers.hexStrToU32 currentValue.1) then
+        {
+            merged,
+            merging: (merging.0, merging.1, currentValue.2),
+        }
+    else
+        {
+            merged: List.append merged merging,
+            merging: currentValue,
+        }
+
+expect mergeOp { merged: [], merging: ("Na", "0x0020", "0x0020") } ("Na", "0x0021", "0x0021") == { merged: [], merging: ("Na", "0x0020", "0x0021") }
+expect mergeOp { merged: [], merging: ("Na", "0x0020", "0x0020") } ("Na", "0x0022", "0x0022") == { merged: [("Na", "0x0020", "0x0020")], merging: ("Na", "0x0022", "0x0022") }
 
 # Ranges grouped by the values of their property
 groupedRanges : Dict Str (List (Str, Str))
 groupedRanges =
-    accumulators : Dict Str (List (Str, Str))
-    accumulators = Dict.empty {}
     mergedRanges
-    |> List.walk accumulators \s, range ->
+    |> List.walk (Dict.empty {}) \s, range ->
         Dict.update s range.0 \value ->
             when value is
                 Present lst -> Present (List.append lst (range.1, range.2))
