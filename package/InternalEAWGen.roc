@@ -3,40 +3,19 @@
 ## This file will read the test data from `data/EastAsianWidth-15.1.0.txt`
 ## parse it and then generate function to test the East Asian Width property of a code point.
 app [main] {
-    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.10.0/vNe6s9hWzoTZtFmNkvEICPErI9ptji_ySjicO6CkucY.tar.br",
+    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.11.0/SY4WWMhWQ9NvQgvIthcv15AUeA7rAIJHAHgiaSHGhdY.tar.br",
 }
 
-import pf.Stdout
 import pf.File
-import pf.Path
-import pf.Task
+import pf.Task exposing [Task]
 import pf.Arg
-import pf.Stderr
 import "data/EastAsianWidth-15.1.0.txt" as file : Str
 import Helpers
 
-hexToU32 = \hex ->
-    hex
-    |> Str.toU32
-    |> Result.withDefault 0
-
 main =
-    strToPath = \arg -> Path.fromStr "$(Helpers.removeTrailingSlash arg)/InternalEAW.roc"
-    Task.await Arg.list \args ->
-        pathRes =
-            args
-            |> List.get 1
-            |> Result.map strToPath
-        when pathRes is
-            Ok path -> writeToFile path
-            Err _ -> Stderr.line "USAGE: roc run InternalEAW.roc -- path/to/package/"
-
-writeToFile = \path ->
-    File.writeUtf8 path template
-    |> Task.attempt \result ->
-        when result is
-            Ok _ -> Stdout.line "\nSuccessfully wrote to $(Path.display path)\n"
-            Err _ -> Stderr.line "ERROR: unable to write to $(Path.display path)"
+    when Arg.list! |> List.get 1 is
+        Err _ -> Task.err (InvalidArguments "USAGE: roc run InternalEAW.roc -- path/to/package/")
+        Ok arg -> File.writeUtf8 "$(Helpers.removeTrailingSlash arg)/InternalEAW.roc" template
 
 template =
     """
@@ -96,7 +75,7 @@ optimizedRanges =
 mergedRanges =
     op = \state, currentValue ->
         { merged, merging } = state
-        if merging.0 == currentValue.0 && (hexToU32 merging.2) + 1 == (hexToU32 currentValue.1) then
+        if merging.0 == currentValue.0 && (Helpers.hexStrToU32 merging.2) + 1 == (Helpers.hexStrToU32 currentValue.1) then
             {
                 merged,
                 merging: (merging.0, merging.1, currentValue.2),
