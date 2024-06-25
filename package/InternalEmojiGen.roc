@@ -2,27 +2,21 @@
 ##
 ## This file will read the test data from `data/emoji-data.txt`
 ## parse it and then generate the implementation for each of the Emoji properties.
-app "gen"
-    packages {
-        pf: "https://github.com/roc-lang/basic-cli/releases/download/0.8.1/x8URkvfyi9I0QhmVG98roKBUs_AZRkLFwFJVJ3942YA.tar.br",
-    }
-    imports [
-        pf.Stdout,
-        pf.Stderr,
-        pf.Task.{ Task },
-        pf.Path.{ Path },
-        pf.Arg,
-        pf.File,
-        "data/emoji-data.txt" as file : Str,
-        Helpers.{ CPMeta, PropertyMap },
-    ]
-    provides [main] to pf
+app [main] {
+    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.11.0/SY4WWMhWQ9NvQgvIthcv15AUeA7rAIJHAHgiaSHGhdY.tar.br",
+    parser: "https://github.com/lukewilliamboswell/roc-parser/releases/download/0.5.2/9VrPjwfQQ1QeSL3CfmWr2Pr9DESdDIXy97pwpuq84Ck.tar.br",
+}
 
-main : Task {} I32
+import pf.Task exposing [Task]
+import pf.Arg
+import pf.File
+import "data/emoji-data.txt" as file : Str
+import Helpers exposing [CPMeta, PropertyMap]
+
 main =
-    getFilePath
-    |> Task.await writeToFile
-    |> Task.onErr \err -> Stderr.line "$(err)"
+    when Arg.list! |> List.get 1 is
+        Err _ -> Task.err (InvalidArguments "USAGE: roc run InternalEmoji.roc -- path/to/package/")
+        Ok arg -> File.writeUtf8 "$(Helpers.removeTrailingSlash arg)/InternalEmoji.roc" template
 
 EMOJIProp : [Emoji, Presentation, Modifier, Base, Component, Pictographic]
 EMOJIMeta : { fromBytes : List U8, property : EMOJIProp, toStr : Str }
@@ -38,23 +32,6 @@ listMeta =
         { fromBytes: Str.toUtf8 "Emoji_Component", property: Component, toStr: "Component" },
         { fromBytes: Str.toUtf8 "Emoji", property: Emoji, toStr: "Emoji" },
     ]
-
-# TASKS
-# TODO move these to a common helper file once module changes and builtin Task are available
-
-getFilePath : Task Path Str
-getFilePath =
-    args <- Arg.list |> Task.await
-
-    when args |> List.get 1 is
-        Ok arg -> Task.ok (Path.fromStr "$(Helpers.removeTrailingSlash arg)/InternalEmoji.roc")
-        Err _ -> Task.err "USAGE: roc run InternalEmoji.roc -- path/to/package/"
-
-writeToFile : Path -> Task {} Str
-writeToFile = \path ->
-    File.writeUtf8 path template
-    |> Task.mapErr \_ -> "ERROR: unable to write to $(Path.display path)"
-    |> Task.await \_ -> Stdout.line "\nSuccessfully wrote to $(Path.display path)\n"
 
 template =
     """
@@ -114,8 +91,8 @@ fromCPTemplate : Str
 fromCPTemplate =
     """
     fromCP : CP -> Result EMOJI [NonEmojiCodePoint]
-    fromCP = \\cp -> 
-        
+    fromCP = \\cp ->
+
         u32 = toU32 cp
 
         $(isXtemp listMeta "")
