@@ -1,9 +1,11 @@
 
 # Ignore the example binaries
 examples/simple
+examples/visualWidth
 
 # Ignore the generated files
 generated-docs
 package/InternalGBPGen
 package/GraphemeTestGen
 package/InternalEmojiGen
+package/InternalEAWGen

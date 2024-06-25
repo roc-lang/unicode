@@ -2,32 +2,28 @@
 ##
 ## This file will read the test data from `data/GraphemeBreakTest-15.1.0.txt`
 ## parse it and then generate the individual tests.
-app "gen"
-    packages {
-        pf: "https://github.com/roc-lang/basic-cli/releases/download/0.8.1/x8URkvfyi9I0QhmVG98roKBUs_AZRkLFwFJVJ3942YA.tar.br",
-        parser: "https://github.com/lukewilliamboswell/roc-parser/releases/download/0.5.2/9VrPjwfQQ1QeSL3CfmWr2Pr9DESdDIXy97pwpuq84Ck.tar.br",
-    }
-    imports [
-        pf.Stdout,
-        pf.Stderr,
-        pf.Task.{ Task },
-        pf.Path.{ Path },
-        pf.Arg,
-        pf.File,
-        parser.Core.{ Parser, const, keep, skip, oneOf, oneOrMore, many, chompWhile },
-        parser.String.{ parseStr, string, codeunit, codeunitSatisfies },
-        "data/GraphemeBreakTest-15.1.0.txt" as inputFile : Str,
-        Helpers.{ hexBytesToU32 },
-        CodePoint.{ CodePoint },
-        InternalCP.{ fromU32Unchecked },
-    ]
-    provides [main] to pf
+app [main] {
+    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.11.0/SY4WWMhWQ9NvQgvIthcv15AUeA7rAIJHAHgiaSHGhdY.tar.br",
+    parser: "https://github.com/lukewilliamboswell/roc-parser/releases/download/0.5.2/9VrPjwfQQ1QeSL3CfmWr2Pr9DESdDIXy97pwpuq84Ck.tar.br",
+}
+
+import pf.Task exposing [Task]
+import pf.Arg
+import pf.File
+import parser.Core exposing [Parser, const, keep, skip, oneOf, oneOrMore, many, chompWhile]
+import parser.String exposing [parseStr, string, codeunit, codeunitSatisfies]
+import "data/GraphemeBreakTest-15.1.0.txt" as inputFile : Str
+import Helpers exposing [hexBytesToU32]
+import CodePoint exposing [CodePoint]
+import InternalCP exposing [fromU32Unchecked]
 
 Rule : [GB1, GB2, GB3, GB4, GB5, GB6, GB7, GB8, GB9, GB9a, GB9b, GB9c, GB11, GB12, GB13, GB999]
 TestTokens : List [BR Rule, NB Rule, CP CodePoint]
 
-main : Task {} I32
-main = getFilePath |> Task.await writeToFile |> Task.onErr \err -> Stderr.line "$(err)"
+main =
+    when Arg.list! |> List.get 1 is
+        Err _ -> Task.err (InvalidArguments "USAGE: roc run GraphemeTest.roc -- path/to/package/")
+        Ok arg -> File.writeUtf8 "$(Helpers.removeTrailingSlash arg)/GraphemeTest.roc" template
 
 template : Str
 template =
@@ -59,14 +55,14 @@ template =
 
             # GraphemeBreakTest-15.1.0.txt:line $(Num.toStr test.lineNo)
             # $(sanitisedLine)
-            expect     
+            expect
                 exp = Ok $(codePointsList |> Inspect.toStr)
-                got = 
+                got =
                     $(codePointsList
             |> List.join
-            |> Inspect.toStr) 
-                    |> List.map InternalCP.fromU32Unchecked 
-                    |> CodePoint.toStr 
+            |> Inspect.toStr)
+                    |> List.map InternalCP.fromU32Unchecked
+                    |> CodePoint.toStr
                     |> Result.try Grapheme.split
                     |> Result.map toCodePointList
 
@@ -82,27 +78,13 @@ template =
 
     toCodePointList : List Str -> List (List U32)
     toCodePointList = \\strings ->
-        strings |> List.map \\str -> 
-            when str |> Str.toUtf8 |> CodePoint.parseUtf8 is 
+        strings |> List.map \\str ->
+            when str |> Str.toUtf8 |> CodePoint.parseUtf8 is
                 Ok cps -> List.map cps CodePoint.toU32
                 Err _ -> crash \"expected valid utf8\"
 
     $(tests)
     """
-
-getFilePath : Task Path Str
-getFilePath =
-    args <- Arg.list |> Task.await
-
-    when args |> List.get 1 is
-        Ok arg -> Task.ok (Path.fromStr "$(Helpers.removeTrailingSlash arg)/GraphemeTest.roc")
-        Err _ -> Task.err "USAGE: roc run GraphemeTest.roc -- path/to/package/"
-
-writeToFile : Path -> Task {} Str
-writeToFile = \path ->
-    File.writeUtf8 path template
-    |> Task.mapErr \_ -> "ERROR: unable to write to $(Path.display path)"
-    |> Task.await \_ -> Stdout.line "\nSuccessfully wrote to $(Path.display path)\n"
 
 toU32List : TestTokens -> List (List U32)
 toU32List = \tokens ->
