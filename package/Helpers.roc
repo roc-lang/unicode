@@ -1,19 +1,17 @@
-interface Helpers
-    exposes [
-        PropertyMap,
-        CPMeta,
-        removeTrailingSlash,
-        takeHexBytes,
-        isHex,
-        hexToDec,
-        startsWithHex,
-        hexBytesToU32,
-        hexStrToU32,
-        propertyMapFromFile,
-        filterPropertyMap,
-        metaToExpression,
-    ]
-    imports []
+module [
+    PropertyMap,
+    CPMeta,
+    removeTrailingSlash,
+    takeHexBytes,
+    isHex,
+    hexToDec,
+    startsWithHex,
+    hexBytesToU32,
+    hexStrToU32,
+    propertyMapFromFile,
+    filterPropertyMap,
+    metaToExpression,
+]
 
 CPMeta : [Single U32, Range U32 U32]
 PropertyMap a : { cp : CPMeta, prop : a }
