@@ -1,6 +1,4 @@
-package "unicode"
-    exposes [
-        CodePoint,
-        Grapheme,
-    ]
-    packages {}
+package [
+    CodePoint,
+    Grapheme,
+] {}

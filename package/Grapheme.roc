@@ -1,14 +1,12 @@
-interface Grapheme
-    exposes [
-        Grapheme,
-        split,
-    ]
-    imports [
-        CodePoint.{ CodePoint, Utf8ParseErr },
-        InternalGBP.{ GBP },
-        InternalCP.{ fromU32Unchecked },
-        InternalEmoji,
-    ]
+module [
+    Grapheme,
+    split,
+]
+
+import CodePoint exposing [CodePoint, Utf8ParseErr]
+import InternalGBP exposing [GBP]
+import InternalCP exposing [fromU32Unchecked]
+import InternalEmoji
 
 ## Extended Grapheme Cluster
 Grapheme : InternalGBP.GBP

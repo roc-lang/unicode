@@ -1,10 +1,8 @@
-interface InternalCP
-    exposes [
-        CP,
-        fromU32Unchecked,
-        toU32,
-    ]
-    imports []
+module [
+    CP,
+    fromU32Unchecked,
+    toU32,
+]
 
 CP := U32 implements [Eq, Hash]
 

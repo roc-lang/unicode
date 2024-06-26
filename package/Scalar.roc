@@ -1,21 +1,19 @@
-interface Scalar
-    exposes [
-        Scalar,
-        toU32,
-        toCodePoint,
-        fromCodePoint,
-        fromStr,
-        toScalars,
-        startsWithScalar,
-        appendScalar,
-        walkScalars,
-        walkScalarsUntil,
-        fromU32,
-    ]
-    imports [
-        InternalCP,
-        CodePoint.{ CodePoint, isValidScalar },
-    ]
+module [
+    Scalar,
+    toU32,
+    toCodePoint,
+    fromCodePoint,
+    fromStr,
+    toScalars,
+    startsWithScalar,
+    appendScalar,
+    walkScalars,
+    walkScalarsUntil,
+    fromU32,
+]
+
+import InternalCP
+import CodePoint exposing [CodePoint, isValidScalar]
 
 ## A [Unicode scalar value](http://www.unicode.org/glossary/#unicode_scalar_value) - that is,
 ## any [code point](./CodePoint#CodePoint) except for [high-surrogate](./CodePoint#isHighSurrogate)
