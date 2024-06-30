@@ -2,6 +2,7 @@
 # Ignore the example binaries
 examples/simple
 examples/visualWidth
+example/splitGraphemes
 
 # Ignore the generated files
 generated-docs
