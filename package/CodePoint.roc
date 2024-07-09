@@ -7,6 +7,7 @@ module [
     isHighSurrogate,
     isLowSurrogate,
     isValidScalar,
+    parsePartialUtf8,
     appendUtf8,
     parseUtf8,
     countUtf8Bytes,
@@ -122,7 +123,6 @@ appendUtf8 = \bytes, codePoint ->
         ## This was an invalid Unicode scalar value, even though it had the Roc type Scalar.
         ## This should never happen!
         # expect u32 < 0x110000
-
         byte1 =
             u32
             |> Num.shiftRightBy 18
