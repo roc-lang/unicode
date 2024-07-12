@@ -1,3 +1,12 @@
-# Work in progress!
+Convenient functions for working with unicode.
 
-Someday this will be a useful collection of Unicode operations, but for right now it's extremely WIP.
+⚠️ This package has only gone through limited testing. [Make an issue](https://github.com/roc-lang/unicode/issues) when you hit a bug.
+
+:eyes: [**examples**](https://github.com/roc-lang/unicode/tree/main/examples)
+
+:book: **documentation**: TODO
+
+
+## Learning about Unicode
+
+The string/unicode rabbit hole goes deep, we have a [good overview](https://www.roc-lang.org/builtins/Str) (scroll to the unicode section).

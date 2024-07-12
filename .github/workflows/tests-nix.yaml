@@ -1,0 +1,30 @@
+on: 
+    pull_request:
+    workflow_dispatch:
+  
+  # this cancels workflows currently in progress if you start a new one
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: true
+  
+jobs:  
+    test-examples-nix:
+      runs-on: [ubuntu-22.04]
+      steps:
+        - uses: actions/checkout@v3
+      
+        # install nix
+        - uses: cachix/install-nix-action@v23
+          with:
+            nix_path: nixpkgs=channel:nixos-unstable
+  
+        # Run all tests 
+        - name: Run all tests
+          run: nix develop -c sh -c 'export ROC=roc && ./ci/all_tests.sh'
+            
+        - name: Run all tests and capture output to check for crash later
+          run: nix develop -c sh -c 'export ROC=roc && ./ci/all_tests.sh 2>&1 | tee all_tests_output.log'
+
+        # Workaround for https://github.com/roc-lang/roc/issues/6688
+        - name: Check if crash occurred
+          run: grep -qv "crashed" all_tests_output.log

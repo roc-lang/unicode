@@ -8,17 +8,18 @@ import unicode.CodePoint
 
 word = "世界"
 
-visualWidth : Result U32 CodePoint.Utf8ParseErr
-visualWidth =
-    word
+## Get the display width (in amount of characters) of a Str
+getVisualWidth : Str -> Result U32 CodePoint.Utf8ParseErr
+getVisualWidth = \str ->
+    str
     |> Str.toUtf8
     |> CodePoint.parseUtf8
     |> Result.map (\lst -> List.map lst CodePoint.visualWidth)
     |> Result.map List.sum
 
 main =
-    when visualWidth is
+    when (getVisualWidth word) is
         Ok width -> Stdout.line "\n\nThe word $(word) will be displayed with the width of $(Num.toStr width) characters on most UIs.\n\n"
         Err _ -> crash "ERROR: Unable to parse $(word)!"
 
-expect visualWidth == Ok 4
+expect (getVisualWidth word) == Ok 4
