@@ -8,9 +8,10 @@ import unicode.CodePoint
 
 word = "世界"
 
-visualWidth : Result U32 CodePoint.Utf8ParseErr
-visualWidth =
-    word
+## Get the display width (in amount of characters) of a Str
+getVisualWidth : Str -> Result U32 CodePoint.Utf8ParseErr
+getVisualWidth = \str ->
+    str
     |> Str.toUtf8
     |> CodePoint.parseUtf8
     |> Result.map (\lst -> List.map lst CodePoint.visualWidth)
