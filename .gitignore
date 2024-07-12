@@ -2,6 +2,7 @@
 # Ignore the example binaries
 examples/nrOfCodePoints
 examples/getVisualWidth
+example/splitGraphemes
 
 # Ignore the generated files
 generated-docs

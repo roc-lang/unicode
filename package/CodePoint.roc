@@ -7,6 +7,7 @@ module [
     isHighSurrogate,
     isLowSurrogate,
     isValidScalar,
+    parsePartialUtf8,
     appendUtf8,
     parseUtf8,
     countUtf8Bytes,
@@ -121,9 +122,7 @@ appendUtf8 = \bytes, codePoint ->
     else
         ## This was an invalid Unicode scalar value, even though it had the Roc type Scalar.
         ## This should never happen!
-        expect
-            u32 < 0x110000
-
+        # expect u32 < 0x110000
         byte1 =
             u32
             |> Num.shiftRightBy 18
@@ -179,9 +178,7 @@ countUtf8Bytes = \codePoint ->
         3
     else
         # If this expectation fails, it was an invalid Scalar and shouldn't have been allowed!
-        expect
-            u32 < 0x110000
-
+        # expect u32 < 0x110000
         4
 
 ## parse a 2-byte code point
