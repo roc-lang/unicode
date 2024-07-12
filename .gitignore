@@ -1,7 +1,7 @@
 
 # Ignore the example binaries
-examples/simple
-examples/visualWidth
+examples/nrOfCodePoints
+examples/getVisualWidth
 
 # Ignore the generated files
 generated-docs
