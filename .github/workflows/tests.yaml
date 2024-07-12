@@ -9,8 +9,8 @@ concurrency:
 
 jobs:
 
-  test-examples:
-    runs-on: [ubuntu-20.04]
+  test-examples-ubuntu:
+    runs-on: [ubuntu-22.04]
     steps:
       - uses: actions/checkout@v3
     

@@ -18,8 +18,8 @@ getVisualWidth = \str ->
     |> Result.map List.sum
 
 main =
-    when visualWidth is
+    when (getVisualWidth word) is
         Ok width -> Stdout.line "\n\nThe word $(word) will be displayed with the width of $(Num.toStr width) characters on most UIs.\n\n"
         Err _ -> crash "ERROR: Unable to parse $(word)!"
 
-expect getVisualWidth == Ok 4
+expect (getVisualWidth word) == Ok 4
