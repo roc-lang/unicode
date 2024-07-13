@@ -4,7 +4,7 @@ Convenient functions for working with unicode.
 
 :eyes: [**examples**](https://github.com/roc-lang/unicode/tree/main/examples)
 
-:book: **documentation**: TODO
+:book: [**documentation**](https://roc-lang.github.io/unicode)
 
 
 ## Learning about Unicode
