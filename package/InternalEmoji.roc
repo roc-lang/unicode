@@ -39,5 +39,5 @@ fromCP = \cp ->
         Ok Component
     else if isEmoji u32 then
         Ok Emoji
-    else 
+    else
         Err NonEmojiCodePoint

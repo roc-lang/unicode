@@ -13,8 +13,8 @@ expect Grapheme.split string == Ok ["🇦🇺", "🦘", "🪃"]
 
 main =
     string
-    |> Grapheme.split
-    |> Inspect.toStr
-    |> \splitted ->
-        Stdout.line! "\n\nThe string \"$(string)\" has following graphemes:"
-        Stdout.line! splitted
+        |> Grapheme.split
+        |> Inspect.toStr
+        |> \splitted ->
+            Stdout.line! "\n\nThe string \"$(string)\" has following graphemes:"
+            Stdout.line! splitted
