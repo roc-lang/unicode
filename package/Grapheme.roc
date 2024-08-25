@@ -61,6 +61,8 @@ splitHelp = \state, codePoints, breakPoints, acc ->
     nextBPs = List.dropFirst breakPoints 1
 
     when (state, codePoints, breakPoints) is
+        # Special handling for empty list
+        (Next, [], _) -> acc
         # Special handling for last codepoint
         (Next, [cp], _) -> List.concat acc [CP cp, BR GB2]
         (AfterHangulL prev, [cp], [bp]) if bp == L || bp == V || bp == LV || bp == LVT -> List.concat acc [CP prev, NB GB6, CP cp, BR GB2]
