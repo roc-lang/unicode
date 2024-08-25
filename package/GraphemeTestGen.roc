@@ -3,8 +3,8 @@
 ## This file will read the test data from `data/GraphemeBreakTest-15.1.0.txt`
 ## parse it and then generate the individual tests.
 app [main] {
-    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.11.0/SY4WWMhWQ9NvQgvIthcv15AUeA7rAIJHAHgiaSHGhdY.tar.br",
-    parser: "https://github.com/lukewilliamboswell/roc-parser/releases/download/0.7.1/MvLlME9RxOBjl0QCxyn3LIaoG9pSlaNxCa-t3BfbPNc.tar.br",
+    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.14.0/dC5ceT962N_4jmoyoffVdphJ_4GlW3YMhAPyGPr-nU0.tar.br",
+    parser: "https://github.com/lukewilliamboswell/roc-parser/releases/download/0.7.2/1usTzOOACTpnkarBX0ED3gFESzR4ROdAlt1Llf4WFzo.tar.br",
 }
 
 import pf.Task exposing [Task]
@@ -21,7 +21,7 @@ Rule : [GB1, GB2, GB3, GB4, GB5, GB6, GB7, GB8, GB9, GB9a, GB9b, GB9c, GB11, GB1
 TestTokens : List [BR Rule, NB Rule, CP CodePoint]
 
 main =
-    when Arg.list! |> List.get 1 is
+    when Arg.list! {} |> List.get 1 is
         Err _ -> Task.err (InvalidArguments "USAGE: roc run GraphemeTest.roc -- path/to/package/")
         Ok arg -> File.writeUtf8 "$(Helpers.removeTrailingSlash arg)/GraphemeTest.roc" template
 
@@ -213,17 +213,17 @@ zip : List [BR, NB, CP CodePoint], List [BR Rule, NB Rule] -> Result (List [BR R
 zip = \first, second ->
     when (List.first first, List.first second) is
         (Ok BR, Ok (BR rule)) ->
-            next <- zip (List.dropFirst first 1) (List.dropFirst second 1) |> Result.try
+            next = zip? (List.dropFirst first 1) (List.dropFirst second 1)
 
             Ok (List.append next (BR rule))
 
         (Ok NB, Ok (NB rule)) ->
-            next <- zip (List.dropFirst first 1) (List.dropFirst second 1) |> Result.try
+            next = zip? (List.dropFirst first 1) (List.dropFirst second 1)
 
             Ok (List.append next (NB rule))
 
         (Ok (CP cp), _) ->
-            next <- zip (List.dropFirst first 1) second |> Result.try
+            next = zip? (List.dropFirst first 1) second
 
             Ok (List.append next (CP cp))
 

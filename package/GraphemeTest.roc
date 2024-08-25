@@ -7,11 +7,11 @@ import InternalCP
 
 toCodePointList : List Str -> List (List U32)
 toCodePointList = \strings ->
-    strings |> List.map \str ->
+    strings
+    |> List.map \str ->
         when str |> Str.toUtf8 |> CodePoint.parseUtf8 is
             Ok cps -> List.map cps CodePoint.toU32
             Err _ -> crash "expected valid utf8"
-
 
 # GraphemeBreakTest-15.1.0.txt:line 25
 # % 0020 % 0020 % #  % [0.2] SPACE (Other) % [999.0] SPACE (Other) % [0.3]

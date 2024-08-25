@@ -74,77 +74,95 @@ fromCP = \cp ->
         LV
     else if isL u32 then
         L
-    else 
+    else
         Other
 
-expect # test U+000D gives CR
+expect
+    # test U+000D gives CR
     gbp = fromCP (fromU32Unchecked 13)
     gbp == CR
 
-expect # test U+000A gives LF
+expect
+    # test U+000A gives LF
     gbp = fromCP (fromU32Unchecked 10)
     gbp == LF
 
-expect # test U+200D gives ZWJ
+expect
+    # test U+200D gives ZWJ
     gbp = fromCP (fromU32Unchecked 8205)
     gbp == ZWJ
 
-expect # test U+17BF gives SpacingMark
+expect
+    # test U+17BF gives SpacingMark
     gbp = fromCP (fromU32Unchecked 6079)
     gbp == SpacingMark
 
-expect # test U+A960 gives L
+expect
+    # test U+A960 gives L
     gbp = fromCP (fromU32Unchecked 43360)
     gbp == L
 
-expect # test U+D7C6 gives V
+expect
+    # test U+D7C6 gives V
     gbp = fromCP (fromU32Unchecked 55238)
     gbp == V
 
-expect # test U+11A8 gives T
+expect
+    # test U+11A8 gives T
     gbp = fromCP (fromU32Unchecked 4520)
     gbp == T
 
-expect # test U+AC00 gives LV
+expect
+    # test U+AC00 gives LV
     gbp = fromCP (fromU32Unchecked 44032)
     gbp == LV
 
-expect # test U+AC04 gives LVT
+expect
+    # test U+AC04 gives LVT
     gbp = fromCP (fromU32Unchecked 44036)
     gbp == LVT
 
-expect # test U+B93D gives LVT
+expect
+    # test U+B93D gives LVT
     gbp = fromCP (fromU32Unchecked 47421)
     gbp == LVT
 
-expect # test U+0041 gives Other
+expect
+    # test U+0041 gives Other
     gbp = fromCP (fromU32Unchecked 65)
     gbp == Other
 
-expect # test U+D7CD gives T
+expect
+    # test U+D7CD gives T
     gbp = fromCP (fromU32Unchecked 55245)
     gbp == T
 
-expect # test U+1160 gives V
+expect
+    # test U+1160 gives V
     gbp = fromCP (fromU32Unchecked 4448)
     gbp == V
 
-expect # test U+D7C6 gives V
+expect
+    # test U+D7C6 gives V
     gbp = fromCP (fromU32Unchecked 55238)
     gbp == V
 
-expect # test U+1E2AE gives Extend
+expect
+    # test U+1E2AE gives Extend
     gbp = fromCP (fromU32Unchecked 123566)
     gbp == Extend
 
-expect # test U+FFF0 gives Control
+expect
+    # test U+FFF0 gives Control
     gbp = fromCP (fromU32Unchecked 65520)
     gbp == Control
 
-expect # test U+1D17A gives Control
+expect
+    # test U+1D17A gives Control
     gbp = fromCP (fromU32Unchecked 119162)
     gbp == Control
 
-expect # test U+06DD gives Prepend
+expect
+    # test U+06DD gives Prepend
     gbp = fromCP (fromU32Unchecked 1757)
     gbp == Prepend
