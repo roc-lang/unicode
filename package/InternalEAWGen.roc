@@ -3,7 +3,7 @@
 ## This file will read the test data from `data/EastAsianWidth-15.1.0.txt`
 ## parse it and then generate function to test the East Asian Width property of a code point.
 app [main] {
-    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.11.0/SY4WWMhWQ9NvQgvIthcv15AUeA7rAIJHAHgiaSHGhdY.tar.br",
+    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.14.0/dC5ceT962N_4jmoyoffVdphJ_4GlW3YMhAPyGPr-nU0.tar.br",
 }
 
 import pf.File
@@ -15,7 +15,7 @@ import Helpers
 EawRange : (Str, Str, Str)
 
 main =
-    when Arg.list! |> List.get 1 is
+    when Arg.list! {} |> List.get 1 is
         Err _ -> Task.err (InvalidArguments "USAGE: roc run InternalEAWGen.roc -- path/to/package/")
         Ok arg -> File.writeUtf8 "$(Helpers.removeTrailingSlash arg)/InternalEAW.roc" template
 

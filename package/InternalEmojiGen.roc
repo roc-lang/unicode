@@ -3,8 +3,8 @@
 ## This file will read the test data from `data/emoji-data.txt`
 ## parse it and then generate the implementation for each of the Emoji properties.
 app [main] {
-    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.11.0/SY4WWMhWQ9NvQgvIthcv15AUeA7rAIJHAHgiaSHGhdY.tar.br",
-    parser: "https://github.com/lukewilliamboswell/roc-parser/releases/download/0.5.2/9VrPjwfQQ1QeSL3CfmWr2Pr9DESdDIXy97pwpuq84Ck.tar.br",
+    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.14.0/dC5ceT962N_4jmoyoffVdphJ_4GlW3YMhAPyGPr-nU0.tar.br",
+    parser: "https://github.com/lukewilliamboswell/roc-parser/releases/download/0.7.2/1usTzOOACTpnkarBX0ED3gFESzR4ROdAlt1Llf4WFzo.tar.br",
 }
 
 import pf.Task exposing [Task]
@@ -14,7 +14,7 @@ import "data/emoji-data.txt" as file : Str
 import Helpers exposing [CPMeta, PropertyMap]
 
 main =
-    when Arg.list! |> List.get 1 is
+    when Arg.list! {} |> List.get 1 is
         Err _ -> Task.err (InvalidArguments "USAGE: roc run InternalEmoji.roc -- path/to/package/")
         Ok arg -> File.writeUtf8 "$(Helpers.removeTrailingSlash arg)/InternalEmoji.roc" template
 
