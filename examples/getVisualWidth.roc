@@ -4,6 +4,7 @@ app [main] {
 }
 
 import pf.Stdout
+import pf.Task exposing [Task]
 import unicode.CodePoint
 
 word = "世界"

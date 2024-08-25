@@ -4,7 +4,7 @@ app [main] {
 }
 
 import pf.Stdout
-import pf.Task
+import pf.Task exposing [Task]
 import unicode.CodePoint exposing [Utf8ParseErr]
 
 ## Get the number of code points for a given Str
