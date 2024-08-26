@@ -271,7 +271,7 @@ parsePartialUtf8 = \bytes ->
     # We always try to get the first byte, and if it fails with Err ListWasEmpty, then
     # the whole function should return Err ListWasEmpty. This tells the caller "there's nothing
     # else to parse" as opposed to "There are bytes here, but they're invalid UTF-8."
-    firstByte <- List.first bytes |> Result.try
+    firstByte = List.first? bytes
 
     # Get the byte at the index, or return Err InvalidUtf8 if that's past the end of the list.
     byteAt = \index ->
@@ -289,15 +289,15 @@ parsePartialUtf8 = \bytes ->
         }
     else if firstByte >= 0b1100_0000 && firstByte <= 0b1101_1111 then
         # 2-byte code point
-        secondByte <- byteAt 1 |> Result.try
+        secondByte = byteAt? 1
         bytesParsed = 2
 
         parse2 firstByte secondByte
         |> Result.map \u32 -> { codePoint: fromU32Unchecked u32, bytesParsed }
     else if firstByte >= 0b1110_0000 && firstByte <= 0b1110_1111 then
         # 3-byte code point
-        secondByte <- byteAt 1 |> Result.try
-        thirdByte <- byteAt 2 |> Result.try
+        secondByte = byteAt? 1
+        thirdByte = byteAt? 2
         bytesParsed = 3
 
         if Num.bitwiseAnd firstByte 0b11110000 == 0b11100000 then
@@ -307,9 +307,9 @@ parsePartialUtf8 = \bytes ->
             Err InvalidUtf8
     else if firstByte >= 0b1111_0000 && firstByte <= 0b1111_0111 then
         # 4-byte code point
-        secondByte <- byteAt 1 |> Result.try
-        thirdByte <- byteAt 2 |> Result.try
-        fourthByte <- byteAt 3 |> Result.try
+        secondByte = byteAt? 1
+        thirdByte = byteAt? 2
+        fourthByte = byteAt? 3
         bytesParsed = 4
 
         if

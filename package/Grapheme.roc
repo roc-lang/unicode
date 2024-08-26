@@ -30,11 +30,11 @@ split = \str ->
     # I'm not sure if we should return an error here or just crash.
     # A Roc Str should be be valid utf8 and so in theory it should not be possible
     # for split to have invalid utf8 in it. To be discussed.
-    codePoints <- str |> Str.toUtf8 |> CodePoint.parseUtf8 |> Result.map
+    codePoints = str |> Str.toUtf8 |> CodePoint.parseUtf8?
 
     breakPoints = codePoints |> List.map InternalGBP.fromCP
 
-    splitHelp Next codePoints breakPoints [BR GB1] |> toListStr
+    Ok (splitHelp Next codePoints breakPoints [BR GB1] |> toListStr)
 
 # Used internally to filter out the break/nobreak tokens and separate CPs into a List Str
 toListStr : Tokens -> List Str
@@ -61,6 +61,8 @@ splitHelp = \state, codePoints, breakPoints, acc ->
     nextBPs = List.dropFirst breakPoints 1
 
     when (state, codePoints, breakPoints) is
+        # Special handling for empty list
+        (Next, [], _) -> acc
         # Special handling for last codepoint
         (Next, [cp], _) -> List.concat acc [CP cp, BR GB2]
         (AfterHangulL prev, [cp], [bp]) if bp == L || bp == V || bp == LV || bp == LVT -> List.concat acc [CP prev, NB GB6, CP cp, BR GB2]
