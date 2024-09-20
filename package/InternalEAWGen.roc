@@ -121,8 +121,8 @@ groupedRanges =
     |> List.walk (Dict.empty {}) \s, range ->
         Dict.update s range.0 \value ->
             when value is
-                Present lst -> Present (List.append lst (range.1, range.2))
-                Missing -> Present (List.single (range.1, range.2))
+                Ok lst -> Ok (List.append lst (range.1, range.2))
+                Err Missing -> Ok (List.single (range.1, range.2))
 
 testsStr : Str
 testsStr =
