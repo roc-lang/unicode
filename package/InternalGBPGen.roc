@@ -3,7 +3,7 @@
 ## This file will read the test data from `data/GraphemeBreakProperty-15.1.0.txt`
 ## parse it and then generate the implementation for each of the GBP properties.
 app [main] {
-    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.15.0/SlwdbJ-3GR7uBWQo6zlmYWNYOxnvo8r6YABXD-45UOw.tar.br",
+    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.17.0/lZFLstMUCUvd5bjnnpYromZJXkQUrdhbva4xdBInicE.tar.br",
     parser: "https://github.com/lukewilliamboswell/roc-parser/releases/download/0.7.2/1usTzOOACTpnkarBX0ED3gFESzR4ROdAlt1Llf4WFzo.tar.br",
 }
 
@@ -143,7 +143,7 @@ testsTemplate =
 
 parsePropPart : Str -> Result GBPProp [ParsingError]
 parsePropPart = \str ->
-    when Str.split str "#" is
+    when Str.splitOn str "#" is
         [propStr, ..] -> gbpPropParser (Str.trim propStr)
         _ -> Err ParsingError
 

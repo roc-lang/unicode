@@ -3,13 +3,13 @@
 ## This file will read the test data from `data/GraphemeBreakTest-15.1.0.txt`
 ## parse it and then generate the individual tests.
 app [main] {
-    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.15.0/SlwdbJ-3GR7uBWQo6zlmYWNYOxnvo8r6YABXD-45UOw.tar.br",
-    parser: "https://github.com/lukewilliamboswell/roc-parser/releases/download/0.7.2/1usTzOOACTpnkarBX0ED3gFESzR4ROdAlt1Llf4WFzo.tar.br",
+    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.17.0/lZFLstMUCUvd5bjnnpYromZJXkQUrdhbva4xdBInicE.tar.br",
+    parser: "https://github.com/lukewilliamboswell/roc-parser/releases/download/0.9.0/w8YKp2YAgQt5REYk912HfKAHBjcXsrnvtjI0CBzoAT4.tar.br",
 }
 
 import pf.Arg
 import pf.File
-import parser.Core exposing [Parser, const, keep, skip, oneOf, oneOrMore, many, chompWhile]
+import parser.Parser exposing [Parser, const, keep, skip, oneOf, oneOrMore, many, chompWhile]
 import parser.String exposing [parseStr, string, codeunit, codeunitSatisfies]
 import "data/GraphemeBreakTest-15.1.0.txt" as inputFile : Str
 import Helpers exposing [hexBytesToU32]
@@ -106,7 +106,7 @@ toU32List = \tokens ->
 testFile : List { lineNo : U16, lineStr : Str, parsed : TestTokens }
 testFile =
     inputFile
-    |> Str.split "\n"
+    |> Str.splitOn "\n"
     |> List.mapWithIndex \lineStr, idx -> { lineNo: Num.toU16 (idx + 1), lineStr, parsed: [] }
     |> List.keepIf \test -> Str.startsWith test.lineStr "÷ "
     |> List.map \test ->

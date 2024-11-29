@@ -125,10 +125,10 @@ expect hexToDec 'F' == 15
 propertyMapFromFile : Str, (Str -> Result a [ParsingError]) -> List { cp : CPMeta, prop : a }
 propertyMapFromFile = \file, parsePropPart ->
     file
-    |> Str.split "\n"
+    |> Str.splitOn "\n"
     |> List.keepOks Helpers.startsWithHex
     |> List.map \l ->
-        when Str.split l ";" is
+        when Str.splitOn l ";" is
             [hexPart, propPart] ->
                 when (parseHexPart hexPart, parsePropPart propPart) is
                     (Ok cp, Ok prop) -> { cp, prop }
@@ -138,7 +138,7 @@ propertyMapFromFile = \file, parsePropPart ->
 
 parseHexPart : Str -> Result CPMeta [ParsingError]
 parseHexPart = \hexPart ->
-    when hexPart |> Str.trim |> Str.split ".." is
+    when hexPart |> Str.trim |> Str.splitOn ".." is
         [single] ->
             when codePointParser single is
                 Ok a -> Ok (Single a)
