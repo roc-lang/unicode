@@ -3,7 +3,7 @@
 ## This file will read the test data from `data/EastAsianWidth-15.1.0.txt`
 ## parse it and then generate function to test the East Asian Width property of a code point.
 app [main] {
-    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.15.0/SlwdbJ-3GR7uBWQo6zlmYWNYOxnvo8r6YABXD-45UOw.tar.br",
+    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.17.0/lZFLstMUCUvd5bjnnpYromZJXkQUrdhbva4xdBInicE.tar.br",
 }
 
 import pf.File
@@ -75,7 +75,7 @@ expect parseLine "0020           ; Na # Zs         SPACE" == Ok ("Na", "0x0020",
 expect parseLine "0025..0027     ; Na # Po     [3] PERCENT SIGN..APOSTROPHE" == Ok ("Na", "0x0025", "0x0027")
 
 parsedLines : List (Result EawRange _)
-parsedLines = file |> Str.split "\n" |> List.map parseLine
+parsedLines = file |> Str.splitOn "\n" |> List.map parseLine
 
 originalRanges =
     parsedLines
