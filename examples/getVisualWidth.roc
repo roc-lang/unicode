@@ -1,5 +1,5 @@
-app [main] {
-    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.17.0/lZFLstMUCUvd5bjnnpYromZJXkQUrdhbva4xdBInicE.tar.br",
+app [main!] {
+    pf: platform "../../basic-cli/platform/main.roc",
     unicode: "../package/main.roc", # use release URL (ends in tar.br) for local example, see github.com/roc/unicode/releases
 }
 
@@ -9,17 +9,17 @@ import unicode.CodePoint
 word = "世界"
 
 ## Get the display width (in amount of characters) of a Str
-getVisualWidth : Str -> Result U32 CodePoint.Utf8ParseErr
-getVisualWidth = \str ->
+get_visual_width : Str -> Result U32 CodePoint.Utf8ParseErr
+get_visual_width = \str ->
     str
-    |> Str.toUtf8
-    |> CodePoint.parseUtf8
-    |> Result.map (\lst -> List.map lst CodePoint.visualWidth)
-    |> Result.map List.sum
+    |> Str.to_utf8
+    |> CodePoint.parse_utf8
+    |> Result.map(\lst -> List.map(lst, CodePoint.visual_width))
+    |> Result.map(List.sum)
 
-main =
-    when getVisualWidth word is
-        Ok width -> Stdout.line "\n\nThe word $(word) will be displayed with the width of $(Num.toStr width) characters on most UIs.\n\n"
-        Err _ -> crash "ERROR: Unable to parse $(word)!"
+main! = \_args ->
+    when get_visual_width(word) is
+        Ok(width) -> Stdout.line!("\n\nThe word ${word} will be displayed with the width of ${Num.to_str(width)} characters on most UIs.\n\n")
+        Err(_) -> crash("ERROR: Unable to parse ${word}!")
 
-expect (getVisualWidth word) == Ok 4
+expect (get_visual_width(word)) == Ok(4)

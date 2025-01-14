@@ -2,9 +2,9 @@
 ##
 ## This file will read the test data from `data/GraphemeBreakProperty-15.1.0.txt`
 ## parse it and then generate the implementation for each of the GBP properties.
-app [main] {
-    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.17.0/lZFLstMUCUvd5bjnnpYromZJXkQUrdhbva4xdBInicE.tar.br",
-    parser: "https://github.com/lukewilliamboswell/roc-parser/releases/download/0.7.2/1usTzOOACTpnkarBX0ED3gFESzR4ROdAlt1Llf4WFzo.tar.br",
+app [main!] {
+    pf: platform "../../basic-cli/platform/main.roc",
+    parser: "../../roc-parser/package/main.roc",
 }
 
 import pf.Arg
@@ -12,33 +12,38 @@ import pf.File
 import "data/GraphemeBreakProperty-15.1.0.txt" as file : Str
 import Helpers exposing [CPMeta, PropertyMap]
 
-main =
-    when Arg.list! {} |> List.get 1 is
-        Err _ -> Task.err (InvalidArguments "USAGE: roc run InternalGBP.roc -- path/to/package/")
-        Ok arg -> File.writeUtf8 "$(Helpers.removeTrailingSlash arg)/InternalGBP.roc" template
+main! = \raw_args ->
+    args = List.map(raw_args, Arg.display)
+
+    # gets the second argument, the first is the executable's path
+    package_path =
+        List.get(args, 1)
+        |> Result.map_err?(\_ -> Exit(1, "Error: I got 0 arguments! Usage: roc InternalGBP.roc -- path/to/package/"))
+    
+    File.write_utf8!("${Helpers.remove_trailing_slash(package_path)}/InternalGBP.roc", template)
 
 GBPProp : [CR, LF, Control, Extend, ZWJ, RI, Prepend, SpacingMark, L, V, T, LV, LVT, Other]
-GBPMeta : { fromBytes : List U8, property : GBPProp, toStr : Str }
+GBPMeta : { from_bytes : List U8, property : GBPProp, to_str : Str }
 
-listMeta : List GBPMeta
-listMeta =
+list_meta : List GBPMeta
+list_meta =
     # NOTE ordering matters here, e.g. L after LV and LVT
     # to match on longest first
     [
-        { fromBytes: Str.toUtf8 "CR", property: CR, toStr: "CR" },
-        { fromBytes: Str.toUtf8 "Control", property: Control, toStr: "Control" },
-        { fromBytes: Str.toUtf8 "Extend", property: Extend, toStr: "Extend" },
-        { fromBytes: Str.toUtf8 "ZWJ", property: ZWJ, toStr: "ZWJ" },
-        { fromBytes: Str.toUtf8 "Regional_Indicator", property: RI, toStr: "RI" },
-        { fromBytes: Str.toUtf8 "Prepend", property: Prepend, toStr: "Prepend" },
-        { fromBytes: Str.toUtf8 "SpacingMark", property: SpacingMark, toStr: "SpacingMark" },
-        { fromBytes: Str.toUtf8 "V", property: V, toStr: "V" },
-        { fromBytes: Str.toUtf8 "T", property: T, toStr: "T" },
-        { fromBytes: Str.toUtf8 "LF", property: LF, toStr: "LF" },
-        { fromBytes: Str.toUtf8 "LVT", property: LVT, toStr: "LVT" },
-        { fromBytes: Str.toUtf8 "LV", property: LV, toStr: "LV" },
-        { fromBytes: Str.toUtf8 "L", property: L, toStr: "L" },
-        { fromBytes: Str.toUtf8 "Other", property: Other, toStr: "Other" },
+        { from_bytes: Str.to_utf8("CR"), property: CR, to_str: "CR" },
+        { from_bytes: Str.to_utf8("Control"), property: Control, to_str: "Control" },
+        { from_bytes: Str.to_utf8("Extend"), property: Extend, to_str: "Extend" },
+        { from_bytes: Str.to_utf8("ZWJ"), property: ZWJ, to_str: "ZWJ" },
+        { from_bytes: Str.to_utf8("Regional_Indicator"), property: RI, to_str: "RI" },
+        { from_bytes: Str.to_utf8("Prepend"), property: Prepend, to_str: "Prepend" },
+        { from_bytes: Str.to_utf8("SpacingMark"), property: SpacingMark, to_str: "SpacingMark" },
+        { from_bytes: Str.to_utf8("V"), property: V, to_str: "V" },
+        { from_bytes: Str.to_utf8("T"), property: T, to_str: "T" },
+        { from_bytes: Str.to_utf8("LF"), property: LF, to_str: "LF" },
+        { from_bytes: Str.to_utf8("LVT"), property: LVT, to_str: "LVT" },
+        { from_bytes: Str.to_utf8("LV"), property: LV, to_str: "LV" },
+        { from_bytes: Str.to_utf8("L"), property: L, to_str: "L" },
+        { from_bytes: Str.to_utf8("Other"), property: Other, to_str: "Other" },
     ]
 
 template =
@@ -47,75 +52,77 @@ template =
     module [GBP, fromCP, isExtend, isZWJ]
     import InternalCP exposing [CP, toU32, fromU32Unchecked]
 
-    $(propDefTemplate)
-    $(isFuncTemplate)
+    ${prop_def_template}
+    ${is_func_template}
 
-    $(fromCPTemplate)
-    $(testsTemplate)
+    ${from_cp_template}
+    ${tests_template}
     """
 
-propDefTemplate : Str
-propDefTemplate =
+prop_def_template : Str
+prop_def_template =
 
-    propStrs =
-        listMeta
-        |> List.map .toStr
-        |> List.map \str -> "$(str)"
-        |> Str.joinWith ", "
+    prop_strs =
+        list_meta
+        |> List.map(.to_str)
+        |> List.map(\str -> "${str}")
+        |> Str.join_with(", ")
 
     """
-    GBP : [$(propStrs)]
+    GBP : [${prop_strs}]
     """
 
-isFuncTemplate : Str
-isFuncTemplate =
+is_func_template : Str
+is_func_template =
 
     help : Str, GBPProp -> Str
     help = \name, current ->
         exp =
-            cpsForProperty current
-            |> List.map Helpers.metaToExpression
-            |> Str.joinWith " || "
+            cps_for_property(current)
+            |> List.map(Helpers.meta_to_expression)
+            |> Str.join_with(" || ")
 
         """
 
-        $(name) : U32 -> Bool
-        $(name) = \\u32 -> $(exp)
+        ${name} : U32 -> Bool
+        ${name} = \\u32 -> ${exp}
         """
 
     # For each GBPProp define a function that returns true if the given code point has that property
-    listMeta
-    |> List.keepOks \{ property } ->
-        when property is
-            CR -> help "isCR" CR |> Ok
-            LF -> help "isLF" LF |> Ok
-            Control -> help "isControl" Control |> Ok
-            Extend -> help "isExtend" Extend |> Ok
-            ZWJ -> help "isZWJ" ZWJ |> Ok
-            RI -> help "isRI" RI |> Ok
-            Prepend -> help "isPrepend" Prepend |> Ok
-            SpacingMark -> help "isSpacingMark" SpacingMark |> Ok
-            L -> help "isL" L |> Ok
-            V -> help "isV" V |> Ok
-            T -> help "isT" T |> Ok
-            LV -> help "isLV" LV |> Ok
-            LVT -> help "isLVT" LVT |> Ok
-            Other -> Err NotUsed
-    |> Str.joinWith "\n"
+    list_meta
+    |> List.keep_oks(
+        \{ property } ->
+            when property is
+                CR -> help("isCR", CR) |> Ok
+                LF -> help("isLF", LF) |> Ok
+                Control -> help("isControl", Control) |> Ok
+                Extend -> help("isExtend", Extend) |> Ok
+                ZWJ -> help("isZWJ", ZWJ) |> Ok
+                RI -> help("isRI", RI) |> Ok
+                Prepend -> help("isPrepend", Prepend) |> Ok
+                SpacingMark -> help("isSpacingMark", SpacingMark) |> Ok
+                L -> help("isL", L) |> Ok
+                V -> help("isV", V) |> Ok
+                T -> help("isT", T) |> Ok
+                LV -> help("isLV", LV) |> Ok
+                LVT -> help("isLVT", LVT) |> Ok
+                Other -> Err(NotUsed),
+    )
+    |> Str.join_with("\n")
 
-fromCPTemplate : Str
-fromCPTemplate =
+from_cp_template : Str
+from_cp_template =
     """
     fromCP : CP -> GBP
     fromCP = \\cp ->
 
         u32 = toU32 cp
 
-        $(isXtemp listMeta "")
+        ${is_xtemp(list_meta, "")}
     """
 
-testsTemplate : Str
-testsTemplate =
+tests_template : Str
+tests_template =
     [
         ("000D", "CR"),
         ("000A", "LF"),
@@ -136,133 +143,134 @@ testsTemplate =
         ("1D17A", "Control"),
         ("06DD", "Prepend"),
     ]
-    |> List.map unicodeHexToTest
-    |> Str.joinWith "\n\n"
+    |> List.map(unicode_hex_to_test)
+    |> Str.join_with("\n\n")
 
 # HELPERS
 
-parsePropPart : Str -> Result GBPProp [ParsingError]
-parsePropPart = \str ->
-    when Str.splitOn str "#" is
-        [propStr, ..] -> gbpPropParser (Str.trim propStr)
-        _ -> Err ParsingError
+parse_prop_part : Str -> Result GBPProp [ParsingError]
+parse_prop_part = \str ->
+    when Str.split_on(str, "#") is
+        [prop_str, ..] -> gbp_prop_parser(Str.trim(prop_str))
+        _ -> Err(ParsingError)
 
-expect parsePropPart " Prepend # Cf   [6] ARABIC NUMBER SIGN..ARABIC NUMBER MARK ABOVE" == Ok Prepend
-expect parsePropPart " CR # Cc       <control-000D>" == Ok CR
-expect parsePropPart " Regional_Indicator # So  [26] REGIONAL INDICATOR SYMBOL LETTER A..REGIONAL INDICATOR SYMBOL LETTER Z" == Ok RI
+expect parse_prop_part(" Prepend # Cf   [6] ARABIC NUMBER SIGN..ARABIC NUMBER MARK ABOVE") == Ok(Prepend)
+expect parse_prop_part(" CR # Cc       <control-000D>") == Ok(CR)
+expect parse_prop_part(" Regional_Indicator # So  [26] REGIONAL INDICATOR SYMBOL LETTER A..REGIONAL INDICATOR SYMBOL LETTER Z") == Ok(RI)
 
 # Parse the file to map between code points and properties
-fileMap : List (PropertyMap GBPProp)
-fileMap = Helpers.propertyMapFromFile file parsePropPart
+file_map : List (PropertyMap GBPProp)
+file_map = Helpers.property_map_from_file(file, parse_prop_part)
 
 # Make a helper that returns a list of code points for the given property
-cpsForProperty : GBPProp -> List CPMeta
-cpsForProperty = \current ->
-    Helpers.filterPropertyMap
-        fileMap
-        \{ cp, prop } -> if prop == current then Ok cp else Err NotNeeded
+cps_for_property : GBPProp -> List CPMeta
+cps_for_property = \current ->
+    Helpers.filter_property_map(
+        file_map,
+        \{ cp, prop } -> if prop == current then Ok(cp) else Err(NotNeeded),
+    )
 
 # For each property, generate a function that returns true if the given code
 # point has that property
-isXtemp : List GBPMeta, Str -> Str
-isXtemp = \props, buf ->
-    when List.first props is
-        Err ListWasEmpty ->
-            "$(buf)\n        Other\n"
+is_xtemp : List GBPMeta, Str -> Str
+is_xtemp = \props, buf ->
+    when List.first(props) is
+        Err(ListWasEmpty) ->
+            "${buf}\n        Other\n"
 
-        Ok prop ->
+        Ok(prop) ->
             when prop.property is
                 CR ->
-                    next = ifXStr "isCR" "CR"
-                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
+                    next = if_x_str("isCR", "CR")
+                    is_xtemp(List.drop_first(props, 1), "${buf}${next}")
 
                 LF ->
-                    next = ifXStr "isLF" "LF"
-                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
+                    next = if_x_str("isLF", "LF")
+                    is_xtemp(List.drop_first(props, 1), "${buf}${next}")
 
                 Control ->
-                    next = ifXStr "isControl" "Control"
-                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
+                    next = if_x_str("isControl", "Control")
+                    is_xtemp(List.drop_first(props, 1), "${buf}${next}")
 
                 Extend ->
-                    next = ifXStr "isExtend" "Extend"
-                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
+                    next = if_x_str("isExtend", "Extend")
+                    is_xtemp(List.drop_first(props, 1), "${buf}${next}")
 
                 ZWJ ->
-                    next = ifXStr "isZWJ" "ZWJ"
-                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
+                    next = if_x_str("isZWJ", "ZWJ")
+                    is_xtemp(List.drop_first(props, 1), "${buf}${next}")
 
                 RI ->
-                    next = ifXStr "isRI" "RI"
-                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
+                    next = if_x_str("isRI", "RI")
+                    is_xtemp(List.drop_first(props, 1), "${buf}${next}")
 
                 Prepend ->
-                    next = ifXStr "isPrepend" "Prepend"
-                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
+                    next = if_x_str("isPrepend", "Prepend")
+                    is_xtemp(List.drop_first(props, 1), "${buf}${next}")
 
                 SpacingMark ->
-                    next = ifXStr "isSpacingMark" "SpacingMark"
-                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
+                    next = if_x_str("isSpacingMark", "SpacingMark")
+                    is_xtemp(List.drop_first(props, 1), "${buf}${next}")
 
                 L ->
-                    next = ifXStr "isL" "L"
-                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
+                    next = if_x_str("isL", "L")
+                    is_xtemp(List.drop_first(props, 1), "${buf}${next}")
 
                 V ->
-                    next = ifXStr "isV" "V"
-                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
+                    next = if_x_str("isV", "V")
+                    is_xtemp(List.drop_first(props, 1), "${buf}${next}")
 
                 T ->
-                    next = ifXStr "isT" "T"
-                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
+                    next = if_x_str("isT", "T")
+                    is_xtemp(List.drop_first(props, 1), "${buf}${next}")
 
                 LV ->
-                    next = ifXStr "isLV" "LV"
-                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
+                    next = if_x_str("isLV", "LV")
+                    is_xtemp(List.drop_first(props, 1), "${buf}${next}")
 
                 LVT ->
-                    next = ifXStr "isLVT" "LVT"
-                    isXtemp (List.dropFirst props 1) ("$(buf)$(next)")
+                    next = if_x_str("isLVT", "LVT")
+                    is_xtemp(List.drop_first(props, 1), "${buf}${next}")
 
                 Other ->
-                    isXtemp (List.dropFirst props 1) buf
+                    is_xtemp(List.drop_first(props, 1), buf)
 
-ifXStr : Str, Str -> Str
-ifXStr = \funcStr, str ->
-    "if $(funcStr) u32 then\n        $(str)\n    else "
+if_x_str : Str, Str -> Str
+if_x_str = \func_str, str ->
+    "if ${func_str} u32 then\n        ${str}\n    else "
 
 # Helper to manually generate a test
-unicodeHexToTest : (Str, Str) -> Str
-unicodeHexToTest = \(hex, gbpExpected) ->
-    u32 = hex |> Str.toUtf8 |> Helpers.hexBytesToU32
+unicode_hex_to_test : (Str, Str) -> Str
+unicode_hex_to_test = \(hex, gbp_expected) ->
+    u32 = hex |> Str.to_utf8 |> Helpers.hex_bytes_to_u32
 
     """
-    expect # test U+$(hex) gives $(gbpExpected)
-        gbp = fromCP (fromU32Unchecked $(Num.toStr u32))
-        gbp == $(gbpExpected)
+    expect # test U+${hex} gives ${gbp_expected}
+        gbp = fromCP (fromU32Unchecked ${Num.to_str(u32)})
+        gbp == ${gbp_expected}
     """
 
-gbpPropParser : Str -> Result GBPProp [ParsingError]
-gbpPropParser = \input ->
-    startsWithProp : GBPMeta -> Result GBPProp [NonPropSequence]
-    startsWithProp = \prop ->
-        if input |> Str.toUtf8 |> List.startsWith prop.fromBytes then
-            Ok prop.property
+gbp_prop_parser : Str -> Result GBPProp [ParsingError]
+gbp_prop_parser = \input ->
+    starts_with_prop : GBPMeta -> Result GBPProp [NonPropSequence]
+    starts_with_prop = \prop ->
+        if input |> Str.to_utf8 |> List.starts_with(prop.from_bytes) then
+            Ok(prop.property)
         else
-            Err NonPropSequence
+            Err(NonPropSequence)
 
     # see which properties match
     matches : List GBPProp
-    matches = listMeta |> List.keepOks startsWithProp
+    matches = list_meta |> List.keep_oks(starts_with_prop)
 
     when matches is
         # take the longest match
-        [a, ..] -> Ok a
-        _ -> Err ParsingError
+        [a, ..] -> Ok(a)
+        _ -> Err(ParsingError)
 
-expect gbpPropParser "L" == Ok L
-expect gbpPropParser "LF" == Ok LF
-expect gbpPropParser "LV" == Ok LV
-expect gbpPropParser "LVT" == Ok LVT
-expect gbpPropParser "Other" == Ok Other
-expect gbpPropParser "# ===" == Err ParsingError
+expect gbp_prop_parser("L") == Ok(L)
+expect gbp_prop_parser("LF") == Ok(LF)
+expect gbp_prop_parser("LV") == Ok(LV)
+expect gbp_prop_parser("LVT") == Ok(LVT)
+expect gbp_prop_parser("Other") == Ok(Other)
+expect gbp_prop_parser("# ===") == Err(ParsingError)

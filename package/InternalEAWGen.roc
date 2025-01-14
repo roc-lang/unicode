@@ -2,8 +2,8 @@
 ##
 ## This file will read the test data from `data/EastAsianWidth-15.1.0.txt`
 ## parse it and then generate function to test the East Asian Width property of a code point.
-app [main] {
-    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.17.0/lZFLstMUCUvd5bjnnpYromZJXkQUrdhbva4xdBInicE.tar.br",
+app [main!] {
+    pf: platform "../../basic-cli/platform/main.roc",
 }
 
 import pf.File
@@ -13,10 +13,14 @@ import Helpers
 
 EawRange : (Str, Str, Str)
 
-main =
-    when Arg.list! {} |> List.get 1 is
-        Err _ -> Task.err (InvalidArguments "USAGE: roc run InternalEAWGen.roc -- path/to/package/")
-        Ok arg -> File.writeUtf8 "$(Helpers.removeTrailingSlash arg)/InternalEAW.roc" template
+main! = \raw_args ->
+    args = List.map(raw_args, Arg.display)
+
+    package_path =
+        List.get(args, 1)
+        |> Result.map_err?(\_ -> Exit(1, "Error: I got 0 arguments! Usage: roc InternalEAWGen.roc -- path/to/package/"))
+
+    File.write_utf8!("${Helpers.remove_trailing_slash(package_path)}/InternalEAW.roc", template)
 
 template =
     """
@@ -29,9 +33,9 @@ template =
             F | W | A -> 2
             H | N | Na -> 1
 
-    eastAsianWidthProperty = \\cp -> $(testsStr)
+    eastAsianWidthProperty = \\cp -> ${tests_str}
 
-    $(allTests)
+    ${all_tests}
     """
 
 # The ranges are specified as its starting point and an optional inclusive end point
@@ -40,116 +44,131 @@ template =
 # Examples:
 # 0000..001F     ; N    # The property may be followed by comments
 # 0020           ; Na
-parseLine : Str -> Result EawRange _
-parseLine = \line ->
-    listToParsingState = \rest -> { val: [], rest }
+parse_line : Str -> Result EawRange _
+parse_line = \line ->
+    list_to_parsing_state = \rest -> { val: [], rest }
 
-    startHexBytes =
+    start_hex_bytes =
         line
-        |> Str.toUtf8
-        |> listToParsingState
-        |> Helpers.takeHexBytes
+        |> Str.to_utf8
+        |> list_to_parsing_state
+        |> Helpers.take_hex_bytes
 
-    endHexBytes =
-        when startHexBytes.rest is
-            ['.', '.', .. as rest] -> rest |> listToParsingState |> Helpers.takeHexBytes
-            _ -> startHexBytes # This range has length 1. The start will be repeated as the end
+    end_hex_bytes =
+        when start_hex_bytes.rest is
+            ['.', '.', .. as rest] -> rest |> list_to_parsing_state |> Helpers.take_hex_bytes
+            _ -> start_hex_bytes # This range has length 1. The start will be repeated as the end
 
-    endHexBytes.rest
-    |> List.splitFirst ';'
-    |> Result.map \{ after } -> after
-    |> Result.try \commentdEAP -> List.splitFirst commentdEAP '#'
-    |> Result.map \{ before } -> before
-    |> Result.try Str.fromUtf8
-    |> Result.map Str.trim
-    |> Result.try \eawp ->
-        startHexBytes.val
-        |> Str.fromUtf8
-        |> Result.map \start -> (eawp, "0x$(start)")
-    |> Result.try \(eawp, start) ->
-        endHexBytes.val
-        |> Str.fromUtf8
-        |> Result.map \end -> (eawp, start, "0x$(end)")
+    end_hex_bytes.rest
+    |> List.split_first(';')
+    |> Result.map(\{ after } -> after)
+    |> Result.try(\commentd_eap -> List.split_first(commentd_eap, '#'))
+    |> Result.map(\{ before } -> before)
+    |> Result.try(Str.from_utf8)
+    |> Result.map(Str.trim)
+    |> Result.try(
+        \eawp ->
+            start_hex_bytes.val
+            |> Str.from_utf8
+            |> Result.map(\start -> (eawp, "0x${start}")),
+    )
+    |> Result.try(
+        \(eawp, start) ->
+            end_hex_bytes.val
+            |> Str.from_utf8
+            |> Result.map(\end -> (eawp, start, "0x${end}")),
+    )
 
-expect parseLine "0020           ; Na # Zs         SPACE" == Ok ("Na", "0x0020", "0x0020")
-expect parseLine "0025..0027     ; Na # Po     [3] PERCENT SIGN..APOSTROPHE" == Ok ("Na", "0x0025", "0x0027")
+expect parse_line("0020           ; Na # Zs         SPACE") == Ok(("Na", "0x0020", "0x0020"))
+expect parse_line("0025..0027     ; Na # Po     [3] PERCENT SIGN..APOSTROPHE") == Ok(("Na", "0x0025", "0x0027"))
 
-parsedLines : List (Result EawRange _)
-parsedLines = file |> Str.splitOn "\n" |> List.map parseLine
+parsed_lines : List (Result EawRange _)
+parsed_lines = file |> Str.split_on("\n") |> List.map(parse_line)
 
-originalRanges =
-    parsedLines
-    |> List.keepOks \x -> x
+original_ranges =
+    parsed_lines
+    |> List.keep_oks(\x -> x)
 
 # We can drop the Neutral ranges because those are the default
-optimizedRanges =
-    List.dropIf originalRanges \(eawp, _, _) -> eawp == "N"
+optimized_ranges =
+    List.drop_if(original_ranges, \(eawp, _, _) -> eawp == "N")
 
 # The input file contains many consecutive ranges with the same property value.
 # We will merge them into wider ranges to work with a smaller number of ranges.
-mergedRanges =
-    headRes = List.first optimizedRanges
-    tail = List.dropFirst optimizedRanges 1
+merged_ranges =
+    head_res = List.first(optimized_ranges)
+    tail = List.drop_first(optimized_ranges, 1)
     res =
-        when headRes is
-            Err _ -> crash "Something went wrong while parsing the input."
-            Ok head -> List.walk tail { merged: [], merging: head } mergeOp
+        when head_res is
+            Err(_) -> crash("Something went wrong while parsing the input.")
+            Ok(head) -> List.walk(tail, { merged: [], merging: head }, merge_op)
 
-    List.append res.merged res.merging
+    List.append(res.merged, res.merging)
 
-mergeOp : { merged : List EawRange, merging : EawRange }, EawRange -> { merged : List EawRange, merging : EawRange }
-mergeOp = \{ merged, merging }, currentValue ->
-    if merging.0 == currentValue.0 && (Helpers.hexStrToU32 merging.2) + 1 == (Helpers.hexStrToU32 currentValue.1) then
+merge_op : { merged : List EawRange, merging : EawRange }, EawRange -> { merged : List EawRange, merging : EawRange }
+merge_op = \{ merged, merging }, current_value ->
+    if merging.0 == current_value.0 && (Helpers.hex_str_to_u32(merging.2)) + 1 == (Helpers.hex_str_to_u32(current_value.1)) then
         {
             merged,
-            merging: (merging.0, merging.1, currentValue.2),
+            merging: (merging.0, merging.1, current_value.2),
         }
     else
         {
-            merged: List.append merged merging,
-            merging: currentValue,
+            merged: List.append(merged, merging),
+            merging: current_value,
         }
 
-expect mergeOp { merged: [], merging: ("Na", "0x0020", "0x0020") } ("Na", "0x0021", "0x0021") == { merged: [], merging: ("Na", "0x0020", "0x0021") }
-expect mergeOp { merged: [], merging: ("Na", "0x0020", "0x0020") } ("Na", "0x0022", "0x0022") == { merged: [("Na", "0x0020", "0x0020")], merging: ("Na", "0x0022", "0x0022") }
+expect merge_op({ merged: [], merging: ("Na", "0x0020", "0x0020") }, ("Na", "0x0021", "0x0021")) == { merged: [], merging: ("Na", "0x0020", "0x0021") }
+expect merge_op({ merged: [], merging: ("Na", "0x0020", "0x0020") }, ("Na", "0x0022", "0x0022")) == { merged: [("Na", "0x0020", "0x0020")], merging: ("Na", "0x0022", "0x0022") }
 
 # Ranges grouped by the values of their property
-groupedRanges : Dict Str (List (Str, Str))
-groupedRanges =
-    mergedRanges
-    |> List.walk (Dict.empty {}) \s, range ->
-        Dict.update s range.0 \value ->
-            when value is
-                Ok lst -> Ok (List.append lst (range.1, range.2))
-                Err Missing -> Ok (List.single (range.1, range.2))
+grouped_ranges : Dict Str (List (Str, Str))
+grouped_ranges =
+    merged_ranges
+    |> List.walk(
+        Dict.empty({}),
+        \s, range ->
+            Dict.update(
+                s,
+                range.0,
+                \value ->
+                    when value is
+                        Ok(lst) -> Ok(List.append(lst, (range.1, range.2)))
+                        Err(Missing) -> Ok(List.single((range.1, range.2))),
+            ),
+    )
 
-testsStr : Str
-testsStr =
-    rangeToTestStr = \(start, end) ->
+tests_str : Str
+tests_str =
+    range_to_test_str = \(start, end) ->
         if start == end then
-            "cp == $(start)"
+            "cp == ${start}"
         else
-            "($(start) <= cp && cp <= $(end))"
-    groupedRanges
-    |> Dict.map \_, lst ->
-        (List.map lst rangeToTestStr)
-        |> Str.joinWith " || "
-    |> Dict.map \eawp, test ->
-        "if $(test) then ($(eawp))"
+            "(${start} <= cp && cp <= ${end})"
+    grouped_ranges
+    |> Dict.map(
+        \_, lst ->
+            (List.map(lst, range_to_test_str))
+            |> Str.join_with(" || "),
+    )
+    |> Dict.map(
+        \eawp, test ->
+            "if ${test} then (${eawp})",
+    )
     |> Dict.values
-    |> Str.joinWith " else "
-    |> Str.concat " else N"
+    |> Str.join_with(" else ")
+    |> Str.concat(" else N")
 
-createTest : (U32, Str) -> Str
-createTest = \(cp, eawp) ->
-    "expect eastAsianWidthProperty $(Num.toStr cp) == $(eawp)"
+create_test : (U32, Str) -> Str
+create_test = \(cp, eawp) ->
+    "expect eastAsianWidthProperty ${Num.to_str(cp)} == ${eawp}"
 
 expect
-    test = createTest ('Æ', "A")
+    test = create_test(('Æ', "A"))
     expected = "expect eastAsianWidthProperty 198 == A"
     test == expected
 
-allTests =
+all_tests =
     tests = [
         # Ambiguous
         ('Æ', "A"),
@@ -177,4 +196,4 @@ allTests =
         ('𑌓', "N"),
         ('𑪊', "N"),
     ]
-    List.map tests createTest |> Str.joinWith "\n\n"
+    List.map(tests, create_test) |> Str.join_with("\n\n")

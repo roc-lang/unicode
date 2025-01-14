@@ -1,5 +1,5 @@
-app [main] {
-    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.17.0/lZFLstMUCUvd5bjnnpYromZJXkQUrdhbva4xdBInicE.tar.br",
+app [main!] {
+    pf: platform "../../basic-cli/platform/main.roc",
     unicode: "../package/main.roc", # use release URL (ends in tar.br) for local example, see github.com/roc/unicode/releases
 }
 
@@ -8,12 +8,12 @@ import unicode.Grapheme
 
 string = "🇦🇺🦘🪃"
 
-expect Grapheme.split string == Ok ["🇦🇺", "🦘", "🪃"]
+expect Grapheme.split(string) == Ok(["🇦🇺", "🦘", "🪃"])
 
-main =
+main! = \_args ->
     string
-        |> Grapheme.split
-        |> Inspect.toStr
-        |> \splitted ->
-            Stdout.line! "\n\nThe string \"$(string)\" has following graphemes:"
-            Stdout.line! splitted
+    |> Grapheme.split
+    |> Inspect.to_str
+    |> \splitted ->
+        Stdout.line!("\n\nThe string \"${string}\" has following graphemes:")?
+        Stdout.line!(splitted)
