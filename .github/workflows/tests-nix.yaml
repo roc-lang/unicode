@@ -21,10 +21,3 @@ jobs:
         # Run all tests 
         - name: Run all tests
           run: nix develop -c sh -c 'export ROC=roc && ./ci/all_tests.sh'
-            
-        - name: Run all tests and capture output to check for crash later
-          run: nix develop -c sh -c 'export ROC=roc && ./ci/all_tests.sh 2>&1 | tee all_tests_output.log'
-
-        # Workaround for https://github.com/roc-lang/roc/issues/6688
-        - name: Check if crash occurred
-          run: grep -qv "crashed" all_tests_output.log

@@ -1,58 +1,58 @@
 module [
     Scalar,
-    toU32,
-    toCodePoint,
-    fromCodePoint,
-    fromStr,
-    toScalars,
-    startsWithScalar,
-    appendScalar,
-    walkScalars,
-    walkScalarsUntil,
-    fromU32,
+    to_u32,
+    to_code_point,
+    from_code_point,
+    from_str,
+    to_scalars,
+    starts_with_scalar,
+    append_scalar,
+    walk_scalars,
+    walk_scalars_until,
+    from_u32,
 ]
 
 import InternalCP
-import CodePoint exposing [CodePoint, isValidScalar]
+import CodePoint exposing [CodePoint, is_valid_scalar]
 
 ## A [Unicode scalar value](http://www.unicode.org/glossary/#unicode_scalar_value) - that is,
 ## any [code point](./CodePoint#CodePoint) except for [high-surrogate](./CodePoint#isHighSurrogate)
 ## and [low-surrogate](./CodePoint#isLowSurrogate) code points.
 Scalar := CodePoint
 
-toU32 : Scalar -> U32
-toU32 = \@Scalar cp -> CodePoint.toU32 cp
+to_u32 : Scalar -> U32
+to_u32 = |@Scalar(cp)| CodePoint.to_u32(cp)
 
 ## Any Unicode code point except high-surrogate and low-surrogate code points.
 ##
 ## Note UTF-8 does not use surrogates as it is a variable-width encoding unlike UTF-16.
-fromU32 : U32 -> Result Scalar [InvalidScalar]
-fromU32 = \u32 ->
-    inRangeA = u32 >= 0x0000 && u32 <= 0xD7FF
-    inRangeB = u32 >= 0xE000 && u32 <= 0x10FFFF
-    if inRangeA || inRangeB then
-        Ok (@Scalar (InternalCP.fromU32Unchecked u32))
+from_u32 : U32 -> Result Scalar [InvalidScalar]
+from_u32 = |u32|
+    in_range_a = u32 >= 0x0000 and u32 <= 0xD7FF
+    in_range_b = u32 >= 0xE000 and u32 <= 0x10FFFF
+    if in_range_a or in_range_b then
+        Ok(@Scalar(InternalCP.from_u32_unchecked(u32)))
     else
-        Err InvalidScalar
+        Err(InvalidScalar)
 
-toCodePoint : Scalar -> CodePoint
-toCodePoint = \@Scalar codePoint -> codePoint
+to_code_point : Scalar -> CodePoint
+to_code_point = |@Scalar(code_point)| code_point
 
 ## Convert a code point to a scalar value. This can fail if the given
 ## code point is
-fromCodePoint : CodePoint -> Result Scalar [NonScalarCodePt]
-fromCodePoint = \codePoint ->
-    if isValidScalar codePoint then
-        Ok (@Scalar codePoint)
+from_code_point : CodePoint -> Result Scalar [NonScalarCodePt]
+from_code_point = |code_point|
+    if is_valid_scalar(code_point) then
+        Ok(@Scalar(code_point))
     else
-        Err NonScalarCodePt
+        Err(NonScalarCodePt)
 
-fromStr : Str -> List Scalar
-fromStr = \_str ->
-    crash "TODO implement" # https://www.roc-lang.org/builtins/Str#toScalars
+from_str : Str -> List Scalar
+from_str = |_str|
+    crash("TODO implement") # https://www.roc-lang.org/builtins/Str#toScalars
 
 # appendToStr : Scalar, Str -> Str
-# appendToStr = \@Scalar u32, str ->
+# appendToStr = |@Scalar u32, str|
 #     when Str.appendScalar str u32 is
 #         Ok answer -> answer
 #         Err InvalidScalar ->
@@ -87,7 +87,7 @@ fromStr = \_str ->
 ## `Str.startsWithScalar '👩‍👩‍👦‍👦'` would be a compiler error because 👩‍👩‍👦‍👦 takes up
 ## multiple code points and cannot be represented as a single [U32].
 ## You'd need to use `Str.startsWithScalar "🕊"` instead.
-startsWithScalar : Str, U32 -> Bool
+starts_with_scalar : Str, U32 -> Bool
 
 ## Returns a [List] of the [Unicode scalar values](https://unicode.org/glossary/#unicode_scalar_value)
 ## in the given string.
@@ -103,7 +103,7 @@ startsWithScalar : Str, U32 -> Bool
 ## expect Str.toScalars "I ♥ Roc" == [73, 32, 9829, 32, 82, 111, 99]
 ## expect Str.toScalars "" == []
 ## ```
-toScalars : Str -> List U32
+to_scalars : Str -> List U32
 
 ## Append a [U32] scalar to the given string. If the given scalar is not a valid
 ## unicode value, it returns [Err InvalidScalar].
@@ -111,37 +111,37 @@ toScalars : Str -> List U32
 ## expect Str.appendScalar "H" 105 == Ok "Hi"
 ## expect Str.appendScalar "😢" 0xabcdef == Err InvalidScalar
 ## ```
-appendScalar : Str, U32 -> Result Str [InvalidScalar]
-appendScalar = \string, u32 ->
-    if isValidScalar (InternalCP.fromU32Unchecked u32) then
-        Ok (appendScalarUnsafe string u32)
+append_scalar : Str, U32 -> Result Str [InvalidScalar]
+append_scalar = |string, u32|
+    if is_valid_scalar(InternalCP.from_u32_unchecked(u32)) then
+        Ok(append_scalar_unsafe(string, u32))
     else
-        Err InvalidScalar
+        Err(InvalidScalar)
 
-appendScalarUnsafe : Str, U32 -> Str
-appendScalarUnsafe = \_string, _scalar ->
-    crash "TODO"
+append_scalar_unsafe : Str, U32 -> Str
+append_scalar_unsafe = |_string, _scalar|
+    crash("TODO")
 
-getScalarUnsafe : Str, U64 -> { scalar : U32, bytesParsed : U64 }
+get_scalar_unsafe : Str, U64 -> { scalar : U32, bytes_parsed : U64 }
 
 ## Walks over the unicode [U32] values for the given [Str] and calls a function
 ## to update state for each.
 ## ```
 ## f : List U32, U32 -> List U32
-## f = \state, scalar -> List.append state scalar
+## f = |state, scalar| List.append state scalar
 ## expect Str.walkScalars "ABC" [] f == [65, 66, 67]
 ## ```
-walkScalars : Str, state, (state, U32 -> state) -> state
-walkScalars = \string, init, step ->
-    walkScalarsHelp string init step 0 (Str.countUtf8Bytes string)
+walk_scalars : Str, state, (state, U32 -> state) -> state
+walk_scalars = |string, init, step|
+    walk_scalars_help(string, init, step, 0, Str.count_utf8_bytes(string))
 
-walkScalarsHelp : Str, state, (state, U32 -> state), U64, U64 -> state
-walkScalarsHelp = \string, state, step, index, length ->
+walk_scalars_help : Str, state, (state, U32 -> state), U64, U64 -> state
+walk_scalars_help = |string, state, step, index, length|
     if index < length then
-        { scalar, bytesParsed } = getScalarUnsafe string index
-        newState = step state scalar
+        { scalar, bytes_parsed } = get_scalar_unsafe(string, index)
+        new_state = step(state, scalar)
 
-        walkScalarsHelp string newState step (index + bytesParsed) length
+        walk_scalars_help(string, new_state, step, (index + bytes_parsed), length)
     else
         state
 
@@ -149,7 +149,7 @@ walkScalarsHelp = \string, state, step, index, length ->
 ## to update state for each.
 ## ```
 ## f : List U32, U32 -> [Break (List U32), Continue (List U32)]
-## f = \state, scalar ->
+## f = |state, scalar|
 ##     check = 66
 ##     if scalar == check then
 ##         Break [check]
@@ -158,21 +158,21 @@ walkScalarsHelp = \string, state, step, index, length ->
 ## expect Str.walkScalarsUntil "ABC" [] f == [66]
 ## expect Str.walkScalarsUntil "AxC" [] f == [65, 120, 67]
 ## ```
-walkScalarsUntil : Str, state, (state, U32 -> [Break state, Continue state]) -> state
-walkScalarsUntil = \string, init, step ->
-    walkScalarsUntilHelp string init step 0 (Str.countUtf8Bytes string)
+walk_scalars_until : Str, state, (state, U32 -> [Break state, Continue state]) -> state
+walk_scalars_until = |string, init, step|
+    walk_scalars_until_help(string, init, step, 0, Str.count_utf8_bytes(string))
 
-walkScalarsUntilHelp : Str, state, (state, U32 -> [Break state, Continue state]), U64, U64 -> state
-walkScalarsUntilHelp = \string, state, step, index, length ->
+walk_scalars_until_help : Str, state, (state, U32 -> [Break state, Continue state]), U64, U64 -> state
+walk_scalars_until_help = |string, state, step, index, length|
     if index < length then
-        { scalar, bytesParsed } = getScalarUnsafe string index
+        { scalar, bytes_parsed } = get_scalar_unsafe(string, index)
 
-        when step state scalar is
-            Continue newState ->
-                walkScalarsUntilHelp string newState step (index + bytesParsed) length
+        when step(state, scalar) is
+            Continue(new_state) ->
+                walk_scalars_until_help(string, new_state, step, (index + bytes_parsed), length)
 
-            Break newState ->
-                newState
+            Break(new_state) ->
+                new_state
     else
         state
 
