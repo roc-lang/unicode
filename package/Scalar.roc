@@ -21,38 +21,38 @@ import CodePoint exposing [CodePoint, is_valid_scalar]
 Scalar := CodePoint
 
 to_u32 : Scalar -> U32
-to_u32 = \@Scalar(cp) -> CodePoint.to_u32(cp)
+to_u32 = |@Scalar(cp)| CodePoint.to_u32(cp)
 
 ## Any Unicode code point except high-surrogate and low-surrogate code points.
 ##
 ## Note UTF-8 does not use surrogates as it is a variable-width encoding unlike UTF-16.
 from_u32 : U32 -> Result Scalar [InvalidScalar]
-from_u32 = \u32 ->
-    in_range_a = u32 >= 0x0000 && u32 <= 0xD7FF
-    in_range_b = u32 >= 0xE000 && u32 <= 0x10FFFF
-    if in_range_a || in_range_b then
+from_u32 = |u32|
+    in_range_a = u32 >= 0x0000 and u32 <= 0xD7FF
+    in_range_b = u32 >= 0xE000 and u32 <= 0x10FFFF
+    if in_range_a or in_range_b then
         Ok(@Scalar(InternalCP.from_u32_unchecked(u32)))
     else
         Err(InvalidScalar)
 
 to_code_point : Scalar -> CodePoint
-to_code_point = \@Scalar(code_point) -> code_point
+to_code_point = |@Scalar(code_point)| code_point
 
 ## Convert a code point to a scalar value. This can fail if the given
 ## code point is
 from_code_point : CodePoint -> Result Scalar [NonScalarCodePt]
-from_code_point = \code_point ->
+from_code_point = |code_point|
     if is_valid_scalar(code_point) then
         Ok(@Scalar(code_point))
     else
         Err(NonScalarCodePt)
 
 from_str : Str -> List Scalar
-from_str = \_str ->
+from_str = |_str|
     crash("TODO implement") # https://www.roc-lang.org/builtins/Str#toScalars
 
 # appendToStr : Scalar, Str -> Str
-# appendToStr = \@Scalar u32, str ->
+# appendToStr = |@Scalar u32, str|
 #     when Str.appendScalar str u32 is
 #         Ok answer -> answer
 #         Err InvalidScalar ->
@@ -112,14 +112,14 @@ to_scalars : Str -> List U32
 ## expect Str.appendScalar "😢" 0xabcdef == Err InvalidScalar
 ## ```
 append_scalar : Str, U32 -> Result Str [InvalidScalar]
-append_scalar = \string, u32 ->
+append_scalar = |string, u32|
     if is_valid_scalar(InternalCP.from_u32_unchecked(u32)) then
         Ok(append_scalar_unsafe(string, u32))
     else
         Err(InvalidScalar)
 
 append_scalar_unsafe : Str, U32 -> Str
-append_scalar_unsafe = \_string, _scalar ->
+append_scalar_unsafe = |_string, _scalar|
     crash("TODO")
 
 get_scalar_unsafe : Str, U64 -> { scalar : U32, bytes_parsed : U64 }
@@ -128,15 +128,15 @@ get_scalar_unsafe : Str, U64 -> { scalar : U32, bytes_parsed : U64 }
 ## to update state for each.
 ## ```
 ## f : List U32, U32 -> List U32
-## f = \state, scalar -> List.append state scalar
+## f = |state, scalar| List.append state scalar
 ## expect Str.walkScalars "ABC" [] f == [65, 66, 67]
 ## ```
 walk_scalars : Str, state, (state, U32 -> state) -> state
-walk_scalars = \string, init, step ->
+walk_scalars = |string, init, step|
     walk_scalars_help(string, init, step, 0, Str.count_utf8_bytes(string))
 
 walk_scalars_help : Str, state, (state, U32 -> state), U64, U64 -> state
-walk_scalars_help = \string, state, step, index, length ->
+walk_scalars_help = |string, state, step, index, length|
     if index < length then
         { scalar, bytes_parsed } = get_scalar_unsafe(string, index)
         new_state = step(state, scalar)
@@ -149,7 +149,7 @@ walk_scalars_help = \string, state, step, index, length ->
 ## to update state for each.
 ## ```
 ## f : List U32, U32 -> [Break (List U32), Continue (List U32)]
-## f = \state, scalar ->
+## f = |state, scalar|
 ##     check = 66
 ##     if scalar == check then
 ##         Break [check]
@@ -159,11 +159,11 @@ walk_scalars_help = \string, state, step, index, length ->
 ## expect Str.walkScalarsUntil "AxC" [] f == [65, 120, 67]
 ## ```
 walk_scalars_until : Str, state, (state, U32 -> [Break state, Continue state]) -> state
-walk_scalars_until = \string, init, step ->
+walk_scalars_until = |string, init, step|
     walk_scalars_until_help(string, init, step, 0, Str.count_utf8_bytes(string))
 
 walk_scalars_until_help : Str, state, (state, U32 -> [Break state, Continue state]), U64, U64 -> state
-walk_scalars_until_help = \string, state, step, index, length ->
+walk_scalars_until_help = |string, state, step, index, length|
     if index < length then
         { scalar, bytes_parsed } = get_scalar_unsafe(string, index)
 

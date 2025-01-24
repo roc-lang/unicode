@@ -10,10 +10,10 @@ string = "🇦🇺🦘🪃"
 
 expect Grapheme.split(string) == Ok(["🇦🇺", "🦘", "🪃"])
 
-main! = \_args ->
+main! = |_args|
     string
     |> Grapheme.split
     |> Inspect.to_str
-    |> \splitted ->
+    |> |splitted|
         Stdout.line!("\n\nThe string \"${string}\" has following graphemes:")?
         Stdout.line!(splitted)

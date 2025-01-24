@@ -24,7 +24,7 @@ Tokens : List [BR Rule, NB Rule, CP CodePoint]
 
 ## Split a string into extended grapheme clusters
 split : Str -> Result (List Str) Utf8ParseErr
-split = \str ->
+split = |str|
 
     # TODO DISCUSS
     # I'm not sure if we should return an error here or just crash.
@@ -38,11 +38,11 @@ split = \str ->
 
 # Used internally to filter out the break/nobreak tokens and separate CPs into a List Str
 to_list_str : Tokens -> List Str
-to_list_str = \tokens ->
+to_list_str = |tokens|
     List.walk(
         tokens,
         { acc: [], cps: [] },
-        \state, curr ->
+        |state, curr|
             when curr is
                 NB(_) -> state
                 BR(_) -> if List.is_empty(state.acc) then state else { acc: [], cps: List.append(state.cps, state.acc) }
@@ -50,7 +50,7 @@ to_list_str = \tokens ->
     )
     |> .cps
     |> List.map(
-        \cp_list ->
+        |cp_list|
             # TODO DISCUSS
             # Again I'm not sure if we should crash here... I dont think CodePoint.toStr
             # should be returning a result... to be discussed.
@@ -62,7 +62,7 @@ to_list_str = \tokens ->
 # Used internally to implement the [UNICODE TEXT SEGMENTATION](https://www.unicode.org/reports/tr29/)
 # algorithm.
 split_help : _, List CodePoint, List GBP, Tokens -> Tokens
-split_help = \state, code_points, break_points, acc ->
+split_help = |state, code_points, break_points, acc|
     next_c_ps = List.drop_first(code_points, 1)
     next_b_ps = List.drop_first(break_points, 1)
 
@@ -71,13 +71,13 @@ split_help = \state, code_points, break_points, acc ->
         (Next, [], _) -> acc
         # Special handling for last codepoint
         (Next, [cp], _) -> List.concat(acc, [CP(cp), BR(GB2)])
-        (AfterHangulL(prev), [cp], [bp]) if bp == L || bp == V || bp == LV || bp == LVT -> List.concat(acc, [CP(prev), NB(GB6), CP(cp), BR(GB2)])
-        (AfterHangulLVorV(prev), [cp], [bp]) if bp == V || bp == T -> List.concat(acc, [CP(prev), NB(GB7), CP(cp), BR(GB2)])
+        (AfterHangulL(prev), [cp], [bp]) if bp == L or bp == V or bp == LV or bp == LVT -> List.concat(acc, [CP(prev), NB(GB6), CP(cp), BR(GB2)])
+        (AfterHangulLVorV(prev), [cp], [bp]) if bp == V or bp == T -> List.concat(acc, [CP(prev), NB(GB7), CP(cp), BR(GB2)])
         (AfterHangulLVTorT(prev), [cp], [bp]) if bp == T -> List.concat(acc, [CP(prev), NB(GB8), CP(cp), BR(GB2)])
         (AfterHangulL(prev), [_], [_]) -> split_help(LastWithPrev(prev), code_points, break_points, acc)
         (AfterHangulLVorV(prev), [_], [_]) -> split_help(LastWithPrev(prev), code_points, break_points, acc)
         (AfterHangulLVTorT(prev), [_], [_]) -> split_help(LastWithPrev(prev), code_points, break_points, acc)
-        (LastWithPrev(prev), [cp], [bp]) if bp == Control || bp == CR || bp == LF -> List.concat(acc, [CP(prev), BR(GB5), CP(cp), BR(GB2)])
+        (LastWithPrev(prev), [cp], [bp]) if bp == Control or bp == CR or bp == LF -> List.concat(acc, [CP(prev), BR(GB5), CP(cp), BR(GB2)])
         (LastWithPrev(prev), [cp], [bp]) if bp == Extend -> List.concat(acc, [CP(prev), NB(GB9), CP(cp), BR(GB2)])
         (LastWithPrev(prev), [cp], [bp]) if bp == ZWJ ->
             if prev |> CodePoint.to_u32 |> InternalEmoji.is_pictographic then
@@ -95,15 +95,15 @@ split_help = \state, code_points, break_points, acc ->
         (AfterOddRI(prev), [], []) -> List.concat(acc, [CP(prev), BR(GB2)])
         # Looking at current breakpoint property
         (Next, [cp, ..], [bp, ..]) if bp == CR -> split_help(AfterCR(cp), next_c_ps, next_b_ps, acc)
-        (Next, [cp, ..], [bp, ..]) if bp == Control || bp == LF -> split_help(Next, next_c_ps, next_b_ps, List.concat(acc, [CP(cp), BR(GB4)]))
+        (Next, [cp, ..], [bp, ..]) if bp == Control or bp == LF -> split_help(Next, next_c_ps, next_b_ps, List.concat(acc, [CP(cp), BR(GB4)]))
         (Next, [cp, ..], [bp, ..]) if bp == L -> split_help(AfterHangulL(cp), next_c_ps, next_b_ps, acc)
-        (Next, [cp, ..], [bp, ..]) if bp == V || bp == LV -> split_help(AfterHangulLVorV(cp), next_c_ps, next_b_ps, acc)
-        (Next, [cp, ..], [bp, ..]) if bp == LVT || bp == T -> split_help(AfterHangulLVTorT(cp), next_c_ps, next_b_ps, acc)
+        (Next, [cp, ..], [bp, ..]) if bp == V or bp == LV -> split_help(AfterHangulLVorV(cp), next_c_ps, next_b_ps, acc)
+        (Next, [cp, ..], [bp, ..]) if bp == LVT or bp == T -> split_help(AfterHangulLVTorT(cp), next_c_ps, next_b_ps, acc)
         (Next, [cp, ..], [bp, ..]) if bp == RI -> split_help(AfterOddRI(cp), next_c_ps, next_b_ps, acc)
         # Advance to next, this is required so that we can apply rules which break before
         (Next, [cp, ..], _) -> split_help(LookAtNext(cp), next_c_ps, next_b_ps, acc)
         # Looking ahead at next, given previous
-        (LookAtNext(prev), _, [bp, ..]) if bp == Control || bp == CR || bp == LF -> split_help(Next, code_points, break_points, List.concat(acc, [CP(prev), BR(GB5)]))
+        (LookAtNext(prev), _, [bp, ..]) if bp == Control or bp == CR or bp == LF -> split_help(Next, code_points, break_points, List.concat(acc, [CP(prev), BR(GB5)]))
         (LookAtNext(prev), [cp, ..], [bp, ..]) if bp == Extend -> split_help(AfterExtend(cp), next_c_ps, next_b_ps, List.concat(acc, [CP(prev), NB(GB9)]))
         (LookAtNext(prev), [cp, ..], [bp, ..]) if bp == ZWJ ->
             if prev |> CodePoint.to_u32 |> InternalEmoji.is_pictographic then
@@ -141,7 +141,7 @@ split_help = \state, code_points, break_points, acc ->
         (AfterCR(prev), _, _) -> split_help(Next, code_points, break_points, List.concat(acc, [CP(prev), BR(GB4)]))
         # Looking ahead, given previous was Hangul
         (AfterHangulL(prev), [cp, ..], [bp, ..]) if bp == L -> split_help(AfterHangulL(cp), next_c_ps, next_b_ps, List.concat(acc, [CP(prev), NB(GB6)]))
-        (AfterHangulL(prev), [cp, ..], [bp, ..]) if bp == V || bp == LV -> split_help(AfterHangulLVorV(cp), next_c_ps, next_b_ps, List.concat(acc, [CP(prev), NB(GB6)]))
+        (AfterHangulL(prev), [cp, ..], [bp, ..]) if bp == V or bp == LV -> split_help(AfterHangulLVorV(cp), next_c_ps, next_b_ps, List.concat(acc, [CP(prev), NB(GB6)]))
         (AfterHangulL(prev), [cp, ..], [bp, ..]) if bp == LVT -> split_help(AfterHangulLVTorT(cp), next_c_ps, next_b_ps, List.concat(acc, [CP(prev), NB(GB6)]))
         (AfterHangulL(prev), _, [bp, ..]) if bp == ZWJ -> split_help(AfterZWJ(prev), code_points, break_points, acc)
         (AfterHangulL(prev), _, _) -> split_help(LookAtNext(prev), code_points, break_points, acc)
@@ -169,7 +169,7 @@ split_help = \state, code_points, break_points, acc ->
 # input. Most of the test inputs come from the test data, some are manually developed
 # to cover additional edge cases not found in the test data file.
 test_help : List (List U32) -> Tokens
-test_help = \u32_list ->
+test_help = |u32_list|
     code_points = u32_list |> List.join |> List.map(from_u32_unchecked)
     break_points = code_points |> List.map(InternalGBP.from_cp)
 

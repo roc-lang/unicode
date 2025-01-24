@@ -8,10 +8,10 @@ import unicode.CodePoint exposing [Utf8ParseErr]
 
 ## Get the number of code points for a given Str
 nr_of_code_points : Str -> Result U64 Utf8ParseErr
-nr_of_code_points = \str ->
-    str |> Str.to_utf8 |> CodePoint.parse_utf8 |> Result.map(List.len)
+nr_of_code_points = |str|
+    str |> Str.to_utf8 |> CodePoint.parse_utf8 |> Result.map_ok(List.len)
 
-main! = \_args ->
+main! = |_args|
     word = "ẇ͓̞͒͟͡ǫ̠̠̉̏͠͡ͅr̬̺͚̍͛̔͒͢d̠͎̗̳͇͆̋̊͂͐"
 
     when nr_of_code_points(word) is

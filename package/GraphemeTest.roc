@@ -6,14 +6,15 @@ import Grapheme
 import InternalCP
 
 to_code_point_list : List Str -> List (List U32)
-to_code_point_list = \strings ->
+to_code_point_list = |strings|
     strings
-    |> List.map(
-        \str ->
-            when str |> Str.to_utf8 |> CodePoint.parse_utf8 is
-                Ok(cps) -> List.map(cps, CodePoint.to_u32)
-                Err(_) -> crash("expected valid utf8"),
+    |> List.map(|str|
+        when str |> Str.to_utf8 |> CodePoint.parse_utf8 is
+            Ok cps -> List.map(cps, CodePoint.to_u32)
+            Err _ ->
+                crash "expected valid utf8"
     )
+
 
 # GraphemeBreakTest-15.1.0.txt:line 25
 # % 0020 % 0020 % #  % [0.2] SPACE (Other) % [999.0] SPACE (Other) % [0.3]
@@ -24,7 +25,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -37,7 +38,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -50,7 +51,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -63,7 +64,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -76,7 +77,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -89,7 +90,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -102,7 +103,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -115,7 +116,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -128,7 +129,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -141,7 +142,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -154,7 +155,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -167,7 +168,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -180,7 +181,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -193,7 +194,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -206,7 +207,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -219,7 +220,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -232,7 +233,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -245,7 +246,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -258,7 +259,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -271,7 +272,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -284,7 +285,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -297,7 +298,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -310,7 +311,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -323,7 +324,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -336,7 +337,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -349,7 +350,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -362,7 +363,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -375,7 +376,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -388,7 +389,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -401,7 +402,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -414,7 +415,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -427,7 +428,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -440,7 +441,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -453,7 +454,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -466,7 +467,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -479,7 +480,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -492,7 +493,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -505,7 +506,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -518,7 +519,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -531,7 +532,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -544,7 +545,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -557,7 +558,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -570,7 +571,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -583,7 +584,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -596,7 +597,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -609,7 +610,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -622,7 +623,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -635,7 +636,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -648,7 +649,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -661,7 +662,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -674,7 +675,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -687,7 +688,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -700,7 +701,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -713,7 +714,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -726,7 +727,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -739,7 +740,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -752,7 +753,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -765,7 +766,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -778,7 +779,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -791,7 +792,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -804,7 +805,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -817,7 +818,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -830,7 +831,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -843,7 +844,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -856,7 +857,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -869,7 +870,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -882,7 +883,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -895,7 +896,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -908,7 +909,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -921,7 +922,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -934,7 +935,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -947,7 +948,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -960,7 +961,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -973,7 +974,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -986,7 +987,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -999,7 +1000,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1012,7 +1013,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1025,7 +1026,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1038,7 +1039,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1051,7 +1052,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1064,7 +1065,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1077,7 +1078,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1090,7 +1091,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1103,7 +1104,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1116,7 +1117,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1129,7 +1130,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1142,7 +1143,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1155,7 +1156,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1168,7 +1169,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1181,7 +1182,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1194,7 +1195,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1207,7 +1208,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1220,7 +1221,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1233,7 +1234,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1246,7 +1247,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1259,7 +1260,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1272,7 +1273,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1285,7 +1286,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1298,7 +1299,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1311,7 +1312,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1324,7 +1325,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1337,7 +1338,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1350,7 +1351,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1363,7 +1364,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1376,7 +1377,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1389,7 +1390,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1402,7 +1403,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1415,7 +1416,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1428,7 +1429,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1441,7 +1442,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1454,7 +1455,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1467,7 +1468,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1480,7 +1481,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1493,7 +1494,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1506,7 +1507,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1519,7 +1520,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1532,7 +1533,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1545,7 +1546,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1558,7 +1559,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1571,7 +1572,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1584,7 +1585,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1597,7 +1598,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1610,7 +1611,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1623,7 +1624,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1636,7 +1637,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1649,7 +1650,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1662,7 +1663,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1675,7 +1676,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1688,7 +1689,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1701,7 +1702,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1714,7 +1715,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1727,7 +1728,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1740,7 +1741,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1753,7 +1754,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1766,7 +1767,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1779,7 +1780,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1792,7 +1793,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1805,7 +1806,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1818,7 +1819,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1831,7 +1832,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1844,7 +1845,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1857,7 +1858,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1870,7 +1871,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1883,7 +1884,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1896,7 +1897,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1909,7 +1910,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1922,7 +1923,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1935,7 +1936,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1948,7 +1949,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1961,7 +1962,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1974,7 +1975,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -1987,7 +1988,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2000,7 +2001,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2013,7 +2014,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2026,7 +2027,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2039,7 +2040,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2052,7 +2053,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2065,7 +2066,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2078,7 +2079,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2091,7 +2092,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2104,7 +2105,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2117,7 +2118,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2130,7 +2131,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2143,7 +2144,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2156,7 +2157,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2169,7 +2170,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2182,7 +2183,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2195,7 +2196,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2208,7 +2209,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2221,7 +2222,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2234,7 +2235,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2247,7 +2248,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2260,7 +2261,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2273,7 +2274,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2286,7 +2287,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2299,7 +2300,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2312,7 +2313,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2325,7 +2326,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2338,7 +2339,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2351,7 +2352,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2364,7 +2365,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2377,7 +2378,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2390,7 +2391,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2403,7 +2404,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2416,7 +2417,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2429,7 +2430,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2442,7 +2443,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2455,7 +2456,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2468,7 +2469,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2481,7 +2482,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2494,7 +2495,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2507,7 +2508,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2520,7 +2521,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2533,7 +2534,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2546,7 +2547,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2559,7 +2560,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2572,7 +2573,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2585,7 +2586,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2598,7 +2599,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2611,7 +2612,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2624,7 +2625,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2637,7 +2638,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2650,7 +2651,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2663,7 +2664,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2676,7 +2677,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2689,7 +2690,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2702,7 +2703,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2715,7 +2716,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2728,7 +2729,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2741,7 +2742,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2754,7 +2755,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2767,7 +2768,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2780,7 +2781,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2793,7 +2794,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2806,7 +2807,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2819,7 +2820,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2832,7 +2833,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2845,7 +2846,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2858,7 +2859,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2871,7 +2872,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2884,7 +2885,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2897,7 +2898,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2910,7 +2911,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2923,7 +2924,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2936,7 +2937,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2949,7 +2950,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2962,7 +2963,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2975,7 +2976,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -2988,7 +2989,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3001,7 +3002,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3014,7 +3015,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3027,7 +3028,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3040,7 +3041,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3053,7 +3054,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3066,7 +3067,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3079,7 +3080,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3092,7 +3093,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3105,7 +3106,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3118,7 +3119,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3131,7 +3132,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3144,7 +3145,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3157,7 +3158,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3170,7 +3171,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3183,7 +3184,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3196,7 +3197,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3209,7 +3210,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3222,7 +3223,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3235,7 +3236,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3248,7 +3249,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3261,7 +3262,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3274,7 +3275,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3287,7 +3288,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3300,7 +3301,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3313,7 +3314,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3326,7 +3327,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3339,7 +3340,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3352,7 +3353,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3365,7 +3366,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3378,7 +3379,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3391,7 +3392,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3404,7 +3405,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3417,7 +3418,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3430,7 +3431,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3443,7 +3444,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3456,7 +3457,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3469,7 +3470,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3482,7 +3483,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3495,7 +3496,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3508,7 +3509,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3521,7 +3522,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3534,7 +3535,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3547,7 +3548,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3560,7 +3561,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3573,7 +3574,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3586,7 +3587,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3599,7 +3600,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3612,7 +3613,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3625,7 +3626,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3638,7 +3639,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3651,7 +3652,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3664,7 +3665,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3677,7 +3678,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3690,7 +3691,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3703,7 +3704,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3716,7 +3717,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3729,7 +3730,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3742,7 +3743,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3755,7 +3756,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3768,7 +3769,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3781,7 +3782,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3794,7 +3795,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3807,7 +3808,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3820,7 +3821,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3833,7 +3834,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3846,7 +3847,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3859,7 +3860,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3872,7 +3873,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3885,7 +3886,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3898,7 +3899,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3911,7 +3912,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3924,7 +3925,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3937,7 +3938,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3950,7 +3951,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3963,7 +3964,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3976,7 +3977,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -3989,7 +3990,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4002,7 +4003,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4015,7 +4016,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4028,7 +4029,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4041,7 +4042,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4054,7 +4055,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4067,7 +4068,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4080,7 +4081,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4093,7 +4094,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4106,7 +4107,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4119,7 +4120,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4132,7 +4133,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4145,7 +4146,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4158,7 +4159,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4171,7 +4172,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4184,7 +4185,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4197,7 +4198,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4210,7 +4211,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4223,7 +4224,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4236,7 +4237,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4249,7 +4250,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4262,7 +4263,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4275,7 +4276,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4288,7 +4289,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4301,7 +4302,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4314,7 +4315,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4327,7 +4328,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4340,7 +4341,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4353,7 +4354,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4366,7 +4367,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4379,7 +4380,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4392,7 +4393,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4405,7 +4406,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4418,7 +4419,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4431,7 +4432,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4444,7 +4445,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4457,7 +4458,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4470,7 +4471,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4483,7 +4484,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4496,7 +4497,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4509,7 +4510,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4522,7 +4523,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4535,7 +4536,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4548,7 +4549,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4561,7 +4562,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4574,7 +4575,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4587,7 +4588,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4600,7 +4601,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4613,7 +4614,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4626,7 +4627,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4639,7 +4640,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4652,7 +4653,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4665,7 +4666,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4678,7 +4679,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4691,7 +4692,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4704,7 +4705,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4717,7 +4718,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4730,7 +4731,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4743,7 +4744,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4756,7 +4757,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4769,7 +4770,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4782,7 +4783,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4795,7 +4796,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4808,7 +4809,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4821,7 +4822,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4834,7 +4835,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4847,7 +4848,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4860,7 +4861,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4873,7 +4874,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4886,7 +4887,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4899,7 +4900,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4912,7 +4913,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4925,7 +4926,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4938,7 +4939,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4951,7 +4952,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4964,7 +4965,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4977,7 +4978,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -4990,7 +4991,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5003,7 +5004,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5016,7 +5017,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5029,7 +5030,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5042,7 +5043,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5055,7 +5056,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5068,7 +5069,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5081,7 +5082,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5094,7 +5095,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5107,7 +5108,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5120,7 +5121,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5133,7 +5134,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5146,7 +5147,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5159,7 +5160,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5172,7 +5173,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5185,7 +5186,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5198,7 +5199,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5211,7 +5212,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5224,7 +5225,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5237,7 +5238,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5250,7 +5251,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5263,7 +5264,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5276,7 +5277,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5289,7 +5290,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5302,7 +5303,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5315,7 +5316,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5328,7 +5329,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5341,7 +5342,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5354,7 +5355,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5367,7 +5368,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5380,7 +5381,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5393,7 +5394,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5406,7 +5407,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5419,7 +5420,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5432,7 +5433,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5445,7 +5446,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5458,7 +5459,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5471,7 +5472,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5484,7 +5485,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5497,7 +5498,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5510,7 +5511,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5523,7 +5524,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5536,7 +5537,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5549,7 +5550,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5562,7 +5563,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5575,7 +5576,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5588,7 +5589,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5601,7 +5602,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5614,7 +5615,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5627,7 +5628,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5640,7 +5641,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5653,7 +5654,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5666,7 +5667,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5679,7 +5680,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5692,7 +5693,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5705,7 +5706,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5718,7 +5719,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5731,7 +5732,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5744,7 +5745,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5757,7 +5758,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5770,7 +5771,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5783,7 +5784,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5796,7 +5797,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5809,7 +5810,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5822,7 +5823,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5835,7 +5836,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5848,7 +5849,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5861,7 +5862,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5874,7 +5875,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5887,7 +5888,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5900,7 +5901,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5913,7 +5914,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5926,7 +5927,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5939,7 +5940,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5952,7 +5953,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5965,7 +5966,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5978,7 +5979,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -5991,7 +5992,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6004,7 +6005,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6017,7 +6018,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6030,7 +6031,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6043,7 +6044,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6056,7 +6057,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6069,7 +6070,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6082,7 +6083,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6095,7 +6096,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6108,7 +6109,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6121,7 +6122,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6134,7 +6135,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6147,7 +6148,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6160,7 +6161,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6173,7 +6174,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6186,7 +6187,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6199,7 +6200,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6212,7 +6213,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6225,7 +6226,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6238,7 +6239,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6251,7 +6252,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6264,7 +6265,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6277,7 +6278,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6290,7 +6291,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6303,7 +6304,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6316,7 +6317,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6329,7 +6330,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6342,7 +6343,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6355,7 +6356,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6368,7 +6369,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6381,7 +6382,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6394,7 +6395,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6407,7 +6408,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6420,7 +6421,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6433,7 +6434,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6446,7 +6447,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6459,7 +6460,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6472,7 +6473,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6485,7 +6486,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6498,7 +6499,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6511,7 +6512,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6524,7 +6525,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6537,7 +6538,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6550,7 +6551,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6563,7 +6564,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6576,7 +6577,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6589,7 +6590,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6602,7 +6603,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6615,7 +6616,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6628,7 +6629,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6641,7 +6642,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6654,7 +6655,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6667,7 +6668,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6680,7 +6681,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6693,7 +6694,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6706,7 +6707,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6719,7 +6720,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6732,7 +6733,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6745,7 +6746,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6758,7 +6759,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6771,7 +6772,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6784,7 +6785,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6797,7 +6798,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6810,7 +6811,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6823,7 +6824,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6836,7 +6837,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6849,7 +6850,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6862,7 +6863,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6875,7 +6876,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6888,7 +6889,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6901,7 +6902,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6914,7 +6915,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6927,7 +6928,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6940,7 +6941,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6953,7 +6954,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6966,7 +6967,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6979,7 +6980,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -6992,7 +6993,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7005,7 +7006,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7018,7 +7019,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7031,7 +7032,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7044,7 +7045,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7057,7 +7058,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7070,7 +7071,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7083,7 +7084,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7096,7 +7097,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7109,7 +7110,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7122,7 +7123,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7135,7 +7136,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7148,7 +7149,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7161,7 +7162,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7174,7 +7175,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7187,7 +7188,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7200,7 +7201,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7213,7 +7214,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7226,7 +7227,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7239,7 +7240,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7252,7 +7253,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7265,7 +7266,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7278,7 +7279,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7291,7 +7292,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7304,7 +7305,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7317,7 +7318,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7330,7 +7331,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7343,7 +7344,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7356,7 +7357,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7369,7 +7370,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7382,7 +7383,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7395,7 +7396,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7408,7 +7409,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7421,7 +7422,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7434,7 +7435,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7447,7 +7448,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7460,7 +7461,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7473,7 +7474,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7486,7 +7487,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7499,7 +7500,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7512,7 +7513,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7525,7 +7526,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7538,7 +7539,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7551,7 +7552,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7564,7 +7565,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7577,7 +7578,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7590,7 +7591,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7603,7 +7604,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7616,7 +7617,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7629,7 +7630,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7642,7 +7643,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7655,7 +7656,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7668,7 +7669,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7681,7 +7682,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7694,7 +7695,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7707,7 +7708,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7720,7 +7721,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7733,7 +7734,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7746,7 +7747,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7759,7 +7760,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7772,7 +7773,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7785,7 +7786,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7798,7 +7799,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7811,7 +7812,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7824,7 +7825,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7837,7 +7838,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7850,7 +7851,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7863,7 +7864,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7876,7 +7877,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7889,7 +7890,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7902,7 +7903,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7915,7 +7916,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7928,7 +7929,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7941,7 +7942,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7954,7 +7955,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7967,7 +7968,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7980,7 +7981,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -7993,7 +7994,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8006,7 +8007,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8019,7 +8020,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8032,7 +8033,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8045,7 +8046,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8058,7 +8059,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8071,7 +8072,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8084,7 +8085,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8097,7 +8098,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8110,7 +8111,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8123,7 +8124,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8136,7 +8137,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8149,7 +8150,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8162,7 +8163,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8175,7 +8176,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8188,7 +8189,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8201,7 +8202,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8214,7 +8215,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8227,7 +8228,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8240,7 +8241,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8253,7 +8254,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8266,7 +8267,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8279,7 +8280,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8292,7 +8293,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8305,7 +8306,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8318,7 +8319,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8331,7 +8332,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8344,7 +8345,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8357,7 +8358,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8370,7 +8371,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8383,7 +8384,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8396,7 +8397,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8409,7 +8410,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8422,7 +8423,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8435,7 +8436,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8448,7 +8449,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8461,7 +8462,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8474,7 +8475,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8487,7 +8488,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8500,7 +8501,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8513,7 +8514,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8526,7 +8527,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8539,7 +8540,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8552,7 +8553,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8565,7 +8566,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8578,7 +8579,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8591,7 +8592,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8604,7 +8605,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8617,7 +8618,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8630,7 +8631,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8643,7 +8644,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8656,7 +8657,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8669,7 +8670,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8682,7 +8683,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8695,7 +8696,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8708,7 +8709,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8721,7 +8722,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8734,7 +8735,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8747,7 +8748,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8760,7 +8761,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8773,7 +8774,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8786,7 +8787,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8799,7 +8800,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8812,7 +8813,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8825,7 +8826,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8838,7 +8839,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8851,7 +8852,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8864,7 +8865,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8877,7 +8878,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8890,7 +8891,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8903,7 +8904,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8916,7 +8917,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8929,7 +8930,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8942,7 +8943,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8955,7 +8956,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8968,7 +8969,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8981,7 +8982,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -8994,7 +8995,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9007,7 +9008,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9020,7 +9021,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9033,7 +9034,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9046,7 +9047,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9059,7 +9060,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9072,7 +9073,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9085,7 +9086,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9098,7 +9099,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9111,7 +9112,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9124,7 +9125,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9137,7 +9138,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9150,7 +9151,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9163,7 +9164,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9176,7 +9177,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9189,7 +9190,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9202,7 +9203,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9215,7 +9216,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9228,7 +9229,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9241,7 +9242,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9254,7 +9255,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9267,7 +9268,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9280,7 +9281,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9293,7 +9294,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9306,7 +9307,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9319,7 +9320,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9332,7 +9333,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9345,7 +9346,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9358,7 +9359,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9371,7 +9372,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9384,7 +9385,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9397,7 +9398,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9410,7 +9411,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9423,7 +9424,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9436,7 +9437,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9449,7 +9450,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9462,7 +9463,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9475,7 +9476,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9488,7 +9489,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9501,7 +9502,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9514,7 +9515,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9527,7 +9528,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9540,7 +9541,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9553,7 +9554,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9566,7 +9567,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9579,7 +9580,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9592,7 +9593,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9605,7 +9606,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9618,7 +9619,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9631,7 +9632,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9644,7 +9645,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9657,7 +9658,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9670,7 +9671,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9683,7 +9684,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9696,7 +9697,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9709,7 +9710,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9722,7 +9723,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9735,7 +9736,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9748,7 +9749,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9761,7 +9762,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9774,7 +9775,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9787,7 +9788,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9800,7 +9801,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9813,7 +9814,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9826,7 +9827,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9839,7 +9840,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9852,7 +9853,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9865,7 +9866,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9878,7 +9879,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9891,7 +9892,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9904,7 +9905,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9917,7 +9918,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9930,7 +9931,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9943,7 +9944,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9956,7 +9957,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9969,7 +9970,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9982,7 +9983,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -9995,7 +9996,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10008,7 +10009,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10021,7 +10022,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10034,7 +10035,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10047,7 +10048,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10060,7 +10061,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10073,7 +10074,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10086,7 +10087,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10099,7 +10100,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10112,7 +10113,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10125,7 +10126,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10138,7 +10139,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10151,7 +10152,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10164,7 +10165,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10177,7 +10178,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10190,7 +10191,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10203,7 +10204,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10216,7 +10217,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10229,7 +10230,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10242,7 +10243,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10255,7 +10256,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10268,7 +10269,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10281,7 +10282,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10294,7 +10295,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10307,7 +10308,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10320,7 +10321,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10333,7 +10334,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10346,7 +10347,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10359,7 +10360,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10372,7 +10373,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10385,7 +10386,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10398,7 +10399,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10411,7 +10412,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10424,7 +10425,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10437,7 +10438,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10450,7 +10451,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10463,7 +10464,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10476,7 +10477,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10489,7 +10490,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10502,7 +10503,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10515,7 +10516,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10528,7 +10529,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10541,7 +10542,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10554,7 +10555,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10567,7 +10568,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10580,7 +10581,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10593,7 +10594,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10606,7 +10607,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10619,7 +10620,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10632,7 +10633,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10645,7 +10646,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10658,7 +10659,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10671,7 +10672,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10684,7 +10685,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10697,7 +10698,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10710,7 +10711,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10723,7 +10724,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10736,7 +10737,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10749,7 +10750,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10762,7 +10763,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10775,7 +10776,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10788,7 +10789,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10801,7 +10802,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10814,7 +10815,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10827,7 +10828,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10840,7 +10841,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10853,7 +10854,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10866,7 +10867,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10879,7 +10880,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10892,7 +10893,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10905,7 +10906,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10918,7 +10919,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10931,7 +10932,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10944,7 +10945,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10957,7 +10958,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10970,7 +10971,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10983,7 +10984,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -10996,7 +10997,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11009,7 +11010,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11022,7 +11023,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11035,7 +11036,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11048,7 +11049,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11061,7 +11062,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11074,7 +11075,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11087,7 +11088,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11100,7 +11101,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11113,7 +11114,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11126,7 +11127,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11139,7 +11140,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11152,7 +11153,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11165,7 +11166,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11178,7 +11179,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11191,7 +11192,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11204,7 +11205,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11217,7 +11218,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11230,7 +11231,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11243,7 +11244,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11256,7 +11257,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11269,7 +11270,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11282,7 +11283,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11295,7 +11296,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11308,7 +11309,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11321,7 +11322,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11334,7 +11335,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11347,7 +11348,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11360,7 +11361,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11373,7 +11374,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11386,7 +11387,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11399,7 +11400,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11412,7 +11413,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11425,7 +11426,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11438,7 +11439,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11451,7 +11452,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11464,7 +11465,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11477,7 +11478,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11490,7 +11491,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11503,7 +11504,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11516,7 +11517,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11529,7 +11530,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11542,7 +11543,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11555,7 +11556,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11568,7 +11569,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11581,7 +11582,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11594,7 +11595,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11607,7 +11608,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11620,7 +11621,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11633,7 +11634,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11646,7 +11647,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11659,7 +11660,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11672,7 +11673,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11685,7 +11686,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11698,7 +11699,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11711,7 +11712,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11724,7 +11725,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11737,7 +11738,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11750,7 +11751,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11763,7 +11764,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11776,7 +11777,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11789,7 +11790,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11802,7 +11803,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11815,7 +11816,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11828,7 +11829,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11841,7 +11842,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11854,7 +11855,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11867,7 +11868,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11880,7 +11881,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11893,7 +11894,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11906,7 +11907,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11919,7 +11920,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11932,7 +11933,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11945,7 +11946,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11958,7 +11959,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11971,7 +11972,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11984,7 +11985,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -11997,7 +11998,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12010,7 +12011,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12023,7 +12024,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12036,7 +12037,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12049,7 +12050,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12062,7 +12063,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12075,7 +12076,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12088,7 +12089,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12101,7 +12102,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12114,7 +12115,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12127,7 +12128,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12140,7 +12141,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12153,7 +12154,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12166,7 +12167,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12179,7 +12180,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12192,7 +12193,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12205,7 +12206,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12218,7 +12219,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12231,7 +12232,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12244,7 +12245,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12257,7 +12258,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12270,7 +12271,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12283,7 +12284,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12296,7 +12297,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12309,7 +12310,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12322,7 +12323,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12335,7 +12336,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12348,7 +12349,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12361,7 +12362,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12374,7 +12375,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12387,7 +12388,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12400,7 +12401,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12413,7 +12414,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12426,7 +12427,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12439,7 +12440,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12452,7 +12453,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12465,7 +12466,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12478,7 +12479,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12491,7 +12492,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12504,7 +12505,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12517,7 +12518,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12530,7 +12531,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12543,7 +12544,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12556,7 +12557,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12569,7 +12570,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12582,7 +12583,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12595,7 +12596,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12608,7 +12609,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12621,7 +12622,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12634,7 +12635,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12647,7 +12648,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12660,7 +12661,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12673,7 +12674,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12686,7 +12687,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12699,7 +12700,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12712,7 +12713,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12725,7 +12726,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12738,7 +12739,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12751,7 +12752,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12764,7 +12765,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12777,7 +12778,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12790,7 +12791,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12803,7 +12804,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12816,7 +12817,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12829,7 +12830,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12842,7 +12843,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12855,7 +12856,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12868,7 +12869,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12881,7 +12882,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12894,7 +12895,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12907,7 +12908,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12920,7 +12921,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12933,7 +12934,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12946,7 +12947,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12959,7 +12960,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12972,7 +12973,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12985,7 +12986,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -12998,7 +12999,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13011,7 +13012,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13024,7 +13025,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13037,7 +13038,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13050,7 +13051,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13063,7 +13064,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13076,7 +13077,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13089,7 +13090,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13102,7 +13103,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13115,7 +13116,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13128,7 +13129,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13141,7 +13142,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13154,7 +13155,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13167,7 +13168,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13180,7 +13181,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13193,7 +13194,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13206,7 +13207,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13219,7 +13220,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13232,7 +13233,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13245,7 +13246,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13258,7 +13259,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13271,7 +13272,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13284,7 +13285,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13297,7 +13298,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13310,7 +13311,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13323,7 +13324,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13336,7 +13337,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13349,7 +13350,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13362,7 +13363,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13375,7 +13376,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13388,7 +13389,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13401,7 +13402,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13414,7 +13415,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13427,7 +13428,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13440,7 +13441,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13453,7 +13454,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13466,7 +13467,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13479,7 +13480,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13492,7 +13493,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13505,7 +13506,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13518,7 +13519,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13531,7 +13532,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13544,7 +13545,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13557,7 +13558,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13570,7 +13571,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13583,7 +13584,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13596,7 +13597,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13609,7 +13610,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13622,7 +13623,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13635,7 +13636,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13648,7 +13649,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13661,7 +13662,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13674,7 +13675,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13687,7 +13688,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13700,7 +13701,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13713,7 +13714,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13726,7 +13727,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13739,7 +13740,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13752,7 +13753,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13765,7 +13766,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13778,7 +13779,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13791,7 +13792,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13804,7 +13805,7 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp
 
@@ -13817,6 +13818,6 @@ expect
         |> List.map(InternalCP.from_u32_unchecked)
         |> CodePoint.to_str
         |> Result.try(Grapheme.split)
-        |> Result.map(to_code_point_list)
+        |> Result.map_ok(to_code_point_list)
 
     got == exp

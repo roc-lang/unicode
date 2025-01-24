@@ -7,8 +7,7 @@ app [main!] {
     parser: "../../roc-parser/package/main.roc",
 }
 
-import pf.Arg
-import pf.File
+import pf.Stdout
 import parser.Parser exposing [Parser, const, keep, skip, one_of, one_or_more, many, chomp_while]
 import parser.String exposing [parse_str, string, codeunit, codeunit_satisfies]
 import "data/GraphemeBreakTest-15.1.0.txt" as input_file : Str
@@ -19,15 +18,7 @@ import InternalCP exposing [from_u32_unchecked]
 Rule : [GB1, GB2, GB3, GB4, GB5, GB6, GB7, GB8, GB9, GB9a, GB9b, GB9c, GB11, GB12, GB13, GB999]
 TestTokens : List [BR Rule, NB Rule, CP CodePoint]
 
-main! = \raw_args ->
-    args = List.map(raw_args, Arg.display)
-
-    # gets the second argument, the first is the executable's path
-    package_path =
-        List.get(args, 1)
-        |> Result.map_err?(\_ -> Exit(1, "Error: I got 0 arguments! Usage: roc GraphemeTest.roc -- path/to/package/"))
-
-    File.write_utf8!("${Helpers.remove_trailing_slash(package_path)}/GraphemeTest.roc", template)
+main! = |_args| Stdout.line!(template)
 
 template : Str
 template =
@@ -35,21 +26,21 @@ template =
     tests =
         test_file
         |> List.keep_if(
-            \test ->
+            |test|
                 # filter out any tests which aren't passing yet
                 # progressively add these as support is added
                 test.parsed
                 |> List.keep_if(
-                    \token ->
+                    |token|
                         when token is
-                            BR(rule) if rule == GB9a || rule == GB9b || rule == GB9c -> Bool.true
-                            NB(rule) if rule == GB9a || rule == GB9b || rule == GB9c -> Bool.true
+                            BR(rule) if rule == GB9a or rule == GB9b or rule == GB9c -> Bool.true
+                            NB(rule) if rule == GB9a or rule == GB9b or rule == GB9c -> Bool.true
                             _ -> Bool.false,
                 )
                 |> List.is_empty,
         )
         |> List.map(
-            \test ->
+            |test|
                 # test : {lineNo : U16, lineStr : Str, parsed : List [BR Rule, NB Rule, CP CodePoint]}
 
                 sanitised_line =
@@ -65,15 +56,13 @@ template =
                 # GraphemeBreakTest-15.1.0.txt:line ${Num.to_str(test.line_no)}
                 # ${sanitised_line}
                 expect
-                    exp = Ok ${code_points_list |> Inspect.to_str}
+                    exp = Ok(${code_points_list |> Inspect.to_str})
                     got =
-                        ${code_points_list
-                    |> List.join
-                    |> Inspect.to_str}
-                        |> List.map InternalCP.fromU32Unchecked
-                        |> CodePoint.toStr
-                        |> Result.try Grapheme.split
-                        |> Result.map toCodePointList
+                        ${code_points_list |> List.join |> Inspect.to_str}
+                        |> List.map(InternalCP.from_u32_unchecked)
+                        |> CodePoint.to_str
+                        |> Result.try(Grapheme.split)
+                        |> Result.map_ok(to_code_point_list)
 
                     got == exp
                 """,
@@ -88,23 +77,25 @@ template =
     import Grapheme
     import InternalCP
 
-    toCodePointList : List Str -> List (List U32)
-    toCodePointList = \\strings ->
-        strings |> List.map \\str ->
-            when str |> Str.toUtf8 |> CodePoint.parseUtf8 is
-                Ok cps -> List.map cps CodePoint.toU32
-                Err _ -> crash \"expected valid utf8\"
+    to_code_point_list : List Str -> List (List U32)
+    to_code_point_list = |strings|
+        strings
+        |> List.map(|str|
+            when str |> Str.to_utf8 |> CodePoint.parse_utf8 is
+                Ok cps -> List.map(cps, CodePoint.to_u32)
+                Err _ ->
+                    crash \"expected valid utf8\"
+        )
 
     ${tests}
     """
 
 to_u32_list : TestTokens -> List (List U32)
-to_u32_list = \tokens ->
-
-    to_u32s = \cps -> cps |> List.map(CodePoint.to_u32)
+to_u32_list = |tokens|
+    to_u32s = |cps| cps |> List.map(CodePoint.to_u32)
 
     go : TestTokens, List CodePoint, List (List U32) -> List (List U32)
-    go = \remaining, acc, strs ->
+    go = |remaining, acc, strs|
         next = List.drop_first(remaining, 1)
         when remaining is
             [] -> if List.is_empty(acc) then strs else List.append(strs, to_u32s(acc))
@@ -118,19 +109,19 @@ test_file : List { line_no : U16, line_str : Str, parsed : TestTokens }
 test_file =
     input_file
     |> Str.split_on("\n")
-    |> List.map_with_index(\line_str, idx -> { line_no: Num.to_u16((idx + 1)), line_str, parsed: [] })
-    |> List.keep_if(\test -> Str.starts_with(test.line_str, "÷ "))
+    |> List.map_with_index(|line_str, idx| { line_no: Num.to_u16((idx + 1)), line_str, parsed: [] })
+    |> List.keep_if(|test| Str.starts_with(test.line_str, "÷ "))
     |> List.map(
-        \test ->
+        |test|
             when parse_str(test_parser, test.line_str) is
                 Ok(Ok(parsed)) -> { test & parsed }
                 Ok(Err(err)) -> crash("Unable to parse line ${Num.to_str(test.line_no)} completely, got err ${Inspect.to_str(err)}")
-                Err(err) -> crash("Unable to parse line ${Num.to_str(test.line_no)} got err ${Inspect.to_str(err)}")
+                Err(err) -> crash("Unable to parse line ${Num.to_str(test.line_no)} got err ${Inspect.to_str(err)}"),
     )
 
 test_parser : Parser (List U8) (Result TestTokens _)
 test_parser =
-    const(\first -> \second -> zip(first, second) |> Result.map(List.reverse))
+    const(|first| |second| zip(first, second) |> Result.map_ok(List.reverse))
     |> keep(first_half_parser)
     |> skip(string("	#  "))
     |> keep(second_half_parser)
@@ -145,11 +136,10 @@ expect
 
 code_point_parser : Parser (List U8) CodePoint
 code_point_parser =
-
-    is_hex = \b -> (b >= '0' && b <= '9') || (b >= 'A' && b <= 'F')
+    is_hex = |b| (b >= '0' and b <= '9') or (b >= 'A' and b <= 'F')
 
     const(
-        \bytes ->
+        |bytes|
             bytes
             |> hex_bytes_to_u32
             |> from_u32_unchecked,
@@ -210,12 +200,12 @@ second_half_parser =
                 |> skip(string("÷"))
                 |> skip(codeunit(' '))
                 |> keep(break_rule_parser)
-                |> skip(chomp_while(\b -> b != 195)),
+                |> skip(chomp_while(|b| b != 195)),
                 const(NB)
                 |> skip(string("×"))
                 |> skip(codeunit(' '))
                 |> keep(break_rule_parser)
-                |> skip(chomp_while(\b -> b != 195)),
+                |> skip(chomp_while(|b| b != 195)),
             ],
         ),
     )
@@ -227,7 +217,7 @@ expect parse_str(second_half_parser, "÷ [0.2] SPACE (Other) ÷ [999.0] SPACE (O
 # so we can test our implementation with more confidence by checking we apply the correct
 # rule in the correct locations
 zip : List [BR, NB, CP CodePoint], List [BR Rule, NB Rule] -> Result (List [BR Rule, NB Rule, CP CodePoint]) [Invalid Str]
-zip = \first, second ->
+zip = |first, second|
     when (List.first(first), List.first(second)) is
         (Ok(BR), Ok(BR(rule))) ->
             next = zip(List.drop_first(first, 1), List.drop_first(second, 1))?
@@ -250,7 +240,7 @@ zip = \first, second ->
 expect
     answer =
         zip([BR, CP(from_u32_unchecked(35)), BR, CP(from_u32_unchecked(32)), BR], [BR(GB1), BR(GB999), BR(GB2)])
-        |> Result.map(List.reverse)
+        |> Result.map_ok(List.reverse)
         |> Result.with_default([])
 
     answer == [BR(GB1), CP(from_u32_unchecked(35)), BR(GB999), CP(from_u32_unchecked(32)), BR(GB2)]

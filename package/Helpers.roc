@@ -17,10 +17,10 @@ CPMeta : [Single U32, Range U32 U32]
 PropertyMap a : { cp : CPMeta, prop : a }
 
 filter_property_map : List (PropertyMap a), (PropertyMap a -> Result CPMeta [NotNeeded]) -> List CPMeta
-filter_property_map = \map, filter -> List.keep_oks(map, filter)
+filter_property_map = |map, filter| List.keep_oks(map, filter)
 
 remove_trailing_slash : Str -> Str
-remove_trailing_slash = \str ->
+remove_trailing_slash = |str|
     trimmed = str |> Str.trim
     reversed = trimmed |> Str.to_utf8 |> List.reverse
 
@@ -38,7 +38,7 @@ expect remove_trailing_slash("abc  ") == "abc"
 expect remove_trailing_slash("  abc/package/  ") == "abc/package"
 
 take_hex_bytes : { val : List U8, rest : List U8 } -> { val : List U8, rest : List U8 }
-take_hex_bytes = \input ->
+take_hex_bytes = |input|
     when input.rest is
         [] -> input
         [first, ..] ->
@@ -62,7 +62,7 @@ expect
     take_hex_bytes({ val: [], rest: bytes }) == { val: [68, 54, 69, 49], rest: [46, 46, 68, 54, 70, 66, 32, 32] }
 
 is_hex : U8 -> Bool
-is_hex = \u8 -> u8 == '0' || u8 == '1' || u8 == '2' || u8 == '3' || u8 == '4' || u8 == '5' || u8 == '6' || u8 == '7' || u8 == '8' || u8 == '9' || u8 == 'A' || u8 == 'B' || u8 == 'C' || u8 == 'D' || u8 == 'E' || u8 == 'F'
+is_hex = |u8| u8 == '0' or u8 == '1' or u8 == '2' or u8 == '3' or u8 == '4' or u8 == '5' or u8 == '6' or u8 == '7' or u8 == '8' or u8 == '9' or u8 == 'A' or u8 == 'B' or u8 == 'C' or u8 == 'D' or u8 == 'E' or u8 == 'F'
 
 expect is_hex('0')
 expect is_hex('A')
@@ -71,7 +71,7 @@ expect !(is_hex(';'))
 expect !(is_hex('#'))
 
 starts_with_hex : Str -> Result Str [NonHex]
-starts_with_hex = \str ->
+starts_with_hex = |str|
     when Str.to_utf8(str) is
         [a, ..] if is_hex(a) -> Ok(str)
         _ -> Err(NonHex)
@@ -80,14 +80,14 @@ expect starts_with_hex("# ===") == Err(NonHex)
 expect starts_with_hex("0000..") == Ok("0000..")
 
 hex_str_to_u32 : Str -> U32
-hex_str_to_u32 = \str ->
+hex_str_to_u32 = |str|
     str |> Str.to_utf8 |> hex_bytes_to_u32
 
 hex_bytes_to_u32 : List U8 -> U32
-hex_bytes_to_u32 = \bytes ->
+hex_bytes_to_u32 = |bytes|
     bytes
     |> List.reverse
-    |> List.walk_with_index(0, \accum, byte, i -> accum + (Num.pow_int(16, Num.to_u32(i))) * (hex_to_dec(byte)))
+    |> List.walk_with_index(0, |accum, byte, i| accum + (Num.pow_int(16, Num.to_u32(i))) * (hex_to_dec(byte)))
     |> Num.to_u32
 
 expect hex_bytes_to_u32(['0', '0', '0', '0']) == 0
@@ -101,7 +101,7 @@ expect hex_bytes_to_u32(['1', '0', '0', '0']) == 4096
 expect hex_bytes_to_u32(['1', '6', 'F', 'F', '1']) == 94193
 
 hex_to_dec : U8 -> U32
-hex_to_dec = \byte ->
+hex_to_dec = |byte|
     when byte is
         '0' -> 0
         '1' -> 1
@@ -125,12 +125,12 @@ expect hex_to_dec('0') == 0
 expect hex_to_dec('F') == 15
 
 property_map_from_file : Str, (Str -> Result a [ParsingError]) -> List { cp : CPMeta, prop : a }
-property_map_from_file = \file, parse_prop_part ->
+property_map_from_file = |file, parse_prop_part|
     file
     |> Str.split_on("\n")
     |> List.keep_oks(Helpers.starts_with_hex)
     |> List.map(
-        \l ->
+        |l|
             when Str.split_on(l, ";") is
                 [hex_part, prop_part] ->
                     when (parse_hex_part(hex_part), parse_prop_part(prop_part)) is
@@ -141,7 +141,7 @@ property_map_from_file = \file, parse_prop_part ->
     )
 
 parse_hex_part : Str -> Result CPMeta [ParsingError]
-parse_hex_part = \hex_part ->
+parse_hex_part = |hex_part|
     when hex_part |> Str.trim |> Str.split_on("..") is
         [single] ->
             when code_point_parser(single) is
@@ -159,7 +159,7 @@ expect parse_hex_part("0890..0891    ") == Ok(Range(2192, 2193))
 expect parse_hex_part("08E2          ") == Ok(Single(2274))
 
 code_point_parser : Str -> Result U32 [ParsingError]
-code_point_parser = \input ->
+code_point_parser = |input|
 
     { val: hex_bytes } = take_hex_bytes({ val: [], rest: Str.to_utf8(input) })
 
@@ -173,7 +173,7 @@ expect code_point_parser("# ===") == Err(ParsingError)
 
 # Convert to a string suitible for building a function
 meta_to_expression : CPMeta -> Str
-meta_to_expression = \cp ->
+meta_to_expression = |cp|
     when cp is
         Single(a) -> "(u32 == ${Num.to_str(a)})"
-        Range(a, b) -> "(u32 >= ${Num.to_str(a)} && u32 <= ${Num.to_str(b)})"
+        Range(a, b) -> "(u32 >= ${Num.to_str(a)} and u32 <= ${Num.to_str(b)})"
