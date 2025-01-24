@@ -19,6 +19,7 @@ jobs:
         uses: hasnep/setup-roc@main
         with:
           roc-version: nightly
+          testing: "true"
       - name: Bundle and release the library
         uses: hasnep/bundle-roc-library@v0.1.0
         with:
