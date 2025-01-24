@@ -3,7 +3,7 @@
 ## This file will read the test data from `data/EastAsianWidth-15.1.0.txt`
 ## parse it and then generate function to test the East Asian Width property of a code point.
 app [main!] {
-    pf: platform "../../basic-cli/platform/main.roc",
+    pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.19.0/bi5zubJ-_Hva9vxxPq4kNx4WHX6oFs8OP6Ad0tCYlrY.tar.br",
 }
 
 import pf.Stdout
