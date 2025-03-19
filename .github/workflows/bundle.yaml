@@ -5,8 +5,6 @@ on:
   release:
     types:
       - published
-  # TODO remove
-  pull_request:
 
 jobs:
   bundle:
@@ -44,16 +42,16 @@ jobs:
 
           echo "Package bundle created at: $bundle_path"
 
-      # - name: Upload bundle to release assets
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #     UPLOAD_URL: ${{ github.event.release.upload_url }}
-      #   run: |
-      #     FILE_NAME=$(basename "$BUNDLE_PATH")
+      - name: Upload bundle to release assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          UPLOAD_URL: ${{ github.event.release.upload_url }}
+        run: |
+          FILE_NAME=$(basename "$BUNDLE_PATH")
           
-      #     curl -s \
-      #       -H "Authorization: token $GITHUB_TOKEN" \
-      #       -H "Accept: application/vnd.github.v3+json" \
-      #       -H "Content-Type: application/octet-stream" \
-      #       --data-binary @"$BUNDLE_PATH" \
-      #       "$UPLOAD_URL?name=$FILE_NAME&label=$FILE_NAME"
+          curl -s \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @"$BUNDLE_PATH" \
+            "$UPLOAD_URL?name=$FILE_NAME&label=$FILE_NAME"
