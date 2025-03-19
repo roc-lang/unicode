@@ -9,19 +9,49 @@ on:
 jobs:
   bundle:
     name: Bundle
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3
-      - name: Install Roc
-        uses: hasnep/setup-roc@main
-        with:
-          roc-version: nightly
-          testing: "true"
-      - name: Bundle and release the library
-        uses: hasnep/bundle-roc-library@v0.1.0
-        with:
-          library: package/main.roc
-          token: ${{ github.token }}
+        uses: actions/checkout@v4
+      
+      - name: Downloading latest roc nightly
+        run: |
+          curl -fOL https://github.com/roc-lang/roc/releases/download/nightly/roc_nightly-linux_x86_64-latest.tar.gz
+
+      - name: prep nightly tar for use
+        run: |
+          mv $(ls | grep "roc_nightly.*tar\.gz") roc_nightly.tar.gz
+          tar -xzf roc_nightly.tar.gz
+          rm roc_nightly.tar.gz
+          mv roc_nightly* roc_nightly
+
+      - run: ./roc_nightly/roc version
+
+      - name: Build release bundle
+        id: build
+        run: |
+          pkg_dir="./package"
+
+          bundle_output=$(./roc_nightly/roc build --bundle .tar.br $pkg_dir/main.roc)
+
+          bundle_path=$(echo "$bundle_output" | grep -o "$pkg_dir/.*\.tar\.br")
+
+          echo "BUNDLE_PATH=$bundle_path" >> $GITHUB_ENV
+
+          echo "Package bundle created at: $bundle_path"
+
+      - name: Upload bundle to release assets
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          UPLOAD_URL: ${{ github.event.release.upload_url }}
+        run: |
+          FILE_NAME=$(basename "$BUNDLE_PATH")
+          
+          curl -s \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Content-Type: application/octet-stream" \
+            --data-binary @"$BUNDLE_PATH" \
+            "$UPLOAD_URL?name=$FILE_NAME&label=$FILE_NAME"

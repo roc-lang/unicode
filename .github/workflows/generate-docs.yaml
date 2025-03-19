@@ -9,26 +9,38 @@ on:
 jobs:
   generate-docs:
     name: Generate docs
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       pages: write
       id-token: write
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v3
-      - name: Install Roc
-        uses: hasnep/setup-roc@main
-        with:
-          roc-version: nightly
-          testing: "true"
+        uses: actions/checkout@v4
+      
+      - name: Downloading latest roc nightly
+        run: |
+          curl -fOL https://github.com/roc-lang/roc/releases/download/nightly/roc_nightly-linux_x86_64-latest.tar.gz
+
+      - name: prep nightly tar for use
+        run: |
+          mv $(ls | grep "roc_nightly.*tar\.gz") roc_nightly.tar.gz
+          tar -xzf roc_nightly.tar.gz
+          rm roc_nightly.tar.gz
+          mv roc_nightly* roc_nightly
+
+      - run: ./roc_nightly/roc version
+
       - name: Generate docs
-        run: roc docs package/main.roc
+        run: ./roc_nightly/roc docs package/main.roc
+      
       - name: Fix absolute paths
         run: |
           find generated-docs/ -type f -name '*.html' -exec sed -i "s/\(href\|src\)=\"\//\1=\"\/${{ github.event.repository.name }}\//g" {} +
+      
       - name: Upload docs artifact
-        uses: actions/upload-pages-artifact@v1
+        uses: actions/upload-pages-artifact@v3
         with:
           path: generated-docs
+
       - name: Deploy docs
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v4
