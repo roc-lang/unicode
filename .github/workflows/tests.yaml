@@ -10,35 +10,25 @@ concurrency:
 jobs:
 
   test-examples-ubuntu:
-    runs-on: [ubuntu-22.04]
+    runs-on: [ubuntu-24.04]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
     
-      - id: try_fetching_testing_release
-        continue-on-error: true
-        run: |
-          curl -fOL https://github.com/roc-lang/roc/releases/download/nightly/roc_nightly-linux_x86_64-TESTING.tar.gz
-
-      - name: There are no TESTING releases, checking regular releases instead
-        if: steps.try_fetching_testing_release.outcome == 'failure'
+      - name: Downloading latest roc nightly
         run: |
           curl -fOL https://github.com/roc-lang/roc/releases/download/nightly/roc_nightly-linux_x86_64-latest.tar.gz
 
-      - name: rename nightly tar
-        run: mv $(ls | grep "roc_nightly.*tar\.gz") roc_nightly.tar.gz
-
-      - name: decompress the tar
-        run: tar -xzf roc_nightly.tar.gz
-
-      - run: rm roc_nightly.tar.gz
-
-      - name: simplify nightly folder name
-        run: mv roc_nightly* roc_nightly
+      - name: prep nightly tar for use
+        run: |
+          mv $(ls | grep "roc_nightly.*tar\.gz") roc_nightly.tar.gz
+          tar -xzf roc_nightly.tar.gz
+          rm roc_nightly.tar.gz
+          mv roc_nightly* roc_nightly
 
       - run: ./roc_nightly/roc version
 
-      - run: sudo apt install -y expect
       # expect for testing
+      - run: sudo apt install -y expect
 
       - run: expect -v
 

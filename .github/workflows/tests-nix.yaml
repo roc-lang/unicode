@@ -9,12 +9,12 @@ concurrency:
   
 jobs:  
     test-examples-nix:
-      runs-on: [ubuntu-22.04]
+      runs-on: [ubuntu-24.04]
       steps:
-        - uses: actions/checkout@v3
+        - uses: actions/checkout@v4
       
         # install nix
-        - uses: cachix/install-nix-action@v23
+        - uses: cachix/install-nix-action@02a151ada4993995686f9ed4f1be7cfbb229e56f # commit for v31
           with:
             nix_path: nixpkgs=channel:nixos-unstable
   
