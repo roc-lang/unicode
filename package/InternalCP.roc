@@ -1,13 +1,14 @@
-module [
-    CP,
-    from_u32_unchecked,
-    to_u32,
-]
+#TODO: simplify to InternalCP :: U32 once it's possible to implement to_u32
+InternalCP :: { value: U32 }.{
+    to_u32 : InternalCP -> U32
+    to_u32 = |icp| icp.value
 
-CP := U32 implements [Eq, Hash]
+    from_u32_unchecked : U32 -> InternalCP
+    from_u32_unchecked = |value| InternalCP.{ value }
+}
 
-to_u32 : CP -> U32
-to_u32 = |@CP(u32)| u32
-
-from_u32_unchecked : U32 -> CP
-from_u32_unchecked = @CP
+expect {
+    icp = InternalCP.from_u32_unchecked(123)
+    result = icp.to_u32()
+    result == 123
+}
