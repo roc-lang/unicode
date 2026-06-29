@@ -55,14 +55,14 @@ template = {
 					\\# GraphemeBreakTest-15.1.0.txt:line ${test.line_number.to_str()}
 					\\# ${sanitised_line}
 					\\expect {
-					\\    exp = ${code_points_list->Str.inspect()}
-					\\    got = ${code_points_list->join()->Str.inspect()}
-					\\          .map(CodePoint.internal_from_u32_unchecked)
-					\\          ->CodePoint.to_str()?
-					\\          ->Grapheme.split()?
-					\\          ->GraphemeTest.to_code_point_list()
+					\\	exp = ${code_points_list->Str.inspect()}
+					\\	got = ${code_points_list->join()->Str.inspect()}
+					\\		.map(CodePoint.internal_from_u32_unchecked)
+					\\		->CodePoint.to_str()?
+					\\		->Grapheme.split()?
+					\\		->GraphemeTest.to_code_point_list()
 					\\
-					\\    got == exp
+					\\	got == exp
 					\\}
 				},
 			)
@@ -74,16 +74,20 @@ template = {
 	\\import Grapheme
 	\\
 	\\GraphemeTest :: {}.{
-	\\    to_code_point_list : List(Str) -> List(List(U32))
-	\\    to_code_point_list = |strings| {
-	\\        strings
-	\\        .map(|str| {
-	\\            match str.to_utf8()->CodePoint.parse_utf8() {
-	\\                Ok(cps) => cps.map(CodePoint.to_u32)
-	\\                Err(_) => { crash "expected valid utf8" }
-	\\            }
-	\\        })
-	\\    }
+	\\	to_code_point_list : List(Str) -> List(List(U32))
+	\\	to_code_point_list = |strings| {
+	\\		strings
+	\\			.map(
+	\\				|str| {
+	\\					match str.to_utf8()->CodePoint.parse_utf8() {
+	\\						Ok(cps) => cps.map(CodePoint.to_u32)
+	\\						Err(_) => {
+	\\							crash "expected valid utf8"
+	\\						}
+	\\					}
+	\\				},
+	\\			)
+	\\	}
 	\\}
 	\\${tests}
 }
