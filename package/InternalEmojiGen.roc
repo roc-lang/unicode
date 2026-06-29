@@ -153,7 +153,7 @@ is_xtemp : List(EMOJIMeta), Str -> Str
 is_xtemp = |props, buf| {
 	match props.first() {
 		Err(ListWasEmpty) =>
-			"${buf} {\n\t\t\tErr(NonEmojiCodePoint)\n\t\t}"
+			"${buf}{\n\t\t\tErr(NonEmojiCodePoint)\n\t\t}"
 
 		Ok(prop) => {
 			match prop.property {
