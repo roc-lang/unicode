@@ -40,19 +40,19 @@ template = {
 	\\import CodePoint
 	\\
 	\\InternalEmoji :: {}.{
-	\\    EMOJI : [${prop_strs}]
+	\\	EMOJI : [${prop_strs}]
 	\\
-	\\    from_cp : CodePoint -> Try(EMOJI, [NonEmojiCodePoint])
-	\\    from_cp = |cp| {
-	\\        u32 = cp.to_u32()
+	\\	from_cp : CodePoint -> Try(EMOJI, [NonEmojiCodePoint])
+	\\	from_cp = |cp| {
+	\\		u32 = cp.to_u32()
 	\\
-	\\        ${is_xtemp(list_meta, "")}
-	\\    }
+	\\		${is_xtemp(list_meta, "")}
+	\\	}
 	\\
-	\\    is_pictographic : U32 -> Bool
-	\\    is_pictographic = |u32| {
-	\\        is_pictographic_help(u32)
-	\\    }
+	\\	is_pictographic : U32 -> Bool
+	\\	is_pictographic = |u32| {
+	\\		is_pictographic_help(u32)
+	\\	}
 	\\}
 	\\${is_func_template}
 }
@@ -68,7 +68,9 @@ is_func_template = {
 
 		\\
 		\\${name} : U32 -> Bool
-		\\${name} = |u32| { ${exp} }
+		\\${name} = |u32| {
+		\\	${exp}
+		\\}
 	}
 
 	# For each EMOJIProp define a function that returns true if the given code point has that property
@@ -151,7 +153,7 @@ is_xtemp : List(EMOJIMeta), Str -> Str
 is_xtemp = |props, buf| {
 	match props.first() {
 		Err(ListWasEmpty) =>
-			"${buf} {\n            Err(NonEmojiCodePoint)\n        }"
+			"${buf} {\n\t\t\tErr(NonEmojiCodePoint)\n\t\t}"
 
 		Ok(prop) => {
 			match prop.property {
@@ -191,7 +193,7 @@ is_xtemp = |props, buf| {
 
 if_x_str : Str, Str -> Str
 if_x_str = |func_str, str| {
-	"if ${func_str}(u32) {\n            Ok(${str})\n        } else "
+	"if ${func_str}(u32) {\n\t\t\tOk(${str})\n\t\t} else "
 }
 
 # TODO: the following should soon be available in Roc's builtins
