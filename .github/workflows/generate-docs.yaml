@@ -20,10 +20,10 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v4
       
-      - uses: roc-lang/setup-roc@39c354a6a838a0089eea9068a0414f49b62c5c08
+      - uses: roc-lang/setup-roc@bd311e2fb815a3d2255f7ee14a922f0b736e020b
         with:
           # Note: nightly hashes are not verified because they are updated regularly.
-          version: nightly
+          version: nightly-new-compiler
 
       - run: roc version
 

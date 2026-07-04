@@ -1,5 +1,8 @@
 
 # Ignore the example binaries
+/get-visual-width
+/nr-of-code-points
+/split-graphemes
 examples/get-visual-width
 examples/nr-of-code-points
 examples/split-graphemes
@@ -10,3 +13,8 @@ package/InternalGBPGen
 package/GraphemeTestGen
 package/InternalEmojiGen
 package/InternalEAWGen
+
+# Ignore release workflow scratch files
+dist/
+__pycache__/
+.roc-unicode-tmp/
