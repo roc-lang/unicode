@@ -11,8 +11,19 @@ concurrency:
 permissions: {}
 
 jobs:
-  test-examples-ubuntu:
-    runs-on: [ubuntu-24.04]
+  test-examples:
+    name: Test examples (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
     
@@ -24,9 +35,11 @@ jobs:
       - run: roc version
 
       # expect for testing
-      - run: sudo apt install -y expect
+      - if: runner.os == 'Linux'
+        run: sudo apt install -y expect
 
-      - run: expect -v
+      - if: runner.os == 'Linux'
+        run: expect -v
 
       # Run all tests 
       - run: ROC=roc ./ci/all_tests.sh
