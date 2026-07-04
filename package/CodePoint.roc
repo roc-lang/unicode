@@ -42,8 +42,7 @@ CodePoint :: { cp : U32 }.{
         u32 >= 0xDC00 and u32 <= 0xDFFF
     }
 
-    ## Zig docs: bytes the UTF-8 representation would require
-    ## for the given codepoint.
+    ## Returns the number of bytes needed to encode this [CodePoint] as UTF-8.
     utf8_len : CodePoint -> Try(U8, [InvalidCodePoint])
     utf8_len = |code_point| {
         u32 = code_point.to_u32()
@@ -61,7 +60,7 @@ CodePoint :: { cp : U32 }.{
         }
     }
 
-    ## Encode a Scalar as UTF-8 bytes and append those bytes to an existing list of UTF-8 bytes.
+    ## Encode a [CodePoint] as UTF-8 bytes and append those bytes to an existing list of UTF-8 bytes.
     append_utf8 : List(U8), CodePoint -> List(U8)
     append_utf8 = |bytes, code_point| {
         u32 = code_point.to_u32()
@@ -111,9 +110,6 @@ CodePoint :: { cp : U32 }.{
                 .append(byte3)
         } else {
 
-            ## This was an invalid Unicode scalar value, even though it had the Roc type Scalar.
-            ## This should never happen!
-            # expect u32 < 0x110000
             byte1 =
                 u32
                     .shift_right_by(18)
@@ -149,7 +145,7 @@ CodePoint :: { cp : U32 }.{
         }
     }
 
-    ## The number of UTF-8 bytes it takes to represent this Scalar.
+    ## The number of UTF-8 bytes it takes to represent this [CodePoint].
     count_utf8_bytes : CodePoint -> U8
     count_utf8_bytes = |code_point| {
         u32 = code_point.to_u32()
