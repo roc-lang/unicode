@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "Existing release tag, e.g. v0.1.0"
+        description: "Release tag, e.g. v0.1.0"
         required: true
         type: string
   pull_request:
@@ -32,16 +32,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Verify release tag exists
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          RELEASE_TAG: ${{ github.event.inputs.release_tag }}
-        run: |
-          if ! git ls-remote --exit-code --tags origin "refs/tags/$RELEASE_TAG" >/dev/null; then
-            echo "::error::Tag '$RELEASE_TAG' does not exist. Create and push the tag before running this workflow; repository rules prevent this workflow from creating tags."
-            exit 1
-          fi
 
       - name: Install Zig
         uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # 2.2.1
@@ -154,12 +144,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           bundle_file="dist/${{ needs.build-bundle.outputs.bundle_filename }}"
-          release_tag="${{ github.event.inputs.release_tag }}"
           roc_version=$(roc version)
 
-          gh release create "$release_tag" \
+          gh release create "${{ github.event.inputs.release_tag }}" \
             "$bundle_file" \
-            --verify-tag \
-            --title "$release_tag" \
+            --title "${{ github.event.inputs.release_tag }}" \
             --generate-notes \
             --notes "Unicode package bundle built with Roc $roc_version."
