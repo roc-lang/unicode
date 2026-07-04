@@ -1,4 +1,6 @@
-package [
-    CodePoint,
-    Grapheme,
-] {}
+package
+    [
+        CodePoint,
+        Grapheme,
+    ]
+    {}

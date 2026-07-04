@@ -25,7 +25,7 @@ done
 # roc build
 echo "Checking examples builds..."
 for roc_file in $examples_dir*.roc; do
-    $ROC build $roc_file --linker=legacy
+    $ROC build $roc_file
 done
 
 # roc check
