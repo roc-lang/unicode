@@ -20,6 +20,12 @@ LOCAL_PACKAGE = 'unicode: "../package/main.roc"'
 ROC = os.environ.get("ROC", "roc")
 
 
+def configure_output_encoding() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 def run(cmd: list[str], *, cwd: Path = ROOT) -> subprocess.CompletedProcess[str]:
     print("+", " ".join(cmd))
     completed = subprocess.run(
@@ -126,6 +132,8 @@ def build_and_run_examples(examples: list[Path], build_dir: Path) -> None:
 
 
 def main() -> None:
+    configure_output_encoding()
+
     parser = argparse.ArgumentParser()
     parser.add_argument("--bundle-path", type=Path, help="Use an existing bundle instead of creating one")
     parser.add_argument("--skip-build-run", action="store_true", help="Skip compiled example execution")
