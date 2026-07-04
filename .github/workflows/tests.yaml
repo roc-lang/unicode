@@ -16,10 +16,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
     
-      - uses: roc-lang/setup-roc@39c354a6a838a0089eea9068a0414f49b62c5c08
+      - uses: roc-lang/setup-roc@cbe782d6f165b89c87d99f50a59ac4f5f73b4427
         with:
-          # Note: nightly hashes are not verified because they are updated regularly.
-          version: nightly
+          version: nightly-new-compiler
+          nightly-tag: nightly-2026-July-03-c562054
 
       - run: roc version
 
