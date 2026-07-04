@@ -1,0 +1,154 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Release tag, e.g. v0.1.0"
+        required: true
+        type: string
+  pull_request:
+
+env:
+  ZIG_VERSION: "0.16.0"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Do not add permissions here. Configure them at the job level.
+permissions: {}
+
+jobs:
+  build-bundle:
+    name: Build package bundle
+    runs-on: ubuntu-24.04
+    outputs:
+      bundle_filename: ${{ steps.bundle.outputs.bundle_filename }}
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Zig
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # 2.2.1
+        with:
+          version: ${{ env.ZIG_VERSION }}
+          use-cache: false
+
+      - name: Install Roc
+        uses: roc-lang/setup-roc@bd311e2fb815a3d2255f7ee14a922f0b736e020b
+        with:
+          # Installs the latest nightly from https://github.com/roc-lang/nightlies
+          version: nightly-new-compiler
+
+      - name: Run checks
+        run: ROC=roc ./ci/all_tests.sh
+
+      - name: Bundle package
+        id: bundle
+        run: |
+          bundle_output=$(scripts/bundle.sh --output-dir dist 2>&1)
+          echo "$bundle_output"
+
+          bundle_path=$(echo "$bundle_output" | awk '/^Created:/ { print $2; exit }')
+          if [[ -z "$bundle_path" || ! -f "$bundle_path" ]]; then
+            echo "Error: could not find bundle path from roc bundle output"
+            exit 1
+          fi
+
+          bundle_filename=$(basename "$bundle_path")
+          echo "bundle_filename=$bundle_filename" >> "$GITHUB_OUTPUT"
+
+      - name: Upload package bundle artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: package-bundle
+          path: dist/${{ steps.bundle.outputs.bundle_filename }}
+          retention-days: 30
+
+  test-bundle:
+    name: Test package bundle (${{ matrix.os }})
+    needs: build-bundle
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-24.04
+          - macos-15-intel
+          - windows-2025
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Zig
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # 2.2.1
+        with:
+          version: ${{ env.ZIG_VERSION }}
+          use-cache: false
+
+      - name: Install Roc
+        uses: roc-lang/setup-roc@bd311e2fb815a3d2255f7ee14a922f0b736e020b
+        with:
+          # Installs the latest nightly from https://github.com/roc-lang/nightlies
+          version: nightly-new-compiler
+
+      - name: Download package bundle artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: package-bundle
+          path: dist
+
+      - name: Test examples against downloaded bundle
+        run: python3 ci/test_bundle_examples.py --bundle-path "dist/${{ needs.build-bundle.outputs.bundle_filename }}"
+
+  create-release:
+    name: Create GitHub release
+    needs:
+      - build-bundle
+      - test-bundle
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'workflow_dispatch'
+    permissions:
+      contents: write
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download package bundle artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: package-bundle
+          path: dist
+
+      - name: Install Roc
+        uses: roc-lang/setup-roc@bd311e2fb815a3d2255f7ee14a922f0b736e020b
+        with:
+          # Installs the latest nightly from https://github.com/roc-lang/nightlies
+          version: nightly-new-compiler
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          bundle_file="dist/${{ needs.build-bundle.outputs.bundle_filename }}"
+          roc_version=$(roc version)
+
+          gh release create "${{ github.event.inputs.release_tag }}" \
+            "$bundle_file" \
+            --target "$GITHUB_SHA" \
+            --title "${{ github.event.inputs.release_tag }}" \
+            --generate-notes \
+            --notes "Unicode package bundle built with Roc $roc_version."
