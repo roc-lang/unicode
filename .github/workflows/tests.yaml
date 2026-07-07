@@ -1,5 +1,8 @@
 on: 
   pull_request:
+  schedule:
+    # Run daily at 8 PM UTC, after the nightlies are typically published.
+    - cron: '0 20 * * *'
   workflow_dispatch:
 
 # this cancels workflows currently in progress if you start a new one
@@ -30,7 +33,6 @@ jobs:
       - uses: roc-lang/setup-roc@cbe782d6f165b89c87d99f50a59ac4f5f73b4427
         with:
           version: nightly-new-compiler
-          nightly-tag: nightly-2026-July-03-c562054
 
       - run: roc version
 
