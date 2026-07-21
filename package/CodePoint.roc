@@ -274,6 +274,9 @@ CodePoint :: { cp : U32 }.{
             crash "Unreachable: the u32 is known to be a valid codepoint."
         }
     }
+
+    # Use default is_eq implementation
+    is_eq : _
 }
 
 # private methods
