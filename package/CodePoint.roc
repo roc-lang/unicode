@@ -69,7 +69,7 @@ CodePoint :: { cp : U32 }.{
         } else if u32 < 0x800 {
             byte1 =
                 u32
-                    .shift_right_by(6)
+                    .shr_wrap(6)
                     .bitwise_or(0b11000000)
                     .to_u8_wrap()
 
@@ -86,13 +86,13 @@ CodePoint :: { cp : U32 }.{
         } else if u32 < 0x10000 {
             byte1 =
                 u32
-                    .shift_right_by(12)
+                    .shr_wrap(12)
                     .bitwise_or(0b11100000)
                     .to_u8_wrap()
 
             byte2 =
                 u32
-                    .shift_right_by(6)
+                    .shr_wrap(6)
                     .bitwise_and(0b111111)
                     .bitwise_or(0b10000000)
                     .to_u8_wrap()
@@ -112,20 +112,20 @@ CodePoint :: { cp : U32 }.{
 
             byte1 =
                 u32
-                    .shift_right_by(18)
+                    .shr_wrap(18)
                     .bitwise_or(0b11110000)
                     .to_u8_wrap()
 
             byte2 =
                 u32
-                    .shift_right_by(12)
+                    .shr_wrap(12)
                     .bitwise_and(0b111111)
                     .bitwise_or(0b10000000)
                     .to_u8_wrap()
 
             byte3 =
                 u32
-                    .shift_right_by(6)
+                    .shr_wrap(6)
                     .bitwise_and(0b111111)
                     .bitwise_or(0b10000000)
                     .to_u8_wrap()
@@ -288,7 +288,7 @@ is_continuation_byte = |byte| {
 add_continuation : U32, U8 -> U32
 add_continuation = |original, continuation_byte| {
     original
-        .shift_left_by(6)
+        .shl_wrap(6)
         .bitwise_or(U8.bitwise_and(continuation_byte, 0b00111111).to_u32())
 }
 
