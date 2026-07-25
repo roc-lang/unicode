@@ -1,6 +1,9 @@
 on: 
   pull_request:
   workflow_dispatch:
+  schedule:
+    # Run daily at 11 AM UTC, after the nightlies are typically published.
+     - cron: '0 11 * * *'
 
 # this cancels workflows currently in progress if you start a new one
 concurrency:
@@ -12,25 +15,25 @@ permissions: {}
 
 jobs:
   test-examples:
-    name: Test examples (${{ matrix.os }})
+    name: ./ci/all_tests.sh (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os:
-          - ubuntu-latest
-          - macos-latest
-          - windows-latest
+          - ubuntu-26.04
+          - ubuntu-26.04-arm
+          - macos-26
+          - windows-2025
     defaults:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
     
       - uses: roc-lang/setup-roc@cbe782d6f165b89c87d99f50a59ac4f5f73b4427
         with:
           version: nightly-new-compiler
-          nightly-tag: nightly-2026-July-03-c562054
 
       - run: roc version
 
