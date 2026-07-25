@@ -81,7 +81,7 @@ Scalar :: { cp : CodePoint }.{
     ## `Str.starts_with_scalar('👩‍👩‍👦‍👦')` would be a compiler error because 👩‍👩‍👦‍👦 takes up
     ## multiple code points and cannot be represented as a single [U32].
     ## You'd need to use `Str.starts_with_scalar("🕊")` instead.
-    starts_with_scalar : Str, U32 -> Bool
+    #starts_with_scalar : Str, U32 -> Bool
 
     ## Returns a [List] of the [Unicode scalar values](https://unicode.org/glossary/#unicode_scalar_value)
     ## in the given string.
@@ -97,7 +97,7 @@ Scalar :: { cp : CodePoint }.{
     ## expect Str.to_scalars("I ♥ Roc") == [73, 32, 9829, 32, 82, 111, 99]
     ## expect Str.to_scalars("") == []
     ## ```
-    to_scalars : Str -> List(U32)
+    #to_scalars : Str -> List(U32)
 
     ## Append a [U32] scalar to the given string. If the given scalar is not a valid
     ## unicode value, it returns [Err(InvalidScalar)].
@@ -121,15 +121,15 @@ Scalar :: { cp : CodePoint }.{
     ## f = |state, scalar| List.append state scalar
     ## expect Str.fold_scalars "ABC" [] f == [65, 66, 67]
     ## ```
-    fold_scalars : Str, state, (state, U32 -> state) -> state
-    fold_scalars = |string, init, step| {
-        fold_scalars_help(string, init, step, 0, Str.count_utf8_bytes(string))
-    }
+    # fold_scalars : Str, state, (state, U32 -> state) -> state
+    # fold_scalars = |string, init, step| {
+    #     fold_scalars_help(string, init, step, 0, Str.count_utf8_bytes(string))
+    # }
 
-    fold_scalars_until : Str, state, (state, U32 -> [Break(state), Continue(state)]) -> state
-    fold_scalars_until = |string, init, step| {
-        fold_scalars_until_help(string, init, step, 0, Str.count_utf8_bytes(string))
-    }
+    # fold_scalars_until : Str, state, (state, U32 -> [Break(state), Continue(state)]) -> state
+    # fold_scalars_until = |string, init, step| {
+    #     fold_scalars_until_help(string, init, step, 0, Str.count_utf8_bytes(string))
+    # }
 }
 
 # private methods
@@ -138,19 +138,19 @@ append_scalar_unsafe = |_string, _scalar| {
     crash "TODO"
 }
 
-get_scalar_unsafe : Str, U64 -> { scalar : U32, bytes_parsed : U64 }
+# get_scalar_unsafe : Str, U64 -> { scalar : U32, bytes_parsed : U64 }
 
-fold_scalars_help : Str, state, (state, U32 -> state), U64, U64 -> state
-fold_scalars_help = |string, state, step, index, length| {
-    if index < length {
-        { scalar, bytes_parsed } = get_scalar_unsafe(string, index)
-        new_state = step(state, scalar)
+# fold_scalars_help : Str, state, (state, U32 -> state), U64, U64 -> state
+# fold_scalars_help = |string, state, step, index, length| {
+#     if index < length {
+#         { scalar, bytes_parsed } = get_scalar_unsafe(string, index)
+#         new_state = step(state, scalar)
 
-        fold_scalars_help(string, new_state, step, (index + bytes_parsed), length)
-    } else {
-        state
-    }
-}
+#         fold_scalars_help(string, new_state, step, (index + bytes_parsed), length)
+#     } else {
+#         state
+#     }
+# }
 
 ## Folds over the unicode [U32] values for the given [Str] and calls a function
 ## to update state for each.
@@ -166,19 +166,19 @@ fold_scalars_help = |string, state, step, index, length| {
 ## expect Str.fold_scalars_until("ABC", [], f) == [66]
 ## expect Str.fold_scalars_until("AxC", [], f) == [65, 120, 67]
 ## ```
-fold_scalars_until_help : Str, state, (state, U32 -> [Break(state), Continue(state)]), U64, U64 -> state
-fold_scalars_until_help = |string, state, step, index, length| {
-    if index < length {
-        { scalar, bytes_parsed } = get_scalar_unsafe(string, index)
+# fold_scalars_until_help : Str, state, (state, U32 -> [Break(state), Continue(state)]), U64, U64 -> state
+# fold_scalars_until_help = |string, state, step, index, length| {
+#     if index < length {
+#         { scalar, bytes_parsed } = get_scalar_unsafe(string, index)
 
-        match step(state, scalar) {
-            Continue(new_state) =>
-                fold_scalars_until_help(string, new_state, step, (index + bytes_parsed), length)
+#         match step(state, scalar) {
+#             Continue(new_state) =>
+#                 fold_scalars_until_help(string, new_state, step, (index + bytes_parsed), length)
 
-            Break(new_state) =>
-                new_state
-            }
-    } else {
-        state
-    }
-}
+#             Break(new_state) =>
+#                 new_state
+#             }
+#     } else {
+#         state
+#     }
+# }
