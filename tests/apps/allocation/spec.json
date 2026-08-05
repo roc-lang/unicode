@@ -3,6 +3,7 @@
   "kind": "allocation",
   "suites": [
     "allocation-calibration",
+    "allocation-aliases",
     "allocation-baselines"
   ],
   "timeout_seconds": 120,

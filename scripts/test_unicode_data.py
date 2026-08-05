@@ -67,6 +67,28 @@ class UnicodeDataTests(unittest.TestCase):
         changed_properties["sources"]["derived_general_category"]["properties"] = []
         self.assert_manifest_rejected(changed_properties, "format/properties")
 
+    def test_artifact_outputs_cannot_overwrite_sources_or_drift_from_imports(self) -> None:
+        base = json.loads(unicode_data.MANIFEST_PATH.read_text(encoding="utf-8"))
+        vendor_overwrite = json.loads(json.dumps(base))
+        vendor_overwrite["artifacts"]["general_category"]["output"] = (
+            "vendor/unicode/17.0.0/DerivedGeneralCategory.txt"
+        )
+        self.assert_manifest_rejected(vendor_overwrite, "authoritative generated module")
+
+        relocated_dependency = json.loads(json.dumps(base))
+        relocated_dependency["artifacts"]["emoji_properties"]["output"] = (
+            "package/RelocatedEmojiData.roc"
+        )
+        self.assert_manifest_rejected(
+            relocated_dependency, "authoritative generated module"
+        )
+        loaded = unicode_data.load_manifest()
+        loaded["artifacts"]["unicode_version"]["output"] = (
+            "vendor/unicode/17.0.0/PropertyAliases.txt"
+        )
+        with self.assertRaisesRegex(unicode_data.DataError, "authoritative generated module"):
+            unicode_data.rendered_modules(loaded)
+
     def test_manifest_graph_names_are_not_a_parallel_implementation_graph(self) -> None:
         base = unicode_data.load_manifest()
         renamed = json.loads(json.dumps(base))
@@ -111,12 +133,28 @@ class UnicodeDataTests(unittest.TestCase):
         }
         self.assert_manifest_rejected(unsupported, "no implemented parser")
 
+        fake_sync = json.loads(json.dumps(base))
+        fake_sync["releases"]["cldr"]["version"] = "17.0.0"
+        fake_sync["releases"]["cldr"]["vendor_prefix"] = "vendor/unicode/cldr/17.0.0"
+        fake_sync["releases"]["emoji"]["synchronized_with"] = "cldr"
+        self.assert_manifest_rejected(fake_sync, "must name a Unicode UCD release")
+
+        wrong_ucd = json.loads(json.dumps(base))
+        wrong_ucd["releases"]["shadow_ucd"] = {
+            "version": "17.0.0",
+            "authority": "unicode",
+            "kind": "ucd",
+            "vendor_prefix": "vendor/unicode/shadow/17.0.0",
+        }
+        wrong_ucd["releases"]["emoji"]["synchronized_with"] = "shadow_ucd"
+        self.assert_manifest_rejected(wrong_ucd, "storage release does not match")
+
     def test_required_property_defaults_reject_deleted_declarations(self) -> None:
         manifest = unicode_data.load_manifest()
         eaw_path = unicode_data.data_path(manifest, "east_asian_width")
         eaw = unicode_data.verify_source(manifest, "east_asian_width")
         eaw_without_formal = eaw.replace("# @missing: 0000..10FFFF; N\n", "")
-        with self.assertRaisesRegex(unicode_data.DataError, "formal full-domain default"):
+        with self.assertRaisesRegex(unicode_data.DataError, "@missing declaration|formal full-domain default"):
             unicode_data.parse_east_asian_width_defaults(
                 eaw_without_formal, source=str(eaw_path)
             )
@@ -154,14 +192,78 @@ class UnicodeDataTests(unittest.TestCase):
                 properties=unicode_data.EMOJI_PROPERTIES,
             )
 
+    def test_conflicting_formal_defaults_are_rejected_for_every_property_source(self) -> None:
+        manifest = unicode_data.load_manifest()
+        mutations = (
+            (
+                "grapheme_break_property",
+                "# @missing: 0000..10FFFF; Extend",
+                "Grapheme_Cluster_Break",
+                None,
+                "Other",
+            ),
+            (
+                "east_asian_width",
+                "# @missing: 0000..10FFFF; W",
+                "East_Asian_Width",
+                None,
+                "N",
+            ),
+            (
+                "derived_core_properties",
+                "# @missing: 0000..10FFFF; Indic_Conjunct_Break; Linker",
+                "Indic_Conjunct_Break",
+                "InCB",
+                "None",
+            ),
+            (
+                "derived_combining_class",
+                "# @missing: 0000..10FFFF; Above",
+                "Canonical_Combining_Class",
+                None,
+                "Not_Reordered",
+            ),
+            (
+                "property_value_aliases",
+                "# @missing: 0000..10FFFF; gc; Uppercase_Letter",
+                "General_Category",
+                "General_Category",
+                "Unassigned",
+            ),
+        )
+        for source_name, conflict, property_name, declared_property, value in mutations:
+            with self.subTest(source=source_name):
+                text = unicode_data.verify_source(manifest, source_name) + conflict + "\n"
+                with self.assertRaisesRegex(
+                    unicode_data.DataError, "exactly one @missing declaration"
+                ):
+                    unicode_data._required_formal_default(
+                        text,
+                        source=source_name,
+                        property_name=property_name,
+                        declared_property=declared_property,
+                        value=value,
+                    )
+
     def test_generated_alias_access_is_static_and_allocation_free_in_shape(self) -> None:
         manifest = unicode_data.load_manifest()
         aliases = unicode_data.rendered_modules(manifest)[
             unicode_data.ROOT / "package" / "InternalPropertyAliases.roc"
         ]
         self.assertNotIn("List(Str)", aliases)
-        self.assertNotIn("=> [", aliases)
-        self.assertEqual(aliases.count("Iter.custom("), 2)
+        self.assertNotIn("Iter(", aliases)
+        self.assertNotIn("Iter.custom(", aliases)
+        for accessor in (
+            "general_category_short",
+            "general_category_long",
+            "general_category_alias_count",
+            "general_category_alias_at",
+            "canonical_combining_class_short",
+            "canonical_combining_class_long",
+            "canonical_combining_class_alias_count",
+            "canonical_combining_class_alias_at",
+        ):
+            self.assertIn(accessor, aliases)
 
     def test_source_rejects_hash_header_and_count_drift(self) -> None:
         content = "# Header\n0041 ; A\n"

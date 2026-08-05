@@ -25,14 +25,17 @@ each source format and property projection and each artifact's source,
 specification, and artifact dependencies exactly. Unicode file headers, source
 URLs, and synchronized Unicode/Emoji major-minor versions anchor generated
 version labels to the pinned release. A newly declared format is rejected until
-there is an implementation that consumes it. The selected Unicode release is
-also available at runtime as `UnicodeVersion.current`.
+there is an implementation that consumes it. Generated outputs are restricted
+to their declared package modules, and downstream imports are derived from
+those artifact declarations. The selected Unicode release is also available at
+runtime as `UnicodeVersion.current`.
 
 The canonical property substrate currently emits separate, U32-keyed paged
 views for General_Category, exact Canonical_Combining_Class values, and the
 independent Emoji binary properties. Property and value aliases retain stable
-Unicode identities through allocation-free iterators; compact generated
-ordinals remain private table details. Property-specific defaults are parsed as
+Unicode identities through allocation-free short/long and count/index
+accessors; compact generated ordinals remain private table details.
+Property-specific defaults are parsed as
 ordered ranges and checked before explicit records take precedence, including
 all six Emoji defaults and East_Asian_Width's five wide unassigned ranges.
 Algorithm-specific fused views, such as grapheme data, remain separate from

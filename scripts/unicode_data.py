@@ -64,6 +64,10 @@ EMOJI_PROPERTIES = (
     "Extended_Pictographic",
 )
 INCB_PROPERTIES = ("Consonant", "Extend", "Linker")
+FORMAL_PROPERTY_ALIASES = {
+    "General_Category": ("gc",),
+    "Indic_Conjunct_Break": ("InCB",),
+}
 
 
 class DataError(ValueError):
@@ -160,6 +164,7 @@ class GeneratorContract:
     sources: tuple[tuple[str, tuple[str, ...]], ...]
     specifications: tuple[str, ...]
     artifact_generators: tuple[str, ...]
+    output: str
     paged: bool = False
     ascii: str | None = None
 
@@ -214,7 +219,7 @@ SPECIFICATION_COMPATIBILITY = {
 }
 
 GENERATOR_CONTRACTS = {
-    "unicode-version": GeneratorContract((), ("uax_44",), ()),
+    "unicode-version": GeneratorContract((), ("uax_44",), (), "package/UnicodeVersion.roc"),
     "grapheme-data": GeneratorContract(
         (
             ("ucd-property-ranges", ("Grapheme_Cluster_Break",)),
@@ -223,24 +228,32 @@ GENERATOR_CONTRACTS = {
         ),
         ("uax_29", "uts_51"),
         (),
+        "package/InternalGraphemeData.roc",
         True,
         "computed",
     ),
     "legacy-grapheme-break": GeneratorContract(
-        (("ucd-property-ranges", ("Grapheme_Cluster_Break",)),), ("uax_29",), ()
+        (("ucd-property-ranges", ("Grapheme_Cluster_Break",)),),
+        ("uax_29",),
+        (),
+        "package/InternalGBP.roc",
     ),
     "east-asian-width": GeneratorContract(
-        (("ucd-property-ranges", ("East_Asian_Width",)),), ("uax_11",), ()
+        (("ucd-property-ranges", ("East_Asian_Width",)),),
+        ("uax_11",),
+        (),
+        "package/InternalEAW.roc",
     ),
     "emoji-properties": GeneratorContract(
         (("ucd-binary-property-ranges", EMOJI_PROPERTIES),),
         ("uts_51",),
         (),
+        "package/InternalEmojiData.roc",
         True,
         "computed",
     ),
     "legacy-emoji": GeneratorContract(
-        (), ("uts_51",), ("emoji-properties",)
+        (), ("uts_51",), ("emoji-properties",), "package/InternalEmoji.roc"
     ),
     "general-category": GeneratorContract(
         (
@@ -250,6 +263,7 @@ GENERATOR_CONTRACTS = {
         ),
         ("uax_44",),
         (),
+        "package/InternalGeneralCategory.roc",
         True,
         "computed",
     ),
@@ -261,6 +275,7 @@ GENERATOR_CONTRACTS = {
         ),
         ("uax_44",),
         (),
+        "package/InternalCanonicalCombiningClass.roc",
         True,
         "constant-zero",
     ),
@@ -272,6 +287,7 @@ GENERATOR_CONTRACTS = {
         ),
         ("uax_44",),
         ("general-category",),
+        "package/InternalPropertyAliases.roc",
     ),
 }
 
@@ -422,6 +438,13 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
             synchronized_release = _require_dict(
                 releases[synchronized], f"manifest.releases.{synchronized}"
             )
+            if (
+                synchronized_release.get("kind") != "ucd"
+                or synchronized_release.get("authority") != item["authority"]
+            ):
+                raise DataError(
+                    f"manifest.releases.{name}.synchronized_with must name a Unicode UCD release"
+                )
             unicode_tuple = _version_tuple(
                 str(synchronized_release.get("version")),
                 3,
@@ -579,6 +602,12 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
             raise DataError(f"manifest.sources.{name}.header does not identify its exact release")
         if tuple(release_axes) != projection_contract.release_axes:
             raise DataError(f"manifest.sources.{name}.release_axes do not match parser semantics")
+        if projection_contract.emoji_header:
+            emoji_release = _require_dict(releases["emoji"], "manifest.releases.emoji")
+            if emoji_release.get("synchronized_with") != storage_release:
+                raise DataError(
+                    f"manifest.sources.{name} storage release does not match Emoji synchronization"
+                )
         if any(
             _require_dict(releases[axis], f"manifest.releases.{axis}").get("authority")
             != authority_name
@@ -608,6 +637,10 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
                 raise DataError(f"manifest.artifacts.{name}.{field} has the wrong type")
         output = str(item["output"])
         _path_below_root(output, f"manifest.artifacts.{name}.output")
+        if output != contract.output:
+            raise DataError(
+                f"manifest.artifacts.{name}.output must be the authoritative generated module {contract.output!r}"
+            )
         if output in outputs:
             raise DataError(f"manifest artifact output {output!r} is duplicated")
         outputs.add(output)
@@ -743,6 +776,25 @@ def _artifact_for_generator(manifest: dict[str, object], generator: str) -> str:
     if len(matches) != 1:
         raise DataError(f"manifest must declare exactly one {generator!r} generator")
     return matches[0]
+
+
+def _module_for_generator(manifest: dict[str, object], generator: str) -> str:
+    artifact_name = _artifact_for_generator(manifest, generator)
+    artifacts = _require_dict(manifest["artifacts"], "manifest.artifacts")
+    artifact = _require_dict(
+        artifacts[artifact_name], f"manifest.artifacts.{artifact_name}"
+    )
+    output = Path(str(artifact["output"]))
+    contract = GENERATOR_CONTRACTS[generator]
+    if (
+        output.as_posix() != contract.output
+        or output.parent != Path("package")
+        or output.suffix != ".roc"
+    ):
+        raise DataError(
+            f"manifest.artifacts.{artifact_name}.output is not a generated package module"
+        )
+    return output.stem
 
 
 def data_path(manifest: dict[str, object], name: str) -> Path:
@@ -943,19 +995,41 @@ def _required_formal_default(
     declared_property: str | None,
     value: str,
 ) -> MissingDefault:
-    matches = [
-        default
-        for default in parse_missing_defaults(text, source=source)
-        if default.start == 0
-        and default.end == MAX_CODE_POINT
-        and default.property == declared_property
-        and default.value == value
-    ]
-    if len(matches) != 1:
+    if declared_property is None:
+        declarations = [
+            default
+            for default in parse_missing_defaults(text, source=source)
+            if default.property is None
+        ]
+    else:
+        property_aliases = {
+            loose_alias(alias)
+            for alias in (
+                declared_property,
+                property_name,
+                *FORMAL_PROPERTY_ALIASES.get(property_name, ()),
+            )
+        }
+        declarations = [
+            default
+            for default in parse_missing_defaults(text, source=source)
+            if default.property is not None
+            and loose_alias(default.property) in property_aliases
+        ]
+    if len(declarations) != 1:
+        lines = [declaration.line for declaration in declarations]
+        raise DataError(
+            f"{source}: expected exactly one @missing declaration for {property_name}; found lines {lines}"
+        )
+    match = declarations[0]
+    if (
+        match.start != 0
+        or match.end != MAX_CODE_POINT
+        or match.value != value
+    ):
         raise DataError(
             f"{source}: expected exactly one formal full-domain default for {property_name}={value}"
         )
-    match = matches[0]
     return MissingDefault(match.start, match.end, property_name, match.value, match.line)
 
 
@@ -1821,6 +1895,7 @@ def _unique_aliases(values: Iterable[str]) -> tuple[str, ...]:
 def render_property_aliases(
     version: str,
     canonical: CanonicalProperties,
+    general_category_module: str,
 ) -> str:
     general_category_property = canonical.property_aliases["gc"]
     combining_class_property = canonical.property_aliases["ccc"]
@@ -1837,23 +1912,41 @@ def render_property_aliases(
         canonical.property_value_aliases["ccc"], key=lambda record: int(record.identity)
     )
 
-    gc_matches = []
+    gc_short_matches = []
+    gc_long_matches = []
+    gc_count_matches = []
+    gc_at_matches = []
     for record in general_category_values:
         aliases = _unique_aliases((record.short, record.long, *record.aliases))
+        gc_short_matches.append(
+            f"        {record.identity} => {_roc_string(record.short)}"
+        )
+        gc_long_matches.append(
+            f"        {record.identity} => {_roc_string(record.long)}"
+        )
+        gc_count_matches.append(f"        {record.identity} => {len(aliases)}")
         for index, alias in enumerate(aliases):
-            gc_matches.append(
-                f"        ({record.identity}, {index}) => Ok(({_roc_string(alias)}, "
-                "{ category: state.category, index: state.index + 1 }))"
+            gc_at_matches.append(
+                f"        ({record.identity}, {index}) => Some({_roc_string(alias)})"
             )
-    ccc_matches = []
+    ccc_short_matches = []
+    ccc_long_matches = []
+    ccc_count_matches = []
+    ccc_at_matches = []
     for record in combining_class_values:
         aliases = _unique_aliases(
             (record.identity, record.short, record.long, *record.aliases)
         )
+        ccc_short_matches.append(
+            f"        {record.identity} => Some({_roc_string(record.short)})"
+        )
+        ccc_long_matches.append(
+            f"        {record.identity} => Some({_roc_string(record.long)})"
+        )
+        ccc_count_matches.append(f"        {record.identity} => {len(aliases)}")
         for index, alias in enumerate(aliases):
-            ccc_matches.append(
-                f"        ({record.identity}, {index}) => Ok(({_roc_string(alias)}, "
-                "{ value: state.value, index: state.index + 1 }))"
+            ccc_at_matches.append(
+                f"        ({record.identity}, {index}) => Some({_roc_string(alias)})"
             )
 
     return (
@@ -1861,11 +1954,9 @@ def render_property_aliases(
         "## These canonical names are metadata for stable identities, never storage ordinals. ##\n"
         f"## metadata: {len(general_category_values)} scalar category identities; "
         f"{len(combining_class_values)} exact CCC identities. ##\n\n"
-        "import InternalGeneralCategory\n\n"
+        f"import {general_category_module}\n\n"
         "InternalPropertyAliases :: [].{\n"
         "    PropertyName : { short : Str, long : Str }\n\n"
-        "    GeneralCategoryAliasState : { category : InternalGeneralCategory.GeneralCategory, index : U8 }\n"
-        "    CombiningClassAliasState : { value : U8, index : U8 }\n\n"
         "    general_category_property : PropertyName\n"
         "    general_category_property = { "
         f"short: {_roc_string(general_category_property.short)}, "
@@ -1874,27 +1965,58 @@ def render_property_aliases(
         "    canonical_combining_class_property = { "
         f"short: {_roc_string(combining_class_property.short)}, "
         f"long: {_roc_string(combining_class_property.long)} }}\n\n"
-        "    general_category_aliases : InternalGeneralCategory.GeneralCategory -> Iter(Str)\n"
-        "    general_category_aliases = |category| {\n"
-        "        Iter.custom({ category, index: 0 }, Unknown, next_general_category_alias)\n"
+        f"    general_category_short : {general_category_module}.GeneralCategory -> Str\n"
+        "    general_category_short = |category| {\n"
+        "        match category {\n"
+        + "\n".join(gc_short_matches)
+        + "\n        }\n"
         "    }\n\n"
-        "    canonical_combining_class_aliases : U8 -> Iter(Str)\n"
-        "    canonical_combining_class_aliases = |value| {\n"
-        "        Iter.custom({ value, index: 0 }, Unknown, next_combining_class_alias)\n"
-        "    }\n"
-        "}\n\n"
-        "next_general_category_alias : InternalPropertyAliases.GeneralCategoryAliasState -> Try((Str, InternalPropertyAliases.GeneralCategoryAliasState), [NoMore])\n"
-        "next_general_category_alias = |state| {\n"
-        "    match (state.category, state.index) {\n"
-        + "\n".join(gc_matches)
-        + "\n        _ => Err(NoMore)\n"
-        "    }\n"
-        "}\n\n"
-        "next_combining_class_alias : InternalPropertyAliases.CombiningClassAliasState -> Try((Str, InternalPropertyAliases.CombiningClassAliasState), [NoMore])\n"
-        "next_combining_class_alias = |state| {\n"
-        "    match (state.value, state.index) {\n"
-        + "\n".join(ccc_matches)
-        + "\n        _ => Err(NoMore)\n"
+        f"    general_category_long : {general_category_module}.GeneralCategory -> Str\n"
+        "    general_category_long = |category| {\n"
+        "        match category {\n"
+        + "\n".join(gc_long_matches)
+        + "\n        }\n"
+        "    }\n\n"
+        f"    general_category_alias_count : {general_category_module}.GeneralCategory -> U8\n"
+        "    general_category_alias_count = |category| {\n"
+        "        match category {\n"
+        + "\n".join(gc_count_matches)
+        + "\n        }\n"
+        "    }\n\n"
+        f"    general_category_alias_at : {general_category_module}.GeneralCategory, U8 -> [Some(Str), None]\n"
+        "    general_category_alias_at = |category, index| {\n"
+        "        match (category, index) {\n"
+        + "\n".join(gc_at_matches)
+        + "\n            _ => None\n"
+        "        }\n"
+        "    }\n\n"
+        "    canonical_combining_class_short : U8 -> [Some(Str), None]\n"
+        "    canonical_combining_class_short = |value| {\n"
+        "        match value {\n"
+        + "\n".join(ccc_short_matches)
+        + "\n            _ => None\n"
+        "        }\n"
+        "    }\n\n"
+        "    canonical_combining_class_long : U8 -> [Some(Str), None]\n"
+        "    canonical_combining_class_long = |value| {\n"
+        "        match value {\n"
+        + "\n".join(ccc_long_matches)
+        + "\n            _ => None\n"
+        "        }\n"
+        "    }\n\n"
+        "    canonical_combining_class_alias_count : U8 -> U8\n"
+        "    canonical_combining_class_alias_count = |value| {\n"
+        "        match value {\n"
+        + "\n".join(ccc_count_matches)
+        + "\n            _ => 0\n"
+        "        }\n"
+        "    }\n\n"
+        "    canonical_combining_class_alias_at : U8, U8 -> [Some(Str), None]\n"
+        "    canonical_combining_class_alias_at = |value, index| {\n"
+        "        match (value, index) {\n"
+        + "\n".join(ccc_at_matches)
+        + "\n            _ => None\n"
+        "        }\n"
         "    }\n"
         "}\n"
     )
@@ -1982,17 +2104,19 @@ def render_eaw(
     )
 
 
-def render_legacy_emoji(version: str, emoji_version: str) -> str:
+def render_legacy_emoji(
+    version: str, emoji_version: str, emoji_data_module: str
+) -> str:
     return (
         f"## GENERATED from vendor/unicode/{version} (Emoji {emoji_version}). Run `python3 scripts/unicode_data.py generate`. ##\n"
         "import CodePoint\n"
-        "import InternalEmojiData\n\n"
+        f"import {emoji_data_module}\n\n"
         "InternalEmoji :: {}.{\n"
         "    EMOJI : [Pictographic, Base, Modifier, Presentation, Component, Emoji]\n\n"
         "    from_cp : CodePoint -> Try(EMOJI, [NonEmojiCodePoint])\n"
         "    from_cp = |cp| {\n"
         "        u32 = cp.to_u32()\n\n"
-        "        properties = InternalEmojiData.lookup(u32)\n"
+        f"        properties = {emoji_data_module}.lookup(u32)\n"
         "        if properties.extended_pictographic {\n"
         "            Ok(Pictographic)\n"
         "        } else if properties.emoji_modifier_base {\n"
@@ -2010,17 +2134,17 @@ def render_legacy_emoji(version: str, emoji_version: str) -> str:
         "        }\n"
         "    }\n\n"
         "    is_pictographic : U32 -> Bool\n"
-        "    is_pictographic = |u32| InternalEmojiData.lookup(u32).extended_pictographic\n\n"
+        f"    is_pictographic = |u32| {emoji_data_module}.lookup(u32).extended_pictographic\n\n"
         "    is_base : U32 -> Bool\n"
-        "    is_base = |u32| InternalEmojiData.lookup(u32).emoji_modifier_base\n\n"
+        f"    is_base = |u32| {emoji_data_module}.lookup(u32).emoji_modifier_base\n\n"
         "    is_modifier : U32 -> Bool\n"
-        "    is_modifier = |u32| InternalEmojiData.lookup(u32).emoji_modifier\n\n"
+        f"    is_modifier = |u32| {emoji_data_module}.lookup(u32).emoji_modifier\n\n"
         "    is_presentation : U32 -> Bool\n"
-        "    is_presentation = |u32| InternalEmojiData.lookup(u32).emoji_presentation\n\n"
+        f"    is_presentation = |u32| {emoji_data_module}.lookup(u32).emoji_presentation\n\n"
         "    is_component : U32 -> Bool\n"
-        "    is_component = |u32| InternalEmojiData.lookup(u32).emoji_component\n\n"
+        f"    is_component = |u32| {emoji_data_module}.lookup(u32).emoji_component\n\n"
         "    is_emoji : U32 -> Bool\n"
-        "    is_emoji = |u32| InternalEmojiData.lookup(u32).emoji\n"
+        f"    is_emoji = |u32| {emoji_data_module}.lookup(u32).emoji\n"
         "}\n"
     )
 
@@ -2062,6 +2186,8 @@ def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
     canonical = load_canonical_properties(manifest)
     version = release_version(manifest, "unicode")
     emoji_version = release_version(manifest, "emoji")
+    emoji_data_module = _module_for_generator(manifest, "emoji-properties")
+    general_category_module = _module_for_generator(manifest, "general-category")
     generators: dict[str, Callable[[], str]] = {
         "unicode-version": lambda: render_unicode_version(version),
         "grapheme-data": lambda: render_grapheme_data(manifest, version, gcb, incb, emoji),
@@ -2072,7 +2198,9 @@ def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
         "emoji-properties": lambda: render_emoji_data(
             manifest, version, emoji_version, emoji
         ),
-        "legacy-emoji": lambda: render_legacy_emoji(version, emoji_version),
+        "legacy-emoji": lambda: render_legacy_emoji(
+            version, emoji_version, emoji_data_module
+        ),
         "general-category": lambda: render_general_category(
             manifest, version, canonical.general_category, canonical.general_category_default
         ),
@@ -2082,7 +2210,9 @@ def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
             canonical.canonical_combining_class,
             canonical.canonical_combining_class_default,
         ),
-        "property-aliases": lambda: render_property_aliases(version, canonical),
+        "property-aliases": lambda: render_property_aliases(
+            version, canonical, general_category_module
+        ),
     }
 
     artifacts = _require_dict(manifest["artifacts"], "manifest.artifacts")
@@ -2097,7 +2227,20 @@ def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
                 raise DataError(
                     f"manifest.artifacts.{name}.generator {generator_name!r} is not implemented"
                 )
-            rendered[_path_below_root(str(artifact["output"]), f"manifest.artifacts.{name}.output")] = definition()
+            contract = GENERATOR_CONTRACTS[generator_name]
+            declared_output = str(artifact["output"])
+            if declared_output != contract.output:
+                raise DataError(
+                    f"manifest.artifacts.{name}.output must be the authoritative generated module {contract.output!r}"
+                )
+            output = Path(declared_output)
+            if output.parent != Path("package") or output.suffix != ".roc":
+                raise DataError(
+                    f"manifest.artifacts.{name}.output is not a generated package module"
+                )
+            rendered[
+                _path_below_root(declared_output, f"manifest.artifacts.{name}.output")
+            ] = definition()
         return rendered
 
     first = render_once()
