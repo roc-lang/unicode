@@ -129,6 +129,55 @@ core. Its package policy is independently versioned as
 `LineBreak.preserve_graphemes_revision`, and `LineBreak.profile_revision`
 distinguishes that policy axis from the Unicode/UAX version.
 
+## Scripts and shaping-oriented itemization
+
+`Script` exposes Unicode 17's normative `Script` and `Script_Extensions`
+properties from `Scripts.txt`, `ScriptExtensions.txt`, and
+`PropertyValueAliases.txt` under UAX #24 revision 39. A script is a character
+property, not a Unicode block, language, text direction, font choice, or
+security classification. `Common` (`Zyyy`), `Inherited` (`Zinh`), and
+`Unknown` (`Zzzz`) are ordinary property values rather than errors.
+
+`Script.of_scalar` is total over `Scalar`. `Script.extensions_of_scalar`
+returns a nonempty opaque `ScriptSet`: an absent Script_Extensions override is
+the normative singleton `{ Script(cp) }`, not an empty set. Membership,
+length, intersection, equality, and ordered walking use a fixed three-word
+view without per-lookup allocation. `Script.to_list` is the explicit
+materializing convenience. Public set traversal and comparison use canonical
+short-alias lexicographic order; generated private IDs and bit positions are
+not public identities.
+
+All `sc` aliases declared by the pinned UCD are accepted with UAX #44 loose
+matching, including compatibility aliases such as `Qaai` and `Qaac`. Matching
+is case-insensitive and ignores spaces, hyphens, and underscores. It does not
+guess other ISO 15924 codes that are absent from the UCD `sc` namespace.
+Canonical short and long aliases are available without constructing strings.
+
+`ScriptItemization.ConservativeScxV1` is an independently named package policy,
+not a Unicode-defined universal itemization algorithm. It treats extended
+grapheme clusters atomically, resolves restricted Script_Extensions candidates
+from explicit neighbors and caller preferences, resolves broadly Common spans
+only when their explicit context agrees, preserves Unknown as a propagation
+barrier, and coalesces adjacent equal results. It deliberately does not infer
+language or paired-punctuation ownership. Each run carries a `TextRange`, so
+its byte and scalar coordinates describe the same source span without retaining
+that source.
+
+Complete strings can be traversed lazily with `ScriptItemization.iter_runs`,
+folded without collecting with `fold_runs`, or materialized with `runs`.
+Exact right-context resolution uses interval-local replay: every scalar is
+classified at most twice, and the iterator retains neither an
+input-proportional coordinate tape nor copied substrings. A preference list is
+retained rather than copied and scanned in order for each restricted cluster,
+so its resolution cost is O(P); applications should keep it short.
+
+For non-replayable scalar-aligned chunks, `ScriptItemization.Cursor` retains
+only compact unresolved grapheme descriptors under an explicit
+`max_pending_units` bound. The bound is checked before retaining the crossing
+descriptor. Limit and coordinate failures return the caller state unchanged
+and make the returned cursor terminal; chunks and slices are never retained.
+Chunk boundaries do not imply end of text.
+
 Validate the sources and check generated Roc modules with:
 
 ```sh
