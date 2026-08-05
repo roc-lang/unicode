@@ -71,6 +71,18 @@ LINE_BREAK_PROPERTIES = (
     "NU", "OP", "PO", "PR", "QU", "RI", "SA", "SG", "SP", "SY", "VF",
     "VI", "WJ", "XX", "ZW", "ZWJ",
 )
+PUBLIC_ALIAS_PROPERTIES = (
+    "Bidi_Class",
+    "Bidi_Paired_Bracket_Type",
+    "Canonical_Combining_Class",
+    "East_Asian_Width",
+    "General_Category",
+    "Indic_Positional_Category",
+    "Indic_Syllabic_Category",
+    "Joining_Group",
+    "Joining_Type",
+    "Vertical_Orientation",
+)
 FORMAL_PROPERTY_ALIASES = {
     "Canonical_Combining_Class": ("ccc",),
     "East_Asian_Width": ("ea",),
@@ -168,6 +180,23 @@ class PagedBytes:
 
 
 @dataclass(frozen=True)
+class PagedU16:
+    page_index: tuple[int, ...]
+    pages: tuple[tuple[int, ...], ...]
+    page_bits: int
+    index_type: str
+
+    @property
+    def flat_pages(self) -> tuple[int, ...]:
+        return tuple(value for page in self.pages for value in page)
+
+    @property
+    def storage_bytes(self) -> int:
+        index_width = {"U8": 1, "U16": 2, "U32": 4}[self.index_type]
+        return len(self.page_index) * index_width + len(self.pages) * (1 << self.page_bits) * 2
+
+
+@dataclass(frozen=True)
 class CanonicalProperties:
     general_category: tuple[RangeRecord, ...]
     general_category_default: str
@@ -178,6 +207,37 @@ class CanonicalProperties:
 
 
 @dataclass(frozen=True)
+class SparseMapping:
+    source: int
+    target: int
+    line: int
+
+
+@dataclass(frozen=True)
+class BidiBracket:
+    source: int
+    target: int
+    kind: str
+    line: int
+
+
+@dataclass(frozen=True)
+class PublicProperties:
+    bidi_class: PropertySource
+    bidi_mirrored: tuple[RangeRecord, ...]
+    bidi_mirroring_glyph: tuple[SparseMapping, ...]
+    bidi_brackets: tuple[BidiBracket, ...]
+    joining_type: PropertySource
+    joining_group: tuple[RangeRecord, ...]
+    indic_syllabic_category: PropertySource
+    indic_positional_category: PropertySource
+    vertical_orientation: PropertySource
+    default_ignorable: tuple[RangeRecord, ...]
+    variation_selector: tuple[RangeRecord, ...]
+    emoji_variation_bases: tuple[int, ...]
+
+
+@dataclass(frozen=True)
 class GeneratorContract:
     sources: tuple[tuple[str, tuple[str, ...]], ...]
     specifications: tuple[str, ...]
@@ -185,6 +245,7 @@ class GeneratorContract:
     output: str
     paged: bool = False
     ascii: str | None = None
+    value_type: str = "U8"
 
 
 @dataclass(frozen=True)
@@ -194,6 +255,7 @@ class SourceProjectionContract:
     release_axes: tuple[str, ...] = ("unicode",)
     emoji_header: bool = False
     has_cases: bool = False
+    header: str | None = None
 
 
 SOURCE_PROJECTION_CONTRACTS = {
@@ -221,7 +283,7 @@ SOURCE_PROJECTION_CONTRACTS = {
         ("unicode", "emoji"),
         True,
     ),
-    ("ucd-derived-core-properties", ("Indic_Conjunct_Break",)): SourceProjectionContract(
+    ("ucd-derived-core-properties", ("Default_Ignorable_Code_Point", "Indic_Conjunct_Break")): SourceProjectionContract(
         "ucd/DerivedCoreProperties.txt", "production-and-conformance"
     ),
     ("ucd-property-ranges", ("General_Category",)): SourceProjectionContract(
@@ -230,19 +292,59 @@ SOURCE_PROJECTION_CONTRACTS = {
     ("ucd-numeric-property-ranges", ("Canonical_Combining_Class",)): SourceProjectionContract(
         "ucd/extracted/DerivedCombiningClass.txt", "production"
     ),
-    ("ucd-property-aliases", ("Canonical_Combining_Class", "General_Category")): SourceProjectionContract(
+    ("ucd-property-aliases", PUBLIC_ALIAS_PROPERTIES): SourceProjectionContract(
         "ucd/PropertyAliases.txt", "production-metadata"
     ),
-    ("ucd-property-value-aliases", ("Canonical_Combining_Class", "General_Category")): SourceProjectionContract(
+    ("ucd-property-value-aliases", PUBLIC_ALIAS_PROPERTIES): SourceProjectionContract(
         "ucd/PropertyValueAliases.txt", "production-metadata"
+    ),
+    ("ucd-property-ranges", ("Bidi_Class",)): SourceProjectionContract(
+        "ucd/extracted/DerivedBidiClass.txt", "production"
+    ),
+    ("ucd-unicode-data", ("Bidi_Mirrored",)): SourceProjectionContract(
+        "ucd/UnicodeData.txt",
+        "production",
+        header="0000;<control>;Cc;0;BN;;;;;N;NULL;;;;",
+    ),
+    ("ucd-bidi-mirroring", ("Bidi_Mirroring_Glyph",)): SourceProjectionContract(
+        "ucd/BidiMirroring.txt", "production"
+    ),
+    ("ucd-bidi-brackets", ("Bidi_Paired_Bracket", "Bidi_Paired_Bracket_Type")): SourceProjectionContract(
+        "ucd/BidiBrackets.txt", "production"
+    ),
+    ("ucd-property-ranges", ("Joining_Type",)): SourceProjectionContract(
+        "ucd/extracted/DerivedJoiningType.txt", "production"
+    ),
+    ("ucd-arabic-shaping", ("Joining_Type", "Joining_Group")): SourceProjectionContract(
+        "ucd/ArabicShaping.txt", "production"
+    ),
+    ("ucd-property-ranges", ("Indic_Syllabic_Category",)): SourceProjectionContract(
+        "ucd/IndicSyllabicCategory.txt", "production"
+    ),
+    ("ucd-property-ranges", ("Indic_Positional_Category",)): SourceProjectionContract(
+        "ucd/IndicPositionalCategory.txt", "production"
+    ),
+    ("ucd-binary-property-ranges", ("Variation_Selector",)): SourceProjectionContract(
+        "ucd/PropList.txt", "production"
+    ),
+    ("ucd-property-ranges", ("Vertical_Orientation",)): SourceProjectionContract(
+        "ucd/VerticalOrientation.txt", "production"
+    ),
+    ("ucd-emoji-variation-sequences", ("Emoji_Variation_Sequence",)): SourceProjectionContract(
+        "ucd/emoji/emoji-variation-sequences.txt",
+        "production",
+        ("unicode", "emoji"),
+        True,
     ),
 }
 
 SPECIFICATION_COMPATIBILITY = {
+    "uax_9": ("unicode", "17.0.0", "51"),
     "uax_11": ("unicode", "17.0.0", "44"),
     "uax_14": ("unicode", "17.0.0", "55"),
     "uax_29": ("unicode", "17.0.0", "47"),
     "uax_44": ("unicode", "17.0.0", "36"),
+    "uax_50": ("unicode", "17.0.0", "33"),
     "uts_51": ("emoji", "17.0", "29"),
 }
 
@@ -251,7 +353,7 @@ GENERATOR_CONTRACTS = {
     "grapheme-data": GeneratorContract(
         (
             ("ucd-property-ranges", ("Grapheme_Cluster_Break",)),
-            ("ucd-derived-core-properties", ("Indic_Conjunct_Break",)),
+            ("ucd-derived-core-properties", ("Default_Ignorable_Code_Point", "Indic_Conjunct_Break")),
             ("ucd-binary-property-ranges", EMOJI_PROPERTIES),
         ),
         ("uax_29", "uts_51"),
@@ -297,8 +399,8 @@ GENERATOR_CONTRACTS = {
     "general-category": GeneratorContract(
         (
             ("ucd-property-ranges", ("General_Category",)),
-            ("ucd-property-aliases", ("Canonical_Combining_Class", "General_Category")),
-            ("ucd-property-value-aliases", ("Canonical_Combining_Class", "General_Category")),
+            ("ucd-property-aliases", PUBLIC_ALIAS_PROPERTIES),
+            ("ucd-property-value-aliases", PUBLIC_ALIAS_PROPERTIES),
         ),
         ("uax_44",),
         (),
@@ -309,8 +411,8 @@ GENERATOR_CONTRACTS = {
     "canonical-combining-class": GeneratorContract(
         (
             ("ucd-numeric-property-ranges", ("Canonical_Combining_Class",)),
-            ("ucd-property-aliases", ("Canonical_Combining_Class", "General_Category")),
-            ("ucd-property-value-aliases", ("Canonical_Combining_Class", "General_Category")),
+            ("ucd-property-aliases", PUBLIC_ALIAS_PROPERTIES),
+            ("ucd-property-value-aliases", PUBLIC_ALIAS_PROPERTIES),
         ),
         ("uax_44",),
         (),
@@ -320,13 +422,131 @@ GENERATOR_CONTRACTS = {
     ),
     "property-aliases": GeneratorContract(
         (
-            ("ucd-property-aliases", ("Canonical_Combining_Class", "General_Category")),
-            ("ucd-property-value-aliases", ("Canonical_Combining_Class", "General_Category")),
+            ("ucd-property-aliases", PUBLIC_ALIAS_PROPERTIES),
+            ("ucd-property-value-aliases", PUBLIC_ALIAS_PROPERTIES),
             ("ucd-property-ranges", ("General_Category",)),
         ),
         ("uax_44",),
         ("general-category",),
         "package/InternalPropertyAliases.roc",
+    ),
+    "bidi-properties": GeneratorContract(
+        (
+            ("ucd-property-ranges", ("Bidi_Class",)),
+            ("ucd-unicode-data", ("Bidi_Mirrored",)),
+            ("ucd-bidi-mirroring", ("Bidi_Mirroring_Glyph",)),
+            ("ucd-bidi-brackets", ("Bidi_Paired_Bracket", "Bidi_Paired_Bracket_Type")),
+            ("ucd-property-aliases", PUBLIC_ALIAS_PROPERTIES),
+            ("ucd-property-value-aliases", PUBLIC_ALIAS_PROPERTIES),
+        ),
+        ("uax_9", "uax_44"),
+        (),
+        "package/InternalBidiProperties.roc",
+        True,
+        "computed",
+    ),
+    "joining-type": GeneratorContract(
+        (
+            ("ucd-property-ranges", ("Joining_Type",)),
+            ("ucd-arabic-shaping", ("Joining_Type", "Joining_Group")),
+            ("ucd-property-aliases", PUBLIC_ALIAS_PROPERTIES),
+            ("ucd-property-value-aliases", PUBLIC_ALIAS_PROPERTIES),
+        ),
+        ("uax_44",),
+        (),
+        "package/InternalJoiningType.roc",
+        True,
+        "computed",
+    ),
+    "joining-group": GeneratorContract(
+        (
+            ("ucd-arabic-shaping", ("Joining_Type", "Joining_Group")),
+            ("ucd-property-aliases", PUBLIC_ALIAS_PROPERTIES),
+            ("ucd-property-value-aliases", PUBLIC_ALIAS_PROPERTIES),
+        ),
+        ("uax_44",),
+        (),
+        "package/InternalJoiningGroup.roc",
+        True,
+        "constant-zero",
+    ),
+    "indic-syllabic-category": GeneratorContract(
+        (
+            ("ucd-property-ranges", ("Indic_Syllabic_Category",)),
+            ("ucd-property-aliases", PUBLIC_ALIAS_PROPERTIES),
+            ("ucd-property-value-aliases", PUBLIC_ALIAS_PROPERTIES),
+        ),
+        ("uax_44",),
+        (),
+        "package/InternalIndicSyllabicCategory.roc",
+        True,
+        "constant-zero",
+    ),
+    "indic-positional-category": GeneratorContract(
+        (
+            ("ucd-property-ranges", ("Indic_Positional_Category",)),
+            ("ucd-property-aliases", PUBLIC_ALIAS_PROPERTIES),
+            ("ucd-property-value-aliases", PUBLIC_ALIAS_PROPERTIES),
+        ),
+        ("uax_44",),
+        (),
+        "package/InternalIndicPositionalCategory.roc",
+        True,
+        "constant-zero",
+    ),
+    "vertical-orientation": GeneratorContract(
+        (
+            ("ucd-property-ranges", ("Vertical_Orientation",)),
+            ("ucd-property-aliases", PUBLIC_ALIAS_PROPERTIES),
+            ("ucd-property-value-aliases", PUBLIC_ALIAS_PROPERTIES),
+        ),
+        ("uax_44", "uax_50"),
+        (),
+        "package/InternalVerticalOrientation.roc",
+        True,
+        "computed",
+    ),
+    "character-flags": GeneratorContract(
+        (
+            ("ucd-derived-core-properties", ("Default_Ignorable_Code_Point", "Indic_Conjunct_Break")),
+            ("ucd-binary-property-ranges", ("Variation_Selector",)),
+        ),
+        ("uax_44",),
+        (),
+        "package/InternalCharacterFlags.roc",
+        True,
+        "constant-zero",
+    ),
+    "emoji-variations": GeneratorContract(
+        (("ucd-emoji-variation-sequences", ("Emoji_Variation_Sequence",)),),
+        ("uts_51",),
+        (),
+        "package/InternalEmojiVariations.roc",
+    ),
+    "composite-properties": GeneratorContract(
+        (
+            ("ucd-property-ranges", ("General_Category",)),
+            ("ucd-numeric-property-ranges", ("Canonical_Combining_Class",)),
+            ("ucd-property-ranges", ("East_Asian_Width",)),
+            ("ucd-binary-property-ranges", EMOJI_PROPERTIES),
+            ("ucd-property-ranges", ("Bidi_Class",)),
+            ("ucd-unicode-data", ("Bidi_Mirrored",)),
+            ("ucd-property-ranges", ("Joining_Type",)),
+            ("ucd-arabic-shaping", ("Joining_Type", "Joining_Group")),
+            ("ucd-property-ranges", ("Indic_Syllabic_Category",)),
+            ("ucd-property-ranges", ("Indic_Positional_Category",)),
+            ("ucd-property-ranges", ("Vertical_Orientation",)),
+            ("ucd-derived-core-properties", ("Default_Ignorable_Code_Point", "Indic_Conjunct_Break")),
+            ("ucd-binary-property-ranges", ("Variation_Selector",)),
+            ("ucd-property-aliases", PUBLIC_ALIAS_PROPERTIES),
+            ("ucd-property-value-aliases", PUBLIC_ALIAS_PROPERTIES),
+        ),
+        ("uax_9", "uax_11", "uax_44", "uax_50", "uts_51"),
+        (),
+        "package/InternalCompositeProperties.roc",
+        True,
+        "computed",
+        "U16",
     ),
 }
 
@@ -343,6 +563,10 @@ PAGED_LAYOUT_FIELDS = frozenset(
         "max_logical_bytes",
         "ascii",
     )
+)
+
+COMPOSITE_LAYOUT_FIELDS = frozenset(
+    ("expected_row_count", "expected_column_bytes", "max_total_bytes")
 )
 
 def _require_dict(value: object, context: str) -> dict[str, object]:
@@ -633,7 +857,9 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
             raise DataError(f"manifest.sources.{name}.url does not identify its exact release")
         if Path(urlparse(str(item["url"])).path).name != Path(path_value).name:
             raise DataError(f"manifest.sources.{name}.url and path identify different files")
-        if projection_contract.emoji_header:
+        if projection_contract.header is not None:
+            expected_header = projection_contract.header
+        elif projection_contract.emoji_header:
             expected_header = f"# Version: {release_version(manifest, 'emoji')}"
         else:
             expected_header = f"# {Path(path_value).stem}-{unicode_version}.txt"
@@ -725,14 +951,20 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
             )
         if contract.paged:
             layout = _require_dict(item["layout"], f"manifest.artifacts.{name}.layout")
-            _require_fields(layout, PAGED_LAYOUT_FIELDS, f"manifest.artifacts.{name}.layout")
+            layout_fields = (
+                PAGED_LAYOUT_FIELDS | COMPOSITE_LAYOUT_FIELDS
+                if contract.value_type == "U16"
+                else PAGED_LAYOUT_FIELDS
+            )
+            _require_fields(layout, layout_fields, f"manifest.artifacts.{name}.layout")
             candidates = layout.get("candidate_page_bits")
             if candidates != [6, 7, 8, 9, 10]:
                 raise DataError(f"manifest.artifacts.{name}.layout candidates drifted")
             if (
                 layout.get("kind") != "deduplicated-pages"
                 or layout.get("index_type") != "U8"
-                or layout.get("value_type") != "U8"
+                and layout.get("index_type") != "U16"
+                or layout.get("value_type") != contract.value_type
                 or layout.get("ascii") != contract.ascii
             ):
                 raise DataError(f"manifest.artifacts.{name}.layout has unsupported representation")
@@ -746,6 +978,19 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
                 raise DataError(f"manifest.artifacts.{name}.layout index extent drifted")
             if int(layout["expected_logical_bytes"]) > int(layout["max_logical_bytes"]):
                 raise DataError(f"manifest.artifacts.{name}.layout exceeds its budget")
+            if contract.value_type == "U16":
+                for field in COMPOSITE_LAYOUT_FIELDS:
+                    if not isinstance(layout.get(field), int):
+                        raise DataError(
+                            f"manifest.artifacts.{name}.layout.{field} has the wrong type"
+                        )
+                total = int(layout["expected_logical_bytes"]) + int(
+                    layout["expected_column_bytes"]
+                )
+                if total > int(layout["max_total_bytes"]):
+                    raise DataError(
+                        f"manifest.artifacts.{name}.layout exceeds its total byte budget"
+                    )
         dependencies[name] = artifact_dependencies
 
     if declared_generators != set(GENERATOR_CONTRACTS):
@@ -1341,7 +1586,9 @@ def load_property_data(
     )
     emoji_defaults = parse_emoji_defaults(emoji_text, source=emoji_source)
     incb_name = _source_for(
-        manifest, "ucd-derived-core-properties", ("Indic_Conjunct_Break",)
+        manifest,
+        "ucd-derived-core-properties",
+        ("Default_Ignorable_Code_Point", "Indic_Conjunct_Break"),
     )
     incb_text = verify_source(manifest, incb_name)
     incb_source = str(data_path(manifest, incb_name))
@@ -1385,7 +1632,7 @@ def load_property_data(
 
 
 def load_canonical_properties(manifest: dict[str, object]) -> CanonicalProperties:
-    alias_properties = ("Canonical_Combining_Class", "General_Category")
+    alias_properties = PUBLIC_ALIAS_PROPERTIES
     property_alias_name = _source_for(
         manifest, "ucd-property-aliases", alias_properties
     )
@@ -1484,6 +1731,442 @@ def load_canonical_properties(manifest: dict[str, object]) -> CanonicalPropertie
         combining_class_default,
         property_aliases,
         value_aliases,
+    )
+
+
+def _alias_spellings(records: Iterable[PropertyValueAlias]) -> set[str]:
+    return {
+        alias
+        for record in records
+        for alias in (record.identity, record.short, record.long, *record.aliases)
+    }
+
+
+def _resolved_property_source(
+    text: str,
+    *,
+    source: str,
+    property_name: str,
+    aliases: tuple[PropertyValueAlias, ...],
+    expected_base: str,
+) -> PropertySource:
+    records = parse_ranges(
+        text,
+        source=source,
+        allowed_properties=_alias_spellings(aliases),
+        default_marker=None,
+    )
+    resolved_records = tuple(
+        RangeRecord(
+            record.start,
+            record.end,
+            _resolve_alias(aliases, record.property, source=source),
+            record.line,
+        )
+        for record in records
+    )
+    declarations = parse_missing_defaults(text, source=source)
+    if not declarations:
+        raise DataError(f"{source}: {property_name} has no formal @missing declaration")
+    resolved_defaults = tuple(
+        MissingDefault(
+            declaration.start,
+            declaration.end,
+            property_name,
+            _resolve_alias(aliases, declaration.value, source=source),
+            declaration.line,
+        )
+        for declaration in declarations
+        if declaration.property is None
+        or loose_alias(declaration.property)
+        in {loose_alias(property_name), loose_alias(property_name.replace("_", ""))}
+    )
+    expected_identity = _resolve_alias(aliases, expected_base, source=source)
+    if (
+        not resolved_defaults
+        or resolved_defaults[0].start != 0
+        or resolved_defaults[0].end != MAX_CODE_POINT
+        or resolved_defaults[0].value != expected_identity
+    ):
+        raise DataError(
+            f"{source}: {property_name} must begin with the full-domain default {expected_base}"
+        )
+    _validate_default_precedence(
+        resolved_records,
+        resolved_defaults,
+        source=source,
+        properties=(property_name,),
+    )
+    return PropertySource(resolved_records, resolved_defaults)
+
+
+def _parse_unicode_data_mirrored(text: str, *, source: str) -> tuple[RangeRecord, ...]:
+    records: list[RangeRecord] = []
+    previous = -1
+    pending_first: tuple[int, str, bool, int] | None = None
+    for line_number, raw_line in enumerate(text.splitlines(), 1):
+        if not raw_line:
+            continue
+        fields = raw_line.split(";")
+        if len(fields) != 15 or HEX_RE.fullmatch(fields[0]) is None:
+            raise DataError(f"{source}:{line_number}: malformed UnicodeData record")
+        code_point = int(fields[0], 16)
+        if code_point <= previous or code_point > MAX_CODE_POINT:
+            raise DataError(f"{source}:{line_number}: UnicodeData code points are not strictly ordered")
+        previous = code_point
+        if fields[9] not in ("Y", "N"):
+            raise DataError(f"{source}:{line_number}: invalid Bidi_Mirrored value {fields[9]!r}")
+        name = fields[1]
+        if name.endswith(", First>"):
+            if pending_first is not None:
+                raise DataError(f"{source}:{line_number}: nested UnicodeData First range")
+            pending_first = (code_point, name[:-8], fields[9] == "Y", line_number)
+        elif name.endswith(", Last>"):
+            if pending_first is None or pending_first[1] != name[:-7]:
+                raise DataError(f"{source}:{line_number}: unmatched UnicodeData Last range")
+            start, _, mirrored, first_line = pending_first
+            if mirrored != (fields[9] == "Y"):
+                raise DataError(f"{source}:{line_number}: UnicodeData range changes Bidi_Mirrored")
+            if mirrored:
+                records.append(RangeRecord(start, code_point, "Y", first_line))
+            pending_first = None
+        else:
+            if pending_first is not None:
+                raise DataError(f"{source}:{line_number}: unterminated UnicodeData range")
+            if fields[9] == "Y":
+                records.append(RangeRecord(code_point, code_point, "Y", line_number))
+    if pending_first is not None:
+        raise DataError(f"{source}: unterminated UnicodeData range")
+    if not records:
+        raise DataError(f"{source}: no Bidi_Mirrored=Yes records")
+    return tuple(records)
+
+
+def _parse_sparse_mapping(text: str, *, source: str) -> tuple[SparseMapping, ...]:
+    records: list[SparseMapping] = []
+    seen: set[int] = set()
+    for line_number, raw_line in enumerate(text.splitlines(), 1):
+        body = raw_line.split("#", 1)[0].strip()
+        if not body:
+            continue
+        fields = tuple(field.strip() for field in body.split(";"))
+        if len(fields) != 2 or any(HEX_RE.fullmatch(field) is None for field in fields):
+            raise DataError(f"{source}:{line_number}: malformed scalar mapping")
+        source_cp, target_cp = (int(field, 16) for field in fields)
+        if source_cp in seen or source_cp > MAX_CODE_POINT or target_cp > MAX_CODE_POINT:
+            raise DataError(f"{source}:{line_number}: duplicate or invalid scalar mapping")
+        seen.add(source_cp)
+        records.append(SparseMapping(source_cp, target_cp, line_number))
+    if not records or tuple(record.source for record in records) != tuple(sorted(seen)):
+        raise DataError(f"{source}: scalar mappings must be nonempty and strictly ordered")
+    return tuple(records)
+
+
+def _parse_bidi_brackets(text: str, *, source: str) -> tuple[BidiBracket, ...]:
+    records: list[BidiBracket] = []
+    by_source: dict[int, BidiBracket] = {}
+    for line_number, raw_line in enumerate(text.splitlines(), 1):
+        body = raw_line.split("#", 1)[0].strip()
+        if not body:
+            continue
+        fields = tuple(field.strip() for field in body.split(";"))
+        if (
+            len(fields) != 3
+            or HEX_RE.fullmatch(fields[0]) is None
+            or HEX_RE.fullmatch(fields[1]) is None
+            or fields[2] not in ("o", "c")
+        ):
+            raise DataError(f"{source}:{line_number}: malformed bidi bracket record")
+        record = BidiBracket(int(fields[0], 16), int(fields[1], 16), fields[2], line_number)
+        if record.source in by_source or record.source > MAX_CODE_POINT or record.target > MAX_CODE_POINT:
+            raise DataError(f"{source}:{line_number}: duplicate or invalid bidi bracket")
+        by_source[record.source] = record
+        records.append(record)
+    if tuple(record.source for record in records) != tuple(sorted(by_source)):
+        raise DataError(f"{source}: bidi brackets are not strictly ordered")
+    for record in records:
+        partner = by_source.get(record.target)
+        expected_kind = "c" if record.kind == "o" else "o"
+        if partner is None or partner.target != record.source or partner.kind != expected_kind:
+            raise DataError(f"{source}:{record.line}: bidi bracket pair is not reciprocal")
+    return tuple(records)
+
+
+def _parse_arabic_shaping(
+    text: str,
+    *,
+    source: str,
+    jt_aliases: tuple[PropertyValueAlias, ...],
+    jg_aliases: tuple[PropertyValueAlias, ...],
+) -> tuple[tuple[RangeRecord, ...], tuple[RangeRecord, ...]]:
+    joining_types: list[RangeRecord] = []
+    joining_groups: list[RangeRecord] = []
+    previous = -1
+    for line_number, raw_line in enumerate(text.splitlines(), 1):
+        body = raw_line.split("#", 1)[0].strip()
+        if not body:
+            continue
+        fields = tuple(field.strip() for field in body.split(";"))
+        if len(fields) != 4 or HEX_RE.fullmatch(fields[0]) is None or any(not field for field in fields):
+            raise DataError(f"{source}:{line_number}: malformed ArabicShaping record")
+        code_point = int(fields[0], 16)
+        if code_point <= previous or code_point > MAX_CODE_POINT:
+            raise DataError(f"{source}:{line_number}: ArabicShaping code points are not strictly ordered")
+        previous = code_point
+        joining_types.append(
+            RangeRecord(
+                code_point,
+                code_point,
+                _resolve_alias(jt_aliases, fields[2], source=source),
+                line_number,
+            )
+        )
+        joining_groups.append(
+            RangeRecord(
+                code_point,
+                code_point,
+                _resolve_alias(jg_aliases, fields[3].replace(" ", "_"), source=source),
+                line_number,
+            )
+        )
+    if not joining_types:
+        raise DataError(f"{source}: no ArabicShaping records")
+    return tuple(joining_types), tuple(joining_groups)
+
+
+def _parse_binary_projection(
+    text: str, *, source: str, property_name: str
+) -> tuple[RangeRecord, ...]:
+    records: list[RangeRecord] = []
+    for line_number, raw_line in enumerate(text.splitlines(), 1):
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        body = line.split("#", 1)[0].strip()
+        fields = tuple(field.strip() for field in body.split(";"))
+        range_fields = fields[0].split("..") if fields else []
+        if (
+            len(fields) not in (2, 3)
+            or len(range_fields) not in (1, 2)
+            or any(HEX_RE.fullmatch(field) is None for field in range_fields)
+            or any(not field for field in fields[1:])
+        ):
+            raise DataError(f"{source}:{line_number}: malformed binary-property record")
+        if fields[1] != property_name:
+            continue
+        if len(fields) != 2:
+            raise DataError(f"{source}:{line_number}: {property_name} unexpectedly has a value field")
+        start = int(range_fields[0], 16)
+        end = int(range_fields[-1], 16)
+        if start > end or end > MAX_CODE_POINT:
+            raise DataError(f"{source}:{line_number}: invalid binary-property range")
+        records.append(RangeRecord(start, end, property_name, line_number))
+    ordered = sorted(records, key=lambda record: record.start)
+    for previous, current in zip(ordered, ordered[1:]):
+        if current.start <= previous.end:
+            raise DataError(f"{source}:{current.line}: overlapping {property_name} range")
+    if not records:
+        raise DataError(f"{source}: no {property_name} records")
+    return tuple(records)
+
+
+def _parse_emoji_variation_bases(text: str, *, source: str) -> tuple[int, ...]:
+    by_base: dict[int, dict[int, str]] = {}
+    previous: tuple[int, int] | None = None
+    for line_number, raw_line in enumerate(text.splitlines(), 1):
+        body = raw_line.split("#", 1)[0].strip()
+        if not body:
+            continue
+        fields = tuple(field.strip() for field in body.split(";") if field.strip())
+        code_points = fields[0].split() if fields else []
+        if (
+            len(fields) != 2
+            or len(code_points) != 2
+            or any(HEX_RE.fullmatch(field) is None for field in code_points)
+            or fields[1] not in ("text style", "emoji style")
+        ):
+            raise DataError(f"{source}:{line_number}: malformed emoji variation sequence")
+        base, selector = (int(field, 16) for field in code_points)
+        pair = (base, selector)
+        if previous is not None and pair <= previous:
+            raise DataError(f"{source}:{line_number}: emoji variation sequences are not ordered")
+        previous = pair
+        if selector not in (0xFE0E, 0xFE0F) or base > MAX_CODE_POINT:
+            raise DataError(f"{source}:{line_number}: invalid emoji variation sequence")
+        if selector in by_base.setdefault(base, {}):
+            raise DataError(f"{source}:{line_number}: duplicate emoji variation selector")
+        by_base[base][selector] = fields[1]
+    for base, selectors in by_base.items():
+        if selectors != {0xFE0E: "text style", 0xFE0F: "emoji style"}:
+            raise DataError(f"{source}: U+{base:04X} does not have both VS15 and VS16")
+    return tuple(by_base)
+
+
+def _encoded_property(
+    source: PropertySource,
+    identities: tuple[str, ...],
+) -> bytearray:
+    identity_to_u8 = {identity: index for index, identity in enumerate(identities)}
+    if len(identity_to_u8) != len(identities) or len(identities) > 256:
+        raise DataError("property identities must be unique and fit in U8")
+    encoded = bytearray((MAX_CODE_POINT + 1))
+    for default in source.defaults:
+        value = identity_to_u8[default.value]
+        encoded[default.start : default.end + 1] = bytes((value,)) * (default.end - default.start + 1)
+    for record in source.records:
+        value = identity_to_u8[record.property]
+        encoded[record.start : record.end + 1] = bytes((value,)) * (record.end - record.start + 1)
+    return encoded
+
+
+def load_public_properties(
+    manifest: dict[str, object], canonical: CanonicalProperties
+) -> PublicProperties:
+    value_aliases = canonical.property_value_aliases
+    required = ("bc", "bpt", "jt", "jg", "InSC", "InPC", "vo")
+    if any(name not in value_aliases for name in required):
+        raise DataError(f"property value aliases omit one of {required!r}")
+
+    def load_source(source_format: str, projection: tuple[str, ...]) -> tuple[str, str]:
+        name = _source_for(manifest, source_format, projection)
+        return verify_source(manifest, name), str(data_path(manifest, name))
+
+    bidi_text, bidi_path = load_source("ucd-property-ranges", ("Bidi_Class",))
+    bidi_class = _resolved_property_source(
+        bidi_text,
+        source=bidi_path,
+        property_name="Bidi_Class",
+        aliases=value_aliases["bc"],
+        expected_base="Left_To_Right",
+    )
+    if len(bidi_class.defaults) <= 1:
+        raise DataError(f"{bidi_path}: Bidi_Class lost its nontrivial ranged defaults")
+
+    unicode_data_text, unicode_data_path = load_source("ucd-unicode-data", ("Bidi_Mirrored",))
+    mirrored = _parse_unicode_data_mirrored(unicode_data_text, source=unicode_data_path)
+    mirroring_text, mirroring_path = load_source("ucd-bidi-mirroring", ("Bidi_Mirroring_Glyph",))
+    mirroring = _parse_sparse_mapping(mirroring_text, source=mirroring_path)
+    mirrored_scalars = {
+        code_point
+        for record in mirrored
+        for code_point in range(record.start, record.end + 1)
+    }
+    if any(record.source not in mirrored_scalars for record in mirroring):
+        raise DataError(f"{mirroring_path}: mapping source is not Bidi_Mirrored=Yes")
+
+    brackets_text, brackets_path = load_source(
+        "ucd-bidi-brackets", ("Bidi_Paired_Bracket", "Bidi_Paired_Bracket_Type")
+    )
+    brackets = _parse_bidi_brackets(brackets_text, source=brackets_path)
+
+    joining_text, joining_path = load_source("ucd-property-ranges", ("Joining_Type",))
+    joining_type = _resolved_property_source(
+        joining_text,
+        source=joining_path,
+        property_name="Joining_Type",
+        aliases=value_aliases["jt"],
+        expected_base="Non_Joining",
+    )
+    shaping_text, shaping_path = load_source(
+        "ucd-arabic-shaping", ("Joining_Type", "Joining_Group")
+    )
+    shaping_types, shaping_groups = _parse_arabic_shaping(
+        shaping_text,
+        source=shaping_path,
+        jt_aliases=value_aliases["jt"],
+        jg_aliases=value_aliases["jg"],
+    )
+    jt_identities = (
+        _resolve_alias(value_aliases["jt"], "Non_Joining", source=joining_path),
+        *(
+            record.identity
+            for record in value_aliases["jt"]
+            if record.identity != _resolve_alias(value_aliases["jt"], "Non_Joining", source=joining_path)
+        ),
+    )
+    encoded_jt = _encoded_property(joining_type, jt_identities)
+    for record in shaping_types:
+        if jt_identities[encoded_jt[record.start]] != record.property:
+            raise DataError(f"{shaping_path}:{record.line}: Joining_Type disagrees with derived data")
+
+    general_category_by_cp = bytearray(MAX_CODE_POINT + 1)
+    gc_symbols = {"Mn", "Me", "Cf"}
+    for record in canonical.general_category:
+        if record.property in gc_symbols:
+            general_category_by_cp[record.start : record.end + 1] = b"\x01" * (
+                record.end - record.start + 1
+            )
+    shaping_by_cp = {record.start: record.property for record in shaping_types}
+    transparent = _resolve_alias(value_aliases["jt"], "Transparent", source=shaping_path)
+    non_joining = _resolve_alias(value_aliases["jt"], "Non_Joining", source=shaping_path)
+    for code_point in range(MAX_CODE_POINT + 1):
+        expected = shaping_by_cp.get(
+            code_point, transparent if general_category_by_cp[code_point] else non_joining
+        )
+        if jt_identities[encoded_jt[code_point]] != expected:
+            raise DataError(
+                f"{joining_path}: U+{code_point:04X} disagrees with ArabicShaping + GC derivation"
+            )
+
+    no_group = _resolve_alias(value_aliases["jg"], "No_Joining_Group", source=shaping_path)
+    joining_group = tuple(
+        record for record in shaping_groups if record.property != no_group
+    )
+
+    insc_text, insc_path = load_source("ucd-property-ranges", ("Indic_Syllabic_Category",))
+    insc = _resolved_property_source(
+        insc_text,
+        source=insc_path,
+        property_name="Indic_Syllabic_Category",
+        aliases=value_aliases["InSC"],
+        expected_base="Other",
+    )
+    inpc_text, inpc_path = load_source("ucd-property-ranges", ("Indic_Positional_Category",))
+    inpc = _resolved_property_source(
+        inpc_text,
+        source=inpc_path,
+        property_name="Indic_Positional_Category",
+        aliases=value_aliases["InPC"],
+        expected_base="Not_Applicable",
+    )
+    vo_text, vo_path = load_source("ucd-property-ranges", ("Vertical_Orientation",))
+    vo = _resolved_property_source(
+        vo_text,
+        source=vo_path,
+        property_name="Vertical_Orientation",
+        aliases=value_aliases["vo"],
+        expected_base="R",
+    )
+
+    derived_text, derived_path = load_source(
+        "ucd-derived-core-properties",
+        ("Default_Ignorable_Code_Point", "Indic_Conjunct_Break"),
+    )
+    default_ignorable = _parse_binary_projection(
+        derived_text, source=derived_path, property_name="Default_Ignorable_Code_Point"
+    )
+    prop_text, prop_path = load_source("ucd-binary-property-ranges", ("Variation_Selector",))
+    variation_selector = _parse_binary_projection(
+        prop_text, source=prop_path, property_name="Variation_Selector"
+    )
+    variation_text, variation_path = load_source(
+        "ucd-emoji-variation-sequences", ("Emoji_Variation_Sequence",)
+    )
+    variation_bases = _parse_emoji_variation_bases(variation_text, source=variation_path)
+
+    return PublicProperties(
+        bidi_class,
+        mirrored,
+        mirroring,
+        brackets,
+        joining_type,
+        joining_group,
+        insc,
+        inpc,
+        vo,
+        default_ignorable,
+        variation_selector,
+        variation_bases,
     )
 
 
@@ -1793,6 +2476,58 @@ def _selected_paged_bytes(
         )
     if selected.storage_bytes > int(layout["max_logical_bytes"]):
         raise DataError(f"manifest.artifacts.{artifact_name}.layout exceeds its byte budget")
+    return selected
+
+
+def _paged_u16(values: list[int], *, page_bits: int) -> PagedU16:
+    if len(values) != MAX_CODE_POINT + 1 or any(value < 0 or value > 0xFFFF for value in values):
+        raise DataError("paged U16 scalar view must cover the code-point domain with U16 values")
+    page_size = 1 << page_bits
+    page_ids: dict[tuple[int, ...], int] = {}
+    pages: list[tuple[int, ...]] = []
+    page_index: list[int] = []
+    for start in range(0, len(values), page_size):
+        page = tuple(values[start : start + page_size])
+        page_id = page_ids.get(page)
+        if page_id is None:
+            page_id = len(pages)
+            page_ids[page] = page_id
+            pages.append(page)
+        page_index.append(page_id)
+    index_type = "U8" if len(pages) <= 0x100 else "U16" if len(pages) <= 0x10000 else "U32"
+    return PagedU16(tuple(page_index), tuple(pages), page_bits, index_type)
+
+
+def _selected_paged_u16(
+    values: list[int], *, manifest: dict[str, object], generator: str
+) -> PagedU16:
+    artifacts = _require_dict(manifest["artifacts"], "manifest.artifacts")
+    artifact_name = _artifact_for_generator(manifest, generator)
+    artifact = _require_dict(artifacts[artifact_name], f"manifest.artifacts.{artifact_name}")
+    layout = _require_dict(artifact["layout"], f"manifest.artifacts.{artifact_name}.layout")
+    candidates = tuple(
+        _paged_u16(values, page_bits=page_bits)
+        for page_bits in layout["candidate_page_bits"]
+    )
+    selected = min(candidates, key=lambda item: (item.storage_bytes, item.page_bits))
+    expected = (
+        int(layout["page_bits"]),
+        str(layout["index_type"]),
+        int(layout["expected_index_entries"]),
+        int(layout["expected_distinct_pages"]),
+        int(layout["expected_logical_bytes"]),
+    )
+    actual = (
+        selected.page_bits,
+        selected.index_type,
+        len(selected.page_index),
+        len(selected.pages),
+        selected.storage_bytes,
+    )
+    if actual != expected:
+        raise DataError(
+            f"manifest.artifacts.{artifact_name}.layout drifted: expected {expected}, got {actual}"
+        )
     return selected
 
 
@@ -2249,6 +2984,451 @@ def _unique_aliases(values: Iterable[str]) -> tuple[str, ...]:
     return tuple(result)
 
 
+def _enum_identities(
+    aliases: tuple[PropertyValueAlias, ...], default_alias: str, *, source: str
+) -> tuple[str, ...]:
+    default = _resolve_alias(aliases, default_alias, source=source)
+    return (default, *(record.identity for record in aliases if record.identity != default))
+
+
+def _render_alias_members(
+    identities: tuple[str, ...], aliases: tuple[PropertyValueAlias, ...]
+) -> str:
+    by_identity = {record.identity: record for record in aliases}
+    short_matches: list[str] = []
+    long_matches: list[str] = []
+    count_matches: list[str] = []
+    at_matches: list[str] = []
+    parse_branches: list[str] = []
+    for identity in identities:
+        record = by_identity[identity]
+        values = _unique_aliases((record.short, record.long, *record.aliases))
+        short_matches.append(f"            {identity} => {_roc_string(record.short)}")
+        long_matches.append(f"            {identity} => {_roc_string(record.long)}")
+        count_matches.append(f"            {identity} => {len(values)}")
+        for index, alias in enumerate(values):
+            at_matches.append(
+                f"            ({identity}, {index}) => Some({_roc_string(alias)})"
+            )
+        condition = " or ".join(
+            f"InternalLooseAlias.matches(name, {_roc_string(alias)})" for alias in values
+        )
+        parse_branches.append(f"        if {condition} Some({identity})")
+    parse_expression = " else ".join(parse_branches) + " else None"
+    return (
+        "    short : Value -> Str\n"
+        "    short = |value| {\n"
+        "        match value {\n"
+        + "\n".join(short_matches)
+        + "\n        }\n"
+        "    }\n\n"
+        "    long : Value -> Str\n"
+        "    long = |value| {\n"
+        "        match value {\n"
+        + "\n".join(long_matches)
+        + "\n        }\n"
+        "    }\n\n"
+        "    alias_count : Value -> U8\n"
+        "    alias_count = |value| {\n"
+        "        match value {\n"
+        + "\n".join(count_matches)
+        + "\n        }\n"
+        "    }\n\n"
+        "    alias_at : Value, U8 -> [Some(Str), None]\n"
+        "    alias_at = |value, index| {\n"
+        "        match (value, index) {\n"
+        + "\n".join(at_matches)
+        + "\n            _ => None\n"
+        "        }\n"
+        "    }\n\n"
+        "    parse : Str -> [Some(Value), None]\n"
+        f"    parse = |name| {parse_expression}\n"
+    )
+
+
+def render_enum_property(
+    manifest: dict[str, object],
+    version: str,
+    *,
+    generator: str,
+    module: str,
+    source: PropertySource,
+    aliases: tuple[PropertyValueAlias, ...],
+    property_alias: PropertyAlias,
+    default_alias: str,
+) -> str:
+    identities = _enum_identities(aliases, default_alias, source=module)
+    encoded = _encoded_property(source, identities)
+    paged = _selected_paged_bytes(encoded, manifest=manifest, generator=generator)
+    page_size = 1 << paged.page_bits
+    ascii_expression = _ascii_value_expression(encoded, default=0)
+    from_matches = "\n".join(
+        f"        {index} => {identity}" for index, identity in enumerate(identities)
+    )
+    to_matches = "\n".join(
+        f"            {identity} => {index}" for index, identity in enumerate(identities)
+    )
+    aliases_members = _render_alias_members(identities, aliases)
+    return (
+        f"## GENERATED from Unicode {version}. Run `python3 scripts/unicode_data.py generate`. ##\n"
+        f"## layout: {len(paged.page_index)} {paged.index_type} page ids + {len(paged.pages)} x {page_size} U8 values; "
+        f"logical payload {paged.storage_bytes} bytes. ##\n\n"
+        "import InternalLooseAlias\n\n"
+        f"{module} :: [].{{\n"
+        f"    Value : [{', '.join(identities)}]\n"
+        "    PropertyName : { short : Str, long : Str }\n\n"
+        "    property_name : PropertyName\n"
+        f"    property_name = {{ short: {_roc_string(property_alias.short)}, long: {_roc_string(property_alias.long)} }}\n\n"
+        "    lookup : U32 -> Value\n"
+        "    lookup = |scalar| from_u8(lookup_u8(scalar))\n\n"
+        "    lookup_u8 : U32 -> U8\n"
+        "    lookup_u8 = |scalar| {\n"
+        "        if scalar < 128 {\n"
+        "            ascii_value(scalar)\n"
+        "        } else if scalar > 0x10FFFF {\n"
+        "            0\n"
+        "        } else {\n"
+        f"            page_id = page_index.get(scalar.shr_wrap({paged.page_bits}).to_u64()) ?? 0\n"
+        f"            offset = page_id.to_u64() * {page_size} + scalar.bitwise_and({page_size - 1}).to_u64()\n"
+        "            pages.get(offset) ?? 0\n"
+        "        }\n"
+        "    }\n\n"
+        + aliases_members
+        + "}\n\n"
+        f"from_u8 : U8 -> {module}.Value\n"
+        "from_u8 = |value| {\n"
+        "    match value {\n"
+        f"{from_matches}\n"
+        f"        _ => {identities[0]}\n"
+        "    }\n"
+        "}\n\n"
+        f"to_u8 : {module}.Value -> U8\n"
+        "to_u8 = |value| {\n"
+        "    match value {\n"
+        f"{to_matches}\n"
+        "    }\n"
+        "}\n\n"
+        "ascii_value : U32 -> U8\n"
+        f"ascii_value = |u32| {ascii_expression}\n\n"
+        f"page_index : List({paged.index_type})\n"
+        f"page_index = {_roc_list(paged.page_index)}\n\n"
+        "pages : List(U8)\n"
+        f"pages = {_roc_list(paged.flat_pages)}\n"
+    )
+
+
+def _render_sparse_lookup(
+    name: str, records: Iterable[SparseMapping]
+) -> str:
+    records = tuple(records)
+    return (
+        f"    {name} : U32 -> [Some(U32), None]\n"
+        f"    {name} = |scalar| lookup_mapping(scalar, {name}_sources, {name}_targets)\n"
+        f"\n{name}_sources : List(U32)\n"
+        f"{name}_sources = {_roc_list(record.source for record in records)}\n\n"
+        f"{name}_targets : List(U32)\n"
+        f"{name}_targets = {_roc_list(record.target for record in records)}\n"
+    )
+
+
+def render_bidi_properties(
+    manifest: dict[str, object],
+    version: str,
+    public: PublicProperties,
+    canonical: CanonicalProperties,
+) -> str:
+    aliases = canonical.property_value_aliases["bc"]
+    identities = _enum_identities(aliases, "Left_To_Right", source="Bidi_Class")
+    encoded = _encoded_property(public.bidi_class, identities)
+    for record in public.bidi_mirrored:
+        for code_point in range(record.start, record.end + 1):
+            encoded[code_point] |= 0x20
+    paged = _selected_paged_bytes(encoded, manifest=manifest, generator="bidi-properties")
+    page_size = 1 << paged.page_bits
+    ascii_expression = _ascii_value_expression(encoded, default=0)
+    from_matches = "\n".join(
+        f"        {index} => {identity}" for index, identity in enumerate(identities)
+    )
+    aliases_members = _render_alias_members(identities, aliases)
+    property_alias = canonical.property_aliases["bc"]
+    bracket_sources = _roc_list(record.source for record in public.bidi_brackets)
+    bracket_targets = _roc_list(record.target for record in public.bidi_brackets)
+    bracket_kinds = _roc_list(1 if record.kind == "o" else 2 for record in public.bidi_brackets)
+    mirror_lookup = _render_sparse_lookup("mirroring_glyph", public.bidi_mirroring_glyph)
+    return (
+        f"## GENERATED from Unicode {version} bidi data. Run `python3 scripts/unicode_data.py generate`. ##\n"
+        f"## Bidi_Class preserves {len(public.bidi_class.defaults)} ordered defaults; layout: "
+        f"{len(paged.page_index)} {paged.index_type} ids + {len(paged.pages)} x {page_size} U8 values; "
+        f"logical payload {paged.storage_bytes} bytes. ##\n\n"
+        "import InternalLooseAlias\n\n"
+        "InternalBidiProperties :: [].{\n"
+        f"    Value : [{', '.join(identities)}]\n"
+        "    BracketType : [Open, Close]\n"
+        "    PropertyName : { short : Str, long : Str }\n\n"
+        f"    property_name : PropertyName\n    property_name = {{ short: {_roc_string(property_alias.short)}, long: {_roc_string(property_alias.long)} }}\n\n"
+        "    lookup : U32 -> Value\n    lookup = |scalar| class_from_u8(lookup_u8(scalar).bitwise_and(0x1F))\n\n"
+        "    is_mirrored : U32 -> Bool\n    is_mirrored = |scalar| lookup_u8(scalar).bitwise_and(0x20) != 0\n\n"
+        "    lookup_u8 : U32 -> U8\n"
+        "    lookup_u8 = |scalar| {\n"
+        "        if scalar < 128 { ascii_value(scalar) } else if scalar > 0x10FFFF { 0 } else {\n"
+        f"            page_id = page_index.get(scalar.shr_wrap({paged.page_bits}).to_u64()) ?? 0\n"
+        f"            pages.get(page_id.to_u64() * {page_size} + scalar.bitwise_and({page_size - 1}).to_u64()) ?? 0\n"
+        "        }\n"
+        "    }\n\n"
+        + mirror_lookup
+        + "\n\n    paired_bracket : U32 -> [Some({ scalar : U32, kind : BracketType }), None]\n"
+        "    paired_bracket = |scalar| {\n"
+        "        match lookup_index(scalar, bracket_sources) {\n"
+        "            None => None\n"
+        "            Some(index) => {\n"
+        "                target = bracket_targets.get(index) ?? ...\n"
+        "                kind = if (bracket_kinds.get(index) ?? 0) == 1 Open else Close\n"
+        "                Some({ scalar: target, kind })\n"
+        "            }\n"
+        "        }\n"
+        "    }\n\n"
+        + aliases_members
+        + "}\n\n"
+        "class_from_u8 : U8 -> InternalBidiProperties.Value\nclass_from_u8 = |value| {\n    match value {\n"
+        f"{from_matches}\n        _ => {identities[0]}\n    }}\n}}\n\n"
+        "ascii_value : U32 -> U8\n"
+        f"ascii_value = |u32| {ascii_expression}\n\n"
+        "lookup_mapping : U32, List(U32), List(U32) -> [Some(U32), None]\n"
+        "lookup_mapping = |scalar, sources, targets| {\n"
+        "    match lookup_index(scalar, sources) {\n"
+        "        None => None\n"
+        "        Some(index) => Some(targets.get(index) ?? ...)\n"
+        "    }\n"
+        "}\n\n"
+        "lookup_index : U32, List(U32) -> [Some(U64), None]\n"
+        "lookup_index = |scalar, sources| {\n"
+        "    var low = 0.U64\n    var high = sources.len()\n"
+        "    while low < high {\n"
+        "        middle = low + (high - low) / 2\n"
+        "        if (sources.get(middle) ?? ...) < scalar { low = middle + 1 } else { high = middle }\n"
+        "    }\n"
+        "    if low < sources.len() and (sources.get(low) ?? ...) == scalar Some(low) else None\n"
+        "}\n\n"
+        f"page_index : List({paged.index_type})\npage_index = {_roc_list(paged.page_index)}\n\n"
+        f"pages : List(U8)\npages = {_roc_list(paged.flat_pages)}\n\n"
+        f"bracket_sources : List(U32)\nbracket_sources = {bracket_sources}\n\n"
+        f"bracket_targets : List(U32)\nbracket_targets = {bracket_targets}\n\n"
+        f"bracket_kinds : List(U8)\nbracket_kinds = {bracket_kinds}\n"
+    )
+
+
+def render_character_flags(
+    manifest: dict[str, object], version: str, public: PublicProperties
+) -> str:
+    encoded = bytearray(MAX_CODE_POINT + 1)
+    for record in public.default_ignorable:
+        for code_point in range(record.start, record.end + 1):
+            encoded[code_point] |= 1
+    for record in public.variation_selector:
+        for code_point in range(record.start, record.end + 1):
+            encoded[code_point] |= 2
+    paged = _selected_paged_bytes(encoded, manifest=manifest, generator="character-flags")
+    page_size = 1 << paged.page_bits
+    return (
+        f"## GENERATED from Unicode {version} binary properties. Run `python3 scripts/unicode_data.py generate`. ##\n"
+        f"## layout: {len(paged.page_index)} {paged.index_type} ids + {len(paged.pages)} x {page_size} U8 values; logical payload {paged.storage_bytes} bytes. ##\n\n"
+        "InternalCharacterFlags :: [].{\n"
+        "    lookup : U32 -> { default_ignorable : Bool, variation_selector : Bool }\n"
+        "    lookup = |scalar| {\n"
+        "        value = if scalar < 128 or scalar > 0x10FFFF { 0 } else {\n"
+        f"            page_id = page_index.get(scalar.shr_wrap({paged.page_bits}).to_u64()) ?? 0\n"
+        f"            pages.get(page_id.to_u64() * {page_size} + scalar.bitwise_and({page_size - 1}).to_u64()) ?? 0\n"
+        "        }\n"
+        "        { default_ignorable: value.bitwise_and(1) != 0, variation_selector: value.bitwise_and(2) != 0 }\n"
+        "    }\n}\n\n"
+        f"page_index : List({paged.index_type})\npage_index = {_roc_list(paged.page_index)}\n\n"
+        f"pages : List(U8)\npages = {_roc_list(paged.flat_pages)}\n"
+    )
+
+
+def render_emoji_variations(version: str, bases: tuple[int, ...]) -> str:
+    return (
+        f"## GENERATED from Unicode {version} emoji variation sequences. Run `python3 scripts/unicode_data.py generate`. ##\n\n"
+        "InternalEmojiVariations :: [].{\n"
+        "    lookup : U32, U32 -> [Some([Text, Emoji]), None]\n"
+        "    lookup = |base, selector| {\n"
+        "        if !contains(base) { None } else if selector == 0xFE0E { Some(Text) } else if selector == 0xFE0F { Some(Emoji) } else { None }\n"
+        "    }\n}\n\n"
+        "contains : U32 -> Bool\ncontains = |scalar| {\n"
+        "    var low = 0.U64\n    var high = bases.len()\n"
+        "    while low < high {\n"
+        "        middle = low + (high - low) / 2\n"
+        "        if (bases.get(middle) ?? ...) < scalar { low = middle + 1 } else { high = middle }\n"
+        "    }\n"
+        "    low < bases.len() and (bases.get(low) ?? ...) == scalar\n}\n\n"
+        f"bases : List(U32)\nbases = {_roc_list(bases)}\n"
+    )
+
+
+def _binary_byte(records: Iterable[RangeRecord], bit: int = 1) -> bytearray:
+    encoded = bytearray(MAX_CODE_POINT + 1)
+    for record in records:
+        encoded[record.start : record.end + 1] = bytes((bit,)) * (
+            record.end - record.start + 1
+        )
+    return encoded
+
+
+def _canonical_scalar_columns(
+    canonical: CanonicalProperties,
+    algorithm: AlgorithmProperties,
+    public: PublicProperties,
+) -> tuple[dict[str, bytearray], dict[str, tuple[str, ...]]]:
+    categories = tuple(sorted({record.property for record in canonical.general_category}))
+    gc_source = PropertySource(
+        canonical.general_category,
+        (MissingDefault(0, MAX_CODE_POINT, "General_Category", canonical.general_category_default, 0),),
+    )
+    gc = _encoded_property(gc_source, categories)
+
+    ccc = bytearray((canonical.canonical_combining_class_default,)) * (MAX_CODE_POINT + 1)
+    for record in canonical.canonical_combining_class:
+        ccc[record.start : record.end + 1] = bytes((int(record.property),)) * (
+            record.end - record.start + 1
+        )
+
+    eaw_identities = EAW_PROPERTIES
+    eaw = bytearray((eaw_identities.index("N"),)) * (MAX_CODE_POINT + 1)
+    for default in algorithm.east_asian_width.defaults:
+        value = eaw_identities.index(default.value)
+        eaw[default.start : default.end + 1] = bytes((value,)) * (default.end - default.start + 1)
+    for record in algorithm.east_asian_width.records:
+        value = eaw_identities.index(record.property)
+        eaw[record.start : record.end + 1] = bytes((value,)) * (record.end - record.start + 1)
+
+    emoji = bytearray(MAX_CODE_POINT + 1)
+    for bit, property_name in enumerate(EMOJI_PROPERTIES):
+        for record in _ranges_for(list(algorithm.emoji.records), property_name):
+            for code_point in range(record.start, record.end + 1):
+                emoji[code_point] |= 1 << bit
+
+    bc_ids = _enum_identities(canonical.property_value_aliases["bc"], "Left_To_Right", source="bc")
+    bc = _encoded_property(public.bidi_class, bc_ids)
+    for record in public.bidi_mirrored:
+        for code_point in range(record.start, record.end + 1):
+            bc[code_point] |= 0x20
+
+    jt_ids = _enum_identities(canonical.property_value_aliases["jt"], "Non_Joining", source="jt")
+    jt = _encoded_property(public.joining_type, jt_ids)
+    jg_ids = _enum_identities(canonical.property_value_aliases["jg"], "No_Joining_Group", source="jg")
+    jg_source = PropertySource(
+        public.joining_group,
+        (MissingDefault(0, MAX_CODE_POINT, "Joining_Group", jg_ids[0], 0),),
+    )
+    jg = _encoded_property(jg_source, jg_ids)
+    insc_ids = _enum_identities(canonical.property_value_aliases["InSC"], "Other", source="InSC")
+    insc = _encoded_property(public.indic_syllabic_category, insc_ids)
+    inpc_ids = _enum_identities(canonical.property_value_aliases["InPC"], "Not_Applicable", source="InPC")
+    inpc = _encoded_property(public.indic_positional_category, inpc_ids)
+    vo_ids = _enum_identities(canonical.property_value_aliases["vo"], "R", source="vo")
+    vo = _encoded_property(public.vertical_orientation, vo_ids)
+
+    flags = bytearray(MAX_CODE_POINT + 1)
+    for record in public.default_ignorable:
+        for code_point in range(record.start, record.end + 1):
+            flags[code_point] |= 1
+    for record in public.variation_selector:
+        for code_point in range(record.start, record.end + 1):
+            flags[code_point] |= 2
+    return (
+        {
+            "general_category": gc,
+            "canonical_combining_class": ccc,
+            "east_asian_width": eaw,
+            "emoji": emoji,
+            "bidi": bc,
+            "joining_type": jt,
+            "joining_group": jg,
+            "indic_syllabic_category": insc,
+            "indic_positional_category": inpc,
+            "vertical_orientation": vo,
+            "flags": flags,
+        },
+        {
+            "general_category": categories,
+            "east_asian_width": eaw_identities,
+            "bidi": bc_ids,
+            "joining_type": jt_ids,
+            "joining_group": jg_ids,
+            "indic_syllabic_category": insc_ids,
+            "indic_positional_category": inpc_ids,
+            "vertical_orientation": vo_ids,
+        },
+    )
+
+
+def render_composite_properties(
+    manifest: dict[str, object],
+    version: str,
+    canonical: CanonicalProperties,
+    algorithm: AlgorithmProperties,
+    public: PublicProperties,
+) -> str:
+    scalar_columns, _ = _canonical_scalar_columns(canonical, algorithm, public)
+    names = tuple(scalar_columns)
+    row_ids: list[int] = []
+    row_by_values: dict[tuple[int, ...], int] = {}
+    rows: list[tuple[int, ...]] = []
+    for code_point in range(MAX_CODE_POINT + 1):
+        values = tuple(scalar_columns[name][code_point] for name in names)
+        row_id = row_by_values.get(values)
+        if row_id is None:
+            row_id = len(rows)
+            row_by_values[values] = row_id
+            rows.append(values)
+        row_ids.append(row_id)
+    paged = _selected_paged_u16(row_ids, manifest=manifest, generator="composite-properties")
+    artifact_name = _artifact_for_generator(manifest, "composite-properties")
+    layout = _require_dict(
+        _require_dict(manifest["artifacts"], "manifest.artifacts")[artifact_name]["layout"],
+        f"manifest.artifacts.{artifact_name}.layout",
+    )
+    column_bytes = len(rows) * len(names)
+    if len(rows) != layout["expected_row_count"] or column_bytes != layout["expected_column_bytes"]:
+        raise DataError(
+            f"composite row layout drifted: expected {layout['expected_row_count']} rows/{layout['expected_column_bytes']} bytes, "
+            f"got {len(rows)} rows/{column_bytes} bytes"
+        )
+    page_size = 1 << paged.page_bits
+    column_lists = {name: tuple(row[index] for row in rows) for index, name in enumerate(names)}
+    fields = "\n".join(f"        {name} : U8," for name in names)
+    assignments = "\n".join(
+        f"            {name}: {name}_rows.get(row_id) ?? 0," for name in names
+    )
+    rendered_columns = "\n\n".join(
+        f"{name}_rows : List(U8)\n{name}_rows = {_roc_list(values)}"
+        for name, values in column_lists.items()
+    )
+    return (
+        f"## GENERATED from Unicode {version}. Composite-only fused scalar view. ##\n"
+        "## Direct property modules do not import this table. ##\n"
+        f"## layout: {len(paged.page_index)} {paged.index_type} ids + {len(paged.pages)} x {page_size} U16 row ids "
+        f"({paged.storage_bytes} bytes), {len(rows)} rows x {len(names)} U8 columns ({column_bytes} bytes), "
+        f"total {paged.storage_bytes + column_bytes} bytes. ##\n\n"
+        "InternalCompositeProperties :: [].{\n"
+        "    Row : {\n"
+        f"{fields}\n"
+        "    }\n\n"
+        "    lookup : U32 -> Row\n"
+        "    lookup = |scalar| {\n"
+        "        bounded = if scalar <= 0x10FFFF scalar else 0\n"
+        f"        page_id = page_index.get(bounded.shr_wrap({paged.page_bits}).to_u64()) ?? 0\n"
+        f"        row_id = row_ids.get(page_id.to_u64() * {page_size} + bounded.bitwise_and({page_size - 1}).to_u64()) ?? 0\n"
+        "        {\n"
+        f"{assignments}\n"
+        "        }\n"
+        "    }\n}\n\n"
+        f"page_index : List({paged.index_type})\npage_index = {_roc_list(paged.page_index)}\n\n"
+        f"row_ids : List(U16)\nrow_ids = {_roc_list(paged.flat_pages)}\n\n"
+        f"{rendered_columns}\n"
+    )
+
+
 def render_property_aliases(
     version: str,
     canonical: CanonicalProperties,
@@ -2273,6 +3453,7 @@ def render_property_aliases(
     gc_long_matches = []
     gc_count_matches = []
     gc_at_matches = []
+    gc_parse_branches = []
     for record in general_category_values:
         aliases = _unique_aliases((record.short, record.long, *record.aliases))
         gc_short_matches.append(
@@ -2286,10 +3467,18 @@ def render_property_aliases(
             gc_at_matches.append(
                 f"        ({record.identity}, {index}) => Some({_roc_string(alias)})"
             )
+        gc_parse_branches.append(
+            "        if "
+            + " or ".join(
+                f"InternalLooseAlias.matches(name, {_roc_string(alias)})" for alias in aliases
+            )
+            + f" Some({record.identity})"
+        )
     ccc_short_matches = []
     ccc_long_matches = []
     ccc_count_matches = []
     ccc_at_matches = []
+    ccc_parse_branches = []
     for record in combining_class_values:
         aliases = _unique_aliases(
             (record.identity, record.short, record.long, *record.aliases)
@@ -2305,13 +3494,21 @@ def render_property_aliases(
             ccc_at_matches.append(
                 f"        ({record.identity}, {index}) => Some({_roc_string(alias)})"
             )
+        ccc_parse_branches.append(
+            "        if "
+            + " or ".join(
+                f"InternalLooseAlias.matches(name, {_roc_string(alias)})" for alias in aliases
+            )
+            + f" Some({record.identity})"
+        )
 
     return (
         f"## GENERATED from Unicode {version} PropertyAliases and PropertyValueAliases. Run `python3 scripts/unicode_data.py generate`. ##\n"
         "## These canonical names are metadata for stable identities, never storage ordinals. ##\n"
         f"## metadata: {len(general_category_values)} scalar category identities; "
         f"{len(combining_class_values)} exact CCC identities. ##\n\n"
-        f"import {general_category_module}\n\n"
+        f"import {general_category_module}\n"
+        "import InternalLooseAlias\n\n"
         "InternalPropertyAliases :: [].{\n"
         "    PropertyName : { short : Str, long : Str }\n\n"
         "    general_category_property : PropertyName\n"
@@ -2347,6 +3544,10 @@ def render_property_aliases(
         + "\n            _ => None\n"
         "        }\n"
         "    }\n\n"
+        f"    general_category_parse : Str -> [Some({general_category_module}.GeneralCategory), None]\n"
+        "    general_category_parse = |name| "
+        + " else ".join(gc_parse_branches)
+        + " else None\n\n"
         "    canonical_combining_class_short : U8 -> [Some(Str), None]\n"
         "    canonical_combining_class_short = |value| {\n"
         "        match value {\n"
@@ -2374,7 +3575,11 @@ def render_property_aliases(
         + "\n".join(ccc_at_matches)
         + "\n            _ => None\n"
         "        }\n"
-        "    }\n"
+        "    }\n\n"
+        "    canonical_combining_class_parse : Str -> [Some(U8), None]\n"
+        "    canonical_combining_class_parse = |name| "
+        + " else ".join(ccc_parse_branches)
+        + " else None\n"
         "}\n"
     )
 
@@ -2542,10 +3747,18 @@ def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
     incb = list(properties.indic_conjunct_break.records)
     canonical = load_canonical_properties(manifest)
     _line_break_records, line_break_values = load_line_break_properties(manifest)
+    public = load_public_properties(manifest, canonical)
     version = release_version(manifest, "unicode")
     emoji_version = release_version(manifest, "emoji")
     emoji_data_module = _module_for_generator(manifest, "emoji-properties")
     general_category_module = _module_for_generator(manifest, "general-category")
+    jg_identities = _enum_identities(
+        canonical.property_value_aliases["jg"], "No_Joining_Group", source="Joining_Group"
+    )
+    joining_group_source = PropertySource(
+        public.joining_group,
+        (MissingDefault(0, MAX_CODE_POINT, "Joining_Group", jg_identities[0], 0),),
+    )
     generators: dict[str, Callable[[], str]] = {
         "unicode-version": lambda: render_unicode_version(version),
         "grapheme-data": lambda: render_grapheme_data(manifest, version, gcb, incb, emoji),
@@ -2578,6 +3791,66 @@ def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
         ),
         "property-aliases": lambda: render_property_aliases(
             version, canonical, general_category_module
+        ),
+        "bidi-properties": lambda: render_bidi_properties(
+            manifest, version, public, canonical
+        ),
+        "joining-type": lambda: render_enum_property(
+            manifest,
+            version,
+            generator="joining-type",
+            module="InternalJoiningType",
+            source=public.joining_type,
+            aliases=canonical.property_value_aliases["jt"],
+            property_alias=canonical.property_aliases["jt"],
+            default_alias="Non_Joining",
+        ),
+        "joining-group": lambda: render_enum_property(
+            manifest,
+            version,
+            generator="joining-group",
+            module="InternalJoiningGroup",
+            source=joining_group_source,
+            aliases=canonical.property_value_aliases["jg"],
+            property_alias=canonical.property_aliases["jg"],
+            default_alias="No_Joining_Group",
+        ),
+        "indic-syllabic-category": lambda: render_enum_property(
+            manifest,
+            version,
+            generator="indic-syllabic-category",
+            module="InternalIndicSyllabicCategory",
+            source=public.indic_syllabic_category,
+            aliases=canonical.property_value_aliases["InSC"],
+            property_alias=canonical.property_aliases["InSC"],
+            default_alias="Other",
+        ),
+        "indic-positional-category": lambda: render_enum_property(
+            manifest,
+            version,
+            generator="indic-positional-category",
+            module="InternalIndicPositionalCategory",
+            source=public.indic_positional_category,
+            aliases=canonical.property_value_aliases["InPC"],
+            property_alias=canonical.property_aliases["InPC"],
+            default_alias="Not_Applicable",
+        ),
+        "vertical-orientation": lambda: render_enum_property(
+            manifest,
+            version,
+            generator="vertical-orientation",
+            module="InternalVerticalOrientation",
+            source=public.vertical_orientation,
+            aliases=canonical.property_value_aliases["vo"],
+            property_alias=canonical.property_aliases["vo"],
+            default_alias="R",
+        ),
+        "character-flags": lambda: render_character_flags(manifest, version, public),
+        "emoji-variations": lambda: render_emoji_variations(
+            version, public.emoji_variation_bases
+        ),
+        "composite-properties": lambda: render_composite_properties(
+            manifest, version, canonical, properties, public
         ),
     }
 
@@ -2628,8 +3901,9 @@ def validate_all(manifest: dict[str, object]) -> None:
     for source in _require_dict(manifest["sources"], "manifest.sources"):
         verify_source(manifest, source)
     load_property_data(manifest)
-    load_canonical_properties(manifest)
+    canonical = load_canonical_properties(manifest)
     load_line_break_properties(manifest)
+    load_public_properties(manifest, canonical)
     parse_grapheme_tests(manifest)
     parse_line_break_tests(manifest)
     rendered_modules(manifest)
