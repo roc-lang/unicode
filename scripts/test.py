@@ -249,8 +249,9 @@ def make_shards(count: int, jobs: int) -> list[Shard]:
     return result
 
 
-def protocol_payload(suite: str, rows: Sequence[str]) -> str:
-    return f"ROC_UNICODE_TEST_V1\t{suite}\t{len(rows)}\n" + "\n".join(rows) + "\n"
+def protocol_payload(suite: str, rows: Sequence[str]) -> bytes:
+    text = f"ROC_UNICODE_TEST_V1\t{suite}\t{len(rows)}\n" + "\n".join(rows) + "\n"
+    return text.encode("utf-8")
 
 
 def invoke_app(binary: Path, suite: str, rows: Sequence[str], timeout: int) -> str | None:
@@ -259,9 +260,6 @@ def invoke_app(binary: Path, suite: str, rows: Sequence[str], timeout: int) -> s
             [str(binary)],
             cwd=ROOT,
             input=protocol_payload(suite, rows),
-            text=True,
-            encoding="utf-8",
-            errors="replace",
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             timeout=timeout,
@@ -269,7 +267,8 @@ def invoke_app(binary: Path, suite: str, rows: Sequence[str], timeout: int) -> s
     except subprocess.TimeoutExpired:
         return f"timed out after {timeout}s"
     expected = f"PASS\t{suite}\t{len(rows)}"
-    stdout = completed.stdout.strip()
+    stdout = completed.stdout.decode("utf-8", errors="replace").strip()
+    stderr = completed.stderr.decode("utf-8", errors="replace").strip()
     if completed.returncode == 0 and stdout == expected:
         return None
     details = []
@@ -277,8 +276,8 @@ def invoke_app(binary: Path, suite: str, rows: Sequence[str], timeout: int) -> s
         details.append(f"exit={completed.returncode}")
     if stdout:
         details.append(f"stdout={stdout!r}")
-    if completed.stderr.strip():
-        details.append(f"stderr={completed.stderr.strip()!r}")
+    if stderr:
+        details.append(f"stderr={stderr!r}")
     if not details:
         details.append("empty or malformed response")
     return ", ".join(details)
