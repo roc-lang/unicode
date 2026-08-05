@@ -34,10 +34,14 @@ BidiProperties :: [].{
         match InternalBidiProperties.mirroring_glyph(Scalar.to_u32(scalar)) {
             None => None
             Some(target) => {
-                match Scalar.from_u32(target) {
-                    Ok(mapped) => Some(mapped)
-                    Err(_) => None
+                # Generation rejects every non-scalar endpoint. Crashing on a
+                # violated generated-data invariant is deliberate: absence is
+                # a real Unicode answer and must not conceal corrupt data.
+                mapped = match Scalar.from_u32(target) {
+                    Ok(value) => value
+                    Err(_) => { crash "generated bidi mirror target is not a Unicode scalar" }
                 }
+                Some(mapped)
             }
         }
     }
@@ -48,10 +52,13 @@ BidiProperties :: [].{
         match InternalBidiProperties.paired_bracket(Scalar.to_u32(scalar)) {
             None => None
             Some(pair) => {
-                match Scalar.from_u32(pair.scalar) {
-                    Ok(mapped) => Some({ scalar: mapped, kind: pair.kind })
-                    Err(_) => None
+                # See `mirroring_glyph`: invalid generated targets are faults,
+                # never semantically meaningful missing mappings.
+                mapped = match Scalar.from_u32(pair.scalar) {
+                    Ok(value) => value
+                    Err(_) => { crash "generated bidi bracket target is not a Unicode scalar" }
                 }
+                Some({ scalar: mapped, kind: pair.kind })
             }
         }
     }

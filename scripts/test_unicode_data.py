@@ -192,6 +192,68 @@ class UnicodeDataTests(unittest.TestCase):
                 properties=unicode_data.EMOJI_PROPERTIES,
             )
 
+    def test_bidi_default_cascade_rejects_value_drift_and_duplicates(self) -> None:
+        manifest = unicode_data.load_manifest()
+        canonical = unicode_data.load_canonical_properties(manifest)
+        original = unicode_data.verify_source(manifest, "derived_bidi_class")
+        declaration = "# @missing: 0590..05FF; Right_To_Left"
+        self.assertIn(declaration, original)
+        mutations = (
+            original.replace(declaration, "# @missing: 0590..05FF; Arabic_Letter"),
+            original + f"\n{declaration}\n",
+            original + "\n# @missing: 0000..10FFFF; Joining_Type; Non_Joining\n",
+        )
+        verified_source = unicode_data.verify_source
+        for mutated in mutations:
+            with self.subTest(mutation=mutated[-90:]):
+                def verify_with_mutation(
+                    loaded_manifest: dict[str, object], loaded_source: str
+                ) -> str:
+                    if loaded_source == "derived_bidi_class":
+                        return mutated
+                    return verified_source(loaded_manifest, loaded_source)
+
+                with (
+                    mock.patch.object(
+                        unicode_data, "verify_source", side_effect=verify_with_mutation
+                    ),
+                    self.assertRaisesRegex(
+                        unicode_data.DataError, "exact Unicode 17.0.0 cascade"
+                    ),
+                ):
+                    unicode_data.load_public_properties(manifest, canonical)
+
+    def test_sparse_public_data_rejects_every_non_scalar_endpoint(self) -> None:
+        for invalid in ("D800", "110000"):
+            with self.subTest(parser="mapping-source", invalid=invalid):
+                with self.assertRaisesRegex(unicode_data.DataError, "non-scalar"):
+                    unicode_data._parse_sparse_mapping(
+                        f"{invalid}; 0029\n", source="mapping"
+                    )
+            with self.subTest(parser="mapping-target", invalid=invalid):
+                with self.assertRaisesRegex(unicode_data.DataError, "non-scalar"):
+                    unicode_data._parse_sparse_mapping(
+                        f"0028; {invalid}\n", source="mapping"
+                    )
+            with self.subTest(parser="bracket-source", invalid=invalid):
+                with self.assertRaisesRegex(unicode_data.DataError, "non-scalar"):
+                    unicode_data._parse_bidi_brackets(
+                        f"{invalid}; 0029; o\n0029; {invalid}; c\n",
+                        source="brackets",
+                    )
+            with self.subTest(parser="bracket-target", invalid=invalid):
+                with self.assertRaisesRegex(unicode_data.DataError, "non-scalar"):
+                    unicode_data._parse_bidi_brackets(
+                        f"0028; {invalid}; o\n{invalid}; 0028; c\n",
+                        source="brackets",
+                    )
+            with self.subTest(parser="variation-base", invalid=invalid):
+                with self.assertRaisesRegex(unicode_data.DataError, "non-scalar"):
+                    unicode_data._parse_emoji_variation_bases(
+                        f"{invalid} FE0E; text style\n{invalid} FE0F; emoji style\n",
+                        source="variations",
+                    )
+
     def test_full_loaders_reject_alternate_shape_conflicting_formal_defaults(self) -> None:
         manifest = unicode_data.load_manifest()
         mutations = (

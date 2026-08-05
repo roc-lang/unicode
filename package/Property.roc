@@ -1,5 +1,6 @@
 import BidiClass
 import BidiProperties
+import ByteRange
 import CanonicalCombiningClass
 import EastAsianWidth
 import Emoji
@@ -9,6 +10,7 @@ import IndicSyllabicCategory
 import InternalCharacterFlags
 import InternalCompositeProperties
 import InternalLooseAlias
+import InternalUtf8
 import JoiningGroup
 import JoiningType
 import Scalar
@@ -144,8 +146,30 @@ Property :: [].{
     ## stop early without decoding its suffix.
     iter : Str -> Iter(Entry)
     iter = |source| {
-        Scalar.iter(source).map(|located| {
-            { located, row: Property.of_scalar(located.scalar) }
-        })
+        next_entry = |cursor| {
+            match InternalUtf8.next(cursor) {
+                Done => Err(NoMore)
+                One({ item, rest }) => {
+                    match Scalar.from_u32(item.scalar) {
+                        Err(_) => Err(NoMore)
+                        Ok(scalar) => {
+                            match ByteRange.from_bounds(item.byte_start, item.byte_end) {
+                                Err(_) => Err(NoMore)
+                                Ok(byte_range) => Ok(({
+                                    located: {
+                                        scalar,
+                                        byte_range,
+                                        scalar_index: item.scalar_index,
+                                    },
+                                    row: Property.of_scalar(scalar),
+                                }, rest))
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Iter.custom(InternalUtf8.init(source), Unknown, next_entry)
     }
 }

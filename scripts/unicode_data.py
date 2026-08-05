@@ -103,6 +103,37 @@ FORMAL_PROPERTY_ALIASES = {
     "Line_Break": ("lb",),
 }
 
+# DerivedBidiClass-17.0.0 has an ordered default cascade whose ranges are part
+# of the data contract, not merely an implementation detail. In particular,
+# changing one nontrivial default can silently reclassify large unassigned
+# regions while every explicit record remains valid.
+BIDI_CLASS_DEFAULTS = (
+    (0x0000, 0x10FFFF, "Left_To_Right"),
+    (0x0590, 0x05FF, "Right_To_Left"),
+    (0x0600, 0x07BF, "Arabic_Letter"),
+    (0x07C0, 0x085F, "Right_To_Left"),
+    (0x0860, 0x08FF, "Arabic_Letter"),
+    (0x20A0, 0x20CF, "European_Terminator"),
+    (0xFB1D, 0xFB4F, "Right_To_Left"),
+    (0xFB50, 0xFDCF, "Arabic_Letter"),
+    (0xFDF0, 0xFDFF, "Arabic_Letter"),
+    (0xFE70, 0xFEFF, "Arabic_Letter"),
+    (0x10800, 0x10CFF, "Right_To_Left"),
+    (0x10D00, 0x10D3F, "Arabic_Letter"),
+    (0x10D40, 0x10EBF, "Right_To_Left"),
+    (0x10EC0, 0x10EFF, "Arabic_Letter"),
+    (0x10F00, 0x10F2F, "Right_To_Left"),
+    (0x10F30, 0x10F6F, "Arabic_Letter"),
+    (0x10F70, 0x10FFF, "Right_To_Left"),
+    (0x1E800, 0x1EC6F, "Right_To_Left"),
+    (0x1EC70, 0x1ECBF, "Arabic_Letter"),
+    (0x1ECC0, 0x1ECFF, "Right_To_Left"),
+    (0x1ED00, 0x1ED4F, "Arabic_Letter"),
+    (0x1ED50, 0x1EDFF, "Right_To_Left"),
+    (0x1EE00, 0x1EEFF, "Arabic_Letter"),
+    (0x1EF00, 0x1EFFF, "Right_To_Left"),
+)
+
 
 class DataError(ValueError):
     """Pinned data is malformed or has drifted from its manifest."""
@@ -1177,8 +1208,20 @@ def parse_ranges(
 
 
 def loose_alias(value: str) -> str:
-    """Unicode loose matching for property and property-value aliases."""
-    return "".join(character.lower() for character in value if character not in " _-")
+    """UAX #44 revision 36, LM3 loose matching for ASCII property aliases."""
+    ignored_whitespace = {
+        "\u0009", "\u000A", "\u000B", "\u000C", "\u000D", "\u0020",
+        "\u0085", "\u00A0", "\u1680", "\u2000", "\u2001", "\u2002",
+        "\u2003", "\u2004", "\u2005", "\u2006", "\u2007", "\u2008",
+        "\u2009", "\u200A", "\u2028", "\u2029", "\u202F", "\u205F",
+        "\u3000",
+    }
+    normalized = "".join(
+        character.lower()
+        for character in value
+        if character not in "_-" and character not in ignored_whitespace
+    )
+    return normalized[2:] if len(normalized) > 2 and normalized.startswith("is") else normalized
 
 
 def parse_property_aliases(text: str, *, source: str) -> dict[str, PropertyAlias]:
@@ -1811,6 +1854,10 @@ def _resolved_property_source(
     return PropertySource(resolved_records, resolved_defaults)
 
 
+def _is_unicode_scalar(code_point: int) -> bool:
+    return 0 <= code_point <= MAX_CODE_POINT and not 0xD800 <= code_point <= 0xDFFF
+
+
 def _parse_unicode_data_mirrored(text: str, *, source: str) -> tuple[RangeRecord, ...]:
     records: list[RangeRecord] = []
     previous = -1
@@ -1864,8 +1911,12 @@ def _parse_sparse_mapping(text: str, *, source: str) -> tuple[SparseMapping, ...
         if len(fields) != 2 or any(HEX_RE.fullmatch(field) is None for field in fields):
             raise DataError(f"{source}:{line_number}: malformed scalar mapping")
         source_cp, target_cp = (int(field, 16) for field in fields)
-        if source_cp in seen or source_cp > MAX_CODE_POINT or target_cp > MAX_CODE_POINT:
-            raise DataError(f"{source}:{line_number}: duplicate or invalid scalar mapping")
+        if (
+            source_cp in seen
+            or not _is_unicode_scalar(source_cp)
+            or not _is_unicode_scalar(target_cp)
+        ):
+            raise DataError(f"{source}:{line_number}: duplicate or non-scalar mapping endpoint")
         seen.add(source_cp)
         records.append(SparseMapping(source_cp, target_cp, line_number))
     if not records or tuple(record.source for record in records) != tuple(sorted(seen)):
@@ -1889,8 +1940,12 @@ def _parse_bidi_brackets(text: str, *, source: str) -> tuple[BidiBracket, ...]:
         ):
             raise DataError(f"{source}:{line_number}: malformed bidi bracket record")
         record = BidiBracket(int(fields[0], 16), int(fields[1], 16), fields[2], line_number)
-        if record.source in by_source or record.source > MAX_CODE_POINT or record.target > MAX_CODE_POINT:
-            raise DataError(f"{source}:{line_number}: duplicate or invalid bidi bracket")
+        if (
+            record.source in by_source
+            or not _is_unicode_scalar(record.source)
+            or not _is_unicode_scalar(record.target)
+        ):
+            raise DataError(f"{source}:{line_number}: duplicate or non-scalar bidi bracket endpoint")
         by_source[record.source] = record
         records.append(record)
     if tuple(record.source for record in records) != tuple(sorted(by_source)):
@@ -2002,8 +2057,8 @@ def _parse_emoji_variation_bases(text: str, *, source: str) -> tuple[int, ...]:
         if previous is not None and pair <= previous:
             raise DataError(f"{source}:{line_number}: emoji variation sequences are not ordered")
         previous = pair
-        if selector not in (0xFE0E, 0xFE0F) or base > MAX_CODE_POINT:
-            raise DataError(f"{source}:{line_number}: invalid emoji variation sequence")
+        if selector not in (0xFE0E, 0xFE0F) or not _is_unicode_scalar(base):
+            raise DataError(f"{source}:{line_number}: non-scalar or invalid emoji variation sequence")
         if selector in by_base.setdefault(base, {}):
             raise DataError(f"{source}:{line_number}: duplicate emoji variation selector")
         by_base[base][selector] = fields[1]
@@ -2050,8 +2105,26 @@ def load_public_properties(
         aliases=value_aliases["bc"],
         expected_base="Left_To_Right",
     )
-    if len(bidi_class.defaults) <= 1:
-        raise DataError(f"{bidi_path}: Bidi_Class lost its nontrivial ranged defaults")
+    bidi_declarations = parse_missing_defaults(bidi_text, source=bidi_path)
+    expected_bidi_defaults = tuple(
+        (
+            start,
+            end,
+            _resolve_alias(value_aliases["bc"], value, source=bidi_path),
+        )
+        for start, end, value in BIDI_CLASS_DEFAULTS
+    )
+    actual_bidi_defaults = tuple(
+        (default.start, default.end, default.value)
+        for default in bidi_class.defaults
+    )
+    if (
+        len(bidi_declarations) != len(bidi_class.defaults)
+        or actual_bidi_defaults != expected_bidi_defaults
+    ):
+        raise DataError(
+            f"{bidi_path}: Bidi_Class @missing declarations drifted from the exact Unicode 17.0.0 cascade"
+        )
 
     unicode_data_text, unicode_data_path = load_source("ucd-unicode-data", ("Bidi_Mirrored",))
     mirrored = _parse_unicode_data_mirrored(unicode_data_text, source=unicode_data_path)
