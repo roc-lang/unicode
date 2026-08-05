@@ -7,12 +7,16 @@ examples/get-visual-width
 examples/nr-of-code-points
 examples/split-graphemes
 
-# Ignore the generated files
+# Ignore generated output
 generated-docs
-package/InternalGBPGen
-package/GraphemeTestGen
-package/InternalEmojiGen
-package/InternalEAWGen
+tests/platform/.zig-cache/
+tests/platform/zig-out/
+tests/platform/targets/*/libhost.a
+tests/platform/targets/*/host.lib
+tests/platform/targets/x64v1musl/crt1.o
+tests/platform/targets/x64v1musl/libc.a
+tests/platform/targets/arm64v1musl/crt1.o
+tests/platform/targets/arm64v1musl/libc.a
 
 # Ignore release workflow scratch files
 dist/

@@ -85,7 +85,7 @@ def start_server(directory: Path) -> tuple[http.server.ThreadingHTTPServer, str]
     return server, f"http://127.0.0.1:{port}"
 
 
-def copy_examples_with_bundle_url(examples_dir: Path, bundle_url: str) -> list[Path]:
+def copy_examples_with_bundle_url(examples_dir: Path, bundle_url: str) -> Path:
     target_dir = examples_dir / "examples"
     target_dir.mkdir()
 
@@ -102,33 +102,7 @@ def copy_examples_with_bundle_url(examples_dir: Path, bundle_url: str) -> list[P
     if not examples:
         raise SystemExit("No examples found to test")
 
-    return examples
-
-
-def run_example_checks(examples: list[Path]) -> None:
-    for example in examples:
-        run([ROC, "check", example.name, "--no-cache"], cwd=example.parent)
-
-
-def run_example_tests(examples: list[Path]) -> None:
-    for example in examples:
-        if re.search(r"(?m)^\s*expect\b", example.read_text(encoding="utf-8")):
-            run([ROC, "test", example.name, "--no-cache"], cwd=example.parent)
-
-
-def run_example_apps(examples: list[Path]) -> None:
-    for example in examples:
-        run([ROC, example.name, "--no-cache"], cwd=example.parent)
-
-
-def build_and_run_examples(examples: list[Path], build_dir: Path) -> None:
-    build_dir.mkdir(parents=True, exist_ok=True)
-    exe_suffix = ".exe" if os.name == "nt" else ""
-
-    for example in examples:
-        output = build_dir / f"{example.stem}{exe_suffix}"
-        run([ROC, "build", example.name, f"--output={output}", "--no-cache"], cwd=example.parent)
-        run([str(output)])
+    return target_dir
 
 
 def main() -> None:
@@ -147,8 +121,6 @@ def main() -> None:
         tmp_dir = Path(tmp)
         bundle_dir = tmp_dir / "bundle"
         examples_dir = tmp_dir / "rewritten"
-        build_dir = tmp_dir / "build"
-
         bundle_dir.mkdir()
         examples_dir.mkdir()
 
@@ -165,15 +137,21 @@ def main() -> None:
         server, base_url = start_server(bundle_dir)
         try:
             bundle_url = f"{base_url}/{bundle_path.name}"
-            examples = copy_examples_with_bundle_url(examples_dir, bundle_url)
+            rewritten_examples = copy_examples_with_bundle_url(examples_dir, bundle_url)
 
             print(f"Testing examples with bundled package: {bundle_url}")
-            run_example_checks(examples)
-            run_example_tests(examples)
-            run_example_apps(examples)
-
-            if not args.skip_build_run:
-                build_and_run_examples(examples, build_dir)
+            runner = [
+                sys.executable,
+                "scripts/test.py",
+                "examples",
+                "--roc",
+                ROC,
+                "--examples-dir",
+                str(rewritten_examples),
+            ]
+            if args.skip_build_run:
+                raise SystemExit("--skip-build-run is no longer supported by the exact example runner")
+            run(runner)
         finally:
             server.shutdown()
             server.server_close()
