@@ -30,6 +30,11 @@
       "release": "unicode",
       "document": "https://www.unicode.org/reports/tr14/tr14-55.html"
     },
+    "uax_24": {
+      "revision": "39",
+      "release": "unicode",
+      "document": "https://www.unicode.org/reports/tr24/tr24-39.html"
+    },
     "uax_29": {
       "revision": "47",
       "release": "unicode",
@@ -202,6 +207,32 @@
       "format": "ucd-numeric-property-ranges",
       "properties": ["Canonical_Combining_Class"]
     },
+    "scripts": {
+      "path": "vendor/unicode/17.0.0/Scripts.txt",
+      "url": "https://www.unicode.org/Public/17.0.0/ucd/Scripts.txt",
+      "sha256": "9f5e50d3abaee7d6ce09480f325c706f485ae3240912527e651954d2d6b035bf",
+      "header": "# Scripts-17.0.0.txt",
+      "records": 2287,
+      "role": "production-and-conformance",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "ucd-property-ranges",
+      "properties": ["Script"]
+    },
+    "script_extensions": {
+      "path": "vendor/unicode/17.0.0/ScriptExtensions.txt",
+      "url": "https://www.unicode.org/Public/17.0.0/ucd/ScriptExtensions.txt",
+      "sha256": "ec2107e58825a1586acee8e0911ce18260394ac8b87e535ca325f1ccbeb06bc6",
+      "header": "# ScriptExtensions-17.0.0.txt",
+      "records": 206,
+      "role": "production-and-conformance",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "ucd-script-extensions",
+      "properties": ["Script_Extensions"]
+    },
     "property_aliases": {
       "path": "vendor/unicode/17.0.0/PropertyAliases.txt",
       "url": "https://www.unicode.org/Public/17.0.0/ucd/PropertyAliases.txt",
@@ -233,6 +264,7 @@
         "Indic_Syllabic_Category",
         "Joining_Group",
         "Joining_Type",
+        "Script",
         "Variation_Selector",
         "Vertical_Orientation"
       ]
@@ -268,6 +300,7 @@
         "Indic_Syllabic_Category",
         "Joining_Group",
         "Joining_Type",
+        "Script",
         "Variation_Selector",
         "Vertical_Orientation"
       ]
@@ -708,6 +741,51 @@
       "sources": ["property_aliases", "property_value_aliases", "derived_general_category"],
       "specifications": ["uax_44"],
       "artifacts": ["general_category"]
+    },
+    "script_data": {
+      "generator": "script-data",
+      "output": "package/InternalScriptData.roc",
+      "sources": ["scripts", "property_value_aliases"],
+      "specifications": ["uax_24", "uax_44"],
+      "artifacts": [],
+      "layout": {
+        "kind": "deduplicated-pages",
+        "candidate_page_bits": [6, 7, 8, 9, 10],
+        "page_bits": 7,
+        "index_type": "U8",
+        "value_type": "U8",
+        "expected_index_entries": 8704,
+        "expected_distinct_pages": 255,
+        "expected_logical_bytes": 41344,
+        "max_logical_bytes": 41344,
+        "ascii": "computed"
+      }
+    },
+    "script_extensions_data": {
+      "generator": "script-extensions-data",
+      "output": "package/InternalScriptExtensionsData.roc",
+      "sources": ["script_extensions", "property_value_aliases"],
+      "specifications": ["uax_24", "uax_44"],
+      "artifacts": ["script_data"],
+      "layout": {
+        "kind": "deduplicated-pages",
+        "candidate_page_bits": [6, 7, 8, 9, 10],
+        "page_bits": 8,
+        "index_type": "U8",
+        "value_type": "U8",
+        "expected_index_entries": 4352,
+        "expected_distinct_pages": 39,
+        "expected_logical_bytes": 14336,
+        "max_logical_bytes": 14336,
+        "ascii": "constant-zero"
+      }
+    },
+    "script_api": {
+      "generator": "script-api",
+      "output": "package/Script.roc",
+      "sources": ["property_value_aliases"],
+      "specifications": ["uax_24", "uax_44"],
+      "artifacts": ["script_data", "script_extensions_data"]
     }
   }
 }

@@ -91,9 +91,13 @@ PUBLIC_ALIAS_PROPERTIES = (
     "Indic_Syllabic_Category",
     "Joining_Group",
     "Joining_Type",
+    "Script",
     "Variation_Selector",
     "Vertical_Orientation",
 )
+SCRIPT_PROPERTIES = ("Script",)
+SCRIPT_EXTENSIONS_PROPERTIES = ("Script_Extensions",)
+IMPLICIT_SCRIPTS = frozenset(("Zinh", "Zyyy", "Zzzz"))
 FORMAL_PROPERTY_ALIASES = {
     "Canonical_Combining_Class": ("ccc",),
     "East_Asian_Width": ("ea",),
@@ -101,6 +105,8 @@ FORMAL_PROPERTY_ALIASES = {
     "Grapheme_Cluster_Break": ("GCB",),
     "Indic_Conjunct_Break": ("InCB",),
     "Line_Break": ("lb",),
+    "Script": ("sc",),
+    "Script_Extensions": ("scx",),
 }
 
 # DerivedBidiClass-17.0.0 has an ordered default cascade whose ranges are part
@@ -194,6 +200,22 @@ class MissingDefault:
 class PropertySource:
     records: tuple[RangeRecord, ...]
     defaults: tuple[MissingDefault, ...]
+
+
+@dataclass(frozen=True, order=True)
+class ScriptExtensionRecord:
+    start: int
+    end: int
+    scripts: tuple[str, ...]
+    line: int
+
+
+@dataclass(frozen=True)
+class ScriptProperties:
+    scripts: tuple[RangeRecord, ...]
+    script_default: str
+    extensions: tuple[ScriptExtensionRecord, ...]
+    aliases: tuple[PropertyValueAlias, ...]
 
 
 @dataclass(frozen=True)
@@ -340,6 +362,12 @@ SOURCE_PROJECTION_CONTRACTS = {
     ("ucd-property-value-aliases", PUBLIC_ALIAS_PROPERTIES): SourceProjectionContract(
         "ucd/PropertyValueAliases.txt", "production-metadata"
     ),
+    ("ucd-property-ranges", SCRIPT_PROPERTIES): SourceProjectionContract(
+        "ucd/Scripts.txt", "production-and-conformance"
+    ),
+    ("ucd-script-extensions", SCRIPT_EXTENSIONS_PROPERTIES): SourceProjectionContract(
+        "ucd/ScriptExtensions.txt", "production-and-conformance"
+    ),
     ("ucd-property-ranges", ("Bidi_Class",)): SourceProjectionContract(
         "ucd/extracted/DerivedBidiClass.txt", "production"
     ),
@@ -384,6 +412,7 @@ SPECIFICATION_COMPATIBILITY = {
     "uax_9": ("unicode", "17.0.0", "51"),
     "uax_11": ("unicode", "17.0.0", "44"),
     "uax_14": ("unicode", "17.0.0", "55"),
+    "uax_24": ("unicode", "17.0.0", "39"),
     "uax_29": ("unicode", "17.0.0", "47"),
     "uax_44": ("unicode", "17.0.0", "36"),
     "uax_50": ("unicode", "17.0.0", "33"),
@@ -589,6 +618,34 @@ GENERATOR_CONTRACTS = {
         True,
         "computed",
         "U16",
+    ),
+    "script-data": GeneratorContract(
+        (
+            ("ucd-property-ranges", SCRIPT_PROPERTIES),
+            ("ucd-property-value-aliases", PUBLIC_ALIAS_PROPERTIES),
+        ),
+        ("uax_24", "uax_44"),
+        (),
+        "package/InternalScriptData.roc",
+        True,
+        "computed",
+    ),
+    "script-extensions-data": GeneratorContract(
+        (
+            ("ucd-script-extensions", SCRIPT_EXTENSIONS_PROPERTIES),
+            ("ucd-property-value-aliases", PUBLIC_ALIAS_PROPERTIES),
+        ),
+        ("uax_24", "uax_44"),
+        ("script-data",),
+        "package/InternalScriptExtensionsData.roc",
+        True,
+        "constant-zero",
+    ),
+    "script-api": GeneratorContract(
+        (("ucd-property-value-aliases", PUBLIC_ALIAS_PROPERTIES),),
+        ("uax_24", "uax_44"),
+        ("script-data", "script-extensions-data"),
+        "package/Script.roc",
     ),
 }
 
@@ -2254,6 +2311,149 @@ def load_public_properties(
     )
 
 
+def parse_script_extensions(
+    text: str,
+    *,
+    source: str,
+    aliases: Iterable[PropertyValueAlias],
+) -> list[ScriptExtensionRecord]:
+    aliases = tuple(aliases)
+    _required_formal_default(
+        text,
+        source=source,
+        property_name="Script_Extensions",
+        declared_property=None,
+        value="<script>",
+    )
+    records: list[ScriptExtensionRecord] = []
+    for line_number, raw_line in enumerate(text.splitlines(), 1):
+        body = raw_line.split("#", 1)[0].strip()
+        if not body:
+            continue
+        fields = tuple(field.strip() for field in body.split(";"))
+        if len(fields) != 2 or not fields[0] or not fields[1]:
+            raise DataError(f"{source}:{line_number}: malformed Script_Extensions line")
+        range_fields = fields[0].split("..")
+        if (
+            len(range_fields) not in (1, 2)
+            or any(HEX_RE.fullmatch(value) is None for value in range_fields)
+        ):
+            raise DataError(f"{source}:{line_number}: malformed Script_Extensions range")
+        start = int(range_fields[0], 16)
+        end = int(range_fields[-1], 16)
+        if start > end or end > MAX_CODE_POINT:
+            raise DataError(f"{source}:{line_number}: invalid Script_Extensions range")
+        raw_members = fields[1].split()
+        if not raw_members:
+            raise DataError(f"{source}:{line_number}: empty Script_Extensions set")
+        members = tuple(
+            sorted(_resolve_alias(aliases, member, source=source) for member in raw_members)
+        )
+        if len(members) != len(set(members)):
+            raise DataError(f"{source}:{line_number}: duplicate Script_Extensions member")
+        implicit = sorted(set(members) & IMPLICIT_SCRIPTS)
+        if implicit:
+            raise DataError(
+                f"{source}:{line_number}: explicit Script_Extensions set contains implicit values {implicit}"
+            )
+        records.append(ScriptExtensionRecord(start, end, members, line_number))
+    if not records:
+        raise DataError(f"{source}: no Script_Extensions records")
+    ordered = sorted(records, key=lambda item: (item.start, item.end))
+    for previous, current in zip(ordered, ordered[1:]):
+        if current.start <= previous.end:
+            raise DataError(
+                f"{source}:{current.line}: Script_Extensions range overlaps line {previous.line}"
+            )
+    return records
+
+
+def load_script_properties(manifest: dict[str, object]) -> ScriptProperties:
+    alias_properties = PUBLIC_ALIAS_PROPERTIES
+    value_alias_name = _source_for(
+        manifest, "ucd-property-value-aliases", alias_properties
+    )
+    value_alias_path = data_path(manifest, value_alias_name)
+    value_aliases = parse_property_value_aliases(
+        verify_source(manifest, value_alias_name), source=str(value_alias_path)
+    )
+    if "sc" not in value_aliases:
+        raise DataError("property-value aliases omit the Script property")
+    script_aliases = tuple(value_aliases["sc"])
+    stable_identities = {record.identity for record in script_aliases}
+    if len(stable_identities) > 0x100:
+        raise DataError("Script private encoding no longer fits in U8")
+
+    script_name = _source_for(manifest, "ucd-property-ranges", SCRIPT_PROPERTIES)
+    script_path = data_path(manifest, script_name)
+    script_text = verify_source(manifest, script_name)
+    accepted_values = {
+        alias
+        for record in script_aliases
+        for alias in (record.identity, record.short, record.long, *record.aliases)
+    }
+    parsed_scripts = parse_ranges(
+        script_text,
+        source=str(script_path),
+        allowed_properties=accepted_values,
+        default_marker=None,
+    )
+    scripts = tuple(
+        RangeRecord(
+            record.start,
+            record.end,
+            _resolve_alias(script_aliases, record.property, source=str(script_path)),
+            record.line,
+        )
+        for record in parsed_scripts
+    )
+    formal_default = _required_formal_default(
+        script_text,
+        source=str(script_path),
+        property_name="Script",
+        declared_property=None,
+        value="Unknown",
+    )
+    script_default = _resolve_alias(
+        script_aliases, formal_default.value, source=str(script_path)
+    )
+    if script_default != "Zzzz":
+        raise DataError("Script default must resolve to the stable Unknown identity Zzzz")
+
+    extension_name = _source_for(
+        manifest, "ucd-script-extensions", SCRIPT_EXTENSIONS_PROPERTIES
+    )
+    extension_path = data_path(manifest, extension_name)
+    extensions = tuple(
+        parse_script_extensions(
+            verify_source(manifest, extension_name),
+            source=str(extension_path),
+            aliases=script_aliases,
+        )
+    )
+    private_ids = {
+        identity: index for index, identity in enumerate(sorted(stable_identities))
+    }
+    primary = bytearray((private_ids[script_default],)) * (MAX_CODE_POINT + 1)
+    for record in scripts:
+        value = private_ids[record.property]
+        primary[record.start : record.end + 1] = bytes((value,)) * (
+            record.end - record.start + 1
+        )
+    identities = tuple(sorted(stable_identities))
+    for record in extensions:
+        for code_point in range(record.start, record.end + 1):
+            script = identities[primary[code_point]]
+            if script not in IMPLICIT_SCRIPTS and script not in record.scripts:
+                raise DataError(
+                    f"{extension_path}:{record.line}: explicit Script {script} is absent from Script_Extensions"
+                )
+    explicit_sets = {record.scripts for record in extensions}
+    if len(explicit_sets) > 0xFF:
+        raise DataError("Script_Extensions override set count no longer fits in U8")
+    return ScriptProperties(scripts, script_default, extensions, script_aliases)
+
+
 def parse_grapheme_tests(
     manifest: dict[str, object], text: str | None = None
 ) -> list[GraphemeCase]:
@@ -2985,6 +3185,391 @@ def render_canonical_combining_class(
         f"page_index = {_roc_list(paged.page_index)}\n\n"
         "pages : List(U8)\n"
         f"pages = {_roc_list(paged.flat_pages)}\n"
+    )
+
+
+def _script_aliases_by_identity(
+    properties: ScriptProperties,
+) -> tuple[PropertyValueAlias, ...]:
+    return tuple(sorted(properties.aliases, key=lambda record: record.identity))
+
+
+def render_script_data(
+    manifest: dict[str, object], version: str, properties: ScriptProperties
+) -> str:
+    aliases = _script_aliases_by_identity(properties)
+    identities = tuple(record.identity for record in aliases)
+    private_ids = {identity: index for index, identity in enumerate(identities)}
+    encoded = bytearray((private_ids[properties.script_default],)) * (
+        MAX_CODE_POINT + 1
+    )
+    for record in properties.scripts:
+        value = private_ids[record.property]
+        encoded[record.start : record.end + 1] = bytes((value,)) * (
+            record.end - record.start + 1
+        )
+    paged = _selected_paged_bytes(encoded, manifest=manifest, generator="script-data")
+    page_size = 1 << paged.page_bits
+    ascii_branches = []
+    for identity in identities:
+        ranges = _ascii_ranges(encoded, private_ids[identity])
+        if ranges:
+            ascii_branches.append(f"if {_condition(ranges)} ({identity})")
+    ascii_expression = " else ".join(ascii_branches) + f" else {properties.script_default}"
+    from_matches = "\n".join(
+        f"        {private_ids[identity]} => {identity}" for identity in identities
+    )
+    id_matches = "\n".join(
+        f"        {identity} => {private_ids[identity]}" for identity in identities
+    )
+    short_matches = "\n".join(
+        f"        {record.identity} => {_roc_string(record.short)}" for record in aliases
+    )
+    long_matches = "\n".join(
+        f"        {record.identity} => {_roc_string(record.long)}" for record in aliases
+    )
+    alias_count_matches = []
+    alias_at_matches = []
+    from_alias_conditions = []
+    for record in aliases:
+        names = _unique_aliases((record.short, record.long, *record.aliases))
+        alias_count_matches.append(f"        {record.identity} => {len(names)}")
+        for index, alias in enumerate(names):
+            alias_at_matches.append(
+                f"        ({record.identity}, {index}) => Some({_roc_string(alias)})"
+            )
+            from_alias_conditions.append(
+                f"if loose_eq(value, {_roc_string(alias)}) Some({record.identity})"
+            )
+    from_alias_expression = " else ".join(from_alias_conditions) + " else None"
+    return (
+        f"## GENERATED from Unicode {version} Scripts.txt and PropertyValueAliases.txt under UAX #24 revision 39. ##\n"
+        "## Run `python3 scripts/unicode_data.py generate`. Named tags/aliases are stable; U8 values are private. ##\n"
+        f"## default: {properties.script_default}; {len(identities)} identities; layout: "
+        f"{len(paged.page_index)} {paged.index_type} page ids + {len(paged.pages)} x {page_size} U8 values; "
+        f"logical payload {paged.storage_bytes} bytes. ##\n\n"
+        "InternalScriptData :: [].{\n"
+        f"    Script : [{', '.join(identities)}]\n\n"
+        "    lookup : U32 -> Script\n"
+        "    lookup = |scalar| {\n"
+        f"        if scalar < 128 {{\n            ascii_script(scalar)\n        }} else if scalar > 0x10FFFF {{\n            {properties.script_default}\n        }} else {{\n"
+        f"            page_id = page_index.get(scalar.shr_wrap({paged.page_bits}).to_u64()) ?? 0\n"
+        f"            offset = page_id.to_u64() * {page_size} + scalar.bitwise_and({page_size - 1}).to_u64()\n"
+        f"            from_private_id(pages.get(offset) ?? {private_ids[properties.script_default]})\n"
+        "        }\n"
+        "    }\n\n"
+        "    private_id : Script -> U8\n"
+        "    private_id = |script| {\n        match script {\n"
+        f"{id_matches}\n        }}\n    }}\n\n"
+        "    from_private_id : U8 -> Script\n"
+        "    from_private_id = |value| {\n        match value {\n"
+        f"{from_matches}\n        _ => {properties.script_default}\n        }}\n    }}\n\n"
+        "    short_alias : Script -> Str\n"
+        "    short_alias = |script| {\n        match script {\n"
+        f"{short_matches}\n        }}\n    }}\n\n"
+        "    long_alias : Script -> Str\n"
+        "    long_alias = |script| {\n        match script {\n"
+        f"{long_matches}\n        }}\n    }}\n\n"
+        "    alias_count : Script -> U8\n"
+        "    alias_count = |script| {\n        match script {\n"
+        + "\n".join(alias_count_matches)
+        + "\n        }\n    }\n\n"
+        "    alias_at : Script, U8 -> [Some(Str), None]\n"
+        "    alias_at = |script, index| {\n        match (script, index) {\n"
+        + "\n".join(alias_at_matches)
+        + "\n        _ => None\n        }\n    }\n\n"
+        "    from_alias : Str -> [Some(Script), None]\n"
+        f"    from_alias = |value| {from_alias_expression}\n"
+        "}\n\n"
+        "ascii_script : U32 -> InternalScriptData.Script\n"
+        f"ascii_script = |u32| {ascii_expression}\n\n"
+        "loose_eq : Str, Str -> Bool\n"
+        "loose_eq = |left, right| {\n"
+        "    var left_bytes = left.iter_utf8()\n"
+        "    var right_bytes = right.iter_utf8()\n"
+        "    while Bool.True {\n"
+        "        left_next = next_loose(left_bytes)\n"
+        "        right_next = next_loose(right_bytes)\n"
+        "        match (left_next, right_next) {\n"
+        "            (End, End) => return Bool.True\n"
+        "            (Byte(_), End) => return Bool.False\n"
+        "            (End, Byte(_)) => return Bool.False\n"
+        "            (Byte(left_item), Byte(right_item)) => {\n"
+        "                if ascii_lower(left_item.value) != ascii_lower(right_item.value) {\n"
+        "                    return Bool.False\n"
+        "                }\n"
+        "                left_bytes = left_item.rest\n"
+        "                right_bytes = right_item.rest\n"
+        "            }\n"
+        "        }\n"
+        "    }\n"
+        "    Bool.False\n"
+        "}\n\n"
+        "next_loose = |initial| {\n"
+        "    var iterator = initial\n"
+        "    while Bool.True {\n"
+        "        match Iter.next(iterator) {\n"
+        "            Done => return End\n"
+        "            Skip({ rest }) => { iterator = rest }\n"
+        "            One({ item, rest }) => {\n"
+        "                if item == 0x20 or item == 0x2D or item == 0x5F {\n"
+        "                    iterator = rest\n"
+        "                } else {\n"
+        "                    return Byte({ value: item, rest })\n"
+        "                }\n"
+        "            }\n"
+        "        }\n"
+        "    }\n"
+        "    End\n"
+        "}\n\n"
+        "ascii_lower = |byte| if 0x41 <= byte and byte <= 0x5A { byte + 0x20 } else { byte }\n\n"
+        f"page_index : List({paged.index_type})\n"
+        f"page_index = {_roc_list(paged.page_index)}\n\n"
+        "pages : List(U8)\n"
+        f"pages = {_roc_list(paged.flat_pages)}\n"
+    )
+
+
+def render_script_extensions_data(
+    manifest: dict[str, object], version: str, properties: ScriptProperties
+) -> str:
+    identities = tuple(record.identity for record in _script_aliases_by_identity(properties))
+    private_ids = {identity: index for index, identity in enumerate(identities)}
+    sets = tuple(
+        sorted(
+            {
+                tuple(sorted(private_ids[identity] for identity in record.scripts))
+                for record in properties.extensions
+            }
+        )
+    )
+    set_ids = {members: index + 1 for index, members in enumerate(sets)}
+    encoded = bytearray(MAX_CODE_POINT + 1)
+    for record in properties.extensions:
+        members = tuple(sorted(private_ids[identity] for identity in record.scripts))
+        value = set_ids[members]
+        encoded[record.start : record.end + 1] = bytes((value,)) * (
+            record.end - record.start + 1
+        )
+    paged = _selected_paged_bytes(
+        encoded, manifest=manifest, generator="script-extensions-data"
+    )
+    page_size = 1 << paged.page_bits
+    words0 = []
+    words1 = []
+    words2 = []
+    lengths = []
+    for members in sets:
+        words = [0, 0, 0]
+        for member in members:
+            words[member // 64] |= 1 << (member % 64)
+        words0.append(words[0])
+        words1.append(words[1])
+        words2.append(words[2])
+        lengths.append(len(members))
+    return (
+        f"## GENERATED from Unicode {version} ScriptExtensions.txt and PropertyValueAliases.txt under UAX #24 revision 39. ##\n"
+        "## Zero means the normative implicit singleton Script(cp); nonzero U8 values name interned sets. ##\n"
+        f"## {len(sets)} explicit sets, {sum(lengths)} pooled members, max {max(lengths)} members; layout: "
+        f"{len(paged.page_index)} {paged.index_type} page ids + {len(paged.pages)} x {page_size} U8 values; "
+        f"logical lookup payload {paged.storage_bytes} bytes; pool payload {len(sets) * 25} bytes. ##\n\n"
+        "InternalScriptExtensionsData :: [].{\n"
+        "    SetBits : { word0 : U64, word1 : U64, word2 : U64, length : U8 }\n\n"
+        "    lookup_override : U32 -> U8\n"
+        "    lookup_override = |scalar| {\n"
+        "        if scalar < 128 {\n            0\n        } else if scalar > 0x10FFFF {\n            0\n        } else {\n"
+        f"            page_id = page_index.get(scalar.shr_wrap({paged.page_bits}).to_u64()) ?? 0\n"
+        f"            offset = page_id.to_u64() * {page_size} + scalar.bitwise_and({page_size - 1}).to_u64()\n"
+        "            pages.get(offset) ?? 0\n"
+        "        }\n"
+        "    }\n\n"
+        "    set_bits : U8 -> SetBits\n"
+        "    set_bits = |override_id| {\n"
+        "        if override_id == 0 {\n"
+        "            { word0: 0, word1: 0, word2: 0, length: 0 }\n"
+        "        } else {\n"
+        "            index = (override_id - 1).to_u64()\n"
+        "            {\n"
+        "                word0: set_word0.get(index) ?? 0,\n"
+        "                word1: set_word1.get(index) ?? 0,\n"
+        "                word2: set_word2.get(index) ?? 0,\n"
+        "                length: set_lengths.get(index) ?? 0,\n"
+        "            }\n"
+        "        }\n"
+        "    }\n"
+        "}\n\n"
+        f"page_index : List({paged.index_type})\n"
+        f"page_index = {_roc_list(paged.page_index)}\n\n"
+        "pages : List(U8)\n"
+        f"pages = {_roc_list(paged.flat_pages)}\n\n"
+        "set_word0 : List(U64)\n"
+        f"set_word0 = {_roc_list(words0, per_line=4)}\n\n"
+        "set_word1 : List(U64)\n"
+        f"set_word1 = {_roc_list(words1, per_line=4)}\n\n"
+        "set_word2 : List(U64)\n"
+        f"set_word2 = {_roc_list(words2, per_line=4)}\n\n"
+        "set_lengths : List(U8)\n"
+        f"set_lengths = {_roc_list(lengths)}\n"
+    )
+
+
+def render_script_api(version: str, properties: ScriptProperties) -> str:
+    identities = tuple(record.identity for record in _script_aliases_by_identity(properties))
+    return (
+        f"## GENERATED public Unicode {version} Script/Script_Extensions API from PropertyValueAliases.txt under UAX #24 revision 39. ##\n"
+        "## Run `python3 scripts/unicode_data.py generate`; representation IDs and bit ordering are private. ##\n\n"
+        "import InternalScriptData\n"
+        "import InternalScriptExtensionsData\n"
+        "import Scalar\n\n"
+        "## Normative Unicode Script and Script_Extensions scalar properties.\n"
+        "##\n"
+        "## Script is not a block, language, direction, font, or security classification.\n"
+        "## Common, Inherited, and Unknown are real property values. Script_Extensions\n"
+        "## is always nonempty: absent override data means the singleton Script(cp).\n"
+        "Script :: [].{\n"
+        f"    Value := [{', '.join(identities)}].{{ is_eq : _ }}\n\n"
+        "    ScriptSet := { word0 : U64, word1 : U64, word2 : U64, length : U8 }\n\n"
+        "    of_scalar : Scalar -> Value\n"
+        "    of_scalar = |scalar| InternalScriptData.lookup(Scalar.to_u32(scalar))\n\n"
+        "    extensions_of_scalar : Scalar -> ScriptSet\n"
+        "    extensions_of_scalar = |scalar| {\n"
+        "        code_point = Scalar.to_u32(scalar)\n"
+        "        primary = InternalScriptData.lookup(code_point)\n"
+        "        override_id = InternalScriptExtensionsData.lookup_override(code_point)\n"
+        "        if override_id == 0 { singleton(primary) } else {\n"
+        "            bits = InternalScriptExtensionsData.set_bits(override_id)\n"
+        "            { word0: bits.word0, word1: bits.word1, word2: bits.word2, length: bits.length }\n"
+        "        }\n"
+        "    }\n\n"
+        "    from_alias : Str -> Try(Value, [UnrecognizedScriptAlias])\n"
+        "    from_alias = |alias| match InternalScriptData.from_alias(alias) {\n"
+        "        Some(script) => Ok(script)\n"
+        "        None => Err(UnrecognizedScriptAlias)\n"
+        "    }\n\n"
+        "    short_alias : Value -> Str\n"
+        "    short_alias = |script| InternalScriptData.short_alias(script)\n\n"
+        "    long_alias : Value -> Str\n"
+        "    long_alias = |script| InternalScriptData.long_alias(script)\n\n"
+        "    alias_count : Value -> U8\n"
+        "    alias_count = |script| InternalScriptData.alias_count(script)\n\n"
+        "    alias_at : Value, U8 -> [Some(Str), None]\n"
+        "    alias_at = |script, index| InternalScriptData.alias_at(script, index)\n\n"
+        "    is_common : Value -> Bool\n"
+        "    is_common = |script| script == Zyyy\n\n"
+        "    is_inherited : Value -> Bool\n"
+        "    is_inherited = |script| script == Zinh\n\n"
+        "    is_unknown : Value -> Bool\n"
+        "    is_unknown = |script| script == Zzzz\n\n"
+        "    is_explicit : Value -> Bool\n"
+        "    is_explicit = |script| script != Zyyy and script != Zinh and script != Zzzz\n\n"
+        "    singleton : Value -> ScriptSet\n"
+        "    singleton = |script| {\n"
+        "        private_id = InternalScriptData.private_id(script)\n"
+        "        word = private_id / 64\n"
+        "        bit = 1.U64.shl_wrap(private_id % 64)\n"
+        "        match word {\n"
+        "            0 => { word0: bit, word1: 0, word2: 0, length: 1 }\n"
+        "            1 => { word0: 0, word1: bit, word2: 0, length: 1 }\n"
+        "            _ => { word0: 0, word1: 0, word2: bit, length: 1 }\n"
+        "        }\n"
+        "    }\n\n"
+        "    contains : ScriptSet, Value -> Bool\n"
+        "    contains = |set, script| {\n"
+        "        private_id = InternalScriptData.private_id(script)\n"
+        "        bit = 1.U64.shl_wrap(private_id % 64)\n"
+        "        word = match private_id / 64 {\n"
+        "            0 => set.word0\n"
+        "            1 => set.word1\n"
+        "            _ => set.word2\n"
+        "        }\n"
+        "        word.bitwise_and(bit) != 0\n"
+        "    }\n\n"
+        "    len : ScriptSet -> U64\n"
+        "    len = |set| set.length.to_u64()\n\n"
+        "    intersection : ScriptSet, ScriptSet -> [Some(ScriptSet), None]\n"
+        "    intersection = |left, right| {\n"
+        "        word0 = left.word0.bitwise_and(right.word0)\n"
+        "        word1 = left.word1.bitwise_and(right.word1)\n"
+        "        word2 = left.word2.bitwise_and(right.word2)\n"
+        "        length = bit_count(word0) + bit_count(word1) + bit_count(word2)\n"
+        "        if length == 0 { None } else {\n"
+        "            Some({ word0, word1, word2, length })\n"
+        "        }\n"
+        "    }\n\n"
+        "    explicit_members : ScriptSet -> [Some(ScriptSet), None]\n"
+        "    explicit_members = |set| {\n"
+        "        without_common = remove(set, Zyyy)\n"
+        "        without_inherited = remove(without_common, Zinh)\n"
+        "        without_unknown = remove(without_inherited, Zzzz)\n"
+        "        if without_unknown.length == 0 { None } else { Some(without_unknown) }\n"
+        "    }\n\n"
+        "    is_eq_set : ScriptSet, ScriptSet -> Bool\n"
+        "    is_eq_set = |left, right| left.word0 == right.word0 and left.word1 == right.word1 and left.word2 == right.word2\n\n"
+        "    compare : ScriptSet, ScriptSet -> [Before, Equal, After]\n"
+        "    compare = |left, right| {\n"
+        "        common = if left.length < right.length { left.length } else { right.length }\n"
+        "        var index = 0.U8\n"
+        "        while index < common {\n"
+        f"            left_script = match at(left, index) {{ Some(value) => value None => {properties.script_default} }}\n"
+        f"            right_script = match at(right, index) {{ Some(value) => value None => {properties.script_default} }}\n"
+        "            left_id = InternalScriptData.private_id(left_script)\n"
+        "            right_id = InternalScriptData.private_id(right_script)\n"
+        "            if left_id < right_id { return Before }\n"
+        "            if left_id > right_id { return After }\n"
+        "            index = index + 1\n"
+        "        }\n"
+        "        if left.length < right.length { Before } else if left.length > right.length { After } else { Equal }\n"
+        "    }\n\n"
+        "    at : ScriptSet, U8 -> [Some(Value), None]\n"
+        "    at = |set, wanted| {\n"
+        "        if wanted >= set.length { return None }\n"
+        "        var private_id = 0.U8\n"
+        "        var seen = 0.U8\n"
+        f"        while private_id < {len(identities)} {{\n"
+        "            script = InternalScriptData.from_private_id(private_id)\n"
+        "            if contains(set, script) {\n"
+        "                if seen == wanted { return Some(script) }\n"
+        "                seen = seen + 1\n"
+        "            }\n"
+        "            private_id = private_id + 1\n"
+        "        }\n"
+        "        None\n"
+        "    }\n\n"
+        "    walk : ScriptSet, state, (state, Value -> state) -> state\n"
+        "    walk = |set, initial, visit| {\n"
+        "        var state = initial\n"
+        "        var index = 0.U8\n"
+        "        while index < set.length {\n"
+        f"            script = match at(set, index) {{ Some(value) => value None => {properties.script_default} }}\n"
+        "            state = visit(state, script)\n"
+        "            index = index + 1\n"
+        "        }\n"
+        "        state\n"
+        "    }\n\n"
+        "    to_list : ScriptSet -> List(Value)\n"
+        "    to_list = |set| walk(set, [], |scripts, script| scripts.append(script))\n"
+        "}\n\n"
+        "remove = |set, script| {\n"
+        "    private_id = InternalScriptData.private_id(script)\n"
+        "    bit = 1.U64.shl_wrap(private_id % 64)\n"
+        "    mask = bit.bitwise_not()\n"
+        "    if !Script.contains(set, script) { set } else {\n"
+        "        match private_id / 64 {\n"
+        "            0 => { word0: set.word0.bitwise_and(mask), word1: set.word1, word2: set.word2, length: set.length - 1 }\n"
+        "            1 => { word0: set.word0, word1: set.word1.bitwise_and(mask), word2: set.word2, length: set.length - 1 }\n"
+        "            _ => { word0: set.word0, word1: set.word1, word2: set.word2.bitwise_and(mask), length: set.length - 1 }\n"
+        "        }\n"
+        "    }\n"
+        "}\n\n"
+        "bit_count = |initial| {\n"
+        "    var value = initial\n"
+        "    var count = 0.U8\n"
+        "    while value != 0 {\n"
+        "        count = count + value.bitwise_and(1).to_u8_wrap()\n"
+        "        value = value.shr_wrap(1)\n"
+        "    }\n"
+        "    count\n"
+        "}\n"
     )
 
 
@@ -3901,6 +4486,7 @@ def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
     canonical = load_canonical_properties(manifest)
     _line_break_records, line_break_values = load_line_break_properties(manifest)
     public = load_public_properties(manifest, canonical)
+    scripts = load_script_properties(manifest)
     version = release_version(manifest, "unicode")
     emoji_version = release_version(manifest, "emoji")
     emoji_data_module = _module_for_generator(manifest, "emoji-properties")
@@ -4005,6 +4591,11 @@ def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
         "composite-properties": lambda: render_composite_properties(
             manifest, version, canonical, properties, public
         ),
+        "script-data": lambda: render_script_data(manifest, version, scripts),
+        "script-extensions-data": lambda: render_script_extensions_data(
+            manifest, version, scripts
+        ),
+        "script-api": lambda: render_script_api(version, scripts),
     }
 
     artifacts = _require_dict(manifest["artifacts"], "manifest.artifacts")
@@ -4057,6 +4648,7 @@ def validate_all(manifest: dict[str, object]) -> None:
     canonical = load_canonical_properties(manifest)
     load_line_break_properties(manifest)
     load_public_properties(manifest, canonical)
+    load_script_properties(manifest)
     parse_grapheme_tests(manifest)
     parse_line_break_tests(manifest)
     rendered_modules(manifest)

@@ -398,6 +398,78 @@ class UnicodeDataTests(unittest.TestCase):
                         value=value,
                     )
 
+    def test_script_sources_preserve_defaults_aliases_and_unicode_17_values(self) -> None:
+        manifest = unicode_data.load_manifest()
+        properties = unicode_data.load_script_properties(manifest)
+        self.assertEqual(len(properties.aliases), 176)
+        self.assertEqual(properties.script_default, "Zzzz")
+        self.assertEqual(len({record.scripts for record in properties.extensions}), 118)
+
+        def primary(code_point: int) -> str:
+            for record in properties.scripts:
+                if record.start <= code_point <= record.end:
+                    return record.property
+            return properties.script_default
+
+        def extensions(code_point: int) -> tuple[str, ...]:
+            for record in properties.extensions:
+                if record.start <= code_point <= record.end:
+                    return record.scripts
+            return (primary(code_point),)
+
+        for code_point, expected in (
+            (0x0041, "Latn"),
+            (0x03B1, "Grek"),
+            (0x0416, "Cyrl"),
+            (0x0627, "Arab"),
+            (0x4E00, "Hani"),
+            (0x3042, "Hira"),
+            (0x30A2, "Kana"),
+            (0x10940, "Sidt"),
+            (0x11DB0, "Tols"),
+            (0x16EA0, "Berf"),
+            (0x1E6C0, "Tayo"),
+            (0xE000, "Zzzz"),
+            (0x10FFFF, "Zzzz"),
+            (0xD800, "Zzzz"),
+        ):
+            with self.subTest(code_point=f"U+{code_point:04X}"):
+                self.assertEqual(primary(code_point), expected)
+                self.assertTrue(extensions(code_point))
+
+        self.assertEqual(extensions(0x30FC), ("Hira", "Kana"))
+        self.assertEqual(extensions(0x0363), ("Latn",))
+        self.assertIn("Gara", extensions(0x060C))
+        self.assertIn(primary(0x096F), extensions(0x096F))
+        alias_rows = {record.identity: record for record in properties.aliases}
+        self.assertIn("Qaai", alias_rows["Zinh"].aliases)
+        self.assertIn("Qaac", alias_rows["Copt"].aliases)
+
+    def test_script_extensions_parser_fails_closed(self) -> None:
+        manifest = unicode_data.load_manifest()
+        alias_name = unicode_data._source_for(
+            manifest,
+            "ucd-property-value-aliases",
+            ("Canonical_Combining_Class", "General_Category", "Script"),
+        )
+        aliases = unicode_data.parse_property_value_aliases(
+            unicode_data.verify_source(manifest, alias_name), source=alias_name
+        )["sc"]
+        default = "# @missing: 0000..10FFFF; <script>\n"
+        failures = (
+            (default + "0041 ; Latn Latn\n", "duplicate"),
+            (default + "0041 ; NotAScript\n", "exactly one value"),
+            (default + "0041 ; Zyyy\n", "implicit values"),
+            (default + "0041..0042 ; Latn\n0042 ; Latn\n", "overlaps"),
+            ("0041 ; Latn\n", "@missing declaration"),
+        )
+        for text, message in failures:
+            with self.subTest(message=message):
+                with self.assertRaisesRegex(unicode_data.DataError, message):
+                    unicode_data.parse_script_extensions(
+                        text, source="fixture.txt", aliases=aliases
+                    )
+
     def test_generated_alias_access_is_static_and_allocation_free_in_shape(self) -> None:
         manifest = unicode_data.load_manifest()
         aliases = unicode_data.rendered_modules(manifest)[

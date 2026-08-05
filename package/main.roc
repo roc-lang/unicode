@@ -17,6 +17,8 @@ package
         Property,
         Scalar,
         ScalarRange,
+        Script,
+        ScriptItemization,
         TextPosition,
         TextRange,
         UnicodeVersion,
