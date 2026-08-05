@@ -3,7 +3,7 @@
 ## This file will read the test data from `data/GraphemeBreakTest-15.1.0.txt`
 ## parse it and then generate the individual tests.
 app [main!] {
-    pf: platform "https://github.com/lukewilliamboswell/roc-platform-template-zig/releases/download/0.9/8GdFEvQYS3TeAZxKvTzCLVdQiomweGtXcdZkXNDEeABq.tar.zst",
+    pf: platform "https://github.com/lukewilliamboswell/roc-platform-template-zig/releases/download/1.1.0/ABFgWwu8SwPJfp7tzxDoTL41b1jFeHEac3RxUFSt1WWp.tar.zst",
 }
 
 import pf.Stdout
@@ -16,7 +16,7 @@ Rule : [GB1, GB2, GB3, GB4, GB5, GB6, GB7, GB8, GB9, GB9a, GB9b, GB9c, GB11, GB1
 TestTokens : List([BR(Rule), NB(Rule), CP(CodePoint)])
 
 main! = |_args| {
-    Stdout.line!(template)
+    Stdout.line!(template)?
     Ok({})
 }
 

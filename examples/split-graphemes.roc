@@ -1,5 +1,5 @@
 app [main!] {
-    pf: platform "https://github.com/lukewilliamboswell/roc-platform-template-zig/releases/download/0.9/8GdFEvQYS3TeAZxKvTzCLVdQiomweGtXcdZkXNDEeABq.tar.zst",
+    pf: platform "https://github.com/lukewilliamboswell/roc-platform-template-zig/releases/download/1.1.0/ABFgWwu8SwPJfp7tzxDoTL41b1jFeHEac3RxUFSt1WWp.tar.zst",
     unicode: "../package/main.roc", # use release URL (ends in tar.br) for local example, see github.com/roc/unicode/releases
 }
 
@@ -19,12 +19,12 @@ main! = |args| {
     }
     match Grapheme.split(string) {
         Ok(splitted) => {
-            Stdout.line!("\n\nThe string \"${string}\" has following graphemes:")
-            Stdout.line!(Str.inspect(splitted))
+            Stdout.line!("\n\nThe string \"${string}\" has following graphemes:")?
+            Stdout.line!(Str.inspect(splitted))?
             Ok({})
         }
         Err(_) => {
-            Stderr.line!("Error splitting the string.")
+            Stderr.line!("Error splitting the string.")?
             Err(Exit(1))
         }
     }

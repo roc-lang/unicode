@@ -3,7 +3,7 @@
 ## This file will read the test data from `data/emoji-data.txt`
 ## parse it and then generate the implementation for each of the Emoji properties.
 app [main!] {
-    pf: platform "https://github.com/lukewilliamboswell/roc-platform-template-zig/releases/download/0.9/8GdFEvQYS3TeAZxKvTzCLVdQiomweGtXcdZkXNDEeABq.tar.zst",
+    pf: platform "https://github.com/lukewilliamboswell/roc-platform-template-zig/releases/download/1.1.0/ABFgWwu8SwPJfp7tzxDoTL41b1jFeHEac3RxUFSt1WWp.tar.zst",
 }
 
 import pf.Stdout
@@ -11,7 +11,7 @@ import "data/emoji-data.txt" as file : Str
 import Helpers exposing [CPMeta, PropertyMap]
 
 main! = |_args| {
-    Stdout.line!(template)
+    Stdout.line!(template)?
     Ok({})
 }
 
