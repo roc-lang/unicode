@@ -25,7 +25,10 @@ Utf8 :: [].{
         OverlongEncoding,
         EncodesSurrogateHalf,
         CodePointTooLarge,
-    ]
+    ].{
+        ## Compare two stable malformed-input classifications.
+        is_eq : _
+    }
 
     ## A malformed sequence with absolute logical-source coordinates.
     ##
@@ -73,33 +76,43 @@ Utf8 :: [].{
         ## Decode one arbitrary byte chunk and fold every completed scalar into
         ## caller state.
         ##
-        ## `Pushed` means the whole chunk was accepted but does not mean end of
-        ## text. `Failed` is terminal and returns both the failed cursor and the
-        ## state containing any earlier, irrevocably decoded scalars. Callers
-        ## must not present that state as a complete decode.
+        ## The callback returns `Continue` or `Stop`. `Stopped` returns at the
+        ## first requested scalar boundary without decoding the chunk suffix;
+        ## `consumed` is the number of bytes accepted from this chunk, so the
+        ## caller can resume with `chunk.drop_first(consumed)`. The cursor does
+        ## not retain that remainder. `Pushed` means the whole chunk was
+        ## accepted but does not mean end of text. `Failed` is terminal and
+        ## returns the state containing any earlier, irrevocably decoded
+        ## scalars; callers must not present that state as a complete decode.
+        ## Every result's `consumed` is relative to this chunk. On malformed
+        ## input it excludes the offending byte, while earlier bytes of a
+        ## partial sequence remain consumed by the terminal cursor.
         ##
         ## Work is O(B) in chunk bytes with constant stack and auxiliary state.
         ## The decoder allocates no list or string and does not retain `chunk`.
         ## The callback controls any allocation in its own state.
-        push : Cursor, List(U8), state, (state, Scalar.LocatedScalar -> state) -> [
-            Pushed({ cursor : Cursor, state : state }),
-            Failed({ cursor : Cursor, state : state, error : Error }),
+        push : Cursor, List(U8), state, (state, Scalar.LocatedScalar -> [Continue(state), Stop(state)]) -> [
+            Pushed({ cursor : Cursor, state : state, consumed : U64 }),
+            Stopped({ cursor : Cursor, state : state, consumed : U64 }),
+            Failed({ cursor : Cursor, state : state, consumed : U64, error : Error }),
         ]
         push = |cursor, chunk, initial_fold_state, emit| {
             initial = cursor.state
             match initial.status {
-                Ended => return Failed({ cursor, state: initial_fold_state, error: AlreadyFinished })
-                Faulted => return Failed({ cursor, state: initial_fold_state, error: AlreadyFailed })
+                Ended => return Failed({ cursor, state: initial_fold_state, consumed: 0, error: AlreadyFinished })
+                Faulted => return Failed({ cursor, state: initial_fold_state, consumed: 0, error: AlreadyFailed })
                 Open => {}
             }
 
             var $current = initial
             var $fold_state = initial_fold_state
+            var $consumed = 0.U64
 
             for byte in chunk {
                 match step_byte($current, byte) {
                     Continue(next) => {
                         $current = next
+                        $consumed = $consumed + 1
                     }
                     Ready({ state: next, value, byte_start, byte_end, scalar_index }) => {
                         scalar = match Scalar.from_u32(value) {
@@ -108,6 +121,7 @@ Utf8 :: [].{
                                 return Failed({
                                     cursor: { state: failed },
                                     state: $fold_state,
+                                    consumed: $consumed,
                                     error: InternalFault,
                                 })
                             }
@@ -119,23 +133,38 @@ Utf8 :: [].{
                                 return Failed({
                                     cursor: { state: failed },
                                     state: $fold_state,
+                                    consumed: $consumed,
                                     error: InternalFault,
                                 })
                             }
                             Ok(range) => range
                         }
 
-                        $fold_state = emit($fold_state, {
+                        $current = next
+                        $consumed = $consumed + 1
+                        located = {
                             scalar,
                             byte_range,
                             scalar_index,
-                        })
-                        $current = next
+                        }
+                        match emit($fold_state, located) {
+                            Continue(next_fold_state) => {
+                                $fold_state = next_fold_state
+                            }
+                            Stop(stopped_state) => {
+                                return Stopped({
+                                    cursor: { state: $current },
+                                    state: stopped_state,
+                                    consumed: $consumed,
+                                })
+                            }
+                        }
                     }
                     MalformedStep({ state: failed_state, error }) => {
                         return Failed({
                             cursor: { state: faulted(failed_state) },
                             state: $fold_state,
+                            consumed: $consumed,
                             error: Malformed(error),
                         })
                     }
@@ -143,6 +172,7 @@ Utf8 :: [].{
                         return Failed({
                             cursor: { state: faulted(failed_state) },
                             state: $fold_state,
+                            consumed: $consumed,
                             error: OffsetOverflow({ at: at }),
                         })
                     }
@@ -150,13 +180,14 @@ Utf8 :: [].{
                         return Failed({
                             cursor: { state: faulted(failed_state) },
                             state: $fold_state,
+                            consumed: $consumed,
                             error: ScalarIndexOverflow({ at: at }),
                         })
                     }
                 }
             }
 
-            Pushed({ cursor: { state: $current }, state: $fold_state })
+            Pushed({ cursor: { state: $current }, state: $fold_state, consumed: $consumed })
         }
 
         ## Explicitly mark the logical end of the byte source.
@@ -243,7 +274,16 @@ step_byte = |state, byte| {
                 byte_end,
                 scalar_index: state.scalar_index,
             })
-        } else if byte >= 0xC0 and byte <= 0xDF {
+        } else if byte == 0xC0 or byte == 0xC1 {
+            MalformedStep({
+                state,
+                error: {
+                    problem: OverlongEncoding,
+                    offset: state.byte_offset,
+                    sequence_start: state.byte_offset,
+                },
+            })
+        } else if byte >= 0xC2 and byte <= 0xDF {
             byte_end = match state.byte_offset.plus_try(1) {
                 Err(Overflow) => return OffsetOverflowStep({ state, at: state.byte_offset })
                 Ok(offset) => offset
@@ -281,6 +321,20 @@ step_byte = |state, byte| {
             },
         })
     } else {
+        match first_continuation_problem(state, byte) {
+            Rejected(problem) => {
+                return MalformedStep({
+                    state,
+                    error: {
+                        problem,
+                        offset: state.byte_offset,
+                        sequence_start: state.sequence_start,
+                    },
+                })
+            }
+            Allowed => {}
+        }
+
         byte_end = match state.byte_offset.plus_try(1) {
             Err(Overflow) => return OffsetOverflowStep({ state, at: state.byte_offset })
             Ok(offset) => offset
@@ -343,6 +397,23 @@ step_byte = |state, byte| {
                 }
             }
         }
+    }
+}
+
+first_continuation_problem : CursorState, U8 -> [Allowed, Rejected(Utf8.Problem)]
+first_continuation_problem = |state, byte| {
+    if state.seen_width != 1 {
+        Allowed
+    } else if state.expected_width == 3 and state.accumulator == 0 and byte < 0xA0 {
+        Rejected(OverlongEncoding)
+    } else if state.expected_width == 3 and state.accumulator == 0x0D and byte >= 0xA0 {
+        Rejected(EncodesSurrogateHalf)
+    } else if state.expected_width == 4 and state.accumulator == 0 and byte < 0x90 {
+        Rejected(OverlongEncoding)
+    } else if state.expected_width == 4 and state.accumulator == 4 and byte >= 0x90 {
+        Rejected(CodePointTooLarge)
+    } else {
+        Allowed
     }
 }
 

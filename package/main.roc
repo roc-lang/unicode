@@ -2,6 +2,7 @@ package
     [
         ByteRange,
         CodePoint,
+        EastAsianWidth,
         Grapheme,
         Scalar,
         UnicodeVersion,

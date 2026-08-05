@@ -35,14 +35,20 @@ iterator's lifetime, while yielded scalars and ranges do not retain it.
 domain, including surrogates. It deliberately has no UTF-8 encoder or decoder;
 callers validate it with `Scalar.from_code_point` before entering a text API.
 UTF-8 encoding accepts only `Scalar`, so it cannot emit surrogate encodings.
+`Scalar.to_str` validates the exact encoded bytes and reports a stable internal
+fault instead of using lossy recovery. Property-specific queries, such as
+`EastAsianWidth.of_scalar`, accept `Scalar` without coupling property tables to
+the scalar representation.
 
 Arbitrary bytes use the separate `Utf8.Cursor`. `push` accepts byte chunks and
-returns `Pushed` or a terminal `Failed` with an indexed typed error; a chunk
-edge is never end-of-text. `finish` explicitly returns `End` or reports an
-incomplete trailing sequence. The cursor retains at most three pending bytes,
-uses constant stack and auxiliary storage, performs no allocation itself, and
-does not retain consumed chunks. Error offsets and all emitted scalar/range
-coordinates are absolute from the beginning of the logical byte source.
+returns `Pushed`, caller-requested `Stopped`, or a terminal `Failed` with an
+indexed typed error; a chunk edge is never end-of-text. `Stopped.consumed`
+identifies the unvisited suffix so callers can resume it with the returned
+cursor, which does not retain the chunk. `finish` explicitly returns `End` or
+reports an incomplete trailing sequence. The cursor retains at most three
+pending bytes, uses constant stack and auxiliary storage, and performs no
+allocation itself. Error offsets and all emitted scalar/range coordinates are
+absolute from the beginning of the logical byte source.
 
 The package cannot turn a host allocator abort into a Unicode error. It avoids
 predictable growth instead: scalar encoding has a fixed one-to-four-byte

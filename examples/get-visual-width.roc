@@ -4,6 +4,7 @@ app [main!] {
 }
 
 import pf.Stdout
+import unicode.EastAsianWidth
 import unicode.Scalar
 
 default_word = "世界"
@@ -15,7 +16,7 @@ get_visual_width : Str -> U32
 get_visual_width = |str| {
     var $width = 0.U32
     for located in Scalar.iter(str) {
-        $width = $width + match Scalar.east_asian_width(located.scalar) {
+        $width = $width + match EastAsianWidth.of_scalar(located.scalar) {
             Fullwidth => 2
             Wide => 2
             _ => 1
@@ -31,7 +32,7 @@ main! = |args| {
         [_app, arg1, ..] => arg1
     }
     width = get_visual_width(word)
-    Stdout.line!("\n\nThe word ${word} will be displayed with the width of ${width.to_str()} characters on most UIs.\n\n")?
+    Stdout.line!("\n\nUnder this simple policy, ${word} uses ${width.to_str()} cells.\n\n")?
     Ok({})
 }
 

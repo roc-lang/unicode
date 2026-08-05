@@ -60,7 +60,7 @@ run_case = |line| {
             expected_offsets = expected_offsets_str.split_on(",").map(U64.from_str)
             match (keep_oks(code_points), keep_oks(expected_offsets)) {
                 (Ok(cps), Ok(expected)) => {
-                    source = keep_oks(cps.map(|value| Scalar.from_u32(value).map_ok(Scalar.to_str)))
+                    source = keep_oks(cps.map(scalar_to_str))
                     match source {
                         Err(_) => Err({ case_id, message: "could not encode source scalars" })
                         Ok(parts) => {
@@ -82,6 +82,27 @@ run_case = |line| {
         }
         [case_id, ..] => Err({ case_id, message: "malformed case row" })
         _ => Err({ case_id: "unknown", message: "malformed case row" })
+    }
+}
+
+scalar_to_str : U32 -> Try(Str, [InvalidScalar, InternalEncodingFault])
+scalar_to_str = |value| {
+    match Scalar.from_u32(value) {
+        Err(_) => {
+            error : [InvalidScalar, InternalEncodingFault]
+            error = InvalidScalar
+            Err(error)
+        }
+        Ok(scalar) => {
+            match Scalar.to_str(scalar) {
+                Ok(encoded) => Ok(encoded)
+                Err(_) => {
+                    error : [InvalidScalar, InternalEncodingFault]
+                    error = InternalEncodingFault
+                    Err(error)
+                }
+            }
+        }
     }
 }
 

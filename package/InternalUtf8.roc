@@ -1,11 +1,14 @@
-import ByteRange
-import CodePoint
-
 ## Allocation-free traversal of the Unicode scalars in a valid Roc `Str`.
+##
+## This private view deliberately carries raw integers instead of public
+## `Scalar` and `ByteRange` wrappers. Algorithm hot loops can therefore fuse
+## decoding with their narrow property lookup and transition without building
+## public records for every scalar.
 InternalUtf8 :: [].{
     LocatedScalar : {
-        code_point : CodePoint,
-        byte_range : ByteRange,
+        scalar : U32,
+        byte_start : U64,
+        byte_end : U64,
         scalar_index : U64,
     }
 
@@ -24,58 +27,88 @@ InternalUtf8 :: [].{
         }
     }
 
+    ## Decode the next scalar from a valid `Str` byte iterator.
+    ##
+    ## Every byte shape is handled exhaustively. The replacement branches are
+    ## defensive totality for an impossible broken-`Str` invariant; no branch
+    ## panics, silently discards consumed bytes, or indexes past the iterator.
     next : Cursor -> [One({ item : LocatedScalar, rest : Cursor }), Done]
     next = |cursor| {
         match next_byte(cursor.bytes) {
-            Err(NoMore) => Done
-            Ok((first, after_first)) => {
-                width = if first < 0x80 1.U64 else if first < 0xE0 2 else if first < 0xF0 3 else 4
-
-                (scalar, rest) = match width {
-                    1 => (first.to_u32(), after_first)
-                    2 => {
-                        (second, after_second) = next_byte(after_first) ?? ...
-                        value = first.bitwise_and(0x1F).to_u32()
-                            .shl_wrap(6)
-                            .bitwise_or(second.bitwise_and(0x3F).to_u32())
-                        (value, after_second)
+            End => Done
+            Byte({ value: first, rest: after_first }) => {
+                (scalar, rest, width) = if first < 0x80 {
+                    (first.to_u32(), after_first, 1.U64)
+                } else if first < 0xE0 {
+                    match next_byte(after_first) {
+                        End => (0xFFFD, after_first, 1)
+                        Byte({ value: second, rest: after_second }) => {
+                            value = first.bitwise_and(0x1F).to_u32()
+                                .shl_wrap(6)
+                                .bitwise_or(second.bitwise_and(0x3F).to_u32())
+                            (value, after_second, 2)
+                        }
                     }
-                    3 => {
-                        (second, after_second) = next_byte(after_first) ?? ...
-                        (third, after_third) = next_byte(after_second) ?? ...
-                        value = first.bitwise_and(0x0F).to_u32()
-                            .shl_wrap(6)
-                            .bitwise_or(second.bitwise_and(0x3F).to_u32())
-                            .shl_wrap(6)
-                            .bitwise_or(third.bitwise_and(0x3F).to_u32())
-                        (value, after_third)
+                } else if first < 0xF0 {
+                    match next_byte(after_first) {
+                        End => (0xFFFD, after_first, 1)
+                        Byte({ value: second, rest: after_second }) => {
+                            match next_byte(after_second) {
+                                End => (0xFFFD, after_second, 2)
+                                Byte({ value: third, rest: after_third }) => {
+                                    value = first.bitwise_and(0x0F).to_u32()
+                                        .shl_wrap(6)
+                                        .bitwise_or(second.bitwise_and(0x3F).to_u32())
+                                        .shl_wrap(6)
+                                        .bitwise_or(third.bitwise_and(0x3F).to_u32())
+                                    (value, after_third, 3)
+                                }
+                            }
+                        }
                     }
-                    4 => {
-                        (second, after_second) = next_byte(after_first) ?? ...
-                        (third, after_third) = next_byte(after_second) ?? ...
-                        (fourth, after_fourth) = next_byte(after_third) ?? ...
-                        value = first.bitwise_and(0x07).to_u32()
-                            .shl_wrap(6)
-                            .bitwise_or(second.bitwise_and(0x3F).to_u32())
-                            .shl_wrap(6)
-                            .bitwise_or(third.bitwise_and(0x3F).to_u32())
-                            .shl_wrap(6)
-                            .bitwise_or(fourth.bitwise_and(0x3F).to_u32())
-                        (value, after_fourth)
+                } else {
+                    match next_byte(after_first) {
+                        End => (0xFFFD, after_first, 1)
+                        Byte({ value: second, rest: after_second }) => {
+                            match next_byte(after_second) {
+                                End => (0xFFFD, after_second, 2)
+                                Byte({ value: third, rest: after_third }) => {
+                                    match next_byte(after_third) {
+                                        End => (0xFFFD, after_third, 3)
+                                        Byte({ value: fourth, rest: after_fourth }) => {
+                                            value = first.bitwise_and(0x07).to_u32()
+                                                .shl_wrap(6)
+                                                .bitwise_or(second.bitwise_and(0x3F).to_u32())
+                                                .shl_wrap(6)
+                                                .bitwise_or(third.bitwise_and(0x3F).to_u32())
+                                                .shl_wrap(6)
+                                                .bitwise_or(fourth.bitwise_and(0x3F).to_u32())
+                                            (value, after_fourth, 4)
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
-                    _ => ...
                 }
 
-                # Roc `Str` validity proves the decoded value and byte range;
-                # source-size bounds prove both checked counter increments.
-                byte_end = cursor.byte_offset.plus_try(width) ?? ...
-                code_point = CodePoint.from_u32(scalar) ?? ...
-                byte_range = ByteRange.from_bounds(cursor.byte_offset, byte_end) ?? ...
-                next_scalar_index = cursor.scalar_index.plus_try(1) ?? ...
+                # A Roc `Str` length bounds both counters. The fallback values
+                # make even an impossible counter invariant total rather than
+                # introducing an unchecked extraction or panic seam.
+                byte_end = match cursor.byte_offset.plus_try(width) {
+                    Ok(value) => value
+                    Err(Overflow) => U64.highest
+                }
+                next_scalar_index = match cursor.scalar_index.plus_try(1) {
+                    Ok(value) => value
+                    Err(Overflow) => U64.highest
+                }
+
                 One({
                     item: {
-                        code_point,
-                        byte_range,
+                        scalar,
+                        byte_start: cursor.byte_offset,
+                        byte_end,
                         scalar_index: cursor.scalar_index,
                     },
                     rest: {
@@ -90,44 +123,73 @@ InternalUtf8 :: [].{
 
     fold_scalars : Str, state, (state, U32, U64, U64, U64 -> state) -> state
     fold_scalars = |source, initial, step| {
-        var result = initial
-        var cursor = InternalUtf8.init(source)
+        var $result = initial
+        var $accumulator = 0.U32
+        var $expected_width = 0.U8
+        var $seen_width = 0.U8
+        var $sequence_start = 0.U64
+        var $byte_offset = 0.U64
+        var $scalar_index = 0.U64
 
-        while Bool.True {
-            match InternalUtf8.next(cursor) {
-                Done => {
-                    break
+        # This is the fused algorithm hot path. Roc `Str` validity guarantees
+        # every leading byte's continuations, and the source byte length bounds
+        # both counters, so the loop needs neither fallible extraction nor
+        # public per-scalar wrappers.
+        for byte in source.iter_utf8() {
+            byte_end = $byte_offset + 1
+            if $expected_width == 0 {
+                if byte < 0x80 {
+                    $result = step($result, byte.to_u32(), $byte_offset, byte_end, $scalar_index)
+                    $scalar_index = $scalar_index + 1
+                } else {
+                    $sequence_start = $byte_offset
+                    if byte < 0xE0 {
+                        $accumulator = byte.bitwise_and(0x1F).to_u32()
+                        $expected_width = 2
+                    } else if byte < 0xF0 {
+                        $accumulator = byte.bitwise_and(0x0F).to_u32()
+                        $expected_width = 3
+                    } else {
+                        $accumulator = byte.bitwise_and(0x07).to_u32()
+                        $expected_width = 4
+                    }
+                    $seen_width = 1
                 }
-                One({ item, rest }) => {
-                    result = step(
-                        result,
-                        CodePoint.to_u32(item.code_point),
-                        ByteRange.start(item.byte_range),
-                        ByteRange.end(item.byte_range),
-                        item.scalar_index,
-                    )
-                    cursor = rest
+            } else {
+                $accumulator = $accumulator
+                    .shl_wrap(6)
+                    .bitwise_or(byte.bitwise_and(0x3F).to_u32())
+                $seen_width = $seen_width + 1
+
+                if $seen_width == $expected_width {
+                    $result = step($result, $accumulator, $sequence_start, byte_end, $scalar_index)
+                    $scalar_index = $scalar_index + 1
+                    $accumulator = 0
+                    $expected_width = 0
+                    $seen_width = 0
                 }
             }
+
+            $byte_offset = byte_end
         }
 
-        result
+        $result
     }
 }
 
-next_byte : Iter(U8) -> Try((U8, Iter(U8)), [NoMore])
+next_byte : Iter(U8) -> [Byte({ value : U8, rest : Iter(U8) }), End]
 next_byte = |initial| {
-    var iterator = initial
+    var $iterator = initial
 
     while Bool.True {
-        match Iter.next(iterator) {
-            Done => return Err(NoMore)
+        match Iter.next($iterator) {
+            Done => return End
             Skip({ rest }) => {
-                iterator = rest
+                $iterator = rest
             }
-            One({ item, rest }) => return Ok((item, rest))
+            One({ item, rest }) => return Byte({ value: item, rest })
         }
     }
 
-    Err(NoMore)
+    End
 }

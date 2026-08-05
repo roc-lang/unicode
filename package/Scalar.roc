@@ -1,6 +1,5 @@
 import ByteRange
 import CodePoint
-import InternalEAW
 import InternalUtf8
 
 ## A Unicode scalar value: a code point other than a surrogate.
@@ -16,8 +15,6 @@ Scalar :: { code_point : CodePoint }.{
         byte_range : ByteRange,
         scalar_index : U64,
     }
-
-    EastAsianWidth := [Fullwidth, Wide, Ambiguous, Halfwidth, Neutral, Narrow]
 
     ## Construct a scalar after rejecting surrogates and values above
     ## `U+10FFFF`.
@@ -76,16 +73,22 @@ Scalar :: { code_point : CodePoint }.{
             match InternalUtf8.next(cursor) {
                 Done => Err(NoMore)
                 One({ item, rest }) => {
-                    # The valid-Str decoder has already excluded surrogates;
-                    # constructing the sealed representation here removes a
-                    # redundant checked branch from every yielded item.
-                    scalar : Scalar
-                    scalar = { code_point: item.code_point }
-                    Ok(({
-                        scalar,
-                        byte_range: item.byte_range,
-                        scalar_index: item.scalar_index,
-                    }, rest))
+                    # The private valid-Str decoder guarantees both checks. We
+                    # still handle their closed error variants explicitly so
+                    # the public iterator has no panic or unchecked seam.
+                    match Scalar.from_u32(item.scalar) {
+                        Err(_) => Err(NoMore)
+                        Ok(scalar) => {
+                            match ByteRange.from_bounds(item.byte_start, item.byte_end) {
+                                Err(_) => Err(NoMore)
+                                Ok(byte_range) => Ok(({
+                                    scalar,
+                                    byte_range,
+                                    scalar_index: item.scalar_index,
+                                }, rest))
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -139,26 +142,18 @@ Scalar :: { code_point : CodePoint }.{
         }
     }
 
-    ## Encode this scalar as an independently owned `Str`.
+    ## Encode this scalar as an independently owned `Str` and validate the
+    ## exact bytes before returning it.
     ##
     ## Work and output size are constant. The implementation creates at most
     ## the fixed one-to-four-byte encoding and does not retain another source.
-    to_str : Scalar -> Str
-    to_str = |scalar| Str.from_utf8_lossy(Scalar.to_utf8(scalar))
-
-    ## Return this scalar's Unicode East_Asian_Width property.
-    ##
-    ## This is a scalar property, not a terminal-column or glyph-width result.
-    ## It is constant time and does not allocate.
-    east_asian_width : Scalar -> EastAsianWidth
-    east_asian_width = |scalar| {
-        match InternalEAW.east_asian_width_property(Scalar.to_u32(scalar)) {
-            F => Fullwidth
-            W => Wide
-            A => Ambiguous
-            H => Halfwidth
-            N => Neutral
-            Na => Narrow
+    ## `InternalEncodingFault` detects an implementation invariant violation;
+    ## it is never a lossy replacement path.
+    to_str : Scalar -> Try(Str, [InternalEncodingFault])
+    to_str = |scalar| {
+        match Str.from_utf8(Scalar.to_utf8(scalar)) {
+            Ok(encoded) => Ok(encoded)
+            Err(_) => Err(InternalEncodingFault)
         }
     }
 
