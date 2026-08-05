@@ -65,7 +65,10 @@ EMOJI_PROPERTIES = (
 )
 INCB_PROPERTIES = ("Consonant", "Extend", "Linker")
 FORMAL_PROPERTY_ALIASES = {
+    "Canonical_Combining_Class": ("ccc",),
+    "East_Asian_Width": ("ea",),
     "General_Category": ("gc",),
+    "Grapheme_Cluster_Break": ("GCB",),
     "Indic_Conjunct_Break": ("InCB",),
 }
 
@@ -995,27 +998,23 @@ def _required_formal_default(
     declared_property: str | None,
     value: str,
 ) -> MissingDefault:
-    if declared_property is None:
-        declarations = [
-            default
-            for default in parse_missing_defaults(text, source=source)
-            if default.property is None
-        ]
-    else:
-        property_aliases = {
-            loose_alias(alias)
-            for alias in (
-                declared_property,
-                property_name,
-                *FORMAL_PROPERTY_ALIASES.get(property_name, ()),
-            )
-        }
-        declarations = [
-            default
-            for default in parse_missing_defaults(text, source=source)
-            if default.property is not None
-            and loose_alias(default.property) in property_aliases
-        ]
+    property_aliases = {
+        loose_alias(alias)
+        for alias in (
+            property_name,
+            *FORMAL_PROPERTY_ALIASES.get(property_name, ()),
+            *((declared_property,) if declared_property is not None else ()),
+        )
+    }
+    # UAX #44 permits both contextual and explicitly qualified declarations.
+    # Normalize both forms before checking uniqueness so syntax cannot hide a
+    # second default for the same logical property.
+    declarations = [
+        default
+        for default in parse_missing_defaults(text, source=source)
+        if default.property is None
+        or loose_alias(default.property) in property_aliases
+    ]
     if len(declarations) != 1:
         lines = [declaration.line for declaration in declarations]
         raise DataError(

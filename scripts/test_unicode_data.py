@@ -192,54 +192,89 @@ class UnicodeDataTests(unittest.TestCase):
                 properties=unicode_data.EMOJI_PROPERTIES,
             )
 
-    def test_conflicting_formal_defaults_are_rejected_for_every_property_source(self) -> None:
+    def test_full_loaders_reject_alternate_shape_conflicting_formal_defaults(self) -> None:
         manifest = unicode_data.load_manifest()
         mutations = (
             (
                 "grapheme_break_property",
-                "# @missing: 0000..10FFFF; Extend",
-                "Grapheme_Cluster_Break",
-                None,
-                "Other",
+                "# @missing: 0000..10FFFF; Grapheme_Cluster_Break; Extend",
+                unicode_data.load_property_data,
             ),
             (
                 "east_asian_width",
-                "# @missing: 0000..10FFFF; W",
-                "East_Asian_Width",
-                None,
-                "N",
+                "# @missing: 0000..10FFFF; East_Asian_Width; W",
+                unicode_data.load_property_data,
             ),
             (
                 "derived_core_properties",
-                "# @missing: 0000..10FFFF; Indic_Conjunct_Break; Linker",
-                "Indic_Conjunct_Break",
-                "InCB",
-                "None",
+                "# @missing: 0000..10FFFF; Linker",
+                unicode_data.load_property_data,
             ),
             (
                 "derived_combining_class",
-                "# @missing: 0000..10FFFF; Above",
-                "Canonical_Combining_Class",
-                None,
-                "Not_Reordered",
+                "# @missing: 0000..10FFFF; Canonical_Combining_Class; Above",
+                unicode_data.load_canonical_properties,
             ),
             (
                 "property_value_aliases",
-                "# @missing: 0000..10FFFF; gc; Uppercase_Letter",
-                "General_Category",
-                "General_Category",
-                "Unassigned",
+                "# @missing: 0000..10FFFF; Uppercase_Letter",
+                unicode_data.load_canonical_properties,
             ),
         )
-        for source_name, conflict, property_name, declared_property, value in mutations:
+        verified_source = unicode_data.verify_source
+        for source_name, conflict, loader in mutations:
             with self.subTest(source=source_name):
-                text = unicode_data.verify_source(manifest, source_name) + conflict + "\n"
+                mutated = verified_source(manifest, source_name) + conflict + "\n"
+
+                def verify_with_mutation(
+                    loaded_manifest: dict[str, object], loaded_source: str
+                ) -> str:
+                    if loaded_source == source_name:
+                        return mutated
+                    return verified_source(loaded_manifest, loaded_source)
+
+                with (
+                    mock.patch.object(
+                        unicode_data, "verify_source", side_effect=verify_with_mutation
+                    ),
+                    self.assertRaisesRegex(
+                        unicode_data.DataError, "exactly one @missing declaration"
+                    ),
+                ):
+                    loader(manifest)
+
+    def test_formal_default_spellings_share_one_canonical_identity(self) -> None:
+        cases = (
+            ("Grapheme_Cluster_Break", None, "Other", "g-c_b"),
+            ("East_Asian_Width", None, "N", "e-a"),
+            ("Indic_Conjunct_Break", "InCB", "None", "indic-conjunct break"),
+            ("Canonical_Combining_Class", None, "Not_Reordered", "c_c-c"),
+            ("General_Category", "General_Category", "Unassigned", "g-c"),
+        )
+        for property_name, declared_property, value, loose_spelling in cases:
+            with self.subTest(property=property_name):
+                qualified = (
+                    f"# @missing: 0000..10FFFF; {loose_spelling}; {value}\n"
+                )
+                self.assertEqual(
+                    unicode_data._required_formal_default(
+                        qualified,
+                        source="fixture.txt",
+                        property_name=property_name,
+                        declared_property=declared_property,
+                        value=value,
+                    ).value,
+                    value,
+                )
+                duplicate_across_shapes = (
+                    qualified + f"# @missing: 0000..10FFFF; {value}\n"
+                )
                 with self.assertRaisesRegex(
                     unicode_data.DataError, "exactly one @missing declaration"
                 ):
                     unicode_data._required_formal_default(
-                        text,
-                        source=source_name,
+                        duplicate_across_shapes,
+                        source="fixture.txt",
                         property_name=property_name,
                         declared_property=declared_property,
                         value=value,
