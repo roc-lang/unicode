@@ -20,6 +20,11 @@
       "release": "unicode",
       "document": "https://www.unicode.org/reports/tr11/tr11-44.html"
     },
+    "uax_14": {
+      "revision": "55",
+      "release": "unicode",
+      "document": "https://www.unicode.org/reports/tr14/tr14-55.html"
+    },
     "uax_29": {
       "revision": "47",
       "release": "unicode",
@@ -60,6 +65,46 @@
       "release_axes": ["unicode"],
       "format": "ucd-property-ranges",
       "properties": ["East_Asian_Width"]
+    },
+    "line_break": {
+      "path": "vendor/unicode/17.0.0/LineBreak.txt",
+      "url": "https://www.unicode.org/Public/17.0.0/ucd/LineBreak.txt",
+      "sha256": "e6a18fa91f8f6a6f8e534b1d3f128c21ada45bfe152eb6b1bcc5e15fd8ac92e6",
+      "header": "# LineBreak-17.0.0.txt",
+      "records": 3654,
+      "role": "production-and-conformance",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "ucd-property-ranges",
+      "properties": ["Line_Break"]
+    },
+    "derived_line_break": {
+      "path": "vendor/unicode/17.0.0/DerivedLineBreak.txt",
+      "url": "https://www.unicode.org/Public/17.0.0/ucd/extracted/DerivedLineBreak.txt",
+      "sha256": "dad3ef492d198d6f1dde4922b175f7371a27dfe62fce489f3e04807015a4c682",
+      "header": "# DerivedLineBreak-17.0.0.txt",
+      "records": 3580,
+      "role": "conformance",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "ucd-derived-property-ranges",
+      "properties": ["Line_Break"]
+    },
+    "line_break_test": {
+      "path": "vendor/unicode/17.0.0/LineBreakTest.txt",
+      "url": "https://www.unicode.org/Public/17.0.0/ucd/auxiliary/LineBreakTest.txt",
+      "sha256": "e69884e0dde6a8724873f885d68c52dc14518abf9ae4ca9e2283b8773db3b752",
+      "header": "# LineBreakTest-17.0.0.txt",
+      "records": 19338,
+      "cases": 19338,
+      "role": "conformance",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "uax-14-test",
+      "properties": []
     },
     "grapheme_break_property": {
       "path": "vendor/unicode/17.0.0/GraphemeBreakProperty.txt",
@@ -181,6 +226,25 @@
       "sources": [],
       "specifications": ["uax_44"],
       "artifacts": []
+    },
+    "line_break_data": {
+      "generator": "line-break-data",
+      "output": "package/InternalLineBreakData.roc",
+      "sources": ["line_break", "derived_line_break"],
+      "specifications": ["uax_14"],
+      "artifacts": ["general_category", "east_asian_width", "emoji_properties"],
+      "layout": {
+        "kind": "deduplicated-pages",
+        "candidate_page_bits": [6, 7, 8, 9, 10],
+        "page_bits": 7,
+        "index_type": "U8",
+        "value_type": "U8",
+        "expected_index_entries": 8704,
+        "expected_distinct_pages": 212,
+        "expected_logical_bytes": 35840,
+        "max_logical_bytes": 65536,
+        "ascii": "computed"
+      }
     },
     "grapheme_data": {
       "generator": "grapheme-data",

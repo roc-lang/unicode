@@ -25,7 +25,7 @@ MANIFEST_PATH = UNICODE_VENDOR_ROOT / "manifest.json"
 MAX_CODE_POINT = 0x10FFFF
 RANGE_RE = re.compile(
     r"^(?P<start>[0-9A-F]{4,6})(?:\.\.(?P<end>[0-9A-F]{4,6}))?"
-    r"\s*;\s*(?P<property>[A-Za-z_]+)(?:\s*#.*)?$"
+    r"\s*;\s*(?P<property>[A-Za-z_][A-Za-z0-9_]*)(?:\s*#.*)?$"
 )
 NUMERIC_RANGE_RE = re.compile(
     r"^(?P<start>[0-9A-F]{4,6})(?:\.\.(?P<end>[0-9A-F]{4,6}))?"
@@ -64,6 +64,13 @@ EMOJI_PROPERTIES = (
     "Extended_Pictographic",
 )
 INCB_PROPERTIES = ("Consonant", "Extend", "Linker")
+LINE_BREAK_PROPERTIES = (
+    "AI", "AK", "AL", "AP", "AS", "B2", "BA", "BB", "BK", "CB", "CJ",
+    "CL", "CM", "CP", "CR", "EB", "EM", "EX", "GL", "H2", "H3", "HH",
+    "HL", "HY", "ID", "IN", "IS", "JL", "JT", "JV", "LF", "NL", "NS",
+    "NU", "OP", "PO", "PR", "QU", "RI", "SA", "SG", "SP", "SY", "VF",
+    "VI", "WJ", "XX", "ZW", "ZWJ",
+)
 FORMAL_PROPERTY_ALIASES = {
     "Canonical_Combining_Class": ("ccc",),
     "East_Asian_Width": ("ea",),
@@ -92,6 +99,13 @@ class GraphemeCase:
     code_points: tuple[int, ...]
     break_offsets: tuple[int, ...]
     rules: frozenset[str]
+
+
+@dataclass(frozen=True)
+class LineBreakCase:
+    line: int
+    code_points: tuple[int, ...]
+    break_offsets: tuple[int, ...]
 
 
 @dataclass(frozen=True)
@@ -188,6 +202,15 @@ SOURCE_PROJECTION_CONTRACTS = {
     ("ucd-property-ranges", ("Grapheme_Cluster_Break",)): SourceProjectionContract(
         "ucd/auxiliary/GraphemeBreakProperty.txt", "production-and-conformance"
     ),
+    ("ucd-property-ranges", ("Line_Break",)): SourceProjectionContract(
+        "ucd/LineBreak.txt", "production-and-conformance"
+    ),
+    ("ucd-derived-property-ranges", ("Line_Break",)): SourceProjectionContract(
+        "ucd/extracted/DerivedLineBreak.txt", "conformance"
+    ),
+    ("uax-14-test", ()): SourceProjectionContract(
+        "ucd/auxiliary/LineBreakTest.txt", "conformance", has_cases=True
+    ),
     ("uax-29-test", ()): SourceProjectionContract(
         "ucd/auxiliary/GraphemeBreakTest.txt", "conformance", has_cases=True
     ),
@@ -216,6 +239,7 @@ SOURCE_PROJECTION_CONTRACTS = {
 
 SPECIFICATION_COMPATIBILITY = {
     "uax_11": ("unicode", "17.0.0", "44"),
+    "uax_14": ("unicode", "17.0.0", "55"),
     "uax_29": ("unicode", "17.0.0", "47"),
     "uax_44": ("unicode", "17.0.0", "36"),
     "uts_51": ("emoji", "17.0", "29"),
@@ -257,6 +281,17 @@ GENERATOR_CONTRACTS = {
     ),
     "legacy-emoji": GeneratorContract(
         (), ("uts_51",), ("emoji-properties",), "package/InternalEmoji.roc"
+    ),
+    "line-break-data": GeneratorContract(
+        (
+            ("ucd-property-ranges", ("Line_Break",)),
+            ("ucd-derived-property-ranges", ("Line_Break",)),
+        ),
+        ("uax_14",),
+        ("general-category", "east-asian-width", "emoji-properties"),
+        "package/InternalLineBreakData.roc",
+        True,
+        "computed",
     ),
     "general-category": GeneratorContract(
         (
@@ -1469,6 +1504,129 @@ def parse_grapheme_tests(
     return cases
 
 
+def parse_line_break_tests(
+    manifest: dict[str, object], text: str | None = None
+) -> list[LineBreakCase]:
+    source_key = _source_for(manifest, "uax-14-test", ())
+    source_name = Path(str(_entry(manifest, source_key)["path"])).name
+    if text is None:
+        text = verify_source(manifest, source_key)
+    cases: list[LineBreakCase] = []
+    for line_number, raw_line in enumerate(text.splitlines(), 1):
+        body = raw_line.split("#", 1)[0].strip()
+        if not body:
+            continue
+        tokens = body.split()
+        if len(tokens) < 3 or len(tokens) % 2 == 0:
+            raise DataError(f"{source_name}:{line_number}: malformed test token sequence")
+        if tokens[0] != "×" or tokens[-1] != "÷":
+            raise DataError(f"{source_name}:{line_number}: tests must prohibit sot and break at eot")
+        code_points: list[int] = []
+        break_offsets: list[int] = []
+        utf8_offset = 0
+        for index, token in enumerate(tokens):
+            if index % 2 == 0:
+                if token not in ("÷", "×"):
+                    raise DataError(
+                        f"{source_name}:{line_number}: expected boundary marker, got {token!r}"
+                    )
+                if token == "÷":
+                    break_offsets.append(utf8_offset)
+            else:
+                if HEX_RE.fullmatch(token) is None:
+                    raise DataError(f"{source_name}:{line_number}: invalid code point {token!r}")
+                code_point = int(token, 16)
+                if code_point > MAX_CODE_POINT or 0xD800 <= code_point <= 0xDFFF:
+                    raise DataError(f"{source_name}:{line_number}: invalid scalar U+{code_point:04X}")
+                code_points.append(code_point)
+                utf8_offset += len(chr(code_point).encode("utf-8"))
+        cases.append(LineBreakCase(line_number, tuple(code_points), tuple(break_offsets)))
+    expected = _entry(manifest, source_key).get("cases")
+    if expected != len(cases):
+        raise DataError(f"line-break case-count drift: expected {expected}, got {len(cases)}")
+    return cases
+
+
+def load_line_break_properties(
+    manifest: dict[str, object],
+) -> tuple[tuple[RangeRecord, ...], bytes]:
+    raw_name = _source_for(manifest, "ucd-property-ranges", ("Line_Break",))
+    derived_name = _source_for(
+        manifest, "ucd-derived-property-ranges", ("Line_Break",)
+    )
+    raw_text = verify_source(manifest, raw_name)
+    derived_text = verify_source(manifest, derived_name)
+    raw_source = str(data_path(manifest, raw_name))
+    derived_source = str(data_path(manifest, derived_name))
+    raw = parse_ranges(
+        raw_text,
+        source=raw_source,
+        allowed_properties=LINE_BREAK_PROPERTIES,
+        default_marker="# @missing: 0000..10FFFF; XX",
+    )
+    derived = parse_ranges(
+        derived_text,
+        source=derived_source,
+        allowed_properties=LINE_BREAK_PROPERTIES,
+        default_marker="# @missing: 0000..10FFFF; Unknown",
+    )
+    if {record.property for record in raw} != set(LINE_BREAK_PROPERTIES):
+        raise DataError(f"{raw_source}: Line_Break values drifted")
+    if {record.property for record in derived} != set(LINE_BREAK_PROPERTIES):
+        raise DataError(f"{derived_source}: derived Line_Break values drifted")
+
+    private_ids = {value: index for index, value in enumerate(LINE_BREAK_PROPERTIES)}
+    default_ranges = (
+        (0x20A0, 0x20CF, "PR"),
+        (0x3400, 0x4DBF, "ID"),
+        (0x4E00, 0x9FFF, "ID"),
+        (0xF900, 0xFAFF, "ID"),
+        (0x1F000, 0x1F7FF, "ID"),
+        (0x1F900, 0x1FAFF, "ID"),
+        (0x1FC00, 0x1FFFD, "ID"),
+        (0x20000, 0x2FFFD, "ID"),
+        (0x30000, 0x3FFFD, "ID"),
+    )
+    expected_markers = (
+        "# @missing: 0000..10FFFF; Unknown",
+        "# @missing: 20A0..20CF; Prefix_Numeric",
+        "# @missing: 3400..4DBF; Ideographic",
+        "# @missing: 4E00..9FFF; Ideographic",
+        "# @missing: F900..FAFF; Ideographic",
+        "# @missing: 1F000..1F7FF; Ideographic",
+        "# @missing: 1F900..1FAFF; Ideographic",
+        "# @missing: 1FC00..1FFFD; Ideographic",
+        "# @missing: 20000..2FFFD; Ideographic",
+        "# @missing: 30000..3FFFD; Ideographic",
+    )
+    for marker in expected_markers:
+        if derived_text.splitlines().count(marker) != 1:
+            raise DataError(f"{derived_source}: missing exact default marker {marker!r}")
+
+    def materialize(records: Iterable[RangeRecord]) -> bytearray:
+        values = bytearray((private_ids["XX"],)) * (MAX_CODE_POINT + 1)
+        for start, end, prop in default_ranges:
+            values[start : end + 1] = bytes((private_ids[prop],)) * (end - start + 1)
+        for record in records:
+            values[record.start : record.end + 1] = bytes((private_ids[record.property],)) * (
+                record.end - record.start + 1
+            )
+        return values
+
+    raw_values = materialize(raw)
+    derived_values = materialize(derived)
+    if raw_values != derived_values:
+        mismatch = next(
+            code_point
+            for code_point, (left, right) in enumerate(zip(raw_values, derived_values))
+            if left != right
+        )
+        raise DataError(
+            f"LineBreak.txt and DerivedLineBreak.txt disagree at U+{mismatch:04X}"
+        )
+    return tuple(raw), bytes(raw_values)
+
+
 def _ranges_for(records: list[RangeRecord], prop: str) -> list[RangeRecord]:
     return [record for record in records if record.property == prop]
 
@@ -1707,6 +1865,154 @@ def render_grapheme_data(
         "        _ => ...\n"
         "    }\n"
         "}\n\n"
+        f"page_index : List({paged.index_type})\n"
+        f"page_index = {_roc_list(paged.page_index)}\n\n"
+        "pages : List(U8)\n"
+        f"pages = {_roc_list(paged.flat_pages)}\n"
+    )
+
+
+def render_line_break_data(
+    manifest: dict[str, object],
+    version: str,
+    raw_values: bytes,
+    canonical: CanonicalProperties,
+    eaw_source: PropertySource,
+    emoji_records: list[RangeRecord],
+) -> str:
+    raw_ids = {value: index for index, value in enumerate(LINE_BREAK_PROPERTIES)}
+    resolved_properties = tuple(
+        value
+        for value in LINE_BREAK_PROPERTIES
+        if value not in ("AI", "CJ", "SA", "SG", "XX")
+    )
+    class_ids = {value: index for index, value in enumerate(resolved_properties)}
+
+    gc_flags = bytearray(MAX_CODE_POINT + 1)
+    for record in canonical.general_category:
+        flag = {
+            "Mn": 0x01,
+            "Mc": 0x02,
+            "Pi": 0x04,
+            "Pf": 0x08,
+            "Cn": 0x10,
+        }.get(record.property, 0)
+        if flag:
+            gc_flags[record.start : record.end + 1] = bytes((flag,)) * (
+                record.end - record.start + 1
+            )
+
+    eaw_values = bytearray(MAX_CODE_POINT + 1)
+    for default in eaw_source.defaults:
+        value = 1 if default.value in ("F", "W", "H") else 0
+        eaw_values[default.start : default.end + 1] = bytes((value,)) * (
+            default.end - default.start + 1
+        )
+    for record in eaw_source.records:
+        value = 1 if record.property in ("F", "W", "H") else 0
+        eaw_values[record.start : record.end + 1] = bytes((value,)) * (
+            record.end - record.start + 1
+        )
+
+    extended_pictographic = bytearray(MAX_CODE_POINT + 1)
+    for record in _ranges_for(emoji_records, "Extended_Pictographic"):
+        extended_pictographic[record.start : record.end + 1] = b"\x01" * (
+            record.end - record.start + 1
+        )
+
+    rows: list[tuple[int, int]] = []
+    row_ids: dict[tuple[int, int], int] = {}
+    encoded = bytearray(MAX_CODE_POINT + 1)
+    for code_point, raw_id in enumerate(raw_values):
+        raw = LINE_BREAK_PROPERTIES[raw_id]
+        if raw in ("AI", "SG", "XX"):
+            resolved = "AL"
+        elif raw == "CJ":
+            resolved = "NS"
+        elif raw == "SA":
+            resolved = "CM" if gc_flags[code_point] & 0x03 else "AL"
+        else:
+            resolved = raw
+        flags = 0
+        if resolved == "QU" and gc_flags[code_point] & 0x04:
+            flags |= 0x01
+        if resolved == "QU" and gc_flags[code_point] & 0x08:
+            flags |= 0x02
+        if eaw_values[code_point]:
+            flags |= 0x04
+        if gc_flags[code_point] & 0x10 and extended_pictographic[code_point]:
+            flags |= 0x08
+        row = (class_ids[resolved], flags)
+        row_id = row_ids.get(row)
+        if row_id is None:
+            row_id = len(rows)
+            if row_id > 0xFF:
+                raise DataError("line-break row pool no longer fits in U8")
+            rows.append(row)
+            row_ids[row] = row_id
+        encoded[code_point] = row_id
+
+    paged = _selected_paged_bytes(encoded, manifest=manifest, generator="line-break-data")
+    artifacts = _require_dict(manifest["artifacts"], "manifest.artifacts")
+    artifact_name = _artifact_for_generator(manifest, "line-break-data")
+    artifact = _require_dict(artifacts[artifact_name], f"manifest.artifacts.{artifact_name}")
+    layout = _require_dict(artifact["layout"], f"manifest.artifacts.{artifact_name}.layout")
+    total_logical_bytes = paged.storage_bytes + len(rows) * 2
+    if total_logical_bytes > int(layout["max_logical_bytes"]):
+        raise DataError(
+            f"manifest.artifacts.{artifact_name}.layout exceeds its total row-view byte budget"
+        )
+    page_size = 1 << paged.page_bits
+    ascii_expression = _ascii_value_expression(encoded, default=encoded[0])
+    matches = "\n".join(
+        f"        {class_id} => {line_class}" for line_class, class_id in class_ids.items()
+    )
+    row_classes = tuple(row[0] for row in rows)
+    row_flags = tuple(row[1] for row in rows)
+    return (
+        f"## GENERATED from Unicode {version} Line_Break through the canonical GC/EAW/Emoji graph. "
+        "Run `python3 scripts/unicode_data.py generate`. ##\n"
+        "## LB1 is resolved in this narrow view. Row ids and flag bits are private storage identities. ##\n"
+        f"## layout: {len(paged.page_index)} {paged.index_type} page ids + {len(paged.pages)} x {page_size} U8 row ids "
+        f"+ {len(rows)} x 2 U8 row fields; logical payload {total_logical_bytes} bytes. ##\n\n"
+        "InternalLineBreakData :: [].{\n"
+        f"    Class : [{', '.join(resolved_properties)}]\n"
+        "    Props : { class : Class, initial_quote : Bool, final_quote : Bool, east_asian : Bool, unassigned_extended_pictographic : Bool }\n\n"
+        "    lookup : U32 -> Props\n"
+        "    lookup = |scalar| {\n"
+        "        row_id = if scalar < 128 {\n"
+        "            ascii_row(scalar)\n"
+        "        } else if scalar > 0x10FFFF {\n"
+        f"            {encoded[0]}\n"
+        "        } else {\n"
+        f"            page_id = page_index.get(scalar.shr_wrap({paged.page_bits}).to_u64()) ?? 0\n"
+        f"            offset = page_id.to_u64() * {page_size} + scalar.bitwise_and({page_size - 1}).to_u64()\n"
+        f"            pages.get(offset) ?? {encoded[0]}\n"
+        "        }\n"
+        f"        class_id = row_classes.get(row_id.to_u64()) ?? {class_ids['AL']}\n"
+        "        flags = row_flags.get(row_id.to_u64()) ?? 0\n"
+        "        {\n"
+        "            class: class_from_u8(class_id),\n"
+        "            initial_quote: flags.bitwise_and(0x01) != 0,\n"
+        "            final_quote: flags.bitwise_and(0x02) != 0,\n"
+        "            east_asian: flags.bitwise_and(0x04) != 0,\n"
+        "            unassigned_extended_pictographic: flags.bitwise_and(0x08) != 0,\n"
+        "        }\n"
+        "    }\n"
+        "}\n\n"
+        "ascii_row : U32 -> U8\n"
+        f"ascii_row = |u32| {ascii_expression}\n\n"
+        "class_from_u8 : U8 -> InternalLineBreakData.Class\n"
+        "class_from_u8 = |value| {\n"
+        "    match value {\n"
+        f"{matches}\n"
+        "        _ => AL\n"
+        "    }\n"
+        "}\n\n"
+        "row_classes : List(U8)\n"
+        f"row_classes = {_roc_list(row_classes)}\n\n"
+        "row_flags : List(U8)\n"
+        f"row_flags = {_roc_list(row_flags)}\n\n"
         f"page_index : List({paged.index_type})\n"
         f"page_index = {_roc_list(paged.page_index)}\n\n"
         "pages : List(U8)\n"
@@ -2183,6 +2489,7 @@ def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
     emoji = list(properties.emoji.records)
     incb = list(properties.indic_conjunct_break.records)
     canonical = load_canonical_properties(manifest)
+    _line_break_records, line_break_values = load_line_break_properties(manifest)
     version = release_version(manifest, "unicode")
     emoji_version = release_version(manifest, "emoji")
     emoji_data_module = _module_for_generator(manifest, "emoji-properties")
@@ -2199,6 +2506,14 @@ def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
         ),
         "legacy-emoji": lambda: render_legacy_emoji(
             version, emoji_version, emoji_data_module
+        ),
+        "line-break-data": lambda: render_line_break_data(
+            manifest,
+            version,
+            line_break_values,
+            canonical,
+            properties.east_asian_width,
+            emoji,
         ),
         "general-category": lambda: render_general_category(
             manifest, version, canonical.general_category, canonical.general_category_default
@@ -2262,7 +2577,9 @@ def validate_all(manifest: dict[str, object]) -> None:
         verify_source(manifest, source)
     load_property_data(manifest)
     load_canonical_properties(manifest)
+    load_line_break_properties(manifest)
     parse_grapheme_tests(manifest)
+    parse_line_break_tests(manifest)
     rendered_modules(manifest)
 
 
