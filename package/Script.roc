@@ -22,9 +22,8 @@ Script :: [].{
     extensions_of_scalar : Scalar -> ScriptSet
     extensions_of_scalar = |scalar| {
         code_point = Scalar.to_u32(scalar)
-        primary = InternalScriptData.lookup(code_point)
         override_id = InternalScriptExtensionsData.lookup_override(code_point)
-        if override_id == 0 { singleton(primary) } else {
+        if override_id == 0 { singleton(InternalScriptData.lookup(code_point)) } else {
             bits = InternalScriptExtensionsData.set_bits(override_id)
             { word0: bits.word0, word1: bits.word1, word2: bits.word2, length: bits.length }
         }
