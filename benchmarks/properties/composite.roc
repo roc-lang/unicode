@@ -13,34 +13,56 @@ import unicode.JoiningGroup
 import unicode.JoiningType
 import unicode.Property
 import unicode.VerticalOrientation
+import unicode.Scalar
+import Signature
 
 ## Benchmark one fused row-id lookup per scalar, lazy column access, and the
 ## single-decode complete-string fold.
 run! : Str => Str
 run! = |source| {
-    checksum = Property.fold(source, 0.U64, |sum, entry| {
+    checksum = Property.fold(source, 0xCBF29CE484222325.U64, |initial, entry| {
         row = entry.row
         emoji = Property.Row.emoji(row)
-        sum
-            + GeneralCategory.short(Property.Row.general_category(row)).count_utf8_bytes()
-            + CanonicalCombiningClass.to_u8(Property.Row.canonical_combining_class(row)).to_u64()
-            + EastAsianWidth.short(Property.Row.east_asian_width(row)).count_utf8_bytes()
-            + BidiClass.short(Property.Row.bidi_class(row)).count_utf8_bytes()
-            + bool_u64(Property.Row.bidi_mirrored(row))
-            + option_u64(Property.Row.bidi_mirroring_glyph(row))
-            + option_u64(Property.Row.bidi_paired_bracket(row))
-            + JoiningType.short(Property.Row.joining_type(row)).count_utf8_bytes()
-            + JoiningGroup.short(Property.Row.joining_group(row)).count_utf8_bytes()
-            + IndicSyllabicCategory.short(Property.Row.indic_syllabic_category(row)).count_utf8_bytes()
-            + IndicPositionalCategory.short(Property.Row.indic_positional_category(row)).count_utf8_bytes()
-            + bool_u64(Property.Row.default_ignorable(row))
-            + bool_u64(Property.Row.variation_selector(row))
-            + VerticalOrientation.short(Property.Row.vertical_orientation(row)).count_utf8_bytes()
-            + emoji_bits(emoji)
+        scalar = entry.located.scalar
+        var state = Signature.mix(initial, Scalar.to_u32(scalar).to_u64())
+        state = Signature.mix_str(state, GeneralCategory.short(Property.Row.general_category(row)))
+        state = Signature.mix(state, CanonicalCombiningClass.to_u8(Property.Row.canonical_combining_class(row)).to_u64())
+        state = Signature.mix_str(state, EastAsianWidth.short(Property.Row.east_asian_width(row)))
+        state = Signature.mix_str(state, BidiClass.short(Property.Row.bidi_class(row)))
+        state = Signature.mix_bool(state, Property.Row.bidi_mirrored(row))
+        state = mix_scalar_option(state, Property.Row.bidi_mirroring_glyph(row))
+        state = mix_bracket_option(state, Property.Row.bidi_paired_bracket(row))
+        state = Signature.mix_str(state, JoiningType.short(Property.Row.joining_type(row)))
+        state = Signature.mix_str(state, JoiningGroup.short(Property.Row.joining_group(row)))
+        state = Signature.mix_str(state, IndicSyllabicCategory.short(Property.Row.indic_syllabic_category(row)))
+        state = Signature.mix_str(state, IndicPositionalCategory.short(Property.Row.indic_positional_category(row)))
+        state = Signature.mix_bool(state, Property.Row.default_ignorable(row))
+        state = Signature.mix_bool(state, Property.Row.variation_selector(row))
+        state = Signature.mix_str(state, VerticalOrientation.short(Property.Row.vertical_orientation(row)))
+        mix_emoji(state, emoji)
     })
     checksum.to_str()
 }
 
-bool_u64 = |value| if value 1.U64 else 0.U64
-option_u64 = |value| match value { Some(_) => 1.U64, None => 0.U64 }
-emoji_bits = |value| bool_u64(value.emoji) + bool_u64(value.emoji_presentation) * 2 + bool_u64(value.emoji_modifier) * 4 + bool_u64(value.emoji_modifier_base) * 8 + bool_u64(value.emoji_component) * 16 + bool_u64(value.extended_pictographic) * 32
+mix_scalar_option = |state, value| match value {
+    None => Signature.mix(state, 0)
+    Some(scalar) => Signature.mix(Signature.mix(state, 1), Scalar.to_u32(scalar).to_u64())
+}
+
+mix_bracket_option = |state, value| match value {
+    None => Signature.mix(state, 0)
+    Some(pair) => {
+        with_scalar = Signature.mix(Signature.mix(state, 1), Scalar.to_u32(pair.scalar).to_u64())
+        Signature.mix(with_scalar, match pair.kind { Open => 1, Close => 2 })
+    }
+}
+
+mix_emoji = |initial, value| {
+    var state = initial
+    state = Signature.mix_bool(state, value.emoji)
+    state = Signature.mix_bool(state, value.emoji_presentation)
+    state = Signature.mix_bool(state, value.emoji_modifier)
+    state = Signature.mix_bool(state, value.emoji_modifier_base)
+    state = Signature.mix_bool(state, value.emoji_component)
+    Signature.mix_bool(state, value.extended_pictographic)
+}

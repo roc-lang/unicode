@@ -82,7 +82,17 @@ def build(roc: str, zig: str) -> dict[str, Path]:
         cwd=ROOT / "tests/platform",
     )
     binaries: dict[str, Path] = {}
-    for name in ("direct", "composite"):
+    for name in (
+        "direct",
+        "composite",
+        "validate",
+        "validate-row",
+        "validate-aliases",
+        "validate-runs",
+        "validate-emoji",
+        "validate-bidi",
+        "allocations",
+    ):
         source = BENCH / f"{name}.roc"
         binary = BUILD / name
         command([roc, "check", str(source), "--no-cache"])
@@ -113,6 +123,123 @@ def run_once(binary: Path, corpus: bytes, cpu: int | None) -> tuple[str, float]:
     return completed.stdout.decode("utf-8").strip(), elapsed_seconds
 
 
+def run_output(binary: Path, corpus: bytes) -> str:
+    return subprocess.run(
+        [str(binary)],
+        cwd=ROOT,
+        check=True,
+        input=corpus,
+        stdout=subprocess.PIPE,
+    ).stdout.decode("utf-8").strip()
+
+
+def validate_semantics(binaries: dict[str, Path]) -> dict[str, object]:
+    outputs: dict[str, str] = {}
+    for name in (
+        "validate",
+        "validate-row",
+        "validate-aliases",
+        "validate-runs",
+        "validate-emoji",
+        "validate-bidi",
+    ):
+        output = run_output(binaries[name], b"runtime-salt")
+        if not output.startswith("PASS\t"):
+            raise BenchmarkFailure(f"{name} failed semantic validation: {output}")
+        outputs[name] = output
+
+    lengths = (1, 2, 4, 8, 16, 32, 64, 128, 256)
+    homogeneous: dict[int, tuple[int, int, int, int]] = {}
+    early_stop: dict[int, int] = {}
+    for length in lengths:
+        for label, corpus in (
+            ("homogeneous", b"A" * length),
+            ("early", "Aα".encode("utf-8") + b"A" * length),
+        ):
+            fields = run_output(binaries["allocations"], corpus).split("\t")
+            if len(fields) != 6:
+                raise BenchmarkFailure(
+                    f"allocations/{label}/{length} produced malformed output {fields!r}"
+                )
+            (
+                property_allocs,
+                run_allocs,
+                first_allocs,
+                alias_allocs,
+                _alias_result,
+                checksum,
+            ) = (int(field) for field in fields)
+            if checksum == 0:
+                raise BenchmarkFailure(
+                    f"allocations/{label}/{length} checksum was optimized away"
+                )
+            if alias_allocs != 0:
+                raise BenchmarkFailure(
+                    f"loose matching allocated {alias_allocs} times for {label}/{length}"
+                )
+            if any(value > 1 for value in (property_allocs, run_allocs, first_allocs)):
+                raise BenchmarkFailure(
+                    f"indexed scan allocations exceeded fixed inline-view cost for "
+                    f"{label}/{length}: {(property_allocs, run_allocs, first_allocs)!r}"
+                )
+            if label == "homogeneous":
+                homogeneous[length] = (
+                    property_allocs,
+                    run_allocs,
+                    first_allocs,
+                    alias_allocs,
+                )
+            else:
+                early_stop[length] = first_allocs
+
+    alias_fields = run_output(
+        binaries["allocations"], b"is\tUppercase - Letter"
+    ).split("\t")
+    if (
+        len(alias_fields) != 6
+        or int(alias_fields[3]) != 0
+        or int(alias_fields[4]) != 2
+    ):
+        raise BenchmarkFailure(
+            f"allocation-free loose alias probe failed: {alias_fields!r}"
+        )
+
+    for length, values in homogeneous.items():
+        expected_view_cost = 1 if length <= 16 else 0
+        if values[:3] != (expected_view_cost,) * 3:
+            raise BenchmarkFailure(
+                f"unexpected pinned indexed-view allocation count for {length}: "
+                f"{values[:3]!r}"
+            )
+        if early_stop[length] != expected_view_cost:
+            raise BenchmarkFailure(
+                f"unexpected pinned early-stop allocation count for {length}: "
+                f"{early_stop[length]}"
+            )
+
+    # Inline strings may materialize one fixed indexed byte view; heap-backed
+    # strings borrow it. No scan is allowed to grow allocations with length.
+    for column, name in enumerate(("Property.iter", "iter_runs", "first run")):
+        observed = {values[column] for values in homogeneous.values()}
+        if not observed <= {0, 1}:
+            raise BenchmarkFailure(f"{name} allocations grew with input: {observed}")
+    if set(early_stop.values()) - {0, 1}:
+        raise BenchmarkFailure(
+            f"early-stop run allocations grew with suffix length: {early_stop!r}"
+        )
+
+    return {
+        "executables": outputs,
+        "allocation_lengths": list(lengths),
+        "homogeneous_allocations": {
+            str(length): list(values) for length, values in homogeneous.items()
+        },
+        "early_stop_allocations": {
+            str(length): value for length, value in early_stop.items()
+        },
+    }
+
+
 def machine() -> dict[str, object]:
     return {
         "system": platform.system(),
@@ -131,7 +258,16 @@ def benchmark(
 ) -> dict[str, object]:
     results: dict[str, object] = {}
     for case_name, corpus in cases.items():
-        checksums: dict[str, str] = {}
+        # Establish semantic agreement before recording a timing sample.
+        checksums = {
+            name: run_output(binaries[name], corpus)
+            for name in ("direct", "composite")
+        }
+        if checksums["direct"] != checksums["composite"]:
+            raise BenchmarkFailure(
+                f"direct/composite preflight mismatch for {case_name}: "
+                f"{checksums['direct']} != {checksums['composite']}"
+            )
         timings: dict[str, list[float]] = {"direct": [], "composite": []}
         # Alternate order per sample so thermal or scheduling drift is not
         # systematically assigned to one implementation.
@@ -139,7 +275,7 @@ def benchmark(
             order = ("direct", "composite") if sample % 2 == 0 else ("composite", "direct")
             for name in order:
                 checksum, elapsed = run_once(binaries[name], corpus, cpu)
-                previous = checksums.setdefault(name, checksum)
+                previous = checksums[name]
                 if checksum != previous:
                     raise BenchmarkFailure(
                         f"{name}/{case_name} produced a nondeterministic checksum"
@@ -183,6 +319,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--cpu", type=int, default=0)
     parser.add_argument("--no-affinity", action="store_true")
     parser.add_argument("--no-build", action="store_true")
+    parser.add_argument("--validate-only", action="store_true")
     parser.add_argument("--case", action="append", choices=tuple(corpora(1)))
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     return parser.parse_args()
@@ -196,8 +333,18 @@ def main() -> int:
     zig = resolve_tool(args.zig)
     binaries = (
         {
-            "direct": BUILD / "direct",
-            "composite": BUILD / "composite",
+            name: BUILD / name
+            for name in (
+                "direct",
+                "composite",
+                "validate",
+                "validate-row",
+                "validate-aliases",
+                "validate-runs",
+                "validate-emoji",
+                "validate-bidi",
+                "allocations",
+            )
         }
         if args.no_build
         else build(roc, zig)
@@ -205,6 +352,11 @@ def main() -> int:
     for binary in binaries.values():
         if not binary.is_file():
             raise BenchmarkFailure(f"missing benchmark binary: {binary}")
+
+    validation = validate_semantics(binaries)
+    print(json.dumps({"validation": validation}, indent=2))
+    if args.validate_only:
+        return 0
 
     selected = corpora(args.target_bytes)
     if args.case:
@@ -219,6 +371,7 @@ def main() -> int:
         "binary_bytes": {
             name: binary.stat().st_size for name, binary in binaries.items()
         },
+        "validation": validation,
         "cases": benchmark(binaries, selected, args.samples, cpu),
     }
     output = args.output.expanduser().resolve()
