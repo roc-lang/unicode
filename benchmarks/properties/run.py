@@ -331,6 +331,12 @@ def main() -> int:
         raise BenchmarkFailure("--samples and --target-bytes must be positive")
     roc = resolve_tool(args.roc)
     zig = resolve_tool(args.zig)
+    pinned_roc = (ROOT / ".roc-version").read_text(encoding="utf-8").strip()
+    actual_roc = capture([roc, "version"])
+    if pinned_roc not in actual_roc:
+        raise BenchmarkFailure(
+            f"benchmark requires {pinned_roc}, got {actual_roc!r}"
+        )
     binaries = (
         {
             name: BUILD / name
@@ -365,7 +371,7 @@ def main() -> int:
     report = {
         "schema": 1,
         "machine": machine(),
-        "roc_version": capture([roc, "version"]),
+        "roc_version": actual_roc,
         "samples": args.samples,
         "cpu_affinity": cpu if affinity_prefix(cpu) else None,
         "binary_bytes": {

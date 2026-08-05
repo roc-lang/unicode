@@ -22,7 +22,7 @@ use the ratios as the useful same-machine signal.
 From the repository root:
 
 ```sh
-ROC=/path/to/roc python3 benchmarks/properties/run.py
+ROC=/path/to/pinned/roc python3 benchmarks/properties/run.py
 ```
 
 Use `--samples`, `--target-bytes`, `--case`, and `--cpu` to control a run.
@@ -34,8 +34,9 @@ CI and does not set a timing threshold.
 
 ## Implementation measurement
 
-On an AMD Ryzen 7 9700X (`x86_64`) with Roc nightly
-`2026-August-04-1cb06bc`, pinned to CPU 0, optimized speed builds measured:
+On an AMD Ryzen 7 9700X (`x86_64`) with the Roc compiler pin recorded by the
+repository commit that produced this measurement, pinned to CPU 0, optimized
+speed builds measured:
 
 | Path | Binary bytes |
 | --- | ---: |

@@ -493,6 +493,12 @@ def main() -> None:
     args.zig = resolve_tool(args.zig)
     args.cc = resolve_tool(args.cc)
     args.make = resolve_tool(args.make)
+    pinned_roc = (ROOT / ".roc-version").read_text(encoding="utf-8").strip()
+    actual_roc = capture([args.roc, "version"])
+    if pinned_roc not in actual_roc:
+        raise BenchmarkFailure(
+            f"benchmark requires {pinned_roc}, got {actual_roc!r}"
+        )
     binaries = (
         {
             "roc": BUILD / "roc",
@@ -527,7 +533,7 @@ def main() -> None:
             "dirty": bool(status),
         },
         "tools": {
-            "roc": capture([args.roc, "version"]),
+            "roc": actual_roc,
             "rustc": capture(["rustc", "--version"]),
             "cargo": capture([args.cargo, "--version"]),
             "go": capture([args.go, "version"]),

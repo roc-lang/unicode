@@ -288,6 +288,12 @@ def main() -> int:
     args = parse_args()
     if args.samples < 1 or args.target_seconds <= 0:
         raise BenchmarkFailure("samples and target-seconds must be positive")
+    pinned_roc = (ROOT / ".roc-version").read_text(encoding="utf-8").strip()
+    actual_roc = capture([args.roc, "version"])
+    if pinned_roc not in actual_roc:
+        raise BenchmarkFailure(
+            f"benchmark requires {pinned_roc}, got {actual_roc!r}"
+        )
     command([sys.executable, "scripts/unicode_data.py", "validate"])
 
     BUILD.mkdir(parents=True, exist_ok=True)

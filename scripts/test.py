@@ -503,16 +503,13 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
         baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as err:
         raise TestFailure(f"unable to read allocation baselines: {err}") from err
-    pinned_roc = (ROOT / ".roc-version").read_text(encoding="utf-8").strip()
     if (
-        baseline.get("schema_version") != 1
+        baseline.get("schema_version") != 2
         or baseline.get("platform") != "roc-platform-template-zig-1.1.0+alloc-count"
         or baseline.get("target") != "x64musl"
         or baseline.get("optimize") != "speed"
     ):
         raise TestFailure("allocation baseline metadata has drifted")
-    if baseline.get("roc_version") != pinned_roc:
-        raise TestFailure("allocation baseline Roc version does not match .roc-version")
     expected = baseline.get("fixtures")
     if not isinstance(expected, dict) or set(expected) != set(ALLOCATION_FIXTURES):
         raise TestFailure("allocation baseline fixture set has drifted")
@@ -528,7 +525,7 @@ def verify_pinned_roc(roc: str) -> None:
     pinned = (ROOT / ".roc-version").read_text(encoding="utf-8").strip()
     if pinned not in completed.stdout:
         raise TestFailure(
-            f"exact allocation baselines require {pinned}, got {completed.stdout.strip()!r}"
+            f"repository requires {pinned}, got {completed.stdout.strip()!r}"
         )
 
 
@@ -618,6 +615,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--jobs must be positive")
     try:
         app_specs = load_app_specs()
+        if args.suite != "data":
+            verify_pinned_roc(args.roc)
         if args.suite in ("all", "data"):
             run_data_checks()
         if args.suite in ("all", "examples"):
@@ -632,12 +631,6 @@ def main(argv: list[str] | None = None) -> int:
         if args.suite in ("all", "allocations"):
             requested_apps.append("allocation")
         if requested_apps:
-            if (
-                "allocation" in requested_apps
-                and platform.system() == "Linux"
-                and platform.machine().lower() in ("x86_64", "amd64")
-            ):
-                verify_pinned_roc(args.roc)
             binaries = build_apps(
                 args.roc, requested_apps, args.zig, skip_build=args.skip_build
             )

@@ -1,6 +1,5 @@
 {
-  "schema_version": 1,
-  "roc_version": "nightly-2026-August-04-1cb06bc",
+  "schema_version": 2,
   "platform": "roc-platform-template-zig-1.1.0+alloc-count",
   "target": "x64musl",
   "optimize": "speed",

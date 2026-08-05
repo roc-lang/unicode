@@ -4,6 +4,14 @@ set -euo pipefail
 root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 output_dir="$root_dir/dist"
 args=()
+roc_bin="${ROC:-roc}"
+
+pinned_roc="$(sed -n '1p' "$root_dir/.roc-version")"
+actual_roc="$("$roc_bin" version)"
+if [[ "$actual_roc" != *"$pinned_roc"* ]]; then
+    echo "ERROR: repository requires $pinned_roc, got '$actual_roc'" >&2
+    exit 1
+fi
 
 while (($# > 0)); do
     case "$1" in
@@ -42,7 +50,7 @@ roc_files=(
 )
 
 if ((${#args[@]} > 0)); then
-    roc bundle "${roc_files[@]}" --output-dir "$output_dir" "${args[@]}"
+    "$roc_bin" bundle "${roc_files[@]}" --output-dir "$output_dir" "${args[@]}"
 else
-    roc bundle "${roc_files[@]}" --output-dir "$output_dir"
+    "$roc_bin" bundle "${roc_files[@]}" --output-dir "$output_dir"
 fi

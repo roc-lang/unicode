@@ -51,10 +51,10 @@ are machine-specific evidence and are deliberately not CI timing gates.
 
 ## Indexed-scalar baseline
 
-On an AMD Ryzen 7 9700X with the repository-pinned Roc nightly
-`2026-August-04-1cb06bc`, CPU 0, nine samples, approximately 128 KiB per corpus,
-and a calibrated target of 0.4 seconds, the indexed scalar implementation
-measured:
+On an AMD Ryzen 7 9700X with the Roc compiler pin recorded by the repository
+commit that produced this measurement, CPU 0, nine samples, approximately 128
+KiB per corpus, and a calibrated target of 0.4 seconds, the indexed scalar
+implementation measured:
 
 | Corpus | Median MB/s | MAD MB/s | Runs per scan |
 | --- | ---: | ---: | ---: |
@@ -91,20 +91,19 @@ signature across all six corpora.
 ## Historical SIMD compiler finding
 
 This scalar batch is an interim implementation, not an architectural decision.
-The failed SIMD spike was recorded with nightly `2026-August-03-94cbed3`, but
-was later attributed here to the pinned `2026-August-04-1cb06bc` compiler by
-mistake. The exact direct-load source fails before backend lowering at
-`c7cfb69b24^`: postcheck expands a record update before its open result row is
-finalized, so the resulting record expression omits fields present in the
-final Lambda Mono type. Commit `c7cfb69b24` preserves the update as an explicit
-base plus explicit fields through postcheck and fixes the source. The apparent
-SIMD lowering and byte-list reference-count failures were downstream symptoms
-of that missing-field layout.
+The failed SIMD spike was recorded with a compiler preceding the repository
+pin, but was later attributed here to the pin by mistake. The exact direct-load
+source fails before backend lowering at `c7cfb69b24^`: postcheck expands a
+record update before its open result row is finalized, so the resulting record
+expression omits fields present in the final Lambda Mono type. Commit
+`c7cfb69b24` preserves the update as an explicit base plus explicit fields
+through postcheck. The apparent SIMD lowering and byte-list reference-count
+failures were downstream symptoms of that missing-field layout.
 
 The direct and helper-returned cursor/vector shapes, together with the complete
-validation corpus below, pass on the pinned `2026-August-04-1cb06bc` compiler.
-There is no current compiler blocker to replacing the scalar transition with
-an exact allocation-free SIMD implementation. That replacement must run:
+validation corpus below, pass on the compiler named in `.roc-version`. There is
+no current compiler blocker to replacing the scalar transition with an exact
+allocation-free SIMD implementation. That replacement must run:
 
 ```sh
 ROC=/path/to/pinned/roc python3 benchmarks/script/run.py --validate-only

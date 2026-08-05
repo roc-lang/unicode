@@ -24,6 +24,16 @@ other measured choices without changing `design.md` when its stated invariants
 and contracts remain intact. Do not encode experimental implementation details
 as enduring architecture.
 
+## Pinned Roc toolchain
+
+`.roc-version` is the repository's sole source of truth for the Roc compiler.
+Do not duplicate a concrete nightly tag in scripts, workflows, baselines, or
+documentation. Every path that invokes Roc must either install the compiler
+named by `.roc-version` or verify the selected compiler against it before doing
+work. Historical measurements should identify the pin through the repository
+commit that produced them; generated, untracked reports may record the actual
+compiler version they observed.
+
 ## Integration workflow
 
 Develop independent substrates and features in isolated branches and

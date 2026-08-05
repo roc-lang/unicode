@@ -25,8 +25,9 @@ default. This probe is not a CI timing gate.
 
 ## Measured decision
 
-The repository-pinned Roc compiler (`nightly-2026-August-04-1cb06bc`) showed
-that the former `Iter(U8)` cursor performed one allocation per visited byte:
+The Roc compiler pin recorded by the repository commit that produced this
+measurement showed that the former `Iter(U8)` cursor performed one allocation
+per visited byte:
 1, 8, and 64 ASCII bytes produced 1, 8, and 64 allocations. The indexed cursor
 produced 1, 1, and 0 respectively. An inline `Str` therefore pays one fixed
 `to_utf8` materialization; a heap-backed `Str` supplies a borrowed list view

@@ -42,7 +42,7 @@ ignored build directory and verifies its SHA-256 before building it.
 From the repository root:
 
 ```sh
-ROC=/path/to/roc python3 benchmarks/grapheme/run.py
+ROC=/path/to/pinned/roc python3 benchmarks/grapheme/run.py
 ```
 
 Generated binaries and the default result file are written beneath the ignored

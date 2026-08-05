@@ -18,7 +18,7 @@ versions and binary checksums, and Unicode and benchmark-source checksums.
 From the repository root:
 
 ```sh
-ROC=/path/to/roc python3 benchmarks/line-break/run.py
+ROC=/path/to/pinned/roc python3 benchmarks/line-break/run.py
 ```
 
 For a quick exploratory run:

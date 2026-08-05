@@ -134,6 +134,14 @@ def main() -> int:
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     args = parser.parse_args()
 
+    pinned_roc = (ROOT / ".roc-version").read_text(encoding="utf-8").strip()
+    actual_roc = subprocess.run(
+        [args.roc, "version"], text=True, stdout=subprocess.PIPE, check=True
+    ).stdout.strip()
+    if pinned_roc not in actual_roc:
+        raise RuntimeError(
+            f"benchmark requires {pinned_roc}, got {actual_roc!r}"
+        )
     binaries = (
         {name: BUILD / name for name in ("full", "early", "grapheme", "slice")}
         if args.no_build
@@ -199,9 +207,7 @@ def main() -> int:
 
     report: dict[str, object] = {
         "schema": 1,
-        "roc_version": subprocess.run(
-            [args.roc, "version"], text=True, stdout=subprocess.PIPE, check=True
-        ).stdout.strip(),
+        "roc_version": actual_roc,
         "samples": args.samples,
         "cpu_affinity": cpu if affinity(cpu) else None,
         "binary_bytes": {name: path.stat().st_size for name, path in binaries.items()},
