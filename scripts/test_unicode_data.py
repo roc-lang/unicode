@@ -88,6 +88,29 @@ class UnicodeDataTests(unittest.TestCase):
             tuple(baseline.values()), tuple(unicode_data.rendered_modules(loaded).values())
         )
 
+    def test_cldr_axis_is_structural_but_unimplemented_formats_are_rejected(self) -> None:
+        base = json.loads(unicode_data.MANIFEST_PATH.read_text(encoding="utf-8"))
+        base["releases"]["cldr"] = {
+            "version": "48",
+            "authority": "unicode",
+            "kind": "cldr",
+            "vendor_prefix": "vendor/unicode/cldr/48",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "manifest.json"
+            path.write_text(json.dumps(base), encoding="utf-8")
+            unicode_data.load_manifest(path)
+
+        unsupported = json.loads(json.dumps(base))
+        unsupported["sources"]["cldr_annotations"] = {
+            **unsupported["sources"]["property_aliases"],
+            "format": "cldr-json",
+            "properties": [],
+            "storage_release": "cldr",
+            "release_axes": ["cldr"],
+        }
+        self.assert_manifest_rejected(unsupported, "no implemented parser")
+
     def test_required_property_defaults_reject_deleted_declarations(self) -> None:
         manifest = unicode_data.load_manifest()
         eaw_path = unicode_data.data_path(manifest, "east_asian_width")

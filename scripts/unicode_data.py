@@ -431,6 +431,20 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
                 raise DataError(
                     f"manifest.releases.{name} is not synchronized to the Unicode major/minor version"
                 )
+        elif kind == "cldr":
+            _require_fields(
+                item, ("version", "authority", "kind", "vendor_prefix"), f"manifest.releases.{name}"
+            )
+            if re.fullmatch(r"[0-9]+(?:\.[0-9]+)*", str(item["version"])) is None:
+                raise DataError(f"manifest.releases.{name}.version has invalid CLDR form")
+            prefix = item.get("vendor_prefix")
+            if not isinstance(prefix, str):
+                raise DataError(f"manifest.releases.{name}.vendor_prefix has the wrong type")
+            _path_below_root(prefix, f"manifest.releases.{name}.vendor_prefix")
+            if Path(prefix).name != item["version"] or "cldr" not in Path(prefix).parts:
+                raise DataError(
+                    f"manifest.releases.{name}.vendor_prefix does not identify its CLDR version"
+                )
         else:
             raise DataError(
                 f"manifest.releases.{name}.kind {kind!r} has no implemented provenance validator"
