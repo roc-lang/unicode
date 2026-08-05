@@ -65,7 +65,25 @@ measured:
 | Multilingual | 7.639 | 0.015 | 22,629 |
 | Long neutral replay | 5.702 | 0.014 | 509 |
 
-The slow homogeneous ASCII result is the baseline motivation for a later exact
-batch transition. It is not evidence for weakening grapheme atomicity,
-right-context replay, or Unknown barriers; any optimized path must reproduce
-the signatures recorded by this runner.
+The slow homogeneous ASCII result motivated an exact printable-ASCII batch
+transition. The transition retains the final inspected scalar as lookahead and
+uses the normal grapheme transition for it, preserving grapheme atomicity,
+right-context replay, and Unknown barriers.
+
+## Exact printable-ASCII batch
+
+With the same compiler, CPU, corpus sizes, and sampling protocol, the exact
+batch measured:
+
+| Corpus | Median MB/s | MAD MB/s | Baseline delta |
+| --- | ---: | ---: | ---: |
+| ASCII prose | 7.985 | 0.079 | +70.92% |
+| Combining sequences | 6.820 | 0.022 | +2.91% |
+| Multi-valued scx | 6.917 | 0.069 | +2.00% |
+| Alternating scripts | 5.828 | 0.068 | +0.70% |
+| Multilingual | 8.192 | 0.065 | +7.24% |
+| Long neutral replay | 302.904 | 2.003 | +5,211.92% |
+
+Every complete-string signature remained identical to the indexed-scalar
+baseline. The independent scalar streaming cursor also reproduced every
+signature across all six corpora.

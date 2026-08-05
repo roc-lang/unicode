@@ -643,6 +643,93 @@ next_unit = |initial| {
         if cursor.finished {
             return NoMoreUnits(cursor)
         }
+
+        # A one-byte retained cluster contains one ASCII scalar. Any following
+        # printable ASCII scalar has GCB=Other and begins a new cluster after
+        # printable ASCII or an ASCII control. Aggregate equal Latin/Common
+        # units, but consume and retain the final inspected scalar as exact
+        # lookahead. Calling the normal grapheme transition for that lookahead
+        # produces the same final machine as each skipped Other transition:
+        # only the final cluster_start survives and all other state is reset.
+        offset = cursor.utf8.byte_offset
+        remaining = cursor.utf8.byte_len - offset
+        one_byte_ascii_cluster = cursor.cluster.started
+            and offset == cursor.cluster.byte_start - cursor.byte_base + 1
+            and cursor.utf8.scalar_index == cursor.cluster.scalar_start - cursor.scalar_base + 1
+        if one_byte_ascii_cluster and remaining > 0 {
+            first = cursor.utf8.bytes.get(offset) ?? 0
+            if 0x20 <= first and first <= 0x7E {
+                current = finish_cluster(
+                    cursor.cluster,
+                    cursor.byte_base + offset,
+                    cursor.scalar_base + cursor.utf8.scalar_index,
+                )
+                latin = InternalScriptData.lookup_private(0x41)
+                current_is_latin = match current.kind {
+                    Definite(script) => script == latin
+                    _ => Bool.False
+                }
+                var lookahead_lane = 0.U64
+                var lookahead_is_latin = (0x41 <= first and first <= 0x5A)
+                    or (0x61 <= first and first <= 0x7A)
+                while lookahead_lane + 1 < remaining
+                    and lookahead_is_latin == current_is_latin
+                {
+                    candidate = cursor.utf8.bytes.get(offset + lookahead_lane + 1) ?? 0
+                    if candidate < 0x20 or candidate > 0x7E {
+                        break
+                    }
+                    lookahead_lane = lookahead_lane + 1
+                    lookahead_is_latin = (0x41 <= candidate and candidate <= 0x5A)
+                        or (0x61 <= candidate and candidate <= 0x7A)
+                }
+
+                consumed = lookahead_lane + 1
+                lookahead_byte = cursor.byte_base + offset + lookahead_lane
+                lookahead_scalar = cursor.scalar_base + cursor.utf8.scalar_index + lookahead_lane
+                representative = if lookahead_is_latin 0x41 else 0x20
+                transition = InternalGrapheme.push(cursor.machine, representative, lookahead_byte)
+                next_utf8 = {
+                    ..cursor.utf8,
+                    byte_offset: offset + consumed,
+                    scalar_index: cursor.utf8.scalar_index + consumed,
+                }
+                lookahead_cluster = if lookahead_is_latin {
+                    {
+                        started: Bool.True,
+                        byte_start: lookahead_byte,
+                        scalar_start: lookahead_scalar,
+                        primary_found: Bool.True,
+                        candidates: Candidates(private_singleton(latin)),
+                        primary: Primary(latin),
+                        has_unknown: Bool.False,
+                    }
+                } else {
+                    {
+                        started: Bool.True,
+                        byte_start: lookahead_byte,
+                        scalar_start: lookahead_scalar,
+                        primary_found: Bool.False,
+                        candidates: NoCandidates,
+                        primary: NoPrimary,
+                        has_unknown: Bool.False,
+                    }
+                }
+                return NextUnit({
+                    unit: {
+                        ..current,
+                        byte_end: lookahead_byte,
+                        scalar_end: lookahead_scalar,
+                    },
+                    cursor: {
+                        ..cursor,
+                        utf8: next_utf8,
+                        machine: transition.machine,
+                        cluster: lookahead_cluster,
+                    },
+                })
+            }
+        }
         match InternalUtf8.next(cursor.utf8) {
             Done => {
                 finished = { ..cursor, cluster: empty_cluster, finished: Bool.True }
