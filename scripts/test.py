@@ -17,12 +17,14 @@ from typing import Callable, Iterable, Sequence
 from unicode_data import (
     DataError,
     GraphemeCase,
+    LineBreakCase,
     MAX_CODE_POINT,
     MissingDefault,
     RangeRecord,
     load_manifest,
     load_property_data,
     parse_grapheme_tests,
+    parse_line_break_tests,
     release_version,
     validate_all,
 )
@@ -32,7 +34,12 @@ ROOT = Path(__file__).resolve().parents[1]
 TEST_TMP = ROOT / ".roc-unicode-tmp" / "tests"
 EXAMPLE_SPEC = ROOT / "examples" / "spec.json"
 APP_ROOT = ROOT / "tests" / "apps"
-APP_NAMES = {"grapheme": "grapheme", "properties": "properties", "allocation": "allocation"}
+APP_NAMES = {
+    "grapheme": "grapheme",
+    "line-break": "line-break",
+    "properties": "properties",
+    "allocation": "allocation",
+}
 GCB_CODES = {
     "CR": 1,
     "LF": 2,
@@ -132,6 +139,13 @@ def load_app_specs() -> dict[str, dict[str, object]]:
             "timeout_seconds",
             "unicode_manifest_file",
         },
+        "line-break": {
+            "schema_version",
+            "kind",
+            "suite",
+            "timeout_seconds",
+            "unicode_manifest_file",
+        },
         "properties": {
             "schema_version",
             "kind",
@@ -170,6 +184,10 @@ def load_app_specs() -> dict[str, dict[str, object]]:
         raise TestFailure("grapheme spec suite has drifted")
     if specs["grapheme"]["unicode_manifest_file"] != "grapheme_break_test":
         raise TestFailure("grapheme spec references an unknown manifest file")
+    if specs["line-break"]["suite"] != "line-break":
+        raise TestFailure("line-break spec suite has drifted")
+    if specs["line-break"]["unicode_manifest_file"] != "line_break_test":
+        raise TestFailure("line-break spec references an unknown manifest file")
     property_sources = set(specs["properties"]["unicode_manifest_files"])
     if property_sources != {
         "grapheme_break_property",
@@ -345,6 +363,25 @@ def run_grapheme(binary: Path, jobs: int, spec: dict[str, object]) -> None:
         "grapheme",
         len(cases),
         lambda index: grapheme_row(cases[index]),
+        jobs=jobs,
+        timeout=int(spec["timeout_seconds"]),
+    )
+
+
+def line_break_row(case: LineBreakCase) -> str:
+    code_points = ",".join(f"{code_point:04X}" for code_point in case.code_points)
+    offsets = ",".join(str(offset) for offset in case.break_offsets)
+    return f"17.0.0:LineBreakTest.txt:{case.line}\t{code_points}\t{offsets}"
+
+
+def run_line_break(binary: Path, jobs: int, spec: dict[str, object]) -> None:
+    manifest = load_manifest()
+    cases = parse_line_break_tests(manifest)
+    run_parallel_suite(
+        binary,
+        "line-break",
+        len(cases),
+        lambda index: line_break_row(cases[index]),
         jobs=jobs,
         timeout=int(spec["timeout_seconds"]),
     )
@@ -558,7 +595,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "suite",
         nargs="?",
-        choices=("all", "data", "grapheme", "properties", "allocations", "examples"),
+        choices=("all", "data", "grapheme", "line-break", "properties", "allocations", "examples"),
         default="all",
     )
     parser.add_argument("--roc", default=os.environ.get("ROC", "roc"))
@@ -578,6 +615,8 @@ def main(argv: list[str] | None = None) -> int:
         requested_apps = []
         if args.suite in ("all", "grapheme"):
             requested_apps.append("grapheme")
+        if args.suite in ("all", "line-break"):
+            requested_apps.append("line-break")
         if args.suite in ("all", "properties"):
             requested_apps.append("properties")
         if args.suite in ("all", "allocations"):
@@ -594,6 +633,8 @@ def main(argv: list[str] | None = None) -> int:
             )
             if "grapheme" in requested_apps:
                 run_grapheme(binaries["grapheme"], args.jobs, app_specs["grapheme"])
+            if "line-break" in requested_apps:
+                run_line_break(binaries["line-break"], args.jobs, app_specs["line-break"])
             if "properties" in requested_apps:
                 run_properties(binaries["properties"], args.jobs, app_specs["properties"])
             if "allocation" in requested_apps:

@@ -4,6 +4,7 @@ package
         CodePoint,
         EastAsianWidth,
         Grapheme,
+        LineBreak,
         Scalar,
         ScalarRange,
         TextPosition,

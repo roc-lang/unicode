@@ -87,6 +87,19 @@ request independent copies with `Grapheme.owned`. `Grapheme.Cursor` carries the
 same algorithm across scalar-aligned streaming chunks without treating a chunk
 edge as end-of-text.
 
+Line breaking follows the exact default Unicode 17 UAX #14 revision 55
+algorithm and reports logical opportunities rather than choosing a line width.
+`LineBreak.iter_boundaries` lazily visits every scalar boundary with its
+`TextPosition`, `Mandatory`/`Allowed`/`Prohibited` decision, and whether the
+governing rule is tailorable. `LineBreak.iter_opportunities` and
+`LineBreak.Cursor` emit only allowed or mandatory opportunities; the cursor
+accepts scalar-aligned `Str` chunks and is explicitly finished. Exhaustive
+replayable traversal uses bounded forward lookahead, while the non-replayable
+cursor retains only bounded algorithm state and never a source chunk. The
+Unicode default is the no-configuration path; `PreserveGraphemes` is an
+explicit restriction profile that reuses the package's grapheme transition
+core.
+
 Validate the sources and check generated Roc modules with:
 
 ```sh
@@ -105,14 +118,17 @@ over a versioned stdin protocol, and executes deterministic shards in parallel.
 ```sh
 ROC=roc scripts/all_tests.sh
 python3 scripts/test.py grapheme
+python3 scripts/test.py line-break --jobs 8
 python3 scripts/test.py properties --jobs 8
 python3 scripts/test.py allocations
 ```
 
-The grapheme suite covers all 766 official Unicode 17 conformance cases. The
-property suite covers every valid Unicode scalar for grapheme-break,
-East-Asian-width, and emoji properties. A separate allocation harness records
-the package's allocation behavior. Its Linux x64 counts are exact measurements
+The grapheme suite covers all 766 official Unicode 17 conformance cases, and
+the line-break suite covers all 19,338 official Unicode 17 cases through both
+complete-string and one-scalar-per-chunk paths. The property suite covers every
+valid Unicode scalar for grapheme-break, East-Asian-width, and emoji
+properties. A separate allocation harness records the package's allocation
+behavior. Its Linux x64 counts are exact measurements
 for the compiler in `.roc-version`: when an intentional implementation change
 alters them, rerun `scripts/test.py allocations` with that pinned compiler and
 review the measured fixture counts before updating the adjacent baseline file.
@@ -122,4 +138,4 @@ The runner never updates or silently accepts a new allocation baseline.
 
 Opt-in local benchmarks live in [`benchmarks`](benchmarks/README.md). They are
 kept outside CI and include a reproducible Unicode 17 grapheme comparison with
-Rust and Go.
+Rust and Go plus an official-conformance-corpus line-break benchmark.
