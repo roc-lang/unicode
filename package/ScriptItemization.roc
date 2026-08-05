@@ -825,21 +825,7 @@ flush_stream_pending = |fold_state, right, byte_end, scalar_end| {
     if fold_state.cursor.pending.is_empty() {
         fold_state
     } else {
-        resolved = fold_state.cursor.pending.map(|unit| {
-            match unit.kind {
-                Restricted(details) => {
-                    script = resolve_restricted(
-                        details,
-                        fold_state.cursor.left,
-                        right,
-                        fold_state.cursor.policy,
-                    )
-                    { ..unit, kind: Definite(script) }
-                }
-                _ => unit
-            }
-        })
-        replayed = resolved.fold(
+        replayed = fold_state.cursor.pending.fold(
             {
                 result: fold_state.result,
                 common: NoCommon,
@@ -847,7 +833,21 @@ flush_stream_pending = |fold_state, right, byte_end, scalar_end| {
                 right,
                 policy: fold_state.cursor.policy,
             },
-            consume_replay,
+            |state, unit| {
+                resolved = match unit.kind {
+                    Restricted(details) => {
+                        script = resolve_restricted(
+                            details,
+                            fold_state.cursor.left,
+                            right,
+                            fold_state.cursor.policy,
+                        )
+                        { ..unit, kind: Definite(script) }
+                    }
+                    _ => unit
+                }
+                consume_replay(state, resolved)
+            },
         )
         final = flush_common(replayed, byte_end, scalar_end, right)
         {
