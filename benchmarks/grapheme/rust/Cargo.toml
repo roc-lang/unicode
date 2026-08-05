@@ -5,7 +5,16 @@ edition = "2024"
 publish = false
 
 [dependencies]
+icu_segmenter = { version = "=2.2.0", default-features = false, features = ["compiled_data"] }
 unicode-segmentation = "=1.13.3"
+
+[[bin]]
+name = "rust-unicode-segmentation"
+path = "src/main.rs"
+
+[[bin]]
+name = "rust-icu4x"
+path = "src/icu4x.rs"
 
 [profile.release]
 codegen-units = 1
