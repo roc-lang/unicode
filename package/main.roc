@@ -1,7 +1,8 @@
 package
     [
+        ByteRange,
         CodePoint,
         Grapheme,
-        Text,
+        UnicodeVersion,
     ]
     {}

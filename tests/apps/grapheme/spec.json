@@ -3,6 +3,5 @@
   "kind": "grapheme",
   "suite": "grapheme",
   "timeout_seconds": 120,
-  "unicode_manifest_file": "grapheme_break_test",
-  "skip_ledger": "tests/apps/grapheme/skips-15.1.0.json"
+  "unicode_manifest_file": "grapheme_break_test"
 }

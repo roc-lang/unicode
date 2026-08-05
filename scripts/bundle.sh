@@ -29,9 +29,13 @@ cd "$root_dir/package"
 
 roc_files=(
     main.roc
+    ByteRange.roc
     CodePoint.roc
     Grapheme.roc
-    Text.roc
+    UnicodeVersion.roc
+    InternalGrapheme.roc
+    InternalGraphemeData.roc
+    InternalUtf8.roc
     InternalEAW.roc
     InternalEmoji.roc
     InternalGBP.roc

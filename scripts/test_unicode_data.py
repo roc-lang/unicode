@@ -104,13 +104,5 @@ class UnicodeDataTests(unittest.TestCase):
                 "÷ 0041 ? 0042 ÷ # ÷ [0.2] A ? [999.0] B ÷ [0.3]\n",
             )
 
-    def test_skip_ledger_has_exactly_the_known_unsupported_cases(self) -> None:
-        manifest = unicode_data.load_manifest()
-        cases = unicode_data.parse_grapheme_tests(manifest)
-        skipped = unicode_data.validate_skip_ledger(cases)
-        self.assertEqual(len(skipped), 125)
-        self.assertEqual(len(cases) - len(skipped), 1062)
-
-
 if __name__ == "__main__":
     unittest.main()

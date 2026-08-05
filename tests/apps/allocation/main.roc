@@ -50,16 +50,13 @@ run_case! = |suite, line| {
                 Ok(str) => {
                     before = Host.alloc_count!({})
                     result = if suite == "allocation-calibration" and expectation == "zero" {
-                        Ok([])
+                        []
                     } else {
-                        Grapheme.split(str)
+                        Grapheme.ranges(str)
                     }
                     after = Host.alloc_count!({})
                     allocations = after - before
-                    _ = match result {
-                        Ok(parts) => parts.len()
-                        Err(_) => 0
-                    }
+                    _ = result.len()
 
                     if suite == "allocation-calibration" {
                         if (expectation == "zero" and allocations == 0) or (expectation == "positive" and allocations > 0) {

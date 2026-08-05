@@ -4,6 +4,7 @@ app [run!] {
 }
 
 import unicode.CodePoint
+import unicode.ByteRange
 import unicode.Grapheme
 
 run! : Str => Str
@@ -65,18 +66,15 @@ run_case = |line| {
                             ->CodePoint.to_str()
                     match source {
                         Err(_) => Err({ case_id, message: "could not encode source scalars" })
-                        Ok(str) => match Grapheme.split(str) {
-                            Err(_) => Err({ case_id, message: "Grapheme.split returned an error" })
-                            Ok(parts) => {
-                                got = break_offsets(parts)
-                                if got == expected {
-                                    Ok({})
-                                } else {
-                                    Err({
-                                        case_id,
-                                        message: "expected ${Str.inspect(expected)}, got ${Str.inspect(got)}",
-                                    })
-                                }
+                        Ok(str) => {
+                            got = break_offsets(Grapheme.ranges(str))
+                            if got == expected {
+                                Ok({})
+                            } else {
+                                Err({
+                                    case_id,
+                                    message: "expected ${Str.inspect(expected)}, got ${Str.inspect(got)}",
+                                })
                             }
                         }
                     }
@@ -89,11 +87,10 @@ run_case = |line| {
     }
 }
 
-break_offsets : List(Str) -> List(U64)
-break_offsets = |parts| {
-    parts.fold([0], |offsets, part| {
-        previous = offsets.last() ?? 0
-        offsets.append(previous + part.to_utf8().len())
+break_offsets : List(ByteRange) -> List(U64)
+break_offsets = |ranges| {
+    ranges.fold([0], |offsets, range| {
+        offsets.append(ByteRange.end(range))
     })
 }
 

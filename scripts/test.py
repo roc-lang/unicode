@@ -23,7 +23,6 @@ from unicode_data import (
     load_property_data,
     parse_grapheme_tests,
     validate_all,
-    validate_skip_ledger,
 )
 
 
@@ -130,7 +129,6 @@ def load_app_specs() -> dict[str, dict[str, object]]:
             "suite",
             "timeout_seconds",
             "unicode_manifest_file",
-            "skip_ledger",
         },
         "properties": {
             "schema_version",
@@ -170,9 +168,6 @@ def load_app_specs() -> dict[str, dict[str, object]]:
         raise TestFailure("grapheme spec suite has drifted")
     if specs["grapheme"]["unicode_manifest_file"] != "grapheme_break_test":
         raise TestFailure("grapheme spec references an unknown manifest file")
-    grapheme_ledger = ROOT / str(specs["grapheme"]["skip_ledger"])
-    if grapheme_ledger.parent != APP_ROOT / "grapheme" or not grapheme_ledger.is_file():
-        raise TestFailure("grapheme skip ledger must be adjacent to its app")
     property_sources = set(specs["properties"]["unicode_manifest_files"])
     if property_sources != {
         "grapheme_break_property",
@@ -343,18 +338,14 @@ def grapheme_row(case: GraphemeCase) -> str:
 def run_grapheme(binary: Path, jobs: int, spec: dict[str, object]) -> None:
     manifest = load_manifest()
     cases = parse_grapheme_tests(manifest)
-    ledger_path = ROOT / str(spec["skip_ledger"])
-    skipped = validate_skip_ledger(cases, ledger_path)
-    supported = [case for case in cases if case.case_id not in skipped]
     run_parallel_suite(
         binary,
         "grapheme",
-        len(supported),
-        lambda index: grapheme_row(supported[index]),
+        len(cases),
+        lambda index: grapheme_row(cases[index]),
         jobs=jobs,
         timeout=int(spec["timeout_seconds"]),
     )
-    print(f"SKIP grapheme: {len(skipped)} cases tracked by issue #35")
 
 
 def fill_property_table(records: list[RangeRecord], codes: dict[str, int], default: int) -> bytearray:
@@ -366,9 +357,9 @@ def fill_property_table(records: list[RangeRecord], codes: dict[str, int], defau
     return values
 
 
-def build_property_tables() -> tuple[bytearray, bytearray, bytearray]:
+def build_property_tables() -> tuple[str, bytearray, bytearray, bytearray]:
     manifest = load_manifest()
-    gcb, eaw, emoji = load_property_data(manifest)
+    gcb, eaw, emoji, _incb = load_property_data(manifest)
     gcb_values = fill_property_table(gcb, GCB_CODES, 0)
     eaw_values = fill_property_table(eaw, EAW_CODES, 0)
     emoji_values = bytearray(MAX_CODE_POINT + 1)
@@ -376,7 +367,7 @@ def build_property_tables() -> tuple[bytearray, bytearray, bytearray]:
         bit = EMOJI_BITS[record.property]
         for code_point in range(record.start, record.end + 1):
             emoji_values[code_point] |= bit
-    return gcb_values, eaw_values, emoji_values
+    return str(manifest["unicode_version"]), gcb_values, eaw_values, emoji_values
 
 
 def scalar_at(index: int) -> int:
@@ -386,12 +377,12 @@ def scalar_at(index: int) -> int:
 def run_properties(binary: Path, jobs: int, spec: dict[str, object]) -> None:
     if spec["suite"] != "properties":
         raise TestFailure("properties spec suite has drifted")
-    gcb, eaw, emoji = build_property_tables()
+    version, gcb, eaw, emoji = build_property_tables()
 
     def row(index: int) -> str:
         code_point = scalar_at(index)
         return (
-            f"15.1.0:scalar:{code_point:06X}\t{code_point:X}\t"
+            f"{version}:scalar:{code_point:06X}\t{code_point:X}\t"
             f"{gcb[code_point]}\t{eaw[code_point]}\t{emoji[code_point]}"
         )
 
