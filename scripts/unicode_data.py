@@ -1281,6 +1281,18 @@ def loose_alias(value: str) -> str:
     return normalized[2:] if len(normalized) > 2 and normalized.startswith("is") else normalized
 
 
+def loose_alias_hash(value: str) -> int:
+    """Allocation-free runtime-compatible FNV-1a over an ASCII loose alias."""
+    result = 2166136261
+    for byte in value.encode("utf-8"):
+        if byte in (0x20, 0x2D, 0x5F):
+            continue
+        if 0x41 <= byte <= 0x5A:
+            byte += 0x20
+        result = ((result ^ byte) * 16777619) & 0xFFFFFFFF
+    return result
+
+
 def parse_property_aliases(text: str, *, source: str) -> dict[str, PropertyAlias]:
     aliases: dict[str, PropertyAlias] = {}
     loose_to_short: dict[str, str] = {}
@@ -3228,8 +3240,10 @@ def render_script_data(
     for identity in identities:
         ranges = _ascii_ranges(encoded, private_ids[identity])
         if ranges:
-            ascii_branches.append(f"if {_condition(ranges)} ({identity})")
-    ascii_expression = " else ".join(ascii_branches) + f" else {properties.script_default}"
+            ascii_branches.append(
+                f"if {_condition(ranges)} {private_ids[identity]}"
+            )
+    ascii_private_expression = " else ".join(ascii_branches) + f" else {private_ids[properties.script_default]}"
     from_matches = "\n".join(
         f"        {private_ids[identity]} => {identity}" for identity in identities
     )
@@ -3244,7 +3258,7 @@ def render_script_data(
     )
     alias_count_matches = []
     alias_at_matches = []
-    from_alias_conditions = []
+    from_alias_buckets: dict[int, list[tuple[str, str]]] = {}
     for record in aliases:
         names = _unique_aliases((record.short, record.long, *record.aliases))
         alias_count_matches.append(f"        {record.identity} => {len(names)}")
@@ -3252,10 +3266,18 @@ def render_script_data(
             alias_at_matches.append(
                 f"        ({record.identity}, {index}) => Some({_roc_string(alias)})"
             )
-            from_alias_conditions.append(
-                f"if loose_eq(value, {_roc_string(alias)}) Some({record.identity})"
+            from_alias_buckets.setdefault(loose_alias_hash(alias), []).append(
+                (alias, record.identity)
             )
-    from_alias_expression = " else ".join(from_alias_conditions) + " else None"
+    from_alias_matches = []
+    for hash_value, bucket in sorted(from_alias_buckets.items()):
+        conditions = " else ".join(
+            f"if loose_eq(value, {_roc_string(alias)}) Some({identity})"
+            for alias, identity in bucket
+        )
+        from_alias_matches.append(
+            f"            {hash_value} => {conditions} else None"
+        )
     return (
         f"## GENERATED from Unicode {version} Scripts.txt and PropertyValueAliases.txt under UAX #24 revision 39. ##\n"
         "## Run `python3 scripts/unicode_data.py generate`. Named tags/aliases are stable; U8 values are private. ##\n"
@@ -3266,13 +3288,18 @@ def render_script_data(
         "InternalScriptData :: [].{\n"
         f"    Script : [{', '.join(identities)}]\n\n"
         "    lookup : U32 -> Script\n"
-        "    lookup = |scalar| {\n"
-        f"        if scalar < 128 {{\n            ascii_script(scalar)\n        }} else if scalar > 0x10FFFF {{\n            {properties.script_default}\n        }} else {{\n"
+        "    lookup = |scalar| from_private_id(lookup_private(scalar))\n\n"
+        "    lookup_private : U32 -> U8\n"
+        "    lookup_private = |scalar| {\n"
+        f"        if scalar < 128 {{\n            ascii_private_id(scalar)\n        }} else if scalar > 0x10FFFF {{\n            {private_ids[properties.script_default]}\n        }} else {{\n"
         f"            page_id = page_index.get(scalar.shr_wrap({paged.page_bits}).to_u64()) ?? 0\n"
         f"            offset = page_id.to_u64() * {page_size} + scalar.bitwise_and({page_size - 1}).to_u64()\n"
-        f"            from_private_id(pages.get(offset) ?? {private_ids[properties.script_default]})\n"
+        f"            pages.get(offset) ?? {private_ids[properties.script_default]}\n"
         "        }\n"
         "    }\n\n"
+        f"    common_private_id : U8\n    common_private_id = {private_ids['Zyyy']}\n\n"
+        f"    inherited_private_id : U8\n    inherited_private_id = {private_ids['Zinh']}\n\n"
+        f"    unknown_private_id : U8\n    unknown_private_id = {private_ids['Zzzz']}\n\n"
         "    private_id : Script -> U8\n"
         "    private_id = |script| {\n        match script {\n"
         f"{id_matches}\n        }}\n    }}\n\n"
@@ -3294,10 +3321,23 @@ def render_script_data(
         + "\n".join(alias_at_matches)
         + "\n        _ => None\n        }\n    }\n\n"
         "    from_alias : Str -> [Some(Script), None]\n"
-        f"    from_alias = |value| {from_alias_expression}\n"
+        "    from_alias = |value| {\n"
+        "        match loose_hash(value) {\n"
+        + "\n".join(from_alias_matches)
+        + "\n            _ => None\n        }\n    }\n"
         "}\n\n"
-        "ascii_script : U32 -> InternalScriptData.Script\n"
-        f"ascii_script = |u32| {ascii_expression}\n\n"
+        "ascii_private_id : U32 -> U8\n"
+        f"ascii_private_id = |u32| {ascii_private_expression}\n\n"
+        "loose_hash : Str -> U32\n"
+        "loose_hash = |value| {\n"
+        "    var hash = 2166136261.U32\n"
+        "    for byte in value.iter_utf8() {\n"
+        "        if byte != 0x20 and byte != 0x2D and byte != 0x5F {\n"
+        "            hash = hash.bitwise_xor(ascii_lower(byte).to_u32()).times_wrap(16777619)\n"
+        "        }\n"
+        "    }\n"
+        "    hash\n"
+        "}\n\n"
         "loose_eq : Str, Str -> Bool\n"
         "loose_eq = |left, right| {\n"
         "    var left_bytes = left.iter_utf8()\n"

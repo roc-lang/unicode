@@ -7,17 +7,29 @@ InternalScriptData :: [].{
     Script : [Adlm, Aghb, Ahom, Arab, Armi, Armn, Avst, Bali, Bamu, Bass, Batk, Beng, Berf, Bhks, Bopo, Brah, Brai, Bugi, Buhd, Cakm, Cans, Cari, Cham, Cher, Chrs, Copt, Cpmn, Cprt, Cyrl, Deva, Diak, Dogr, Dsrt, Dupl, Egyp, Elba, Elym, Ethi, Gara, Geor, Glag, Gong, Gonm, Goth, Gran, Grek, Gujr, Gukh, Guru, Hang, Hani, Hano, Hatr, Hebr, Hira, Hluw, Hmng, Hmnp, Hrkt, Hung, Ital, Java, Kali, Kana, Kawi, Khar, Khmr, Khoj, Kits, Knda, Krai, Kthi, Lana, Laoo, Latn, Lepc, Limb, Lina, Linb, Lisu, Lyci, Lydi, Mahj, Maka, Mand, Mani, Marc, Medf, Mend, Merc, Mero, Mlym, Modi, Mong, Mroo, Mtei, Mult, Mymr, Nagm, Nand, Narb, Nbat, Newa, Nkoo, Nshu, Ogam, Olck, Onao, Orkh, Orya, Osge, Osma, Ougr, Palm, Pauc, Perm, Phag, Phli, Phlp, Phnx, Plrd, Prti, Rjng, Rohg, Runr, Samr, Sarb, Saur, Sgnw, Shaw, Shrd, Sidd, Sidt, Sind, Sinh, Sogd, Sogo, Sora, Soyo, Sund, Sunu, Sylo, Syrc, Tagb, Takr, Tale, Talu, Taml, Tang, Tavt, Tayo, Telu, Tfng, Tglg, Thaa, Thai, Tibt, Tirh, Tnsa, Todr, Tols, Toto, Tutg, Ugar, Vaii, Vith, Wara, Wcho, Xpeo, Xsux, Yezi, Yiii, Zanb, Zinh, Zyyy, Zzzz]
 
     lookup : U32 -> Script
-    lookup = |scalar| {
+    lookup = |scalar| from_private_id(lookup_private(scalar))
+
+    lookup_private : U32 -> U8
+    lookup_private = |scalar| {
         if scalar < 128 {
-            ascii_script(scalar)
+            ascii_private_id(scalar)
         } else if scalar > 0x10FFFF {
-            Zzzz
+            175
         } else {
             page_id = page_index.get(scalar.shr_wrap(7).to_u64()) ?? 0
             offset = page_id.to_u64() * 128 + scalar.bitwise_and(127).to_u64()
-            from_private_id(pages.get(offset) ?? 175)
+            pages.get(offset) ?? 175
         }
     }
+
+    common_private_id : U8
+    common_private_id = 174
+
+    inherited_private_id : U8
+    inherited_private_id = 173
+
+    unknown_private_id : U8
+    unknown_private_id = 175
 
     private_id : Script -> U8
     private_id = |script| {
@@ -1284,11 +1296,372 @@ InternalScriptData :: [].{
     }
 
     from_alias : Str -> [Some(Script), None]
-    from_alias = |value| if loose_eq(value, "Adlm") Some(Adlm) else if loose_eq(value, "Adlam") Some(Adlm) else if loose_eq(value, "Aghb") Some(Aghb) else if loose_eq(value, "Caucasian_Albanian") Some(Aghb) else if loose_eq(value, "Ahom") Some(Ahom) else if loose_eq(value, "Arab") Some(Arab) else if loose_eq(value, "Arabic") Some(Arab) else if loose_eq(value, "Armi") Some(Armi) else if loose_eq(value, "Imperial_Aramaic") Some(Armi) else if loose_eq(value, "Armn") Some(Armn) else if loose_eq(value, "Armenian") Some(Armn) else if loose_eq(value, "Avst") Some(Avst) else if loose_eq(value, "Avestan") Some(Avst) else if loose_eq(value, "Bali") Some(Bali) else if loose_eq(value, "Balinese") Some(Bali) else if loose_eq(value, "Bamu") Some(Bamu) else if loose_eq(value, "Bamum") Some(Bamu) else if loose_eq(value, "Bass") Some(Bass) else if loose_eq(value, "Bassa_Vah") Some(Bass) else if loose_eq(value, "Batk") Some(Batk) else if loose_eq(value, "Batak") Some(Batk) else if loose_eq(value, "Beng") Some(Beng) else if loose_eq(value, "Bengali") Some(Beng) else if loose_eq(value, "Berf") Some(Berf) else if loose_eq(value, "Beria_Erfe") Some(Berf) else if loose_eq(value, "Bhks") Some(Bhks) else if loose_eq(value, "Bhaiksuki") Some(Bhks) else if loose_eq(value, "Bopo") Some(Bopo) else if loose_eq(value, "Bopomofo") Some(Bopo) else if loose_eq(value, "Brah") Some(Brah) else if loose_eq(value, "Brahmi") Some(Brah) else if loose_eq(value, "Brai") Some(Brai) else if loose_eq(value, "Braille") Some(Brai) else if loose_eq(value, "Bugi") Some(Bugi) else if loose_eq(value, "Buginese") Some(Bugi) else if loose_eq(value, "Buhd") Some(Buhd) else if loose_eq(value, "Buhid") Some(Buhd) else if loose_eq(value, "Cakm") Some(Cakm) else if loose_eq(value, "Chakma") Some(Cakm) else if loose_eq(value, "Cans") Some(Cans) else if loose_eq(value, "Canadian_Aboriginal") Some(Cans) else if loose_eq(value, "Cari") Some(Cari) else if loose_eq(value, "Carian") Some(Cari) else if loose_eq(value, "Cham") Some(Cham) else if loose_eq(value, "Cher") Some(Cher) else if loose_eq(value, "Cherokee") Some(Cher) else if loose_eq(value, "Chrs") Some(Chrs) else if loose_eq(value, "Chorasmian") Some(Chrs) else if loose_eq(value, "Copt") Some(Copt) else if loose_eq(value, "Coptic") Some(Copt) else if loose_eq(value, "Qaac") Some(Copt) else if loose_eq(value, "Cpmn") Some(Cpmn) else if loose_eq(value, "Cypro_Minoan") Some(Cpmn) else if loose_eq(value, "Cprt") Some(Cprt) else if loose_eq(value, "Cypriot") Some(Cprt) else if loose_eq(value, "Cyrl") Some(Cyrl) else if loose_eq(value, "Cyrillic") Some(Cyrl) else if loose_eq(value, "Deva") Some(Deva) else if loose_eq(value, "Devanagari") Some(Deva) else if loose_eq(value, "Diak") Some(Diak) else if loose_eq(value, "Dives_Akuru") Some(Diak) else if loose_eq(value, "Dogr") Some(Dogr) else if loose_eq(value, "Dogra") Some(Dogr) else if loose_eq(value, "Dsrt") Some(Dsrt) else if loose_eq(value, "Deseret") Some(Dsrt) else if loose_eq(value, "Dupl") Some(Dupl) else if loose_eq(value, "Duployan") Some(Dupl) else if loose_eq(value, "Egyp") Some(Egyp) else if loose_eq(value, "Egyptian_Hieroglyphs") Some(Egyp) else if loose_eq(value, "Elba") Some(Elba) else if loose_eq(value, "Elbasan") Some(Elba) else if loose_eq(value, "Elym") Some(Elym) else if loose_eq(value, "Elymaic") Some(Elym) else if loose_eq(value, "Ethi") Some(Ethi) else if loose_eq(value, "Ethiopic") Some(Ethi) else if loose_eq(value, "Gara") Some(Gara) else if loose_eq(value, "Garay") Some(Gara) else if loose_eq(value, "Geor") Some(Geor) else if loose_eq(value, "Georgian") Some(Geor) else if loose_eq(value, "Glag") Some(Glag) else if loose_eq(value, "Glagolitic") Some(Glag) else if loose_eq(value, "Gong") Some(Gong) else if loose_eq(value, "Gunjala_Gondi") Some(Gong) else if loose_eq(value, "Gonm") Some(Gonm) else if loose_eq(value, "Masaram_Gondi") Some(Gonm) else if loose_eq(value, "Goth") Some(Goth) else if loose_eq(value, "Gothic") Some(Goth) else if loose_eq(value, "Gran") Some(Gran) else if loose_eq(value, "Grantha") Some(Gran) else if loose_eq(value, "Grek") Some(Grek) else if loose_eq(value, "Greek") Some(Grek) else if loose_eq(value, "Gujr") Some(Gujr) else if loose_eq(value, "Gujarati") Some(Gujr) else if loose_eq(value, "Gukh") Some(Gukh) else if loose_eq(value, "Gurung_Khema") Some(Gukh) else if loose_eq(value, "Guru") Some(Guru) else if loose_eq(value, "Gurmukhi") Some(Guru) else if loose_eq(value, "Hang") Some(Hang) else if loose_eq(value, "Hangul") Some(Hang) else if loose_eq(value, "Hani") Some(Hani) else if loose_eq(value, "Han") Some(Hani) else if loose_eq(value, "Hano") Some(Hano) else if loose_eq(value, "Hanunoo") Some(Hano) else if loose_eq(value, "Hatr") Some(Hatr) else if loose_eq(value, "Hatran") Some(Hatr) else if loose_eq(value, "Hebr") Some(Hebr) else if loose_eq(value, "Hebrew") Some(Hebr) else if loose_eq(value, "Hira") Some(Hira) else if loose_eq(value, "Hiragana") Some(Hira) else if loose_eq(value, "Hluw") Some(Hluw) else if loose_eq(value, "Anatolian_Hieroglyphs") Some(Hluw) else if loose_eq(value, "Hmng") Some(Hmng) else if loose_eq(value, "Pahawh_Hmong") Some(Hmng) else if loose_eq(value, "Hmnp") Some(Hmnp) else if loose_eq(value, "Nyiakeng_Puachue_Hmong") Some(Hmnp) else if loose_eq(value, "Hrkt") Some(Hrkt) else if loose_eq(value, "Katakana_Or_Hiragana") Some(Hrkt) else if loose_eq(value, "Hung") Some(Hung) else if loose_eq(value, "Old_Hungarian") Some(Hung) else if loose_eq(value, "Ital") Some(Ital) else if loose_eq(value, "Old_Italic") Some(Ital) else if loose_eq(value, "Java") Some(Java) else if loose_eq(value, "Javanese") Some(Java) else if loose_eq(value, "Kali") Some(Kali) else if loose_eq(value, "Kayah_Li") Some(Kali) else if loose_eq(value, "Kana") Some(Kana) else if loose_eq(value, "Katakana") Some(Kana) else if loose_eq(value, "Kawi") Some(Kawi) else if loose_eq(value, "Khar") Some(Khar) else if loose_eq(value, "Kharoshthi") Some(Khar) else if loose_eq(value, "Khmr") Some(Khmr) else if loose_eq(value, "Khmer") Some(Khmr) else if loose_eq(value, "Khoj") Some(Khoj) else if loose_eq(value, "Khojki") Some(Khoj) else if loose_eq(value, "Kits") Some(Kits) else if loose_eq(value, "Khitan_Small_Script") Some(Kits) else if loose_eq(value, "Knda") Some(Knda) else if loose_eq(value, "Kannada") Some(Knda) else if loose_eq(value, "Krai") Some(Krai) else if loose_eq(value, "Kirat_Rai") Some(Krai) else if loose_eq(value, "Kthi") Some(Kthi) else if loose_eq(value, "Kaithi") Some(Kthi) else if loose_eq(value, "Lana") Some(Lana) else if loose_eq(value, "Tai_Tham") Some(Lana) else if loose_eq(value, "Laoo") Some(Laoo) else if loose_eq(value, "Lao") Some(Laoo) else if loose_eq(value, "Latn") Some(Latn) else if loose_eq(value, "Latin") Some(Latn) else if loose_eq(value, "Lepc") Some(Lepc) else if loose_eq(value, "Lepcha") Some(Lepc) else if loose_eq(value, "Limb") Some(Limb) else if loose_eq(value, "Limbu") Some(Limb) else if loose_eq(value, "Lina") Some(Lina) else if loose_eq(value, "Linear_A") Some(Lina) else if loose_eq(value, "Linb") Some(Linb) else if loose_eq(value, "Linear_B") Some(Linb) else if loose_eq(value, "Lisu") Some(Lisu) else if loose_eq(value, "Lyci") Some(Lyci) else if loose_eq(value, "Lycian") Some(Lyci) else if loose_eq(value, "Lydi") Some(Lydi) else if loose_eq(value, "Lydian") Some(Lydi) else if loose_eq(value, "Mahj") Some(Mahj) else if loose_eq(value, "Mahajani") Some(Mahj) else if loose_eq(value, "Maka") Some(Maka) else if loose_eq(value, "Makasar") Some(Maka) else if loose_eq(value, "Mand") Some(Mand) else if loose_eq(value, "Mandaic") Some(Mand) else if loose_eq(value, "Mani") Some(Mani) else if loose_eq(value, "Manichaean") Some(Mani) else if loose_eq(value, "Marc") Some(Marc) else if loose_eq(value, "Marchen") Some(Marc) else if loose_eq(value, "Medf") Some(Medf) else if loose_eq(value, "Medefaidrin") Some(Medf) else if loose_eq(value, "Mend") Some(Mend) else if loose_eq(value, "Mende_Kikakui") Some(Mend) else if loose_eq(value, "Merc") Some(Merc) else if loose_eq(value, "Meroitic_Cursive") Some(Merc) else if loose_eq(value, "Mero") Some(Mero) else if loose_eq(value, "Meroitic_Hieroglyphs") Some(Mero) else if loose_eq(value, "Mlym") Some(Mlym) else if loose_eq(value, "Malayalam") Some(Mlym) else if loose_eq(value, "Modi") Some(Modi) else if loose_eq(value, "Mong") Some(Mong) else if loose_eq(value, "Mongolian") Some(Mong) else if loose_eq(value, "Mroo") Some(Mroo) else if loose_eq(value, "Mro") Some(Mroo) else if loose_eq(value, "Mtei") Some(Mtei) else if loose_eq(value, "Meetei_Mayek") Some(Mtei) else if loose_eq(value, "Mult") Some(Mult) else if loose_eq(value, "Multani") Some(Mult) else if loose_eq(value, "Mymr") Some(Mymr) else if loose_eq(value, "Myanmar") Some(Mymr) else if loose_eq(value, "Nagm") Some(Nagm) else if loose_eq(value, "Nag_Mundari") Some(Nagm) else if loose_eq(value, "Nand") Some(Nand) else if loose_eq(value, "Nandinagari") Some(Nand) else if loose_eq(value, "Narb") Some(Narb) else if loose_eq(value, "Old_North_Arabian") Some(Narb) else if loose_eq(value, "Nbat") Some(Nbat) else if loose_eq(value, "Nabataean") Some(Nbat) else if loose_eq(value, "Newa") Some(Newa) else if loose_eq(value, "Nkoo") Some(Nkoo) else if loose_eq(value, "Nko") Some(Nkoo) else if loose_eq(value, "Nshu") Some(Nshu) else if loose_eq(value, "Nushu") Some(Nshu) else if loose_eq(value, "Ogam") Some(Ogam) else if loose_eq(value, "Ogham") Some(Ogam) else if loose_eq(value, "Olck") Some(Olck) else if loose_eq(value, "Ol_Chiki") Some(Olck) else if loose_eq(value, "Onao") Some(Onao) else if loose_eq(value, "Ol_Onal") Some(Onao) else if loose_eq(value, "Orkh") Some(Orkh) else if loose_eq(value, "Old_Turkic") Some(Orkh) else if loose_eq(value, "Orya") Some(Orya) else if loose_eq(value, "Oriya") Some(Orya) else if loose_eq(value, "Osge") Some(Osge) else if loose_eq(value, "Osage") Some(Osge) else if loose_eq(value, "Osma") Some(Osma) else if loose_eq(value, "Osmanya") Some(Osma) else if loose_eq(value, "Ougr") Some(Ougr) else if loose_eq(value, "Old_Uyghur") Some(Ougr) else if loose_eq(value, "Palm") Some(Palm) else if loose_eq(value, "Palmyrene") Some(Palm) else if loose_eq(value, "Pauc") Some(Pauc) else if loose_eq(value, "Pau_Cin_Hau") Some(Pauc) else if loose_eq(value, "Perm") Some(Perm) else if loose_eq(value, "Old_Permic") Some(Perm) else if loose_eq(value, "Phag") Some(Phag) else if loose_eq(value, "Phags_Pa") Some(Phag) else if loose_eq(value, "Phli") Some(Phli) else if loose_eq(value, "Inscriptional_Pahlavi") Some(Phli) else if loose_eq(value, "Phlp") Some(Phlp) else if loose_eq(value, "Psalter_Pahlavi") Some(Phlp) else if loose_eq(value, "Phnx") Some(Phnx) else if loose_eq(value, "Phoenician") Some(Phnx) else if loose_eq(value, "Plrd") Some(Plrd) else if loose_eq(value, "Miao") Some(Plrd) else if loose_eq(value, "Prti") Some(Prti) else if loose_eq(value, "Inscriptional_Parthian") Some(Prti) else if loose_eq(value, "Rjng") Some(Rjng) else if loose_eq(value, "Rejang") Some(Rjng) else if loose_eq(value, "Rohg") Some(Rohg) else if loose_eq(value, "Hanifi_Rohingya") Some(Rohg) else if loose_eq(value, "Runr") Some(Runr) else if loose_eq(value, "Runic") Some(Runr) else if loose_eq(value, "Samr") Some(Samr) else if loose_eq(value, "Samaritan") Some(Samr) else if loose_eq(value, "Sarb") Some(Sarb) else if loose_eq(value, "Old_South_Arabian") Some(Sarb) else if loose_eq(value, "Saur") Some(Saur) else if loose_eq(value, "Saurashtra") Some(Saur) else if loose_eq(value, "Sgnw") Some(Sgnw) else if loose_eq(value, "SignWriting") Some(Sgnw) else if loose_eq(value, "Shaw") Some(Shaw) else if loose_eq(value, "Shavian") Some(Shaw) else if loose_eq(value, "Shrd") Some(Shrd) else if loose_eq(value, "Sharada") Some(Shrd) else if loose_eq(value, "Sidd") Some(Sidd) else if loose_eq(value, "Siddham") Some(Sidd) else if loose_eq(value, "Sidt") Some(Sidt) else if loose_eq(value, "Sidetic") Some(Sidt) else if loose_eq(value, "Sind") Some(Sind) else if loose_eq(value, "Khudawadi") Some(Sind) else if loose_eq(value, "Sinh") Some(Sinh) else if loose_eq(value, "Sinhala") Some(Sinh) else if loose_eq(value, "Sogd") Some(Sogd) else if loose_eq(value, "Sogdian") Some(Sogd) else if loose_eq(value, "Sogo") Some(Sogo) else if loose_eq(value, "Old_Sogdian") Some(Sogo) else if loose_eq(value, "Sora") Some(Sora) else if loose_eq(value, "Sora_Sompeng") Some(Sora) else if loose_eq(value, "Soyo") Some(Soyo) else if loose_eq(value, "Soyombo") Some(Soyo) else if loose_eq(value, "Sund") Some(Sund) else if loose_eq(value, "Sundanese") Some(Sund) else if loose_eq(value, "Sunu") Some(Sunu) else if loose_eq(value, "Sunuwar") Some(Sunu) else if loose_eq(value, "Sylo") Some(Sylo) else if loose_eq(value, "Syloti_Nagri") Some(Sylo) else if loose_eq(value, "Syrc") Some(Syrc) else if loose_eq(value, "Syriac") Some(Syrc) else if loose_eq(value, "Tagb") Some(Tagb) else if loose_eq(value, "Tagbanwa") Some(Tagb) else if loose_eq(value, "Takr") Some(Takr) else if loose_eq(value, "Takri") Some(Takr) else if loose_eq(value, "Tale") Some(Tale) else if loose_eq(value, "Tai_Le") Some(Tale) else if loose_eq(value, "Talu") Some(Talu) else if loose_eq(value, "New_Tai_Lue") Some(Talu) else if loose_eq(value, "Taml") Some(Taml) else if loose_eq(value, "Tamil") Some(Taml) else if loose_eq(value, "Tang") Some(Tang) else if loose_eq(value, "Tangut") Some(Tang) else if loose_eq(value, "Tavt") Some(Tavt) else if loose_eq(value, "Tai_Viet") Some(Tavt) else if loose_eq(value, "Tayo") Some(Tayo) else if loose_eq(value, "Tai_Yo") Some(Tayo) else if loose_eq(value, "Telu") Some(Telu) else if loose_eq(value, "Telugu") Some(Telu) else if loose_eq(value, "Tfng") Some(Tfng) else if loose_eq(value, "Tifinagh") Some(Tfng) else if loose_eq(value, "Tglg") Some(Tglg) else if loose_eq(value, "Tagalog") Some(Tglg) else if loose_eq(value, "Thaa") Some(Thaa) else if loose_eq(value, "Thaana") Some(Thaa) else if loose_eq(value, "Thai") Some(Thai) else if loose_eq(value, "Tibt") Some(Tibt) else if loose_eq(value, "Tibetan") Some(Tibt) else if loose_eq(value, "Tirh") Some(Tirh) else if loose_eq(value, "Tirhuta") Some(Tirh) else if loose_eq(value, "Tnsa") Some(Tnsa) else if loose_eq(value, "Tangsa") Some(Tnsa) else if loose_eq(value, "Todr") Some(Todr) else if loose_eq(value, "Todhri") Some(Todr) else if loose_eq(value, "Tols") Some(Tols) else if loose_eq(value, "Tolong_Siki") Some(Tols) else if loose_eq(value, "Toto") Some(Toto) else if loose_eq(value, "Tutg") Some(Tutg) else if loose_eq(value, "Tulu_Tigalari") Some(Tutg) else if loose_eq(value, "Ugar") Some(Ugar) else if loose_eq(value, "Ugaritic") Some(Ugar) else if loose_eq(value, "Vaii") Some(Vaii) else if loose_eq(value, "Vai") Some(Vaii) else if loose_eq(value, "Vith") Some(Vith) else if loose_eq(value, "Vithkuqi") Some(Vith) else if loose_eq(value, "Wara") Some(Wara) else if loose_eq(value, "Warang_Citi") Some(Wara) else if loose_eq(value, "Wcho") Some(Wcho) else if loose_eq(value, "Wancho") Some(Wcho) else if loose_eq(value, "Xpeo") Some(Xpeo) else if loose_eq(value, "Old_Persian") Some(Xpeo) else if loose_eq(value, "Xsux") Some(Xsux) else if loose_eq(value, "Cuneiform") Some(Xsux) else if loose_eq(value, "Yezi") Some(Yezi) else if loose_eq(value, "Yezidi") Some(Yezi) else if loose_eq(value, "Yiii") Some(Yiii) else if loose_eq(value, "Yi") Some(Yiii) else if loose_eq(value, "Zanb") Some(Zanb) else if loose_eq(value, "Zanabazar_Square") Some(Zanb) else if loose_eq(value, "Zinh") Some(Zinh) else if loose_eq(value, "Inherited") Some(Zinh) else if loose_eq(value, "Qaai") Some(Zinh) else if loose_eq(value, "Zyyy") Some(Zyyy) else if loose_eq(value, "Common") Some(Zyyy) else if loose_eq(value, "Zzzz") Some(Zzzz) else if loose_eq(value, "Unknown") Some(Zzzz) else None
+    from_alias = |value| {
+        match loose_hash(value) {
+            4144741 => if loose_eq(value, "Pau_Cin_Hau") Some(Pauc) else None
+            46304872 => if loose_eq(value, "Meroitic_Cursive") Some(Merc) else None
+            54176342 => if loose_eq(value, "Hiragana") Some(Hira) else None
+            61028153 => if loose_eq(value, "Tai_Yo") Some(Tayo) else None
+            85395043 => if loose_eq(value, "Tagb") Some(Tagb) else None
+            108325841 => if loose_eq(value, "Hluw") Some(Hluw) else None
+            115558953 => if loose_eq(value, "Limb") Some(Limb) else None
+            121335101 => if loose_eq(value, "Cherokee") Some(Cher) else None
+            136295781 => if loose_eq(value, "Java") Some(Java) else None
+            155690797 => if loose_eq(value, "Sogo") Some(Sogo) else None
+            162182025 => if loose_eq(value, "Elbasan") Some(Elba) else None
+            170710161 => if loose_eq(value, "Talu") Some(Talu) else None
+            177827169 => if loose_eq(value, "Nag_Mundari") Some(Nagm) else None
+            187825022 => if loose_eq(value, "Vithkuqi") Some(Vith) else None
+            200585399 => if loose_eq(value, "Hanifi_Rohingya") Some(Rohg) else None
+            201021166 => if loose_eq(value, "Lisu") Some(Lisu) else None
+            254745351 => if loose_eq(value, "Taml") Some(Taml) else None
+            269689434 => if loose_eq(value, "Old_Persian") Some(Xpeo) else None
+            279476947 => if loose_eq(value, "Nko") Some(Nkoo) else None
+            282220607 => if loose_eq(value, "Sinh") Some(Sinh) else None
+            300524632 => if loose_eq(value, "Bopomofo") Some(Bopo) else None
+            333123547 => if loose_eq(value, "Lina") Some(Lina) else None
+            334951179 => if loose_eq(value, "Sora_Sompeng") Some(Sora) else None
+            336757657 => if loose_eq(value, "Tai_Viet") Some(Tavt) else None
+            349331083 => if loose_eq(value, "Sind") Some(Sind) else None
+            349901166 => if loose_eq(value, "Linb") Some(Linb) else None
+            388753082 => if loose_eq(value, "Sora") Some(Sora) else None
+            389541541 => if loose_eq(value, "Bhks") Some(Bhks) else None
+            392338966 => if loose_eq(value, "Gonm") Some(Gonm) else None
+            401753765 => if loose_eq(value, "Lycian") Some(Lyci) else None
+            405302637 => if loose_eq(value, "Tang") Some(Tang) else None
+            409191545 => if loose_eq(value, "Old_Sogdian") Some(Sogo) else None
+            414867441 => if loose_eq(value, "Sidd") Some(Sidd) else None
+            422767528 => if loose_eq(value, "Runr") Some(Runr) else None
+            426609079 => if loose_eq(value, "Lepc") Some(Lepc) else None
+            432601459 => if loose_eq(value, "Linear_A") Some(Lina) else None
+            439152065 => if loose_eq(value, "Tale") Some(Tale) else None
+            449379078 => if loose_eq(value, "Linear_B") Some(Linb) else None
+            464033790 => if loose_eq(value, "Lydian") Some(Lydi) else None
+            493004680 => if loose_eq(value, "Gong") Some(Gong) else None
+            494144966 => if loose_eq(value, "Gujarati") Some(Gujr) else None
+            539833567 => if loose_eq(value, "Sund") Some(Sund) else None
+            554258946 => if loose_eq(value, "Sidetic") Some(Sidt) else None
+            558270595 => if loose_eq(value, "Psalter_Pahlavi") Some(Phlp) else None
+            575169303 => if loose_eq(value, "Old_Hungarian") Some(Hung) else None
+            589089039 => if loose_eq(value, "Carian") Some(Cari) else None
+            599604969 => if loose_eq(value, "Medefaidrin") Some(Medf) else None
+            614738253 => if loose_eq(value, "Yezidi") Some(Yezi) else None
+            633481180 => if loose_eq(value, "Ol_Chiki") Some(Olck) else None
+            643387971 => if loose_eq(value, "Osmanya") Some(Osma) else None
+            650713443 => if loose_eq(value, "Makasar") Some(Maka) else None
+            683309345 => if loose_eq(value, "Sidt") Some(Sidt) else None
+            683475358 => if loose_eq(value, "Vaii") Some(Vaii) else None
+            716440097 => if loose_eq(value, "Telugu") Some(Telu) else None
+            727371646 => if loose_eq(value, "Beria_Erfe") Some(Berf) else None
+            733759557 => if loose_eq(value, "Gurung_Khema") Some(Gukh) else None
+            743784431 => if loose_eq(value, "Shavian") Some(Shaw) else None
+            761769329 => if loose_eq(value, "Deseret") Some(Dsrt) else None
+            772402863 => if loose_eq(value, "Rohg") Some(Rohg) else None
+            778070020 => if loose_eq(value, "Lepcha") Some(Lepc) else None
+            785306538 => if loose_eq(value, "Kali") Some(Kali) else None
+            791497852 => if loose_eq(value, "Sunu") Some(Sunu) else None
+            812410495 => if loose_eq(value, "Mongolian") Some(Mong) else None
+            814708684 => if loose_eq(value, "Tfng") Some(Tfng) else None
+            816922767 => if loose_eq(value, "Ethi") Some(Ethi) else None
+            831458987 => if loose_eq(value, "Bali") Some(Bali) else None
+            836913313 => if loose_eq(value, "Dogr") Some(Dogr) else None
+            852711204 => if loose_eq(value, "Kana") Some(Kana) else None
+            868957177 => if loose_eq(value, "Batk") Some(Batk) else None
+            869142228 => if loose_eq(value, "Limbu") Some(Limb) else None
+            890490207 => if loose_eq(value, "Garay") Some(Gara) else None
+            895028278 => if loose_eq(value, "Todr") Some(Todr) else None
+            895377948 => if loose_eq(value, "Tagalog") Some(Tglg) else None
+            912430666 => if loose_eq(value, "Hebr") Some(Hebr) else None
+            913216764 => if loose_eq(value, "Gara") Some(Gara) else None
+            913709578 => if loose_eq(value, "Rejang") Some(Rjng) else None
+            1017124202 => if loose_eq(value, "Gukh") Some(Gukh) else None
+            1020549158 => if loose_eq(value, "Dsrt") Some(Dsrt) else None
+            1037991868 => if loose_eq(value, "Guru") Some(Guru) else None
+            1056163635 => if loose_eq(value, "Old_North_Arabian") Some(Narb) else None
+            1070033645 => if loose_eq(value, "Xpeo") Some(Xpeo) else None
+            1070375155 => if loose_eq(value, "Gothic") Some(Goth) else None
+            1082761344 => if loose_eq(value, "Glagolitic") Some(Glag) else None
+            1100047986 => if loose_eq(value, "Bamu") Some(Bamu) else None
+            1111130598 => if loose_eq(value, "Cypro_Minoan") Some(Cpmn) else None
+            1130201130 => if loose_eq(value, "Khmer") Some(Khmr) else None
+            1181479088 => if loose_eq(value, "Kharoshthi") Some(Khar) else None
+            1181527729 => if loose_eq(value, "Tols") Some(Tols) else None
+            1184173537 => if loose_eq(value, "Kawi") Some(Kawi) else None
+            1194886720 => if loose_eq(value, "Dogra") Some(Dogr) else None
+            1228996495 => if loose_eq(value, "Cyrl") Some(Cyrl) else None
+            1252734524 => if loose_eq(value, "Malayalam") Some(Mlym) else None
+            1255613789 => if loose_eq(value, "Old_South_Arabian") Some(Sarb) else None
+            1255784980 => if loose_eq(value, "Zanb") Some(Zanb) else None
+            1257381273 => if loose_eq(value, "Phags_Pa") Some(Phag) else None
+            1259539206 => if loose_eq(value, "Balinese") Some(Bali) else None
+            1276859404 => if loose_eq(value, "Tamil") Some(Taml) else None
+            1285713201 => if loose_eq(value, "Gujr") Some(Gujr) else None
+            1297810548 => if loose_eq(value, "Common") Some(Zyyy) else None
+            1309392770 => if loose_eq(value, "Takri") Some(Takr) else None
+            1332165440 => if loose_eq(value, "Old_Permic") Some(Perm) else None
+            1333797141 => if loose_eq(value, "Cuneiform") Some(Xsux) else None
+            1347882587 => if loose_eq(value, "Knda") Some(Knda) else None
+            1355240930 => if loose_eq(value, "Thaana") Some(Thaa) else None
+            1379502483 => if loose_eq(value, "Khoj") Some(Khoj) else None
+            1384139085 => if loose_eq(value, "Toto") Some(Toto) else None
+            1401959279 => if loose_eq(value, "Inscriptional_Pahlavi") Some(Phli) else None
+            1405351331 => if loose_eq(value, "Adlm") Some(Adlm) else None
+            1406973818 => if loose_eq(value, "Bass") Some(Bass) else None
+            1410503101 => if loose_eq(value, "Osma") Some(Osma) else None
+            1443261824 => if loose_eq(value, "Khitan_Small_Script") Some(Kits) else None
+            1457767117 => if loose_eq(value, "Bamum") Some(Bamu) else None
+            1465942435 => if loose_eq(value, "Lao") Some(Laoo) else None
+            1479232228 => if loose_eq(value, "Tirh") Some(Tirh) else None
+            1479591684 => if loose_eq(value, "Buhd") Some(Buhd) else None
+            1487538459 => if loose_eq(value, "Hira") Some(Hira) else None
+            1491883044 => if loose_eq(value, "Laoo") Some(Laoo) else None
+            1506267728 => if loose_eq(value, "Newa") Some(Newa) else None
+            1514120793 => if loose_eq(value, "Khmr") Some(Khmr) else None
+            1521369461 => if loose_eq(value, "Buhid") Some(Buhd) else None
+            1543046767 => if loose_eq(value, "Osge") Some(Osge) else None
+            1545663074 => if loose_eq(value, "Tolong_Siki") Some(Tols) else None
+            1549005728 => if loose_eq(value, "Tibt") Some(Tibt) else None
+            1554663930 => if loose_eq(value, "Rjng") Some(Rjng) else None
+            1578791434 => if loose_eq(value, "Zanabazar_Square") Some(Zanb) else None
+            1585476329 => if loose_eq(value, "Duployan") Some(Dupl) else None
+            1627127737 => if loose_eq(value, "Ogam") Some(Ogam) else None
+            1627632668 => if loose_eq(value, "Warang_Citi") Some(Wara) else None
+            1632270350 => if loose_eq(value, "Mtei") Some(Mtei) else None
+            1647650197 => if loose_eq(value, "Khar") Some(Khar) else None
+            1662960664 => if loose_eq(value, "Myanmar") Some(Mymr) else None
+            1683697517 => if loose_eq(value, "Kthi") Some(Kthi) else None
+            1683996967 => if loose_eq(value, "Yi") Some(Yiii) else None
+            1685029195 => if loose_eq(value, "Miao") Some(Plrd) else None
+            1687280138 => if loose_eq(value, "Bhaiksuki") Some(Bhks) else None
+            1692682322 => if loose_eq(value, "Anatolian_Hieroglyphs") Some(Hluw) else None
+            1698554050 => if loose_eq(value, "Diak") Some(Diak) else None
+            1703858441 => if loose_eq(value, "Arabic") Some(Arab) else None
+            1716276825 => if loose_eq(value, "Bengali") Some(Beng) else None
+            1756251884 => if loose_eq(value, "Olck") Some(Olck) else None
+            1784323999 => if loose_eq(value, "Tutg") Some(Tutg) else None
+            1784330750 => if loose_eq(value, "Glag") Some(Glag) else None
+            1788969220 => if loose_eq(value, "Mroo") Some(Mroo) else None
+            1793733091 => if loose_eq(value, "Lana") Some(Lana) else None
+            1795320016 => if loose_eq(value, "Geor") Some(Geor) else None
+            1796259334 => if loose_eq(value, "Phli") Some(Phli) else None
+            1812579512 => if loose_eq(value, "Cprt") Some(Cprt) else None
+            1813013215 => if loose_eq(value, "Tai_Tham") Some(Lana) else None
+            1835925744 => if loose_eq(value, "Ougr") Some(Ougr) else None
+            1838148016 => if loose_eq(value, "Syriac") Some(Syrc) else None
+            1848662113 => if loose_eq(value, "Latin") Some(Latn) else None
+            1852369084 => if loose_eq(value, "Brah") Some(Brah) else None
+            1869146703 => if loose_eq(value, "Brai") Some(Brai) else None
+            1872097689 => if loose_eq(value, "Siddham") Some(Sidd) else None
+            1910898809 => if loose_eq(value, "Sinhala") Some(Sinh) else None
+            1936813044 => if loose_eq(value, "Imperial_Aramaic") Some(Armi) else None
+            1938387210 => if loose_eq(value, "Pauc") Some(Pauc) else None
+            1945940254 => if loose_eq(value, "Nushu") Some(Nshu) else None
+            1963196881 => if loose_eq(value, "Phag") Some(Phag) else None
+            1965892372 => if loose_eq(value, "Bugi") Some(Bugi) else None
+            1973421709 => if loose_eq(value, "Hung") Some(Hung) else None
+            2010856400 => if loose_eq(value, "Latn") Some(Latn) else None
+            2012380749 => if loose_eq(value, "Cpmn") Some(Cpmn) else None
+            2014662571 => if loose_eq(value, "Phnx") Some(Phnx) else None
+            2044408069 => if loose_eq(value, "Hmng") Some(Hmng) else None
+            2047952907 => if loose_eq(value, "Nyiakeng_Puachue_Hmong") Some(Hmnp) else None
+            2069298552 => if loose_eq(value, "Hangul") Some(Hang) else None
+            2113560556 => if loose_eq(value, "Wara") Some(Wara) else None
+            2119320795 => if loose_eq(value, "Gurmukhi") Some(Guru) else None
+            2143561314 => if loose_eq(value, "Egyptian_Hieroglyphs") Some(Egyp) else None
+            2147666272 => if loose_eq(value, "Mero") Some(Mero) else None
+            2154334766 => if loose_eq(value, "Osage") Some(Osge) else None
+            2195406640 => if loose_eq(value, "Hmnp") Some(Hmnp) else None
+            2215699809 => if loose_eq(value, "Phlp") Some(Phlp) else None
+            2228091033 => if loose_eq(value, "Khudawadi") Some(Sind) else None
+            2248541657 => if loose_eq(value, "Arab") Some(Arab) else None
+            2256405423 => if loose_eq(value, "Ogham") Some(Ogam) else None
+            2258483678 => if loose_eq(value, "Brahmi") Some(Brah) else None
+            2269752869 => if loose_eq(value, "Cypriot") Some(Cprt) else None
+            2284120156 => if loose_eq(value, "Sgnw") Some(Sgnw) else None
+            2300597625 => if loose_eq(value, "Katakana_Or_Hiragana") Some(Hrkt) else None
+            2303507949 => if loose_eq(value, "Palm") Some(Palm) else None
+            2327976948 => if loose_eq(value, "Tangut") Some(Tang) else None
+            2328876209 => if loose_eq(value, "Caucasian_Albanian") Some(Aghb) else None
+            2330248605 => if loose_eq(value, "Mend") Some(Mend) else None
+            2334613016 => if loose_eq(value, "Cari") Some(Cari) else None
+            2340694564 => if loose_eq(value, "Onao") Some(Onao) else None
+            2348997700 => if loose_eq(value, "Merc") Some(Merc) else None
+            2358739092 => if loose_eq(value, "Tagbanwa") Some(Tagb) else None
+            2361377338 => if loose_eq(value, "Old_Italic") Some(Ital) else None
+            2373100727 => if loose_eq(value, "Beng") Some(Beng) else None
+            2373974075 => if loose_eq(value, "Phoenician") Some(Phnx) else None
+            2381765004 => if loose_eq(value, "Narb") Some(Narb) else None
+            2416481554 => if loose_eq(value, "Ol_Onal") Some(Onao) else None
+            2420302585 => if loose_eq(value, "Cher") Some(Cher) else None
+            2433436669 => if loose_eq(value, "Nandinagari") Some(Nand) else None
+            2434906768 => if loose_eq(value, "Cyrillic") Some(Cyrl) else None
+            2435183299 => if loose_eq(value, "Vai") Some(Vaii) else None
+            2437286623 => if loose_eq(value, "Wancho") Some(Wcho) else None
+            2451800716 => if loose_eq(value, "Egyp") Some(Egyp) else None
+            2464847089 => if loose_eq(value, "Cakm") Some(Cakm) else None
+            2473941097 => if loose_eq(value, "Soyombo") Some(Soyo) else None
+            2515896206 => if loose_eq(value, "Runic") Some(Runr) else None
+            2520447072 => if loose_eq(value, "Shrd") Some(Shrd) else None
+            2532982981 => if loose_eq(value, "Samaritan") Some(Samr) else None
+            2540452869 => if loose_eq(value, "Chrs") Some(Chrs) else None
+            2551050114 => if loose_eq(value, "Armenian") Some(Armn) else None
+            2557386105 => if loose_eq(value, "Buginese") Some(Bugi) else None
+            2563324286 => if loose_eq(value, "Braille") Some(Brai) else None
+            2608177081 => if loose_eq(value, "Unknown") Some(Zzzz) else None
+            2614182209 => if loose_eq(value, "Tangsa") Some(Tnsa) else None
+            2625353392 => if loose_eq(value, "Berf") Some(Berf) else None
+            2626721964 => if loose_eq(value, "Tulu_Tigalari") Some(Tutg) else None
+            2630387858 => if loose_eq(value, "Zyyy") Some(Zyyy) else None
+            2633358754 => if loose_eq(value, "Cans") Some(Cans) else None
+            2687346717 => if loose_eq(value, "Ital") Some(Ital) else None
+            2692042822 => if loose_eq(value, "Gunjala_Gondi") Some(Gong) else None
+            2702205278 => if loose_eq(value, "Chorasmian") Some(Chrs) else None
+            2707030620 => if loose_eq(value, "Ahom") Some(Ahom) else None
+            2717401106 => if loose_eq(value, "Dives_Akuru") Some(Diak) else None
+            2722702483 => if loose_eq(value, "Khojki") Some(Khoj) else None
+            2731715163 => if loose_eq(value, "Aghb") Some(Aghb) else None
+            2745543540 => if loose_eq(value, "SignWriting") Some(Sgnw) else None
+            2756609597 => if loose_eq(value, "Inscriptional_Parthian") Some(Prti) else None
+            2778370699 => if loose_eq(value, "Gran") Some(Gran) else None
+            2801327783 => if loose_eq(value, "Kaithi") Some(Kthi) else None
+            2828346456 => if loose_eq(value, "Hrkt") Some(Hrkt) else None
+            2832591437 => if loose_eq(value, "Medf") Some(Medf) else None
+            2837135895 => if loose_eq(value, "Tnsa") Some(Tnsa) else None
+            2840331440 => if loose_eq(value, "Cham") Some(Cham) else None
+            2848868094 => if loose_eq(value, "Elym") Some(Elym) else None
+            2858308472 => if loose_eq(value, "Mymr") Some(Mymr) else None
+            2866367806 => if loose_eq(value, "Wcho") Some(Wcho) else None
+            2878998622 => if loose_eq(value, "Adlam") Some(Adlm) else None
+            2885651355 => if loose_eq(value, "Katakana") Some(Kana) else None
+            2897391516 => if loose_eq(value, "Old_Uyghur") Some(Ougr) else None
+            2926219974 => if loose_eq(value, "Krai") Some(Krai) else None
+            2939512545 => if loose_eq(value, "Inherited") Some(Zinh) else None
+            2968531819 => if loose_eq(value, "Perm") Some(Perm) else None
+            2972380168 => if loose_eq(value, "Nagm") Some(Nagm) else None
+            2985859074 => if loose_eq(value, "Saur") Some(Saur) else None
+            2985969608 => if loose_eq(value, "Javanese") Some(Java) else None
+            2986065345 => if loose_eq(value, "Armn") Some(Armn) else None
+            2991256162 => if loose_eq(value, "Nabataean") Some(Nbat) else None
+            3002842964 => if loose_eq(value, "Armi") Some(Armi) else None
+            3030113015 => if loose_eq(value, "Hatran") Some(Hatr) else None
+            3035854053 => if loose_eq(value, "Tifinagh") Some(Tfng) else None
+            3043353695 => if loose_eq(value, "Mende_Kikakui") Some(Mend) else None
+            3074594991 => if loose_eq(value, "Mult") Some(Mult) else None
+            3083808838 => if loose_eq(value, "Syloti_Nagri") Some(Sylo) else None
+            3094424342 => if loose_eq(value, "Tibetan") Some(Tibt) else None
+            3096451437 => if loose_eq(value, "Nshu") Some(Nshu) else None
+            3104444647 => if loose_eq(value, "Deva") Some(Deva) else None
+            3110768046 => if loose_eq(value, "Shaw") Some(Shaw) else None
+            3143658460 => if loose_eq(value, "Bassa_Vah") Some(Bass) else None
+            3153488169 => if loose_eq(value, "Sarb") Some(Sarb) else None
+            3158066810 => if loose_eq(value, "Nand") Some(Nand) else None
+            3165670261 => if loose_eq(value, "Todhri") Some(Todr) else None
+            3166609459 => if loose_eq(value, "Marchen") Some(Marc) else None
+            3170973593 => if loose_eq(value, "Yiii") Some(Yiii) else None
+            3180624617 => if loose_eq(value, "Elba") Some(Elba) else None
+            3186817087 => if loose_eq(value, "Kannada") Some(Knda) else None
+            3189477354 => if loose_eq(value, "Zinh") Some(Zinh) else None
+            3198565416 => if loose_eq(value, "Ethiopic") Some(Ethi) else None
+            3206016157 => if loose_eq(value, "Telu") Some(Telu) else None
+            3222104702 => if loose_eq(value, "Dupl") Some(Dupl) else None
+            3230674864 => if loose_eq(value, "Grek") Some(Grek) else None
+            3250045846 => if loose_eq(value, "Yezi") Some(Yezi) else None
+            3255580906 => if loose_eq(value, "Samr") Some(Samr) else None
+            3260662848 => if loose_eq(value, "Prti") Some(Prti) else None
+            3275935431 => if loose_eq(value, "Sundanese") Some(Sund) else None
+            3282996293 => if loose_eq(value, "Tglg") Some(Tglg) else None
+            3314303423 => if loose_eq(value, "Bopo") Some(Bopo) else None
+            3315685778 => if loose_eq(value, "Lyci") Some(Lyci) else None
+            3335312164 => if loose_eq(value, "Palmyrene") Some(Palm) else None
+            3350868953 => if loose_eq(value, "Hang") Some(Hang) else None
+            3355254882 => if loose_eq(value, "Kayah_Li") Some(Kali) else None
+            3365071641 => if loose_eq(value, "Mahj") Some(Mahj) else None
+            3427637558 => if loose_eq(value, "Mlym") Some(Mlym) else None
+            3439006748 => if loose_eq(value, "Tirhuta") Some(Tirh) else None
+            3455831052 => if loose_eq(value, "Kits") Some(Kits) else None
+            3480940856 => if loose_eq(value, "Marc") Some(Marc) else None
+            3482932952 => if loose_eq(value, "Mahajani") Some(Mahj) else None
+            3484129583 => if loose_eq(value, "Plrd") Some(Plrd) else None
+            3485089905 => if loose_eq(value, "Hano") Some(Hano) else None
+            3516364402 => if loose_eq(value, "Mani") Some(Mani) else None
+            3518645143 => if loose_eq(value, "Hani") Some(Hani) else None
+            3536996880 => if loose_eq(value, "Hatr") Some(Hatr) else None
+            3567391075 => if loose_eq(value, "Qaac") Some(Copt) else None
+            3595867884 => if loose_eq(value, "Sogdian") Some(Sogd) else None
+            3600252497 => if loose_eq(value, "Mand") Some(Mand) else None
+            3613497042 => if loose_eq(value, "Orya") Some(Orya) else None
+            3625469859 => if loose_eq(value, "Thaa") Some(Thaa) else None
+            3625832999 => if loose_eq(value, "Devanagari") Some(Deva) else None
+            3652313051 => if loose_eq(value, "Ugaritic") Some(Ugar) else None
+            3656884855 => if loose_eq(value, "Coptic") Some(Copt) else None
+            3660148506 => if loose_eq(value, "Grantha") Some(Gran) else None
+            3663911155 => if loose_eq(value, "Copt") Some(Copt) else None
+            3668004980 => if loose_eq(value, "Chakma") Some(Cakm) else None
+            3693510853 => if loose_eq(value, "Meetei_Mayek") Some(Mtei) else None
+            3698474787 => if loose_eq(value, "Saurashtra") Some(Saur) else None
+            3715629196 => if loose_eq(value, "Manichaean") Some(Mani) else None
+            3716960355 => if loose_eq(value, "Maka") Some(Maka) else None
+            3720577637 => if loose_eq(value, "Hanunoo") Some(Hano) else None
+            3735167265 => if loose_eq(value, "Qaai") Some(Zinh) else None
+            3755629569 => if loose_eq(value, "Avestan") Some(Avst) else None
+            3759690811 => if loose_eq(value, "Thai") Some(Thai) else None
+            3781792677 => if loose_eq(value, "Zzzz") Some(Zzzz) else None
+            3783597566 => if loose_eq(value, "Syrc") Some(Syrc) else None
+            3809528351 => if loose_eq(value, "Multani") Some(Mult) else None
+            3831418129 => if loose_eq(value, "Oriya") Some(Orya) else None
+            3838432252 => if loose_eq(value, "Vith") Some(Vith) else None
+            3852025133 => if loose_eq(value, "Lydi") Some(Lydi) else None
+            3858870726 => if loose_eq(value, "Sunuwar") Some(Sunu) else None
+            3900583171 => if loose_eq(value, "Mro") Some(Mroo) else None
+            3904833540 => if loose_eq(value, "Han") Some(Hani) else None
+            3912040265 => if loose_eq(value, "Xsux") Some(Xsux) else None
+            3913219298 => if loose_eq(value, "Old_Turkic") Some(Orkh) else None
+            3913480095 => if loose_eq(value, "Soyo") Some(Soyo) else None
+            3917848435 => if loose_eq(value, "Georgian") Some(Geor) else None
+            3922329705 => if loose_eq(value, "Avst") Some(Avst) else None
+            3934708178 => if loose_eq(value, "Mong") Some(Mong) else None
+            3983667256 => if loose_eq(value, "Kirat_Rai") Some(Krai) else None
+            4027050692 => if loose_eq(value, "Nbat") Some(Nbat) else None
+            4032857862 => if loose_eq(value, "Tayo") Some(Tayo) else None
+            4033799774 => if loose_eq(value, "Modi") Some(Modi) else None
+            4067744746 => if loose_eq(value, "Ugar") Some(Ugar) else None
+            4074175261 => if loose_eq(value, "Meroitic_Hieroglyphs") Some(Mero) else None
+            4093256147 => if loose_eq(value, "Sharada") Some(Shrd) else None
+            4114167284 => if loose_eq(value, "Nkoo") Some(Nkoo) else None
+            4114238752 => if loose_eq(value, "Canadian_Aboriginal") Some(Cans) else None
+            4114333196 => if loose_eq(value, "Tavt") Some(Tavt) else None
+            4171437215 => if loose_eq(value, "Goth") Some(Goth) else None
+            4176278753 => if loose_eq(value, "New_Tai_Lue") Some(Talu) else None
+            4210925312 => if loose_eq(value, "Batak") Some(Batk) else None
+            4221770180 => if loose_eq(value, "Masaram_Gondi") Some(Gonm) else None
+            4232003279 => if loose_eq(value, "Orkh") Some(Orkh) else None
+            4232346077 => if loose_eq(value, "Elymaic") Some(Elym) else None
+            4248009695 => if loose_eq(value, "Takr") Some(Takr) else None
+            4250046449 => if loose_eq(value, "Pahawh_Hmong") Some(Hmng) else None
+            4250880574 => if loose_eq(value, "Hebrew") Some(Hebr) else None
+            4252385160 => if loose_eq(value, "Sylo") Some(Sylo) else None
+            4257448306 => if loose_eq(value, "Tai_Le") Some(Tale) else None
+            4263372803 => if loose_eq(value, "Greek") Some(Grek) else None
+            4266104284 => if loose_eq(value, "Sogd") Some(Sogd) else None
+            4274069832 => if loose_eq(value, "Mandaic") Some(Mand) else None
+            _ => None
+        }
+    }
 }
 
-ascii_script : U32 -> InternalScriptData.Script
-ascii_script = |u32| if (u32 >= 65 and u32 <= 90) or (u32 >= 97 and u32 <= 122) (Latn) else if (u32 >= 0 and u32 <= 64) or (u32 >= 91 and u32 <= 96) or (u32 >= 123 and u32 <= 127) (Zyyy) else Zzzz
+ascii_private_id : U32 -> U8
+ascii_private_id = |u32| if (u32 >= 65 and u32 <= 90) or (u32 >= 97 and u32 <= 122) 74 else if (u32 >= 0 and u32 <= 64) or (u32 >= 91 and u32 <= 96) or (u32 >= 123 and u32 <= 127) 174 else 175
+
+loose_hash : Str -> U32
+loose_hash = |value| {
+    var hash = 2166136261.U32
+    for byte in value.iter_utf8() {
+        if byte != 0x20 and byte != 0x2D and byte != 0x5F {
+            hash = hash.bitwise_xor(ascii_lower(byte).to_u32()).times_wrap(16777619)
+        }
+    }
+    hash
+}
 
 loose_eq : Str, Str -> Bool
 loose_eq = |left, right| {
