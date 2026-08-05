@@ -5,7 +5,7 @@
       "args": [],
       "stdin": "",
       "exit_code": 0,
-      "stdout": "\n\nThe word 世界 will be displayed with the width of 4 characters on most UIs.\n\n\n",
+      "stdout": "\n\nUnder this simple policy, 世界 uses 4 cells.\n\n\n",
       "stderr": "",
       "test": false
     },
