@@ -77,6 +77,7 @@ FORMAL_PROPERTY_ALIASES = {
     "General_Category": ("gc",),
     "Grapheme_Cluster_Break": ("GCB",),
     "Indic_Conjunct_Break": ("InCB",),
+    "Line_Break": ("lb",),
 }
 
 
@@ -1025,6 +1026,56 @@ def parse_missing_defaults(text: str, *, source: str) -> tuple[MissingDefault, .
     return tuple(defaults)
 
 
+def _canonical_line_break_defaults(
+    text: str,
+    *,
+    source: str,
+    expected: tuple[tuple[int, int, str, tuple[str, ...]], ...],
+) -> tuple[MissingDefault, ...]:
+    """Canonicalize every file-level Line_Break @missing declaration."""
+    property_aliases = {
+        loose_alias(alias)
+        for alias in ("Line_Break", *FORMAL_PROPERTY_ALIASES["Line_Break"])
+    }
+    declarations = parse_missing_defaults(text, source=source)
+    canonical: list[MissingDefault] = []
+    remaining = list(expected)
+    for declaration in declarations:
+        if (
+            declaration.property is not None
+            and loose_alias(declaration.property) not in property_aliases
+        ):
+            raise DataError(
+                f"{source}:{declaration.line}: unexpected property in Line_Break @missing declaration"
+            )
+        match_index = next(
+            (
+                index
+                for index, (start, end, _identity, aliases) in enumerate(remaining)
+                if declaration.start == start
+                and declaration.end == end
+                and loose_alias(declaration.value)
+                in {loose_alias(alias) for alias in aliases}
+            ),
+            None,
+        )
+        if match_index is None:
+            raise DataError(
+                f"{source}:{declaration.line}: unexpected or duplicate Line_Break @missing declaration"
+            )
+        start, end, identity, _aliases = remaining.pop(match_index)
+        canonical.append(
+            MissingDefault(start, end, "Line_Break", identity, declaration.line)
+        )
+    if remaining:
+        missing = [
+            f"{start:04X}..{end:04X}; {identity}"
+            for start, end, identity, _aliases in remaining
+        ]
+        raise DataError(f"{source}: missing Line_Break @missing declarations {missing}")
+    return tuple(canonical)
+
+
 def _required_formal_default(
     text: str,
     *,
@@ -1558,17 +1609,39 @@ def load_line_break_properties(
     derived_text = verify_source(manifest, derived_name)
     raw_source = str(data_path(manifest, raw_name))
     derived_source = str(data_path(manifest, derived_name))
+    raw_defaults = _canonical_line_break_defaults(
+        raw_text,
+        source=raw_source,
+        expected=((0, MAX_CODE_POINT, "XX", ("XX", "Unknown")),),
+    )
+    derived_default_contract = (
+        (0, MAX_CODE_POINT, "XX", ("XX", "Unknown")),
+        (0x20A0, 0x20CF, "PR", ("PR", "Prefix_Numeric")),
+        (0x3400, 0x4DBF, "ID", ("ID", "Ideographic")),
+        (0x4E00, 0x9FFF, "ID", ("ID", "Ideographic")),
+        (0xF900, 0xFAFF, "ID", ("ID", "Ideographic")),
+        (0x1F000, 0x1F7FF, "ID", ("ID", "Ideographic")),
+        (0x1F900, 0x1FAFF, "ID", ("ID", "Ideographic")),
+        (0x1FC00, 0x1FFFD, "ID", ("ID", "Ideographic")),
+        (0x20000, 0x2FFFD, "ID", ("ID", "Ideographic")),
+        (0x30000, 0x3FFFD, "ID", ("ID", "Ideographic")),
+    )
+    derived_defaults = _canonical_line_break_defaults(
+        derived_text,
+        source=derived_source,
+        expected=derived_default_contract,
+    )
     raw = parse_ranges(
         raw_text,
         source=raw_source,
         allowed_properties=LINE_BREAK_PROPERTIES,
-        default_marker="# @missing: 0000..10FFFF; XX",
+        default_marker=None,
     )
     derived = parse_ranges(
         derived_text,
         source=derived_source,
         allowed_properties=LINE_BREAK_PROPERTIES,
-        default_marker="# @missing: 0000..10FFFF; Unknown",
+        default_marker=None,
     )
     if {record.property for record in raw} != set(LINE_BREAK_PROPERTIES):
         raise DataError(f"{raw_source}: Line_Break values drifted")
@@ -1576,35 +1649,14 @@ def load_line_break_properties(
         raise DataError(f"{derived_source}: derived Line_Break values drifted")
 
     private_ids = {value: index for index, value in enumerate(LINE_BREAK_PROPERTIES)}
-    default_ranges = (
-        (0x20A0, 0x20CF, "PR"),
-        (0x3400, 0x4DBF, "ID"),
-        (0x4E00, 0x9FFF, "ID"),
-        (0xF900, 0xFAFF, "ID"),
-        (0x1F000, 0x1F7FF, "ID"),
-        (0x1F900, 0x1FAFF, "ID"),
-        (0x1FC00, 0x1FFFD, "ID"),
-        (0x20000, 0x2FFFD, "ID"),
-        (0x30000, 0x3FFFD, "ID"),
+    default_ranges = tuple(
+        (default.start, default.end, default.value)
+        for default in derived_defaults
+        if default.start != 0 or default.end != MAX_CODE_POINT
     )
-    expected_markers = (
-        "# @missing: 0000..10FFFF; Unknown",
-        "# @missing: 20A0..20CF; Prefix_Numeric",
-        "# @missing: 3400..4DBF; Ideographic",
-        "# @missing: 4E00..9FFF; Ideographic",
-        "# @missing: F900..FAFF; Ideographic",
-        "# @missing: 1F000..1F7FF; Ideographic",
-        "# @missing: 1F900..1FAFF; Ideographic",
-        "# @missing: 1FC00..1FFFD; Ideographic",
-        "# @missing: 20000..2FFFD; Ideographic",
-        "# @missing: 30000..3FFFD; Ideographic",
-    )
-    for marker in expected_markers:
-        if derived_text.splitlines().count(marker) != 1:
-            raise DataError(f"{derived_source}: missing exact default marker {marker!r}")
 
     def materialize(records: Iterable[RangeRecord]) -> bytearray:
-        values = bytearray((private_ids["XX"],)) * (MAX_CODE_POINT + 1)
+        values = bytearray((private_ids[raw_defaults[0].value],)) * (MAX_CODE_POINT + 1)
         for start, end, prop in default_ranges:
             values[start : end + 1] = bytes((private_ids[prop],)) * (end - start + 1)
         for record in records:

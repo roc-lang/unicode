@@ -243,6 +243,62 @@ class UnicodeDataTests(unittest.TestCase):
                 ):
                     loader(manifest)
 
+    def test_line_break_loader_rejects_every_extra_missing_declaration_shape(self) -> None:
+        manifest = unicode_data.load_manifest()
+        mutations = (
+            ("line_break", "# @missing: 0000..10FFFF; AL"),
+            ("line_break", "# @missing: 0000..10FFFF; Line_Break; AL"),
+            ("line_break", "# @missing: 0000..10FFFF; l-i_n e b r e a k; Alphabetic"),
+            ("derived_line_break", "# @missing: 0000..10FFFF; AL"),
+            ("derived_line_break", "# @missing: 0000..10FFFF; lb; AL"),
+            ("derived_line_break", "# @missing: 0000..10FFFF; l-i_n e b r e a k; Alphabetic"),
+        )
+        verified_source = unicode_data.verify_source
+        for source_name, conflict in mutations:
+            with self.subTest(source=source_name, conflict=conflict):
+                mutated = verified_source(manifest, source_name) + conflict + "\n"
+
+                def verify_with_mutation(
+                    loaded_manifest: dict[str, object], loaded_source: str
+                ) -> str:
+                    if loaded_source == source_name:
+                        return mutated
+                    return verified_source(loaded_manifest, loaded_source)
+
+                with (
+                    mock.patch.object(
+                        unicode_data, "verify_source", side_effect=verify_with_mutation
+                    ),
+                    self.assertRaisesRegex(
+                        unicode_data.DataError,
+                        "Line_Break @missing declaration",
+                    ),
+                ):
+                    unicode_data.load_line_break_properties(manifest)
+
+    def test_line_break_defaults_accept_qualified_loose_aliases_once(self) -> None:
+        manifest = unicode_data.load_manifest()
+        verified_source = unicode_data.verify_source
+        original = verified_source(manifest, "line_break")
+        mutated = original.replace(
+            "# @missing: 0000..10FFFF; XX",
+            "# @missing: 0000..10FFFF; l-i_n e b r e a k; Unknown",
+        )
+
+        def verify_with_mutation(
+            loaded_manifest: dict[str, object], loaded_source: str
+        ) -> str:
+            if loaded_source == "line_break":
+                return mutated
+            return verified_source(loaded_manifest, loaded_source)
+
+        with mock.patch.object(
+            unicode_data, "verify_source", side_effect=verify_with_mutation
+        ):
+            records, values = unicode_data.load_line_break_properties(manifest)
+        self.assertTrue(records)
+        self.assertEqual(len(values), unicode_data.MAX_CODE_POINT + 1)
+
     def test_formal_default_spellings_share_one_canonical_identity(self) -> None:
         cases = (
             ("Grapheme_Cluster_Break", None, "Other", "g-c_b"),

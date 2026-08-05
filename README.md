@@ -98,7 +98,9 @@ replayable traversal uses bounded forward lookahead, while the non-replayable
 cursor retains only bounded algorithm state and never a source chunk. The
 Unicode default is the no-configuration path; `PreserveGraphemes` is an
 explicit restriction profile that reuses the package's grapheme transition
-core.
+core. Its package policy is independently versioned as
+`LineBreak.preserve_graphemes_revision`, and `LineBreak.profile_revision`
+distinguishes that policy axis from the Unicode/UAX version.
 
 Validate the sources and check generated Roc modules with:
 

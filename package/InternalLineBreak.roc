@@ -15,7 +15,11 @@ TokenRecord : {
 }
 
 OutcomeRecord : { decision : DecisionTag, authority : AuthorityTag }
-EventRecord : { at : TextPosition, decision : DecisionTag, authority : AuthorityTag }
+EventRecord : {
+    at : TextPosition,
+    decision : [Mandatory, Allowed],
+    authority : AuthorityTag,
+}
 
 NumericState : [NoNumeric, NumericBody, NumericClose]
 
@@ -147,6 +151,66 @@ InternalLineBreak :: [].{
     stream_push : Stream, U32, TextPosition -> { stream : Stream, emissions : Emissions }
     stream_push = |stream, scalar, at| stream_push_scalar(stream, scalar, at)
 
+    ## Fold one already-validated ASCII vector with line-break-owned property
+    ## decoding. Homogeneous letter blocks collapse the fifteen internal LB28
+    ## transitions after the first exact transition into one state update.
+    fold_ascii_block : Stream, U8x16, U64, U64, state, (state, Event -> state) -> { stream : Stream, state : state }
+    fold_ascii_block = |stream, vector, byte_start, scalar_start, initial, emit| {
+        if !stream.machine.preserve_graphemes and is_ascii_letter_block(vector) {
+            if is_stable_al_stream(stream) {
+                # No retained coordinate changes within a settled AL run, and
+                # every internal boundary is prohibited by LB28.
+                return { stream, state: initial }
+            }
+            first = stream_push_with_props(
+                stream,
+                ascii_props(vector.get_lane(0)),
+                vector.get_lane(0).to_u32(),
+                TextPosition.from_offsets(byte_start, scalar_start),
+            )
+            state = fold_emitted_events(initial, first.emissions, emit)
+            # Every remaining boundary is AL x AL (LB28), and no AL boundary
+            # creates a right-context request. The summary is exactly the
+            # state reached by fifteen more scalar transitions.
+            al = al_token({})
+            summarized = {
+                started: Bool.True,
+                left: al,
+                left2: al,
+                has_left2: Bool.True,
+                space_base: al,
+                has_space_base: Bool.True,
+                space_base_predecessor: al,
+                has_space_base_predecessor: Bool.True,
+                numeric: NoNumeric,
+                ri_odd: Bool.False,
+                zw_space_run: Bool.False,
+                raw_previous: AL,
+                raw_previous_zwj: Bool.False,
+                preserve_graphemes: Bool.False,
+                grapheme: first.stream.machine.grapheme,
+            }
+            { stream: { machine: summarized, pending: NoPending }, state }
+        } else {
+            var next_stream = stream
+            var state = initial
+            var lane = 0.U64
+            while lane < 16 {
+                byte = vector.get_lane(lane)
+                transition = stream_push_with_props(
+                    next_stream,
+                    ascii_props(byte),
+                    byte.to_u32(),
+                    TextPosition.from_offsets(byte_start + lane, scalar_start + lane),
+                )
+                next_stream = transition.stream
+                state = fold_emitted_events(state, transition.emissions, emit)
+                lane = lane + 1
+            }
+            { stream: next_stream, state }
+        }
+    }
+
     stream_finish : Stream, TextPosition -> { stream : Stream, emissions : Emissions }
     stream_finish = |stream, at| {
         pending_event = match stream.pending {
@@ -205,6 +269,11 @@ token_from_props = |props, scalar| {
 prepare_scalar : MachineState, U32, U64 -> PreparedRecord
 prepare_scalar = |machine, scalar, byte_start| {
     raw = InternalLineBreakData.lookup(scalar)
+    prepare_with_props(machine, raw, scalar, byte_start)
+}
+
+prepare_with_props : MachineState, InternalLineBreakData.Props, U32, U64 -> PreparedRecord
+prepare_with_props = |machine, raw, scalar, byte_start| {
     attached = machine.started and is_combining(raw.class) and can_attach_after(machine.left.line_class)
     token = if attached {
         token_from_props(raw, scalar)
@@ -653,8 +722,18 @@ resolve_second_need = |machine, prepared, need, future| {
 
 stream_push_scalar : StreamState, U32, TextPosition -> { stream : StreamState, emissions : EmittedEvents }
 stream_push_scalar = |stream, scalar, at| {
+    stream_push_with_props(
+        stream,
+        InternalLineBreakData.lookup(scalar),
+        scalar,
+        at,
+    )
+}
+
+stream_push_with_props : StreamState, InternalLineBreakData.Props, U32, TextPosition -> { stream : StreamState, emissions : EmittedEvents }
+stream_push_with_props = |stream, props, scalar, at| {
     machine = stream.machine
-    prepared = prepare_scalar(machine, scalar, TextPosition.byte_offset(at))
+    prepared = prepare_with_props(machine, props, scalar, TextPosition.byte_offset(at))
     advanced = advance_machine(machine, prepared)
 
     if !machine.started {
@@ -746,10 +825,102 @@ process_current_boundary = |machine, prepared, at, advanced, earlier| {
 
 outcome_event : PendingRecord, OutcomeRecord -> MaybeEvent
 outcome_event = |pending, outcome| {
-    if outcome.decision == Prohibited {
-        NoEvent
+    match outcome.decision {
+        Prohibited => NoEvent
+        Mandatory => HasEvent({ at: pending.at, decision: Mandatory, authority: outcome.authority })
+        Allowed => HasEvent({ at: pending.at, decision: Allowed, authority: outcome.authority })
+    }
+}
+
+fold_emitted_events : state, EmittedEvents, (state, EventRecord -> state) -> state
+fold_emitted_events = |initial, emissions, emit| {
+    match emissions {
+        NoEvents => initial
+        OneEvent(event) => emit(initial, event)
+        TwoEvents({ first, second }) => emit(emit(initial, first), second)
+    }
+}
+
+is_ascii_letter_block : U8x16 -> Bool
+is_ascii_letter_block = |vector| {
+    lowercase = vector.gte_lanes(U8x16.splat(0x61)).bitwise_and(
+        vector.lte_lanes(U8x16.splat(0x7A)),
+    )
+    uppercase = vector.gte_lanes(U8x16.splat(0x41)).bitwise_and(
+        vector.lte_lanes(U8x16.splat(0x5A)),
+    )
+    lowercase.all_lanes_set() or uppercase.all_lanes_set()
+}
+
+is_stable_al_stream : StreamState -> Bool
+is_stable_al_stream = |stream| {
+    no_pending = match stream.pending {
+        NoPending => Bool.True
+        _ => Bool.False
+    }
+    machine = stream.machine
+    no_pending
+    and machine.started
+    and machine.left.line_class == AL
+    and machine.has_left2
+    and machine.left2.line_class == AL
+    and machine.has_space_base
+    and machine.space_base.line_class == AL
+    and machine.has_space_base_predecessor
+    and machine.space_base_predecessor.line_class == AL
+    and machine.numeric == NoNumeric
+    and !machine.ri_odd
+    and !machine.zw_space_run
+    and machine.raw_previous == AL
+    and !machine.raw_previous_zwj
+    and !machine.preserve_graphemes
+}
+
+ascii_props : U8 -> InternalLineBreakData.Props
+ascii_props = |byte| {
+    line_class = if byte == 0x09 or byte == 0x7C {
+        BA
+    } else if byte == 0x0A {
+        LF
+    } else if byte == 0x0B or byte == 0x0C {
+        BK
+    } else if byte == 0x0D {
+        CR
+    } else if byte < 0x20 or byte == 0x7F {
+        CM
+    } else if byte == 0x20 {
+        SP
+    } else if byte == 0x21 or byte == 0x3F {
+        EX
+    } else if byte == 0x22 or byte == 0x27 {
+        QU
+    } else if byte == 0x24 or byte == 0x2B or byte == 0x5C {
+        PR
+    } else if byte == 0x25 {
+        PO
+    } else if byte == 0x28 or byte == 0x5B or byte == 0x7B {
+        OP
+    } else if byte == 0x29 or byte == 0x5D {
+        CP
+    } else if byte == 0x2C or byte == 0x2E or byte == 0x3A or byte == 0x3B {
+        IS
+    } else if byte == 0x2D {
+        HY
+    } else if byte == 0x2F {
+        SY
+    } else if byte >= 0x30 and byte <= 0x39 {
+        NU
+    } else if byte == 0x7D {
+        CL
     } else {
-        HasEvent({ at: pending.at, decision: outcome.decision, authority: outcome.authority })
+        AL
+    }
+    {
+        class: line_class,
+        initial_quote: Bool.False,
+        final_quote: Bool.False,
+        east_asian: Bool.False,
+        unassigned_extended_pictographic: Bool.False,
     }
 }
 

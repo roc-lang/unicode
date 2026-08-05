@@ -31,6 +31,8 @@ run! = |input| {
 run_focused : U64 -> Try({}, Str)
 run_focused = |runtime_seed| {
     zero = runtime_seed - runtime_seed
+    verify_profile_revision(LineBreak.default_profile)?
+    verify_profile_revision(PreserveGraphemes)?
     empty = boundary_shape(LineBreak.boundaries(""))
     expected_empty = [
         (zero, zero, Prohibited, NonTailorable),
@@ -112,7 +114,50 @@ run_focused = |runtime_seed| {
         _ => return Err("cursor accepted a chunk after finish")
     }
 
+    ascii_run = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    verify_block_cursor(ascii_run, UnicodeDefault)?
+    verify_block_cursor(Str.join_with(["$(", ascii_run, ") 19"], ""), UnicodeDefault)?
+    verify_block_cursor(Str.join_with([ascii_run, "\r\n", ascii_run], ""), UnicodeDefault)?
+    verify_block_cursor(ascii_run, PreserveGraphemes)?
+
     Ok({})
+}
+
+verify_profile_revision : LineBreak.Profile -> Try({}, Str)
+verify_profile_revision = |profile| {
+    match (profile, LineBreak.profile_revision(profile)) {
+        (UnicodeDefault, None) => Ok({})
+        (PreserveGraphemes, Some(PreserveGraphemesV1)) => Ok({})
+        _ => Err("line-break profile revision axis drifted")
+    }
+}
+
+verify_block_cursor : Str, LineBreak.Profile -> Try({}, Str)
+verify_block_cursor = |source, profile| {
+    expected = opportunity_shape(LineBreak.opportunities_with(source, profile))
+    pushed = match LineBreak.Cursor.push(
+        LineBreak.Cursor.init_with(profile),
+        source,
+        [],
+        |events, event| events.append(event),
+    ) {
+        Failed({ error, .. }) => return Err("ASCII block cursor push failed: ${Str.inspect(error)}")
+        Pushed(value) => value
+    }
+    finished = match LineBreak.Cursor.finish(
+        pushed.cursor,
+        pushed.state,
+        |events, event| events.append(event),
+    ) {
+        Failed({ error, .. }) => return Err("ASCII block cursor finish failed: ${Str.inspect(error)}")
+        End(value) => value
+    }
+    got = opportunity_shape(finished.state)
+    if got == expected {
+        Ok({})
+    } else {
+        Err("ASCII block cursor disagreed with replayable traversal")
+    }
 }
 
 boundary_shape : List(LineBreak.BreakBoundary) -> List((U64, U64, LineBreak.Decision, LineBreak.Authority))
@@ -174,7 +219,7 @@ run_case = |line| {
                             chunked = chunked_offsets(scalar_parts)
                             if exhaustive.len() != code_points.len() + 1 {
                                 Err({ case_id, message: "exhaustive boundary count mismatch" })
-                            } else if opportunities != exhaustive.drop_if(|event| event.decision == Prohibited) {
+                            } else if opportunity_shape(opportunities) != opportunity_boundary_shape(exhaustive) {
                                 Err({ case_id, message: "exhaustive and opportunity traversals disagree" })
                             } else if got != expected_offsets {
                                 Err({
@@ -229,6 +274,33 @@ opportunity_offsets : List(LineBreak.BreakOpportunity) -> List(U64)
 opportunity_offsets = |events| {
     events.map(|event| TextPosition.byte_offset(event.at))
 }
+
+OpportunityShape : (U64, U64, [Mandatory, Allowed], LineBreak.Authority)
+
+opportunity_shape : List(LineBreak.BreakOpportunity) -> List(OpportunityShape)
+opportunity_shape = |events| events.map(|event| {
+    (
+        TextPosition.byte_offset(event.at),
+        TextPosition.scalar_offset(event.at),
+        event.decision,
+        event.authority,
+    )
+})
+
+opportunity_boundary_shape : List(LineBreak.BreakBoundary) -> List(OpportunityShape)
+opportunity_boundary_shape = |events| events.fold([], |shapes, event| {
+    decision = match event.decision {
+        Prohibited => return shapes
+        Mandatory => Mandatory
+        Allowed => Allowed
+    }
+    shapes.append((
+        TextPosition.byte_offset(event.at),
+        TextPosition.scalar_offset(event.at),
+        decision,
+        event.authority,
+    ))
+})
 
 scalar_to_str : U32 -> Try(Str, [InvalidScalar, InternalEncodingFault])
 scalar_to_str = |value| {

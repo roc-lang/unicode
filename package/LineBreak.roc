@@ -8,6 +8,12 @@ BoundaryRecord : {
     authority : [NonTailorable, Tailorable],
 }
 
+OpportunityRecord : {
+    at : TextPosition,
+    decision : [Mandatory, Allowed],
+    authority : [NonTailorable, Tailorable],
+}
+
 BoundaryIterState : {
     cursor : InternalUtf8.Cursor,
     machine : InternalLineBreak.Machine,
@@ -18,7 +24,7 @@ BoundaryIterState : {
 OpportunityIterState : {
     cursor : InternalUtf8.Cursor,
     stream : InternalLineBreak.Stream,
-    queued : [NoQueued, Queued(BoundaryRecord)],
+    queued : [NoQueued, Queued(OpportunityRecord)],
     finished : Bool,
 }
 
@@ -36,13 +42,25 @@ ChunkCursorState : {
 ## API. `PreserveGraphemes` is an explicit restriction profile.
 LineBreak :: [].{
     Profile : [UnicodeDefault, PreserveGraphemes]
+    ProfileRevision : [PreserveGraphemesV1]
     Decision : [Mandatory, Allowed, Prohibited]
     Authority : [NonTailorable, Tailorable]
     BreakBoundary : BoundaryRecord
-    BreakOpportunity : BoundaryRecord
+    BreakOpportunity : OpportunityRecord
 
     default_profile : Profile
     default_profile = UnicodeDefault
+
+    ## Revision of the package-defined tailoring policy, independent of the
+    ## Unicode/UAX version that defines the default algorithm.
+    preserve_graphemes_revision : ProfileRevision
+    preserve_graphemes_revision = PreserveGraphemesV1
+
+    profile_revision : Profile -> [None, Some(ProfileRevision)]
+    profile_revision = |profile| match profile {
+        UnicodeDefault => None
+        PreserveGraphemes => Some(PreserveGraphemesV1)
+    }
 
     Cursor :: { state : ChunkCursorState }.{
         Error : [
@@ -104,7 +122,7 @@ LineBreak :: [].{
                 })
                 Ok(value) => value
             }
-            folded = InternalUtf8.fold_scalars(
+            folded = InternalUtf8.fold_with_ascii_blocks(
                 chunk,
                 {
                     stream: current.stream,
@@ -145,6 +163,40 @@ LineBreak :: [].{
                                 scalar_offset: next_scalar,
                                 consumed: local_end,
                                 problem: NoProblem,
+                            }
+                        }
+                    }
+                },
+                |fold, vector, local_start, _local_scalar_index| {
+                    match fold.problem {
+                        ScalarProblem(_) => fold
+                        NoProblem => {
+                            match fold.scalar_offset.plus_try(16) {
+                                Ok(next_scalar) => {
+                                    transition = InternalLineBreak.fold_ascii_block(
+                                        fold.stream,
+                                        vector,
+                                        current.byte_offset + local_start,
+                                        fold.scalar_offset,
+                                        fold.state,
+                                        emit,
+                                    )
+                                    {
+                                        stream: transition.stream,
+                                        state: transition.state,
+                                        byte_offset: current.byte_offset + local_start + 16,
+                                        scalar_offset: next_scalar,
+                                        consumed: local_start + 16,
+                                        problem: NoProblem,
+                                    }
+                                }
+                                Err(Overflow) => fold_ascii_overflow(
+                                    fold,
+                                    vector,
+                                    local_start,
+                                    current.byte_offset,
+                                    emit,
+                                )
                             }
                         }
                     }
@@ -409,7 +461,7 @@ next_significant = |initial, preceding| {
     NoSignificant
 }
 
-next_opportunity : OpportunityIterState -> Try((BoundaryRecord, OpportunityIterState), [NoMore])
+next_opportunity : OpportunityIterState -> Try((OpportunityRecord, OpportunityIterState), [NoMore])
 next_opportunity = |state| {
     match state.queued {
         Queued(event) => return Ok((event, {
@@ -469,7 +521,7 @@ next_opportunity = |state| {
     Err(NoMore)
 }
 
-opportunity_from_emissions : InternalLineBreak.Emissions, OpportunityIterState -> Try((BoundaryRecord, OpportunityIterState), [NoMore])
+opportunity_from_emissions : InternalLineBreak.Emissions, OpportunityIterState -> Try((OpportunityRecord, OpportunityIterState), [NoMore])
 opportunity_from_emissions = |emissions, state| {
     match emissions {
         NoEvents => Err(NoMore)
@@ -483,11 +535,53 @@ opportunity_from_emissions = |emissions, state| {
     }
 }
 
-fold_emissions : state, InternalLineBreak.Emissions, (state, BoundaryRecord -> state) -> state
+fold_emissions : state, InternalLineBreak.Emissions, (state, OpportunityRecord -> state) -> state
 fold_emissions = |initial, emissions, emit| {
     match emissions {
         NoEvents => initial
         OneEvent(event) => emit(initial, event)
         TwoEvents({ first, second }) => emit(emit(initial, first), second)
     }
+}
+
+fold_ascii_overflow = |initial, vector, local_start, absolute_byte_base, emit| {
+    var fold = initial
+    var lane = 0.U64
+    while lane < 16 {
+        match fold.problem {
+            ScalarProblem(_) => {}
+            NoProblem => match fold.scalar_offset.plus_try(1) {
+                Err(Overflow) => {
+                    fold = {
+                        stream: fold.stream,
+                        state: fold.state,
+                        byte_offset: fold.byte_offset,
+                        scalar_offset: fold.scalar_offset,
+                        consumed: fold.consumed,
+                        problem: ScalarProblem(fold.scalar_offset),
+                    }
+                }
+                Ok(next_scalar) => {
+                    transition = InternalLineBreak.stream_push(
+                        fold.stream,
+                        vector.get_lane(lane).to_u32(),
+                        TextPosition.from_offsets(
+                            absolute_byte_base + local_start + lane,
+                            fold.scalar_offset,
+                        ),
+                    )
+                    fold = {
+                        stream: transition.stream,
+                        state: fold_emissions(fold.state, transition.emissions, emit),
+                        byte_offset: absolute_byte_base + local_start + lane + 1,
+                        scalar_offset: next_scalar,
+                        consumed: local_start + lane + 1,
+                        problem: NoProblem,
+                    }
+                }
+            }
+        }
+        lane = lane + 1
+    }
+    fold
 }
