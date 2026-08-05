@@ -5,6 +5,9 @@ package
         EastAsianWidth,
         Grapheme,
         Scalar,
+        ScalarRange,
+        TextPosition,
+        TextRange,
         UnicodeVersion,
         Utf8,
     ]
