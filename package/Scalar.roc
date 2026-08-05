@@ -64,9 +64,11 @@ Scalar :: { code_point : CodePoint }.{
     ## Each result carries a half-open UTF-8 byte range and zero-based scalar
     ## index, both absolute from the beginning of `source`. The scan is O(B) in
     ## visited bytes, uses constant algorithmic state and stack, and creates no
-    ## intermediate byte/scalar list. Stopping iteration early leaves the
-    ## suffix undecoded. The iterator retains `source` for its own lifetime;
-    ## yielded scalars and integer ranges do not retain it.
+    ## per-scalar byte or scalar list. Heap-backed strings provide a borrowed
+    ## indexed byte view; an inline string may require one fixed byte-list
+    ## materialization. Stopping iteration early leaves the suffix undecoded.
+    ## The iterator retains `source` for its own lifetime; yielded scalars and
+    ## integer ranges do not retain it.
     iter : Str -> Iter(LocatedScalar)
     iter = |source| {
         next_located = |cursor| {

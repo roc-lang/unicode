@@ -1,4 +1,4 @@
-## Allocation-free traversal of the Unicode scalars in a valid Roc `Str`.
+## Indexed traversal of the Unicode scalars in a valid Roc `Str`.
 ##
 ## This private view deliberately carries raw integers instead of public
 ## `Scalar` and `ByteRange` wrappers. Algorithm hot loops can therefore fuse
@@ -18,111 +18,66 @@ InternalUtf8 :: [].{
     }
 
     Cursor : {
-        bytes : Iter(U8),
+        bytes : List(U8),
+        byte_len : U64,
         byte_offset : U64,
         scalar_index : U64,
     }
 
     init : Str -> Cursor
     init = |source| {
+        # `Str.to_utf8` is an exact borrowed List view for heap-backed strings.
+        # Inline strings may materialize one fixed byte list, which avoids the
+        # current byte Iter's allocation on every `Iter.next` call.
+        bytes = source.to_utf8()
         {
-            bytes: source.iter_utf8(),
+            bytes,
+            byte_len: bytes.len(),
             byte_offset: 0,
             scalar_index: 0,
         }
     }
 
-    ## Decode the next scalar from a valid `Str` byte iterator.
+    ## Decode the next scalar from an indexed view of a valid `Str`.
     ##
-    ## Every byte shape is handled exhaustively. The replacement branches are
-    ## defensive totality for an impossible broken-`Str` invariant; no branch
-    ## panics, silently discards consumed bytes, or indexes past the iterator.
+    ## `init` establishes that `bytes` is the exact `Str.to_utf8` view and
+    ## `byte_len == bytes.len()`. Every returned offset is advanced by one
+    ## complete valid scalar, so a nonterminal offset is a scalar boundary and
+    ## the leading byte's full width is in bounds. These private proofs are the
+    ## preconditions of `decode_valid_at`; arbitrary bytes use `Utf8.Cursor`.
     next : Cursor -> [One({ item : LocatedScalar, rest : Cursor }), Done]
     next = |cursor| {
-        match next_byte(cursor.bytes) {
-            End => Done
-            Byte({ value: first, rest: after_first }) => {
-                (scalar, rest, width) = if first < 0x80 {
-                    (first.to_u32(), after_first, 1.U64)
-                } else if first < 0xE0 {
-                    match next_byte(after_first) {
-                        End => (0xFFFD, after_first, 1)
-                        Byte({ value: second, rest: after_second }) => {
-                            value = first.bitwise_and(0x1F).to_u32()
-                                .shl_wrap(6)
-                                .bitwise_or(second.bitwise_and(0x3F).to_u32())
-                            (value, after_second, 2)
-                        }
-                    }
-                } else if first < 0xF0 {
-                    match next_byte(after_first) {
-                        End => (0xFFFD, after_first, 1)
-                        Byte({ value: second, rest: after_second }) => {
-                            match next_byte(after_second) {
-                                End => (0xFFFD, after_second, 2)
-                                Byte({ value: third, rest: after_third }) => {
-                                    value = first.bitwise_and(0x0F).to_u32()
-                                        .shl_wrap(6)
-                                        .bitwise_or(second.bitwise_and(0x3F).to_u32())
-                                        .shl_wrap(6)
-                                        .bitwise_or(third.bitwise_and(0x3F).to_u32())
-                                    (value, after_third, 3)
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    match next_byte(after_first) {
-                        End => (0xFFFD, after_first, 1)
-                        Byte({ value: second, rest: after_second }) => {
-                            match next_byte(after_second) {
-                                End => (0xFFFD, after_second, 2)
-                                Byte({ value: third, rest: after_third }) => {
-                                    match next_byte(after_third) {
-                                        End => (0xFFFD, after_third, 3)
-                                        Byte({ value: fourth, rest: after_fourth }) => {
-                                            value = first.bitwise_and(0x07).to_u32()
-                                                .shl_wrap(6)
-                                                .bitwise_or(second.bitwise_and(0x3F).to_u32())
-                                                .shl_wrap(6)
-                                                .bitwise_or(third.bitwise_and(0x3F).to_u32())
-                                                .shl_wrap(6)
-                                                .bitwise_or(fourth.bitwise_and(0x3F).to_u32())
-                                            (value, after_fourth, 4)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
+        if cursor.byte_offset >= cursor.byte_len {
+            Done
+        } else {
+            decoded = decode_valid_at(cursor.bytes, cursor.byte_offset)
 
-                # A Roc `Str` length bounds both counters. The fallback values
-                # make even an impossible counter invariant total rather than
-                # introducing an unchecked extraction or panic seam.
-                byte_end = match cursor.byte_offset.plus_try(width) {
-                    Ok(value) => value
-                    Err(Overflow) => U64.highest
-                }
-                next_scalar_index = match cursor.scalar_index.plus_try(1) {
-                    Ok(value) => value
-                    Err(Overflow) => U64.highest
-                }
-
-                One({
-                    item: {
-                        scalar,
-                        byte_start: cursor.byte_offset,
-                        byte_end,
-                        scalar_index: cursor.scalar_index,
-                    },
-                    rest: {
-                        bytes: rest,
-                        byte_offset: byte_end,
-                        scalar_index: next_scalar_index,
-                    },
-                })
+            # A Roc `Str` length bounds both counters. The fallback values make
+            # even an impossible counter invariant total rather than adding a
+            # second text-validation or malformed-byte channel.
+            byte_end = match cursor.byte_offset.plus_try(decoded.width) {
+                Ok(value) => value
+                Err(Overflow) => U64.highest
             }
+            next_scalar_index = match cursor.scalar_index.plus_try(1) {
+                Ok(value) => value
+                Err(Overflow) => U64.highest
+            }
+
+            One({
+                item: {
+                    scalar: decoded.scalar,
+                    byte_start: cursor.byte_offset,
+                    byte_end,
+                    scalar_index: cursor.scalar_index,
+                },
+                rest: {
+                    bytes: cursor.bytes,
+                    byte_len: cursor.byte_len,
+                    byte_offset: byte_end,
+                    scalar_index: next_scalar_index,
+                },
+            })
         }
     }
 
@@ -312,11 +267,11 @@ fold_byte_range = |bytes, start, end, initial_index, initial, step| {
     { state, byte_offset, scalar_index }
 }
 
-# Preconditions are established by `fold_with_ascii_blocks`: `bytes` is a
-# fresh view of a valid `Str`, and `byte_start` is a scalar boundary below its
-# length. Consequently the leading byte determines an available complete
-# sequence. Keeping this decoder private prevents arbitrary bytes from relying
-# on that invariant.
+# Preconditions are established by `InternalUtf8.init/next` or
+# `fold_with_ascii_blocks`: `bytes` is the exact view of a valid `Str`, and
+# `byte_start` is a scalar boundary below its length. Consequently the leading
+# byte determines an available complete sequence. Keeping this decoder private
+# prevents arbitrary bytes from relying on that invariant.
 decode_valid_at : List(U8), U64 -> { scalar : U32, width : U64 }
 decode_valid_at = |bytes, byte_start| {
     first = bytes.get(byte_start) ?? ...
@@ -351,21 +306,4 @@ decode_valid_at = |bytes, byte_start| {
             .bitwise_or(fourth.bitwise_and(0x3F).to_u32())
         { scalar: value, width: 4 }
     }
-}
-
-next_byte : Iter(U8) -> [Byte({ value : U8, rest : Iter(U8) }), End]
-next_byte = |initial| {
-    var $iterator = initial
-
-    while Bool.True {
-        match Iter.next($iterator) {
-            Done => return End
-            Skip({ rest }) => {
-                $iterator = rest
-            }
-            One({ item, rest }) => return Byte({ value: item, rest })
-        }
-    }
-
-    End
 }
