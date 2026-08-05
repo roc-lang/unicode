@@ -245,6 +245,16 @@ paragraph boundary, and the preceding context may be semantically required.
 An algorithm may expose checkpoints only where it can state sufficient
 preconditions and capture all required context.
 
+Not every result family available for a complete source is also available on
+a non-replayable chunk stream. In particular, an algorithm may be able to
+retain one pending semantic decision while an unbounded number of already
+known, lower-level results follow it. Preserving result order would then
+require an unbounded coordinate queue even though the algorithm's recognition
+state is finite. The chunk API exposes the result family that can be emitted
+irrevocably with bounded state. An exhaustive complete-source API may instead
+replay a source span, provided it declares the replay and retains neither the
+text nor an input-proportional coordinate list.
+
 ### API families
 
 The public surface follows consistent families without manufacturing a single
@@ -454,8 +464,23 @@ layout engines and profiles.
 
 Some line-break rules require right context. The cursor delays such a decision
 and retains the necessary coordinates, never the intervening text. Chunk ends
-do not resolve pending decisions. The state remains bounded even when a run of
-characters causes arbitrarily long output latency.
+do not resolve pending decisions. A non-replayable chunk cursor emits only
+break opportunities, so boundaries already known to be prohibited while an
+earlier boundary decision remains pending do not form an ordered output queue.
+Its state remains bounded even when a run of characters causes arbitrarily
+long output latency.
+
+Exhaustive traversal that reports `Prohibited` at every scalar boundary is a
+replayable-source operation. It may look ahead to resolve a pending decision and
+then replay that source span to emit intervening boundaries in order. The
+implementation keeps total decoding and classification work linear and does
+not retain the span or its boundary coordinates. This replay is part of the
+declared semantics of the exhaustive API; the opportunity iterator and chunk
+cursor do not pay for it. For example, in
+`PR OP CM* X`, the decision at `PR|OP` can depend on `X`, while every boundary
+inside the combining-mark run is already prohibited. An exact ordered chunk
+stream of all of those boundaries cannot have both bounded storage and no
+replay.
 
 Grapheme preservation is an explicit line-break profile. It consumes grapheme
 boundaries from the same grapheme transition logic in lockstep; it does not
@@ -649,6 +674,7 @@ lookup.
 | Make Unicode versions and tailoring profiles explicit | Results remain reproducible and defaults cannot change through ambient policy. |
 | Treat bidi as retained paragraph analysis | UAX #9 intrinsically needs paragraph context and line-specific final reordering. |
 | Make exact right-context script itemization replay or buffer explicitly | Constant memory and immediate irrevocable output are impossible for arbitrary ambiguous runs. |
+| Keep exhaustive line-boundary traversal on replayable sources | A delayed right-context decision can precede unbounded prohibited boundaries, so an ordered non-replayable stream would require an unbounded coordinate queue. |
 | Use SIMD only for exact block transitions | Fast paths preserve Unicode semantics on every target. |
 | Expose East Asian Width as a property, not display width | Glyph and terminal width require font, grapheme, presentation, locale, and application policy. |
 
