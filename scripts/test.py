@@ -479,10 +479,20 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
     if spec["exact_baseline_target"] != "linux-x64":
         raise TestFailure("allocation spec exact baseline target has drifted")
     suites = spec["suites"]
-    if suites != ["allocation-calibration", "allocation-aliases", "allocation-baselines"]:
+    if suites != [
+        "allocation-calibration",
+        "allocation-aliases",
+        "allocation-line-break-cursor",
+        "allocation-baselines",
+    ]:
         raise TestFailure("allocation spec suites have drifted")
     run_serial_suite(binary, suites[0], calibration, timeout=timeout)
     run_serial_suite(binary, suites[1], ["all\t\t0"], timeout=timeout)
+    line_break_rows = [
+        f"{name}\t{utf8_hex(value)}\t0"
+        for name, value in ALLOCATION_FIXTURES.items()
+    ]
+    run_serial_suite(binary, suites[2], line_break_rows, timeout=timeout)
 
     machine = platform.machine().lower()
     if platform.system() != "Linux" or machine not in ("x86_64", "amd64"):
@@ -510,7 +520,7 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
         f"{name}\t{utf8_hex(value)}\t{expected[name]}"
         for name, value in ALLOCATION_FIXTURES.items()
     ]
-    run_serial_suite(binary, suites[2], rows, timeout=timeout)
+    run_serial_suite(binary, suites[3], rows, timeout=timeout)
 
 
 def verify_pinned_roc(roc: str) -> None:

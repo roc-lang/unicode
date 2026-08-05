@@ -7,6 +7,8 @@ app [run!] {
 import pf.Host
 import test_unicode.TestPropertyAliases
 import unicode.Grapheme
+import unicode.LineBreak
+import unicode.TextPosition
 
 run! : Str => Str
 run! = |input| {
@@ -64,6 +66,20 @@ run_case! = |suite, line| {
                         } else {
                             Err({ case_id, message: "expected ${expected.to_str()}, got ${allocations.to_str()} allocations" })
                         }
+                    } else if suite == "allocation-line-break-cursor" {
+                        before = Host.alloc_count!({})
+                        signature = line_break_signature(str)
+                        after = Host.alloc_count!({})
+                        allocations = after - before
+                        expected = U64.from_str(expectation) ?? 18446744073709551615
+
+                        if signature == 0 {
+                            Err({ case_id, message: "line-break cursor probe was optimized away" })
+                        } else if allocations == expected {
+                            Ok({})
+                        } else {
+                            Err({ case_id, message: "expected ${expected.to_str()}, got ${allocations.to_str()} allocations" })
+                        }
                     } else {
                         before = Host.alloc_count!({})
                         result = if suite == "allocation-calibration" and expectation == "zero" {
@@ -96,6 +112,40 @@ run_case! = |suite, line| {
         [case_id, ..] => Err({ case_id, message: "malformed case row" })
         _ => Err({ case_id: "unknown", message: "malformed case row" })
     }
+}
+
+line_break_signature : Str -> U64
+line_break_signature = |source| {
+    pushed = match LineBreak.Cursor.push(
+        LineBreak.Cursor.init({}),
+        source,
+        { count: 0.U64, weighted_offsets: 0.U64 },
+        |state, event| {
+            next_count = state.count + 1
+            {
+                count: next_count,
+                weighted_offsets: state.weighted_offsets + next_count * TextPosition.byte_offset(event.at),
+            }
+        },
+    ) {
+        Failed(_) => return 18446744073709551615
+        Pushed(value) => value
+    }
+    finished = match LineBreak.Cursor.finish(
+        pushed.cursor,
+        pushed.state,
+        |state, event| {
+            next_count = state.count + 1
+            {
+                count: next_count,
+                weighted_offsets: state.weighted_offsets + next_count * TextPosition.byte_offset(event.at),
+            }
+        },
+    ) {
+        Failed(_) => return 18446744073709551615
+        End(value) => value
+    }
+    finished.state.count + finished.state.weighted_offsets + 1
 }
 
 decode_hex = |hex| {
