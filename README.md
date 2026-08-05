@@ -90,7 +90,11 @@ python3 scripts/test.py allocations
 The grapheme suite covers all 766 official Unicode 17 conformance cases. The
 property suite covers every valid Unicode scalar for grapheme-break,
 East-Asian-width, and emoji properties. A separate allocation harness records
-the package's allocation behavior.
+the package's allocation behavior. Its Linux x64 counts are exact measurements
+for the compiler in `.roc-version`: when an intentional implementation change
+alters them, rerun `scripts/test.py allocations` with that pinned compiler and
+review the measured fixture counts before updating the adjacent baseline file.
+The runner never updates or silently accepts a new allocation baseline.
 
 ## Benchmarks
 

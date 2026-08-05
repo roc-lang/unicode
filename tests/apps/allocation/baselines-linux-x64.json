@@ -6,10 +6,10 @@
   "optimize": "speed",
   "fixtures": {
     "empty": 0,
-    "ascii": 25,
-    "combining": 10,
-    "regional-indicator": 10,
-    "emoji-zwj": 11,
-    "long": 6159
+    "ascii": 2,
+    "combining": 1,
+    "regional-indicator": 1,
+    "emoji-zwj": 1,
+    "long": 12
   }
 }

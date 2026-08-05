@@ -193,6 +193,12 @@ InternalUtf8 :: [].{
     ##
     ## A failed ASCII probe falls back for at least one whole vector window, so
     ## non-ASCII text does not pay for a vector load once per scalar.
+    ##
+    ## Callback byte offsets and scalar indices are segment-local: zero means
+    ## the beginning of this `source` argument, even when `source` is one chunk
+    ## of a larger logical input. Chunked callers must add their tracked byte
+    ## and scalar base offsets before storing or exposing logical coordinates.
+    ## This fold does not retain coordinate state between source segments.
     fold_with_ascii_blocks : Str, state, (state, U32, U64, U64, U64 -> state), (state, U8x16, U64, U64 -> state) -> state
     fold_with_ascii_blocks = |source, initial, step_scalar, step_ascii| {
         byte_len = source.count_utf8_bytes()
