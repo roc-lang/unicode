@@ -1,5 +1,5 @@
 app [main!] {
-    pf: platform "https://github.com/lukewilliamboswell/roc-platform-template-zig/releases/download/0.9/8GdFEvQYS3TeAZxKvTzCLVdQiomweGtXcdZkXNDEeABq.tar.zst",
+    pf: platform "https://github.com/lukewilliamboswell/roc-platform-template-zig/releases/download/1.1.0/ABFgWwu8SwPJfp7tzxDoTL41b1jFeHEac3RxUFSt1WWp.tar.zst",
     unicode: "../package/main.roc", # use release URL (ends in tar.br) for local example, see github.com/roc/unicode/releases
 }
 
@@ -27,7 +27,7 @@ main! = |args| {
     }
     match get_visual_width(word) {
         Ok(width) => {
-            Stdout.line!("\n\nThe word ${word} will be displayed with the width of ${width.to_str()} characters on most UIs.\n\n")
+            Stdout.line!("\n\nThe word ${word} will be displayed with the width of ${width.to_str()} characters on most UIs.\n\n")?
             Ok({})
         }
         Err(_) => {

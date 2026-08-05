@@ -1,5 +1,5 @@
 app [main!] {
-    pf: platform "https://github.com/lukewilliamboswell/roc-platform-template-zig/releases/download/0.9/8GdFEvQYS3TeAZxKvTzCLVdQiomweGtXcdZkXNDEeABq.tar.zst",
+    pf: platform "https://github.com/lukewilliamboswell/roc-platform-template-zig/releases/download/1.1.0/ABFgWwu8SwPJfp7tzxDoTL41b1jFeHEac3RxUFSt1WWp.tar.zst",
     unicode: "../package/main.roc", # use release URL (ends in tar.br) for local example, see github.com/roc/unicode/releases
 }
 
@@ -18,12 +18,12 @@ main! = |_args| {
 
     match nr_of_code_points(word) {
         Ok(nr) => {
-            Stdout.line!("String \"${word}\" consists of ${nr.to_str()} code points.")
+            Stdout.line!("String \"${word}\" consists of ${nr.to_str()} code points.")?
             Ok({})
         }
 
         Err(_) => {
-            Stderr.line!("Failed to parse string ${word} as Utf8.")
+            Stderr.line!("Failed to parse string ${word} as Utf8.")?
             Err(Exit(1))
         }
     }

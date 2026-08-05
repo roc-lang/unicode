@@ -3,7 +3,7 @@
 ## This file will read the test data from `data/EastAsianWidth-15.1.0.txt`
 ## parse it and then generate function to test the East Asian Width property of a code point.
 app [main!] {
-    pf: platform "https://github.com/lukewilliamboswell/roc-platform-template-zig/releases/download/0.9/8GdFEvQYS3TeAZxKvTzCLVdQiomweGtXcdZkXNDEeABq.tar.zst",
+    pf: platform "https://github.com/lukewilliamboswell/roc-platform-template-zig/releases/download/1.1.0/ABFgWwu8SwPJfp7tzxDoTL41b1jFeHEac3RxUFSt1WWp.tar.zst",
 }
 
 EawRange : { eawp : Str, start : Str, end : Str }
@@ -13,7 +13,7 @@ import "data/EastAsianWidth-15.1.0.txt" as file : Str
 import Helpers
 
 main! = |_args| {
-    Stdout.line!(template)
+    Stdout.line!(template)?
     Ok({})
 }
 
