@@ -23,6 +23,21 @@ func main() {
 	}
 	source := string(input[9:])
 
+	if repeats == 0 {
+		var count uint64
+		var sumEnds uint64
+		var weightedEnds uint64
+		iterator := graphemes.FromString(source)
+		for iterator.Next() {
+			count++
+			end := uint64(iterator.End())
+			sumEnds += end
+			weightedEnds += count * end
+		}
+		fmt.Printf("%d %d %d\n", count, sumEnds, weightedEnds)
+		return
+	}
+
 	var total uint64
 	for i := uint64(0); i < repeats; i++ {
 		iterator := graphemes.FromString(source)

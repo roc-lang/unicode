@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import math
 import os
@@ -12,7 +13,9 @@ import shutil
 import statistics
 import subprocess
 import sys
+import tarfile
 import time
+import urllib.request
 from pathlib import Path
 from typing import Sequence
 
@@ -25,6 +28,12 @@ DEFAULT_TARGET_BYTES = 1024 * 1024
 DEFAULT_TARGET_SECONDS = 0.40
 DEFAULT_SAMPLES = 9
 MAX_REPEATS = 99_999_999
+LIBGRAPHEME_VERSION = "3.0.0"
+LIBGRAPHEME_URL = (
+    "https://dl.suckless.org/libgrapheme/"
+    f"libgrapheme-{LIBGRAPHEME_VERSION}.tar.gz"
+)
+LIBGRAPHEME_SHA256 = "32585af73dda62fbcc0fed14f199aa1bc988ad01dad0bfbd06cf175d9cf3d68c"
 CASE_NAMES = (
     "ascii",
     "latin_combining",
@@ -70,25 +79,36 @@ def repeated(unit: str, target_bytes: int) -> bytes:
     return encoded * max(1, target_bytes // len(encoded))
 
 
-def conformance_corpus() -> tuple[bytes, int]:
+def boundary_signature(ends: Sequence[int]) -> tuple[int, int, int]:
+    return (
+        len(ends),
+        sum(ends),
+        sum(index * end for index, end in enumerate(ends, start=1)),
+    )
+
+
+def conformance_corpus() -> tuple[bytes, tuple[int, int, int]]:
     path = ROOT / "vendor/unicode/17.0.0/GraphemeBreakTest.txt"
     corpus = bytearray()
-    expected = 0
+    ends: list[int] = []
     for raw_line in path.read_text(encoding="utf-8").splitlines():
         body = raw_line.split("#", 1)[0].strip()
         if not body:
             continue
         tokens = body.split()
-        codepoints = [int(token, 16) for token in tokens if token not in {"÷", "×"}]
-        clusters = sum(token == "÷" for token in tokens) - 1
         # A control separator guarantees a boundary between adjacent test cases.
         corpus.extend(b"\0")
-        corpus.extend("".join(chr(cp) for cp in codepoints).encode("utf-8"))
-        expected += 1 + clusters
-    return bytes(corpus), expected
+        ends.append(len(corpus))
+        for index in range(1, len(tokens), 2):
+            corpus.extend(chr(int(tokens[index], 16)).encode("utf-8"))
+            if tokens[index + 1] == "÷":
+                ends.append(len(corpus))
+    return bytes(corpus), boundary_signature(ends)
 
 
-def corpora(target_bytes: int) -> tuple[dict[str, bytes], dict[str, int]]:
+def corpora(
+    target_bytes: int,
+) -> tuple[dict[str, bytes], dict[str, tuple[int, int, int]]]:
     conformance, expected = conformance_corpus()
     cases = {
         "ascii": repeated("The quick brown fox jumps over 13 lazy dogs. ", target_bytes),
@@ -112,7 +132,50 @@ def corpora(target_bytes: int) -> tuple[dict[str, bytes], dict[str, int]]:
     return cases, {"unicode17_conformance": expected}
 
 
-def build(roc: str, go: str, cargo: str, zig: str) -> dict[str, Path]:
+def file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def libgrapheme_source() -> Path:
+    archive = BUILD / f"libgrapheme-{LIBGRAPHEME_VERSION}.tar.gz"
+    source = BUILD / f"libgrapheme-{LIBGRAPHEME_VERSION}"
+    if source.is_dir():
+        return source
+
+    if not archive.is_file():
+        print(f"+ download {LIBGRAPHEME_URL}", flush=True)
+        partial = archive.with_suffix(archive.suffix + ".partial")
+        try:
+            with urllib.request.urlopen(LIBGRAPHEME_URL) as response:
+                with partial.open("wb") as output:
+                    shutil.copyfileobj(response, output)
+            partial.replace(archive)
+        finally:
+            partial.unlink(missing_ok=True)
+    actual_sha256 = file_sha256(archive)
+    if actual_sha256 != LIBGRAPHEME_SHA256:
+        raise BenchmarkFailure(
+            f"{archive} has SHA-256 {actual_sha256}, expected {LIBGRAPHEME_SHA256}"
+        )
+
+    with tarfile.open(archive, "r:gz") as package:
+        for member in package.getmembers():
+            member_path = Path(member.name)
+            if member_path.is_absolute() or ".." in member_path.parts:
+                raise BenchmarkFailure(f"unsafe path in {archive}: {member.name}")
+            if member.issym() or member.islnk():
+                raise BenchmarkFailure(f"refusing link in {archive}: {member.name}")
+        package.extractall(BUILD)
+    if not source.is_dir():
+        raise BenchmarkFailure(f"{archive} did not contain {source.name}")
+    return source
+
+
+def build(roc: str, go: str, cargo: str, zig: str, cc: str, make: str) -> dict[str, Path]:
     BUILD.mkdir(parents=True, exist_ok=True)
     command([zig, "build", "native", "-Doptimize=ReleaseFast"], cwd=ROOT / "tests/platform")
     roc_source = BENCH / "roc/main.roc"
@@ -139,10 +202,33 @@ def build(roc: str, go: str, cargo: str, zig: str) -> dict[str, Path]:
         [go, "build", "-trimpath", "-ldflags=-s -w", "-o", str(go_binary), "."],
         cwd=BENCH / "go",
     )
+
+    libgrapheme = libgrapheme_source()
+    command([make, "gen/character.h"], cwd=libgrapheme)
+    c_binary = BUILD / "c-libgrapheme"
+    command(
+        [
+            cc,
+            "-std=c99",
+            "-O3",
+            "-DNDEBUG",
+            "-flto",
+            "-I",
+            str(libgrapheme),
+            str(BENCH / "c/main.c"),
+            str(libgrapheme / "src/character.c"),
+            str(libgrapheme / "src/utf8.c"),
+            str(libgrapheme / "src/util.c"),
+            "-o",
+            str(c_binary),
+        ]
+    )
     return {
         "roc": roc_binary,
-        "rust": rust_target / "release/roc-unicode-grapheme-bench",
-        "go": go_binary,
+        "rust_unicode_segmentation": rust_target / "release/rust-unicode-segmentation",
+        "rust_icu4x": rust_target / "release/rust-icu4x",
+        "go_clipperhouse": go_binary,
+        "c_libgrapheme": c_binary,
     }
 
 
@@ -185,6 +271,32 @@ def invoke(binary: Path, corpus: bytes, repeats: int, cpu: int | None) -> tuple[
     return elapsed, checksum
 
 
+def verify_boundaries(
+    binary: Path, corpus: bytes, cpu: int | None
+) -> tuple[int, int, int]:
+    payload = b"00000000\n" + corpus
+    args = [str(binary)]
+    if cpu is not None:
+        args = ["taskset", "-c", str(cpu), *args]
+    result = subprocess.run(
+        args,
+        input=payload,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=True,
+    )
+    try:
+        count, sum_ends, weighted_ends = (
+            int(part) for part in result.stdout.decode("ascii").split()
+        )
+    except (UnicodeDecodeError, ValueError) as error:
+        raise BenchmarkFailure(
+            f"{binary} returned malformed boundary signature {result.stdout!r}; "
+            f"stderr={result.stderr.decode(errors='replace')!r}"
+        ) from error
+    return count, sum_ends, weighted_ends
+
+
 def checked_invoke(
     binary: Path,
     corpus: bytes,
@@ -221,18 +333,21 @@ def calibrate(
 def benchmark(
     binaries: dict[str, Path],
     cases: dict[str, bytes],
-    expected: dict[str, int],
+    expected: dict[str, tuple[int, int, int]],
     *,
     cpu: int | None,
     samples_count: int,
     target_seconds: float,
 ) -> dict[str, dict]:
     results: dict[str, dict] = {}
+    label_width = max(len(label) for label in binaries)
     for case_name, corpus in cases.items():
         print(f"\n[{case_name}] {len(corpus):,} bytes", flush=True)
         case_results: dict[str, dict] = {}
         one_pass_counts: dict[str, int] = {}
+        signatures: dict[str, tuple[int, int, int]] = {}
         for language, binary in binaries.items():
+            signatures[language] = verify_boundaries(binary, corpus, cpu)
             repeats, checksum = calibrate(binary, corpus, cpu, target_seconds)
             one_pass_counts[language] = checksum
             checked_invoke(binary, corpus, repeats, cpu, checksum)
@@ -250,7 +365,7 @@ def benchmark(
                 "samples_mb_per_second": samples,
             }
             print(
-                f"  {language:4s} {median:9.1f} MB/s  "
+                f"  {language:{label_width}s} {median:9.1f} MB/s  "
                 f"MAD {mad:5.1f}  n={samples_count}",
                 flush=True,
             )
@@ -259,10 +374,14 @@ def benchmark(
             raise BenchmarkFailure(
                 f"{case_name}: implementations disagree on cluster counts: {one_pass_counts}"
             )
-        if case_name in expected and next(iter(one_pass_counts.values())) != expected[case_name]:
+        if len(set(signatures.values())) != 1:
             raise BenchmarkFailure(
-                f"{case_name}: Unicode 17 expected {expected[case_name]} clusters, "
-                f"got {one_pass_counts}"
+                f"{case_name}: implementations disagree on boundary positions: {signatures}"
+            )
+        if case_name in expected and next(iter(signatures.values())) != expected[case_name]:
+            raise BenchmarkFailure(
+                f"{case_name}: Unicode 17 expected boundary signature "
+                f"{expected[case_name]}, got {signatures}"
             )
         results[case_name] = {"bytes": len(corpus), "implementations": case_results}
     return results
@@ -311,7 +430,7 @@ def print_comparison(current: dict, baseline: dict, baseline_path: Path) -> None
         print("WARNING: baseline and current target corpus sizes differ", file=sys.stderr)
 
     print(f"\nComparison with {baseline_path}:")
-    print(f"{'case':28s} {'impl':5s} {'baseline':>11s} {'current':>11s} {'delta':>9s}")
+    print(f"{'case':28s} {'implementation':27s} {'baseline':>11s} {'current':>11s} {'delta':>9s}")
     for case_name, current_case in current_cases.items():
         baseline_case = baseline_cases.get(case_name)
         if not isinstance(baseline_case, dict):
@@ -332,7 +451,7 @@ def print_comparison(current: dict, baseline: dict, baseline_path: Path) -> None
             after = float(current_impl["mb_per_second_median"])
             delta = (after / before - 1.0) * 100.0
             print(
-                f"{case_name:28s} {language:5s} "
+                f"{case_name:28s} {language:27s} "
                 f"{before:9.1f} MB/s {after:9.1f} MB/s {delta:+8.1f}%"
             )
 
@@ -343,6 +462,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--go", default="go")
     parser.add_argument("--cargo", default="cargo")
     parser.add_argument("--zig", default="zig")
+    parser.add_argument("--cc", default="cc")
+    parser.add_argument("--make", default="make")
     parser.add_argument("--skip-build", action="store_true")
     parser.add_argument("--samples", type=int, default=DEFAULT_SAMPLES)
     parser.add_argument("--target-seconds", type=float, default=DEFAULT_TARGET_SECONDS)
@@ -370,14 +491,19 @@ def main() -> None:
     args.go = resolve_tool(args.go)
     args.cargo = resolve_tool(args.cargo)
     args.zig = resolve_tool(args.zig)
+    args.cc = resolve_tool(args.cc)
+    args.make = resolve_tool(args.make)
     binaries = (
         {
             "roc": BUILD / "roc",
-            "rust": BUILD / "rust-target/release/roc-unicode-grapheme-bench",
-            "go": BUILD / "go",
+            "rust_unicode_segmentation": BUILD
+            / "rust-target/release/rust-unicode-segmentation",
+            "rust_icu4x": BUILD / "rust-target/release/rust-icu4x",
+            "go_clipperhouse": BUILD / "go",
+            "c_libgrapheme": BUILD / "c-libgrapheme",
         }
         if args.skip_build
-        else build(args.roc, args.go, args.cargo, args.zig)
+        else build(args.roc, args.go, args.cargo, args.zig, args.cc, args.make)
     )
     missing = [str(path) for path in binaries.values() if not path.is_file()]
     if missing:
@@ -406,10 +532,13 @@ def main() -> None:
             "cargo": capture([args.cargo, "--version"]),
             "go": capture([args.go, "version"]),
             "zig": capture([args.zig, "version"]),
+            "cc": capture([args.cc, "--version"]),
         },
         "libraries": {
             "unicode_segmentation": "1.13.3 (Unicode 17)",
+            "icu_segmenter": "2.2.0 (Unicode 17)",
             "clipperhouse_uax29": "2.7.0 (Unicode 17)",
+            "libgrapheme": "3.0.0 (Unicode 17)",
         },
         "configuration": {
             "samples": args.samples,
