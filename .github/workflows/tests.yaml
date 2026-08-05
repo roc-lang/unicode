@@ -13,9 +13,12 @@ concurrency:
 # Do not add permissions here! Configure them at the job level!
 permissions: {}
 
+env:
+  ZIG_VERSION: "0.16.0"
+
 jobs:
-  test-examples:
-    name: ./ci/all_tests.sh (${{ matrix.os }})
+  test:
+    name: ./scripts/all_tests.sh (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -31,6 +34,12 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - name: Install Zig
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # 2.2.1
+        with:
+          version: ${{ env.ZIG_VERSION }}
+          use-cache: false
+
       - name: Read pinned Roc version
         run: printf 'ROC_NIGHTLY_TAG=%s\n' "$(sed -n '1p' .roc-version)" >> "$GITHUB_ENV"
     
@@ -41,12 +50,5 @@ jobs:
 
       - run: roc version
 
-      # expect for testing
-      - if: runner.os == 'Linux'
-        run: sudo apt install -y expect
-
-      - if: runner.os == 'Linux'
-        run: expect -v
-
-      # Run all tests 
-      - run: ROC=roc ./ci/all_tests.sh
+      - name: Run all tests
+        run: ROC=roc ./scripts/all_tests.sh

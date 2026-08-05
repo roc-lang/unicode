@@ -49,7 +49,7 @@ jobs:
           nightly-tag: ${{ env.ROC_NIGHTLY_TAG }}
 
       - name: Run checks
-        run: ROC=roc ./ci/all_tests.sh
+        run: ROC=roc ./scripts/all_tests.sh
 
       - name: Bundle package
         id: bundle
@@ -115,7 +115,7 @@ jobs:
           path: dist
 
       - name: Test examples against downloaded bundle
-        run: python3 ci/test_bundle_examples.py --bundle-path "dist/${{ needs.build-bundle.outputs.bundle_filename }}"
+        run: python3 scripts/test_bundle_examples.py --bundle-path "dist/${{ needs.build-bundle.outputs.bundle_filename }}"
 
   create-release:
     name: Create GitHub release

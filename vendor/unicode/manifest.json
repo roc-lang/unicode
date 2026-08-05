@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "unicode_version": "15.1.0",
+  "emoji_version": "15.1",
+  "license": "LICENSE-UNICODE",
+  "files": {
+    "east_asian_width": {
+      "path": "15.1.0/EastAsianWidth.txt",
+      "url": "https://www.unicode.org/Public/15.1.0/ucd/EastAsianWidth.txt",
+      "sha256": "b08191401dc125f4e84ef262a95754faae6b737c79538e17ea9664a63434e94e",
+      "header": "# EastAsianWidth-15.1.0.txt",
+      "records": 2578,
+      "role": "production-and-conformance"
+    },
+    "grapheme_break_property": {
+      "path": "15.1.0/GraphemeBreakProperty.txt",
+      "url": "https://www.unicode.org/Public/15.1.0/ucd/auxiliary/GraphemeBreakProperty.txt",
+      "sha256": "4d3620f628189566d731a4363cf45bbd1be333ea2820bdf5e472cd634abe0440",
+      "header": "# GraphemeBreakProperty-15.1.0.txt",
+      "records": 1391,
+      "role": "production-and-conformance"
+    },
+    "grapheme_break_test": {
+      "path": "15.1.0/GraphemeBreakTest.txt",
+      "url": "https://www.unicode.org/Public/15.1.0/ucd/auxiliary/GraphemeBreakTest.txt",
+      "sha256": "79bedb3dd93af766f91d2555dc8c32941f3e6dc412dd7930743c2e2c3969813f",
+      "header": "# GraphemeBreakTest-15.1.0.txt",
+      "records": 1187,
+      "cases": 1187,
+      "role": "conformance"
+    },
+    "emoji_data": {
+      "path": "15.1.0/emoji-data.txt",
+      "url": "https://www.unicode.org/Public/15.1.0/ucd/emoji/emoji-data.txt",
+      "sha256": "95470f9bc165c725e1f56a32bfc08be7ec6673eb63ab7666a704aeea80ad1c0a",
+      "header": "# Used with Emoji Version 15.1",
+      "records": 1258,
+      "role": "production-and-conformance"
+    }
+  }
+}

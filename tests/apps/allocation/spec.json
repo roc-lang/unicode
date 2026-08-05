@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "kind": "allocation",
+  "suites": [
+    "allocation-calibration",
+    "allocation-baselines"
+  ],
+  "timeout_seconds": 120,
+  "baseline_file": "tests/apps/allocation/baselines-linux-x64.json",
+  "exact_baseline_target": "linux-x64"
+}

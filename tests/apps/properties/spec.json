@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "kind": "properties",
+  "suite": "properties",
+  "timeout_seconds": 300,
+  "unicode_manifest_files": [
+    "grapheme_break_property",
+    "east_asian_width",
+    "emoji_data"
+  ],
+  "scalar_domain": "valid-unicode-scalars"
+}
