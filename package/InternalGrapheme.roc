@@ -41,30 +41,12 @@ InternalGrapheme :: [].{
     push : Machine, U32, U64 -> { machine : Machine, boundary : Boundary }
     push = |machine, scalar, byte_start| {
         props = InternalGraphemeData.lookup(scalar)
-
-        if !machine.started {
-            {
-                machine: advance_context(machine, props, byte_start, Bool.True),
-                boundary: NoBoundary,
-            }
-        } else {
-            breaks = should_break(machine, props)
-            boundary = if breaks {
-                Boundary({ start: machine.cluster_start, end: byte_start })
-            } else {
-                NoBoundary
-            }
-
-            {
-                machine: advance_context(machine, props, byte_start, breaks),
-                boundary,
-            }
-        }
+        push_with_props(machine, props, byte_start)
     }
 
     fold_chunk : Machine, U64, Str, state, (state, ByteRange -> state) -> { machine : Machine, state : state }
     fold_chunk = |machine, absolute_start, chunk, initial, emit| {
-        InternalUtf8.fold_scalars(
+        InternalUtf8.fold_with_ascii_blocks(
             chunk,
             { machine, state: initial },
             |fold_state, scalar, local_start, _local_end, _scalar_index| {
@@ -81,6 +63,14 @@ InternalGrapheme :: [].{
                     }
                 }
                 { machine: transition.machine, state: emitted }
+            },
+            |fold_state, vector, local_start, _scalar_index| {
+                fold_ascii_block(
+                    fold_state,
+                    vector,
+                    absolute_start + local_start,
+                    emit,
+                )
             },
         )
     }
@@ -100,8 +90,106 @@ InternalGrapheme :: [].{
 
     ranges : Str -> List(ByteRange)
     ranges = |source| {
-        InternalGrapheme.iter_ranges(source).collect()
+        folded = InternalGrapheme.fold_chunk(
+            InternalGrapheme.init({}),
+            0,
+            source,
+            [],
+            |ranges, range| ranges.append(range),
+        )
+
+        if folded.machine.started {
+            final_range = ByteRange.from_bounds(
+                folded.machine.cluster_start,
+                source.count_utf8_bytes(),
+            ) ?? ...
+            folded.state.append(final_range)
+        } else {
+            folded.state
+        }
     }
+}
+
+fold_ascii_block = |fold_state, vector, absolute_start, emit| {
+    if is_printable_ascii_block(vector) {
+        first = push_with_props(
+            fold_state.machine,
+            ascii_props(0x20),
+            absolute_start,
+        )
+        var state = match first.boundary {
+            NoBoundary => fold_state.state
+            Boundary({ start, end }) => {
+                range = ByteRange.from_bounds(start, end) ?? ...
+                emit(fold_state.state, range)
+            }
+        }
+
+        var lane = 1.U64
+        var range_start = first.machine.cluster_start
+        while lane < 16 {
+            range_end = absolute_start + lane
+            range = ByteRange.from_bounds(range_start, range_end) ?? ...
+            state = emit(state, range)
+            range_start = range_end
+            lane = lane + 1
+        }
+
+        {
+            machine: {
+                started: Bool.True,
+                cluster_start: absolute_start + 15,
+                previous: Other,
+                ri_odd: Bool.False,
+                emoji_context: NoEmojiContext,
+                indic_context: NoIndicContext,
+            },
+            state,
+        }
+    } else {
+        var machine = fold_state.machine
+        var state = fold_state.state
+        var lane = 0.U64
+
+        while lane < 16 {
+            byte = vector.get_lane(lane)
+            byte_start = absolute_start + lane
+            transition = push_with_props(machine, ascii_props(byte), byte_start)
+            machine = transition.machine
+            match transition.boundary {
+                NoBoundary => {}
+                Boundary({ start, end }) => {
+                    range = ByteRange.from_bounds(start, end) ?? ...
+                    state = emit(state, range)
+                }
+            }
+            lane = lane + 1
+        }
+
+        { machine, state }
+    }
+}
+
+is_printable_ascii_block : U8x16 -> Bool
+is_printable_ascii_block = |vector| {
+    at_least_space = vector.gte_lanes(U8x16.splat(0x20))
+    at_most_tilde = vector.lte_lanes(U8x16.splat(0x7E))
+    at_least_space.bitwise_and(at_most_tilde).all_lanes_set()
+}
+
+ascii_props : U8 -> InternalGraphemeData.Props
+ascii_props = |byte| {
+    gcb = if byte == 0x0D {
+        CR
+    } else if byte == 0x0A {
+        LF
+    } else if byte < 0x20 or byte == 0x7F {
+        Control
+    } else {
+        Other
+    }
+
+    { gcb, incb: None, extended_pictographic: Bool.False }
 }
 
 next_range : RangeIterState -> Try((ByteRange, RangeIterState), [NoMore])
@@ -186,6 +274,28 @@ should_break = |machine, current| {
         Bool.False
     } else {
         Bool.True
+    }
+}
+
+push_with_props : MachineState, InternalGraphemeData.Props, U64 -> { machine : MachineState, boundary : Boundary }
+push_with_props = |machine, props, byte_start| {
+    if !machine.started {
+        {
+            machine: advance_context(machine, props, byte_start, Bool.True),
+            boundary: NoBoundary,
+        }
+    } else {
+        breaks = should_break(machine, props)
+        boundary = if breaks {
+            Boundary({ start: machine.cluster_start, end: byte_start })
+        } else {
+            NoBoundary
+        }
+
+        {
+            machine: advance_context(machine, props, byte_start, breaks),
+            boundary,
+        }
     }
 }
 

@@ -4,6 +4,11 @@
 ## `Scalar` and `ByteRange` wrappers. Algorithm hot loops can therefore fuse
 ## decoding with their narrow property lookup and transition without building
 ## public records for every scalar.
+##
+## `fold_with_ascii_blocks` is the internal high-throughput seam. It keeps the
+## scalar transition and the algorithm-specific ASCII transition adjacent in
+## one loop instead of building an `Iter(U8) -> Iter(Scalar) -> Iter(Property)`
+## pipeline. The SIMD width and threshold are intentionally private.
 InternalUtf8 :: [].{
     LocatedScalar : {
         scalar : U32,
@@ -174,6 +179,171 @@ InternalUtf8 :: [].{
         }
 
         $result
+    }
+
+    ## Fold a complete valid string, offering proven all-ASCII blocks to an
+    ## algorithm-specific consumer and every other scalar to `step_scalar`.
+    ##
+    ## Strings below the private threshold stay on `Str.iter_utf8`, which is
+    ## allocation-free for inline strings. Longer strings are necessarily
+    ## heap-backed on every currently supported target, so `Str.to_utf8`
+    ## creates a borrowed list view rather than copying the bytes. It still
+    ## performs reference-count bookkeeping; a direct `Str` vector-load
+    ## primitive would remove that residual cost.
+    ##
+    ## A failed ASCII probe falls back for at least one whole vector window, so
+    ## non-ASCII text does not pay for a vector load once per scalar.
+    fold_with_ascii_blocks : Str, state, (state, U32, U64, U64, U64 -> state), (state, U8x16, U64, U64 -> state) -> state
+    fold_with_ascii_blocks = |source, initial, step_scalar, step_ascii| {
+        byte_len = source.count_utf8_bytes()
+
+        if byte_len < simd_min_bytes {
+            InternalUtf8.fold_scalars(source, initial, step_scalar)
+        } else {
+            bytes = source.to_utf8()
+            var state = initial
+            var byte_offset = 0.U64
+            var scalar_index = 0.U64
+
+            while byte_offset < byte_len {
+                remaining = byte_len - byte_offset
+
+                if remaining >= vector_bytes {
+                    match U8x16.load(bytes, byte_offset) {
+                        Err(_) => {
+                            # The bounds proof above should make this branch
+                            # unreachable. Scalar completion preserves total
+                            # behavior if a backend fails to eliminate it.
+                            folded = fold_byte_range(
+                                bytes,
+                                byte_offset,
+                                byte_len,
+                                scalar_index,
+                                state,
+                                step_scalar,
+                            )
+                            state = folded.state
+                            byte_offset = folded.byte_offset
+                            scalar_index = folded.scalar_index
+                        }
+                        Ok(vector) => {
+                            if vector.to_bitmask() == 0 {
+                                state = step_ascii(
+                                    state,
+                                    vector,
+                                    byte_offset,
+                                    scalar_index,
+                                )
+                                byte_offset = byte_offset + vector_bytes
+                                scalar_index = scalar_index + vector_bytes
+                            } else {
+                                # Decode through the probed window. The last
+                                # scalar may end up to three bytes beyond it;
+                                # the next probe starts at that scalar boundary.
+                                folded = fold_byte_range(
+                                    bytes,
+                                    byte_offset,
+                                    byte_offset + vector_bytes,
+                                    scalar_index,
+                                    state,
+                                    step_scalar,
+                                )
+                                state = folded.state
+                                byte_offset = folded.byte_offset
+                                scalar_index = folded.scalar_index
+                            }
+                        }
+                    }
+                } else {
+                    folded = fold_byte_range(
+                        bytes,
+                        byte_offset,
+                        byte_len,
+                        scalar_index,
+                        state,
+                        step_scalar,
+                    )
+                    state = folded.state
+                    byte_offset = folded.byte_offset
+                    scalar_index = folded.scalar_index
+                }
+            }
+
+            state
+        }
+    }
+}
+
+# 64 bytes is above Roc's inline-string capacity on 32- and 64-bit targets and
+# amortizes one Str/List view conversion over at least four vector probes.
+# Throughput tuning may move this private threshold without changing semantics.
+simd_min_bytes : U64
+simd_min_bytes = 64
+
+vector_bytes : U64
+vector_bytes = 16
+
+fold_byte_range : List(U8), U64, U64, U64, state, (state, U32, U64, U64, U64 -> state) -> { state : state, byte_offset : U64, scalar_index : U64 }
+fold_byte_range = |bytes, start, end, initial_index, initial, step| {
+    var state = initial
+    var byte_offset = start
+    var scalar_index = initial_index
+
+    while byte_offset < end {
+        decoded = decode_valid_at(bytes, byte_offset)
+        byte_end = byte_offset + decoded.width
+        state = step(
+            state,
+            decoded.scalar,
+            byte_offset,
+            byte_end,
+            scalar_index,
+        )
+        byte_offset = byte_end
+        scalar_index = scalar_index + 1
+    }
+
+    { state, byte_offset, scalar_index }
+}
+
+# Preconditions are established by `fold_with_ascii_blocks`: `bytes` is a
+# fresh view of a valid `Str`, and `byte_start` is a scalar boundary below its
+# length. Consequently the leading byte determines an available complete
+# sequence. Keeping this decoder private prevents arbitrary bytes from relying
+# on that invariant.
+decode_valid_at : List(U8), U64 -> { scalar : U32, width : U64 }
+decode_valid_at = |bytes, byte_start| {
+    first = bytes.get(byte_start) ?? ...
+
+    if first < 0x80 {
+        { scalar: first.to_u32(), width: 1 }
+    } else if first < 0xE0 {
+        second = bytes.get(byte_start + 1) ?? ...
+        value = first.bitwise_and(0x1F).to_u32()
+            .shl_wrap(6)
+            .bitwise_or(second.bitwise_and(0x3F).to_u32())
+        { scalar: value, width: 2 }
+    } else if first < 0xF0 {
+        second = bytes.get(byte_start + 1) ?? ...
+        third = bytes.get(byte_start + 2) ?? ...
+        value = first.bitwise_and(0x0F).to_u32()
+            .shl_wrap(6)
+            .bitwise_or(second.bitwise_and(0x3F).to_u32())
+            .shl_wrap(6)
+            .bitwise_or(third.bitwise_and(0x3F).to_u32())
+        { scalar: value, width: 3 }
+    } else {
+        second = bytes.get(byte_start + 1) ?? ...
+        third = bytes.get(byte_start + 2) ?? ...
+        fourth = bytes.get(byte_start + 3) ?? ...
+        value = first.bitwise_and(0x07).to_u32()
+            .shl_wrap(6)
+            .bitwise_or(second.bitwise_and(0x3F).to_u32())
+            .shl_wrap(6)
+            .bitwise_or(third.bitwise_and(0x3F).to_u32())
+            .shl_wrap(6)
+            .bitwise_or(fourth.bitwise_and(0x3F).to_u32())
+        { scalar: value, width: 4 }
     }
 }
 
