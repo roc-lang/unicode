@@ -120,9 +120,12 @@ ScriptItemization :: [].{
     default : ConservativeScxV1
     default = ConservativeScxV1.{ preferred_scripts: [] }
 
-    ## Construct explicit application preference order. Common, Inherited,
-    ## Unknown, duplicates, and scripts absent from a candidate set have no
-    ## effect; no language is inferred.
+    ## Construct explicit application preference order. The policy retains the
+    ## caller's immutable list; construction does not copy it. Resolving one
+    ## restricted cluster scans preferences in order, so its lookup cost is
+    ## O(P). Applications should keep this explicit tailoring list short.
+    ## Common, Inherited, Unknown, duplicates, and scripts absent from a
+    ## candidate set have no effect; no language is inferred.
     with_preferred : List(Script.Value) -> ConservativeScxV1
     with_preferred = |preferred_scripts| ConservativeScxV1.{ preferred_scripts }
 
@@ -455,7 +458,7 @@ empty_cluster = {
 
 scan_units : Str, U64, U64, state, (state, Unit -> state) -> state
 scan_units = |source, byte_base, scalar_base, initial, visit| {
-    folded = InternalUtf8.fold_scalars(
+    folded = InternalUtf8.fold_with_ascii_blocks(
         source,
         {
             scan: {
@@ -466,24 +469,27 @@ scan_units = |source, byte_base, scalar_base, initial, visit| {
             state: initial,
         },
         |fold_state, scalar, local_start, _local_end, local_index| {
-            byte_start = byte_base + local_start
-            scalar_index = scalar_base + local_index
-            transition = InternalGrapheme.push(fold_state.scan.machine, scalar, byte_start)
-            (next_state, fresh_cluster) = match transition.boundary {
-                NoBoundary => (fold_state.state, fold_state.scan.cluster)
-                Boundary(_) => {
-                    unit = finish_cluster(fold_state.scan.cluster, byte_start, scalar_index)
-                    (visit(fold_state.state, unit), empty_cluster)
-                }
+            scan_scalar(fold_state, scalar, local_start, local_index, byte_base, scalar_base, visit)
+        },
+        |initial_state, vector, local_start, local_index| {
+            # The UTF-8 substrate has already proven all sixteen lanes ASCII.
+            # Keep script lookup and grapheme transition fused while avoiding
+            # scalar UTF-8 decoding for the block.
+            var fold_state = initial_state
+            var lane = 0.U64
+            while lane < 16 {
+                fold_state = scan_scalar(
+                    fold_state,
+                    vector.get_lane(lane).to_u32(),
+                    local_start + lane,
+                    local_index + lane,
+                    byte_base,
+                    scalar_base,
+                    visit,
+                )
+                lane = lane + 1
             }
-            {
-                scan: {
-                    machine: transition.machine,
-                    cluster: add_scalar(fresh_cluster, scalar, byte_start, scalar_index),
-                    scalar_end: scalar_index + 1,
-                },
-                state: next_state,
-            }
+            fold_state
         },
     )
 
@@ -496,6 +502,27 @@ scan_units = |source, byte_base, scalar_base, initial, visit| {
         visit(folded.state, unit)
     } else {
         folded.state
+    }
+}
+
+scan_scalar = |fold_state, scalar, local_start, local_index, byte_base, scalar_base, visit| {
+    byte_start = byte_base + local_start
+    scalar_index = scalar_base + local_index
+    transition = InternalGrapheme.push(fold_state.scan.machine, scalar, byte_start)
+    (next_state, fresh_cluster) = match transition.boundary {
+        NoBoundary => (fold_state.state, fold_state.scan.cluster)
+        Boundary(_) => {
+            unit = finish_cluster(fold_state.scan.cluster, byte_start, scalar_index)
+            (visit(fold_state.state, unit), empty_cluster)
+        }
+    }
+    {
+        scan: {
+            machine: transition.machine,
+            cluster: add_scalar(fresh_cluster, scalar, byte_start, scalar_index),
+            scalar_end: scalar_index + 1,
+        },
+        state: next_state,
     }
 }
 

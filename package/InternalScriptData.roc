@@ -1,5 +1,6 @@
 ## GENERATED from Unicode 17.0.0 Scripts.txt and PropertyValueAliases.txt under UAX #24 revision 39. ##
 ## Run `python3 scripts/unicode_data.py generate`. Named tags/aliases are stable; U8 values are private. ##
+## Private IDs are generator-asserted canonical short-alias order solely to implement the public order contract. ##
 ## default: Zzzz; 176 identities; layout: 8704 U8 page ids + 255 x 128 U8 values; logical payload 41344 bytes. ##
 
 InternalScriptData :: [].{

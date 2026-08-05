@@ -1,5 +1,6 @@
 ## GENERATED public Unicode 17.0.0 Script/Script_Extensions API from PropertyValueAliases.txt under UAX #24 revision 39. ##
 ## Run `python3 scripts/unicode_data.py generate`; representation IDs and bit ordering are private. ##
+## ScriptSet traversal and comparison use canonical short-alias lexicographic order. ##
 
 import InternalScriptData
 import InternalScriptExtensionsData
@@ -108,6 +109,7 @@ Script :: [].{
     is_eq_set : ScriptSet, ScriptSet -> Bool
     is_eq_set = |left, right| left.word0 == right.word0 and left.word1 == right.word1 and left.word2 == right.word2
 
+    ## Lexicographic comparison in stable canonical short-alias order.
     compare : ScriptSet, ScriptSet -> [Before, Equal, After]
     compare = |left, right| {
         common = if left.length < right.length { left.length } else { right.length }
@@ -124,6 +126,7 @@ Script :: [].{
         if left.length < right.length { Before } else if left.length > right.length { After } else { Equal }
     }
 
+    ## Member by stable canonical short-alias order.
     at : ScriptSet, U8 -> [Some(Value), None]
     at = |set, wanted| {
         if wanted >= set.length { return None }
@@ -140,6 +143,7 @@ Script :: [].{
         None
     }
 
+    ## Visit members in stable canonical short-alias order without allocating.
     walk : ScriptSet, state, (state, Value -> state) -> state
     walk = |set, initial, visit| {
         var state = initial
@@ -152,6 +156,7 @@ Script :: [].{
         state
     }
 
+    ## Materialize members in stable canonical short-alias order.
     to_list : ScriptSet -> List(Value)
     to_list = |set| walk(set, [], |scripts, script| scripts.append(script))
 }

@@ -3191,7 +3191,21 @@ def render_canonical_combining_class(
 def _script_aliases_by_identity(
     properties: ScriptProperties,
 ) -> tuple[PropertyValueAlias, ...]:
-    return tuple(sorted(properties.aliases, key=lambda record: record.identity))
+    # Public ScriptSet traversal/comparison is defined in canonical short-alias
+    # lexicographic order. PropertyValueAliases currently makes the stable
+    # identity equal to that short alias, but assert the relationship here so a
+    # future parser/data change cannot silently make public order depend on an
+    # incidental private table layout.
+    ordered = tuple(sorted(properties.aliases, key=lambda record: record.short))
+    if any(record.identity != record.short for record in ordered):
+        raise DataError(
+            "Script stable identities must equal canonical short aliases for public ordering"
+        )
+    if tuple(record.short for record in ordered) != tuple(
+        sorted(record.short for record in ordered)
+    ):
+        raise DataError("Script identities are not in canonical short-alias order")
+    return ordered
 
 
 def render_script_data(
@@ -3245,6 +3259,7 @@ def render_script_data(
     return (
         f"## GENERATED from Unicode {version} Scripts.txt and PropertyValueAliases.txt under UAX #24 revision 39. ##\n"
         "## Run `python3 scripts/unicode_data.py generate`. Named tags/aliases are stable; U8 values are private. ##\n"
+        "## Private IDs are generator-asserted canonical short-alias order solely to implement the public order contract. ##\n"
         f"## default: {properties.script_default}; {len(identities)} identities; layout: "
         f"{len(paged.page_index)} {paged.index_type} page ids + {len(paged.pages)} x {page_size} U8 values; "
         f"logical payload {paged.storage_bytes} bytes. ##\n\n"
@@ -3417,7 +3432,8 @@ def render_script_api(version: str, properties: ScriptProperties) -> str:
     identities = tuple(record.identity for record in _script_aliases_by_identity(properties))
     return (
         f"## GENERATED public Unicode {version} Script/Script_Extensions API from PropertyValueAliases.txt under UAX #24 revision 39. ##\n"
-        "## Run `python3 scripts/unicode_data.py generate`; representation IDs and bit ordering are private. ##\n\n"
+        "## Run `python3 scripts/unicode_data.py generate`; representation IDs and bit ordering are private. ##\n"
+        "## ScriptSet traversal and comparison use canonical short-alias lexicographic order. ##\n\n"
         "import InternalScriptData\n"
         "import InternalScriptExtensionsData\n"
         "import Scalar\n\n"
@@ -3505,6 +3521,7 @@ def render_script_api(version: str, properties: ScriptProperties) -> str:
         "    }\n\n"
         "    is_eq_set : ScriptSet, ScriptSet -> Bool\n"
         "    is_eq_set = |left, right| left.word0 == right.word0 and left.word1 == right.word1 and left.word2 == right.word2\n\n"
+        "    ## Lexicographic comparison in stable canonical short-alias order.\n"
         "    compare : ScriptSet, ScriptSet -> [Before, Equal, After]\n"
         "    compare = |left, right| {\n"
         "        common = if left.length < right.length { left.length } else { right.length }\n"
@@ -3520,6 +3537,7 @@ def render_script_api(version: str, properties: ScriptProperties) -> str:
         "        }\n"
         "        if left.length < right.length { Before } else if left.length > right.length { After } else { Equal }\n"
         "    }\n\n"
+        "    ## Member by stable canonical short-alias order.\n"
         "    at : ScriptSet, U8 -> [Some(Value), None]\n"
         "    at = |set, wanted| {\n"
         "        if wanted >= set.length { return None }\n"
@@ -3535,6 +3553,7 @@ def render_script_api(version: str, properties: ScriptProperties) -> str:
         "        }\n"
         "        None\n"
         "    }\n\n"
+        "    ## Visit members in stable canonical short-alias order without allocating.\n"
         "    walk : ScriptSet, state, (state, Value -> state) -> state\n"
         "    walk = |set, initial, visit| {\n"
         "        var state = initial\n"
@@ -3546,6 +3565,7 @@ def render_script_api(version: str, properties: ScriptProperties) -> str:
         "        }\n"
         "        state\n"
         "    }\n\n"
+        "    ## Materialize members in stable canonical short-alias order.\n"
         "    to_list : ScriptSet -> List(Value)\n"
         "    to_list = |set| walk(set, [], |scripts, script| scripts.append(script))\n"
         "}\n\n"
