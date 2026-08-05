@@ -1,24 +1,71 @@
-# Script probes
+# Script itemization benchmark
 
-These opt-in probes exercise the generated Script alias matcher and the
-`ConservativeScxV1` complete/chunked itemizers with the repository-pinned Roc
-compiler and allocation-counting host. They are review evidence, not CI timing
-gates.
+This opt-in benchmark measures complete-string
+`ScriptItemization.fold_runs` under the explicitly named
+`ConservativeScxV1` package policy. It is a Roc implementation benchmark, not
+a cross-language comparison: Unicode Script_Extensions alone does not define a
+universal itemization policy with comparable semantics.
 
-`semantic.roc` covers the UAX44-LM3 initial `is` rule, tab whitespace, exact
-Unknown/Common boundaries on both sides, and complete/cursor parity.
-`allocation.roc` isolates dynamic alias lookup and heap-backed itemization from
-input setup so their zero-allocation contract can be measured exactly.
+Before timing, the runner requires exact semantic signatures for:
+
+- UAX #44 LM3 aliases and the single initial `is` rule;
+- Common next to Unknown in both directions;
+- complete/chunked itemization parity;
+- zero-allocation dynamic alias lookup and heap-backed itemization; and
+- deterministic progress at 23, 24, 31, 32, and the configured long size.
+
+Every timed corpus first produces an order-sensitive signature over every run's
+byte range, scalar range, and canonical Script alias. The calibrated timed loop
+must reproduce its per-scan checksum on every sample. The representative
+corpora cover ASCII prose, combining sequences, multi-valued scx characters,
+rapidly alternating scripts, multilingual/supplementary/emoji/Unknown text,
+and long neutral spans that force right-context replay.
+
+From the repository root:
 
 ```sh
-zig build --build-file tests/platform/build.zig native -Doptimize=ReleaseFast
-roc build benchmarks/script/semantic.roc --opt=speed \
-    --output=.roc-unicode-tmp/benchmarks/script-semantic --no-cache
-printf Greek | .roc-unicode-tmp/benchmarks/script-semantic
-
-roc build benchmarks/script/allocation.roc --opt=speed \
-    --output=.roc-unicode-tmp/benchmarks/script-allocation --no-cache
-printf AisGreek | .roc-unicode-tmp/benchmarks/script-allocation
-printf Iaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa \
-    | .roc-unicode-tmp/benchmarks/script-allocation
+ROC=/path/to/pinned/roc python3 benchmarks/script/run.py --cpu 0
 ```
+
+Use `--samples`, `--target-seconds`, `--target-bytes`, and repeated `--case`
+arguments to control a run. `--validate-only` builds and runs the semantic,
+allocation, and progress gates without collecting timings. Optimized binaries
+and the default JSON result are written below the ignored
+`.roc-unicode-tmp/benchmarks/script/` directory.
+
+For an attributable same-machine comparison:
+
+```sh
+ROC=/path/to/pinned/roc python3 benchmarks/script/run.py \
+    --output /tmp/script-before.json --cpu 0
+# build or check out the implementation to compare
+ROC=/path/to/pinned/roc python3 benchmarks/script/run.py \
+    --baseline /tmp/script-before.json \
+    --output /tmp/script-after.json --cpu 0
+```
+
+The JSON records git state, CPU affinity, tool versions and binary hashes,
+Unicode source hashes, benchmark source hashes, semantic signatures, calibrated
+repeat counts, every sample, medians, and median absolute deviations. Results
+are machine-specific evidence and are deliberately not CI timing gates.
+
+## Indexed-scalar baseline
+
+On an AMD Ryzen 7 9700X with the repository-pinned Roc nightly
+`2026-August-04-1cb06bc`, CPU 0, nine samples, approximately 128 KiB per corpus,
+and a calibrated target of 0.4 seconds, the indexed scalar implementation
+measured:
+
+| Corpus | Median MB/s | MAD MB/s | Runs per scan |
+| --- | ---: | ---: | ---: |
+| ASCII prose | 4.672 | 0.035 | 1 |
+| Combining sequences | 6.627 | 0.007 | 24,959 |
+| Multi-valued scx | 6.782 | 0.047 | 24,191 |
+| Alternating scripts | 5.788 | 0.062 | 78,629 |
+| Multilingual | 7.639 | 0.015 | 22,629 |
+| Long neutral replay | 5.702 | 0.014 | 509 |
+
+The slow homogeneous ASCII result is the baseline motivation for a later exact
+batch transition. It is not evidence for weakening grapheme atomicity,
+right-context replay, or Unknown barriers; any optimized path must reproduce
+the signatures recorded by this runner.
