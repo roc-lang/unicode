@@ -1,0 +1,6 @@
+# Official Unicode inputs are hashed byte-for-byte by their manifest. Preserve
+# upstream LF line endings even when Git is configured to use CRLF on Windows.
+/vendor/unicode/** text eol=lf
+
+# Executable scripts are invoked by Bash on every CI host.
+/scripts/*.sh text eol=lf
