@@ -16,14 +16,13 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable
+from urllib.parse import urlparse
 
 
 ROOT = Path(__file__).resolve().parents[1]
 UNICODE_VENDOR_ROOT = ROOT / "vendor" / "unicode"
 MANIFEST_PATH = UNICODE_VENDOR_ROOT / "manifest.json"
 MAX_CODE_POINT = 0x10FFFF
-PAGE_BITS = 8
-PAGE_SIZE = 1 << PAGE_BITS
 RANGE_RE = re.compile(
     r"^(?P<start>[0-9A-F]{4,6})(?:\.\.(?P<end>[0-9A-F]{4,6}))?"
     r"\s*;\s*(?P<property>[A-Za-z_]+)(?:\s*#.*)?$"
@@ -116,9 +115,25 @@ class MissingDefault:
 
 
 @dataclass(frozen=True)
+class PropertySource:
+    records: tuple[RangeRecord, ...]
+    defaults: tuple[MissingDefault, ...]
+
+
+@dataclass(frozen=True)
+class AlgorithmProperties:
+    grapheme: PropertySource
+    east_asian_width: PropertySource
+    emoji: PropertySource
+    indic_conjunct_break: PropertySource
+
+
+@dataclass(frozen=True)
 class PagedBytes:
     page_index: tuple[int, ...]
     pages: tuple[bytes, ...]
+    page_bits: int
+    index_type: str
 
     @property
     def flat_pages(self) -> tuple[int, ...]:
@@ -126,7 +141,8 @@ class PagedBytes:
 
     @property
     def storage_bytes(self) -> int:
-        return len(self.page_index) * 2 + len(self.pages) * PAGE_SIZE
+        index_width = {"U8": 1, "U16": 2, "U32": 4}[self.index_type]
+        return len(self.page_index) * index_width + len(self.pages) * (1 << self.page_bits)
 
 
 @dataclass(frozen=True)
@@ -137,6 +153,142 @@ class CanonicalProperties:
     canonical_combining_class_default: int
     property_aliases: dict[str, PropertyAlias]
     property_value_aliases: dict[str, tuple[PropertyValueAlias, ...]]
+
+
+@dataclass(frozen=True)
+class GeneratorContract:
+    sources: tuple[tuple[str, tuple[str, ...]], ...]
+    specifications: tuple[str, ...]
+    artifact_generators: tuple[str, ...]
+    paged: bool = False
+    ascii: str | None = None
+
+
+@dataclass(frozen=True)
+class SourceProjectionContract:
+    official_suffix: str
+    role: str
+    release_axes: tuple[str, ...] = ("unicode",)
+    emoji_header: bool = False
+    has_cases: bool = False
+
+
+SOURCE_PROJECTION_CONTRACTS = {
+    ("ucd-property-ranges", ("East_Asian_Width",)): SourceProjectionContract(
+        "ucd/EastAsianWidth.txt", "production-and-conformance"
+    ),
+    ("ucd-property-ranges", ("Grapheme_Cluster_Break",)): SourceProjectionContract(
+        "ucd/auxiliary/GraphemeBreakProperty.txt", "production-and-conformance"
+    ),
+    ("uax-29-test", ()): SourceProjectionContract(
+        "ucd/auxiliary/GraphemeBreakTest.txt", "conformance", has_cases=True
+    ),
+    ("ucd-binary-property-ranges", EMOJI_PROPERTIES): SourceProjectionContract(
+        "ucd/emoji/emoji-data.txt",
+        "production-and-conformance",
+        ("unicode", "emoji"),
+        True,
+    ),
+    ("ucd-derived-core-properties", ("Indic_Conjunct_Break",)): SourceProjectionContract(
+        "ucd/DerivedCoreProperties.txt", "production-and-conformance"
+    ),
+    ("ucd-property-ranges", ("General_Category",)): SourceProjectionContract(
+        "ucd/extracted/DerivedGeneralCategory.txt", "production"
+    ),
+    ("ucd-numeric-property-ranges", ("Canonical_Combining_Class",)): SourceProjectionContract(
+        "ucd/extracted/DerivedCombiningClass.txt", "production"
+    ),
+    ("ucd-property-aliases", ("Canonical_Combining_Class", "General_Category")): SourceProjectionContract(
+        "ucd/PropertyAliases.txt", "production-metadata"
+    ),
+    ("ucd-property-value-aliases", ("Canonical_Combining_Class", "General_Category")): SourceProjectionContract(
+        "ucd/PropertyValueAliases.txt", "production-metadata"
+    ),
+}
+
+SPECIFICATION_COMPATIBILITY = {
+    "uax_11": ("unicode", "17.0.0", "44"),
+    "uax_29": ("unicode", "17.0.0", "47"),
+    "uax_44": ("unicode", "17.0.0", "36"),
+    "uts_51": ("emoji", "17.0", "29"),
+}
+
+GENERATOR_CONTRACTS = {
+    "unicode-version": GeneratorContract((), ("uax_44",), ()),
+    "grapheme-data": GeneratorContract(
+        (
+            ("ucd-property-ranges", ("Grapheme_Cluster_Break",)),
+            ("ucd-derived-core-properties", ("Indic_Conjunct_Break",)),
+            ("ucd-binary-property-ranges", EMOJI_PROPERTIES),
+        ),
+        ("uax_29", "uts_51"),
+        (),
+        True,
+        "computed",
+    ),
+    "legacy-grapheme-break": GeneratorContract(
+        (("ucd-property-ranges", ("Grapheme_Cluster_Break",)),), ("uax_29",), ()
+    ),
+    "east-asian-width": GeneratorContract(
+        (("ucd-property-ranges", ("East_Asian_Width",)),), ("uax_11",), ()
+    ),
+    "emoji-properties": GeneratorContract(
+        (("ucd-binary-property-ranges", EMOJI_PROPERTIES),),
+        ("uts_51",),
+        (),
+        True,
+        "computed",
+    ),
+    "legacy-emoji": GeneratorContract(
+        (), ("uts_51",), ("emoji-properties",)
+    ),
+    "general-category": GeneratorContract(
+        (
+            ("ucd-property-ranges", ("General_Category",)),
+            ("ucd-property-aliases", ("Canonical_Combining_Class", "General_Category")),
+            ("ucd-property-value-aliases", ("Canonical_Combining_Class", "General_Category")),
+        ),
+        ("uax_44",),
+        (),
+        True,
+        "computed",
+    ),
+    "canonical-combining-class": GeneratorContract(
+        (
+            ("ucd-numeric-property-ranges", ("Canonical_Combining_Class",)),
+            ("ucd-property-aliases", ("Canonical_Combining_Class", "General_Category")),
+            ("ucd-property-value-aliases", ("Canonical_Combining_Class", "General_Category")),
+        ),
+        ("uax_44",),
+        (),
+        True,
+        "constant-zero",
+    ),
+    "property-aliases": GeneratorContract(
+        (
+            ("ucd-property-aliases", ("Canonical_Combining_Class", "General_Category")),
+            ("ucd-property-value-aliases", ("Canonical_Combining_Class", "General_Category")),
+            ("ucd-property-ranges", ("General_Category",)),
+        ),
+        ("uax_44",),
+        ("general-category",),
+    ),
+}
+
+PAGED_LAYOUT_FIELDS = frozenset(
+    (
+        "kind",
+        "candidate_page_bits",
+        "page_bits",
+        "index_type",
+        "value_type",
+        "expected_index_entries",
+        "expected_distinct_pages",
+        "expected_logical_bytes",
+        "max_logical_bytes",
+        "ascii",
+    )
+)
 
 def _require_dict(value: object, context: str) -> dict[str, object]:
     if not isinstance(value, dict):
@@ -162,6 +314,24 @@ def _path_below_root(value: str, context: str) -> Path:
     return ROOT / relative
 
 
+def _require_fields(
+    item: dict[str, object], required: Iterable[str], context: str
+) -> None:
+    expected = frozenset(required)
+    actual = frozenset(item)
+    if actual != expected:
+        missing = sorted(expected - actual)
+        surplus = sorted(actual - expected)
+        raise DataError(f"{context} fields drifted; missing={missing}, surplus={surplus}")
+
+
+def _version_tuple(version: str, components: int, context: str) -> tuple[int, ...]:
+    fields = version.split(".")
+    if len(fields) != components or any(not field.isdigit() for field in fields):
+        raise DataError(f"{context} must have {components} numeric components")
+    return tuple(int(field) for field in fields)
+
+
 def release_version(manifest: dict[str, object], name: str) -> str:
     releases = _require_dict(manifest["releases"], "manifest.releases")
     release = _require_dict(releases[name], f"manifest.releases.{name}")
@@ -176,6 +346,11 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
     manifest = _require_dict(raw, "manifest")
     if manifest.get("schema_version") != 2:
         raise DataError("manifest schema_version must be 2")
+    _require_fields(
+        manifest,
+        ("schema_version", "releases", "specifications", "authorities", "licenses", "sources", "artifacts"),
+        "manifest",
+    )
 
     releases = _require_dict(manifest.get("releases"), "manifest.releases")
     authorities = _require_dict(manifest.get("authorities"), "manifest.authorities")
@@ -185,10 +360,20 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
     artifacts = _require_dict(manifest.get("artifacts"), "manifest.artifacts")
     if not releases or not sources or not artifacts:
         raise DataError("manifest releases, sources, and artifacts must not be empty")
+    if licenses != {"unicode-data": {"path": "vendor/unicode/LICENSE-UNICODE"}}:
+        raise DataError("manifest Unicode data license provenance drifted")
+    if authorities != {
+        "unicode": {
+            "url_prefix": "https://www.unicode.org/",
+            "license": "unicode-data",
+        }
+    }:
+        raise DataError("manifest Unicode authority provenance drifted")
 
     for name, raw_license in licenses.items():
         _validate_identifier(name, "manifest.licenses")
         item = _require_dict(raw_license, f"manifest.licenses.{name}")
+        _require_fields(item, ("path",), f"manifest.licenses.{name}")
         if not isinstance(item.get("path"), str):
             raise DataError(f"manifest.licenses.{name}.path has the wrong type")
         _path_below_root(str(item["path"]), f"manifest.licenses.{name}.path")
@@ -196,6 +381,7 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
     for name, raw_authority in authorities.items():
         _validate_identifier(name, "manifest.authorities")
         item = _require_dict(raw_authority, f"manifest.authorities.{name}")
+        _require_fields(item, ("url_prefix", "license"), f"manifest.authorities.{name}")
         if not isinstance(item.get("url_prefix"), str) or not str(item["url_prefix"]).startswith("https://"):
             raise DataError(f"manifest.authorities.{name}.url_prefix must be an HTTPS URL")
         if item.get("license") not in licenses:
@@ -209,14 +395,46 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
                 raise DataError(f"manifest.releases.{name}.{field} has the wrong type")
         if item["authority"] not in authorities:
             raise DataError(f"manifest.releases.{name}.authority names an unknown authority")
-        synchronized = item.get("synchronized_with")
-        if synchronized is not None and synchronized not in releases:
-            raise DataError(f"manifest.releases.{name}.synchronized_with names an unknown release")
-        prefix = item.get("vendor_prefix")
-        if prefix is not None:
+        kind = str(item["kind"])
+        if kind == "ucd":
+            _require_fields(
+                item, ("version", "authority", "kind", "vendor_prefix"), f"manifest.releases.{name}"
+            )
+            _version_tuple(str(item["version"]), 3, f"manifest.releases.{name}.version")
+            prefix = item.get("vendor_prefix")
             if not isinstance(prefix, str):
                 raise DataError(f"manifest.releases.{name}.vendor_prefix has the wrong type")
             _path_below_root(prefix, f"manifest.releases.{name}.vendor_prefix")
+            if Path(prefix).name != item["version"]:
+                raise DataError(
+                    f"manifest.releases.{name}.vendor_prefix does not match its storage release exact version"
+                )
+        elif kind == "emoji":
+            _require_fields(
+                item, ("version", "authority", "kind", "synchronized_with"), f"manifest.releases.{name}"
+            )
+            emoji_tuple = _version_tuple(
+                str(item["version"]), 2, f"manifest.releases.{name}.version"
+            )
+            synchronized = item.get("synchronized_with")
+            if not isinstance(synchronized, str) or synchronized not in releases:
+                raise DataError(f"manifest.releases.{name}.synchronized_with names an unknown release")
+            synchronized_release = _require_dict(
+                releases[synchronized], f"manifest.releases.{synchronized}"
+            )
+            unicode_tuple = _version_tuple(
+                str(synchronized_release.get("version")),
+                3,
+                f"manifest.releases.{synchronized}.version",
+            )
+            if emoji_tuple != unicode_tuple[:2]:
+                raise DataError(
+                    f"manifest.releases.{name} is not synchronized to the Unicode major/minor version"
+                )
+        else:
+            raise DataError(
+                f"manifest.releases.{name}.kind {kind!r} has no implemented provenance validator"
+            )
 
     release_visiting: set[str] = set()
     release_visited: set[str] = set()
@@ -237,17 +455,55 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
     for name in releases:
         visit_release(name)
 
+    if frozenset(specifications) != frozenset(SPECIFICATION_COMPATIBILITY):
+        raise DataError("manifest specification set drifted")
     for name, raw_specification in specifications.items():
         _validate_identifier(name, "manifest.specifications")
         item = _require_dict(raw_specification, f"manifest.specifications.{name}")
+        _require_fields(item, ("revision", "release", "document"), f"manifest.specifications.{name}")
         if not isinstance(item.get("revision"), str):
             raise DataError(f"manifest.specifications.{name}.revision has the wrong type")
         if item.get("release") not in releases:
             raise DataError(f"manifest.specifications.{name}.release names an unknown release")
+        expected_release, expected_version, expected_revision = SPECIFICATION_COMPATIBILITY[name]
+        if (
+            item["release"] != expected_release
+            or release_version(manifest, expected_release) != expected_version
+            or item["revision"] != expected_revision
+        ):
+            raise DataError(
+                f"manifest.specifications.{name} is incompatible with its exact release"
+            )
+        number_match = re.fullmatch(r"(?:uax|uts)_([0-9]+)", name)
+        if number_match is None or not isinstance(item.get("document"), str):
+            raise DataError(f"manifest.specifications.{name} has invalid document metadata")
+        number = number_match.group(1)
+        expected_document = (
+            f"https://www.unicode.org/reports/tr{number}/tr{number}-{item['revision']}.html"
+        )
+        if item["document"] != expected_document:
+            raise DataError(f"manifest.specifications.{name}.document does not pin its revision")
 
     for name, raw_source in sources.items():
         _validate_identifier(name, "manifest.sources")
         item = _require_dict(raw_source, f"manifest.sources.{name}")
+        source_format = item.get("format")
+        properties = _require_string_list(
+            item.get("properties"), f"manifest.sources.{name}.properties"
+        )
+        projection = (str(source_format), tuple(properties))
+        projection_contract = SOURCE_PROJECTION_CONTRACTS.get(projection)
+        if projection_contract is None:
+            raise DataError(
+                f"manifest.sources.{name} format/properties have no implemented parser"
+            )
+        source_fields = {
+            "path", "url", "sha256", "header", "records", "role", "authority",
+            "storage_release", "release_axes", "format", "properties",
+        }
+        if projection_contract.has_cases:
+            source_fields.add("cases")
+        _require_fields(item, source_fields, f"manifest.sources.{name}")
         for field, expected_type in (
             ("path", str),
             ("url", str),
@@ -275,6 +531,8 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
         if storage_release not in releases:
             raise DataError(f"manifest.sources.{name}.storage_release names an unknown release")
         storage = _require_dict(releases[storage_release], f"manifest.releases.{storage_release}")
+        if storage.get("authority") != authority_name:
+            raise DataError(f"manifest.sources.{name}.authority does not match its storage release")
         prefix = storage.get("vendor_prefix")
         if not isinstance(prefix, str) or Path(path_value).parts[: len(Path(prefix).parts)] != Path(prefix).parts:
             raise DataError(f"manifest.sources.{name}.path does not match its storage release")
@@ -285,17 +543,52 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
             or len(release_axes) != len(set(release_axes))
         ):
             raise DataError(f"manifest.sources.{name}.release_axes are inconsistent")
-        properties = _require_string_list(item.get("properties"), f"manifest.sources.{name}.properties")
         if len(properties) != len(set(properties)):
             raise DataError(f"manifest.sources.{name}.properties contains duplicates")
-        if not any(release_version(manifest, axis) in str(item["header"]) for axis in release_axes):
-            raise DataError(f"manifest.sources.{name}.header does not match a release axis")
+        if item["role"] != projection_contract.role:
+            raise DataError(f"manifest.sources.{name}.role does not match its parser contract")
+        if projection_contract.has_cases and item.get("cases") != item["records"]:
+            raise DataError(f"manifest.sources.{name}.cases must exactly match data records")
+        unicode_version = release_version(manifest, storage_release)
+        authority_prefix = str(authority["url_prefix"])
+        expected_url_prefix = f"{authority_prefix}Public/{unicode_version}/"
+        expected_url = expected_url_prefix + projection_contract.official_suffix
+        if item["url"] != expected_url:
+            raise DataError(f"manifest.sources.{name}.url does not identify its exact release")
+        if Path(urlparse(str(item["url"])).path).name != Path(path_value).name:
+            raise DataError(f"manifest.sources.{name}.url and path identify different files")
+        if projection_contract.emoji_header:
+            expected_header = f"# Version: {release_version(manifest, 'emoji')}"
+        else:
+            expected_header = f"# {Path(path_value).stem}-{unicode_version}.txt"
+        if item["header"] != expected_header:
+            raise DataError(f"manifest.sources.{name}.header does not identify its exact release")
+        if tuple(release_axes) != projection_contract.release_axes:
+            raise DataError(f"manifest.sources.{name}.release_axes do not match parser semantics")
+        if any(
+            _require_dict(releases[axis], f"manifest.releases.{axis}").get("authority")
+            != authority_name
+            for axis in release_axes
+        ):
+            raise DataError(f"manifest.sources.{name}.release axes have incompatible authorities")
 
     outputs: set[str] = set()
     dependencies: dict[str, list[str]] = {}
+    declared_generators: set[str] = set()
     for name, raw_artifact in artifacts.items():
         _validate_identifier(name, "manifest.artifacts")
         item = _require_dict(raw_artifact, f"manifest.artifacts.{name}")
+        generator_name = item.get("generator")
+        if not isinstance(generator_name, str) or generator_name not in GENERATOR_CONTRACTS:
+            raise DataError(f"manifest.artifacts.{name}.generator is not implemented")
+        if generator_name in declared_generators:
+            raise DataError(f"manifest generator {generator_name!r} is declared more than once")
+        declared_generators.add(generator_name)
+        contract = GENERATOR_CONTRACTS[generator_name]
+        artifact_fields = {"generator", "output", "sources", "specifications", "artifacts"}
+        if contract.paged:
+            artifact_fields.add("layout")
+        _require_fields(item, artifact_fields, f"manifest.artifacts.{name}")
         for field in ("generator", "output"):
             if not isinstance(item.get(field), str):
                 raise DataError(f"manifest.artifacts.{name}.{field} has the wrong type")
@@ -320,7 +613,58 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
             raise DataError(f"manifest.artifacts.{name}.specifications names an unknown specification")
         if any(artifact not in artifacts for artifact in artifact_dependencies):
             raise DataError(f"manifest.artifacts.{name}.artifacts names an unknown artifact")
+        declared_source_projections = tuple(
+            (
+                str(_require_dict(sources[source], f"manifest.sources.{source}")["format"]),
+                tuple(
+                    _require_string_list(
+                        _require_dict(sources[source], f"manifest.sources.{source}")["properties"],
+                        f"manifest.sources.{source}.properties",
+                    )
+                ),
+            )
+            for source in source_dependencies
+        )
+        declared_artifact_generators = tuple(
+            str(_require_dict(artifacts[artifact], f"manifest.artifacts.{artifact}")["generator"])
+            for artifact in artifact_dependencies
+        )
+        if (
+            declared_source_projections != contract.sources
+            or tuple(spec_dependencies) != contract.specifications
+            or declared_artifact_generators != contract.artifact_generators
+        ):
+            raise DataError(
+                f"manifest.artifacts.{name} dependencies do not exactly match its implemented generator"
+            )
+        if contract.paged:
+            layout = _require_dict(item["layout"], f"manifest.artifacts.{name}.layout")
+            _require_fields(layout, PAGED_LAYOUT_FIELDS, f"manifest.artifacts.{name}.layout")
+            candidates = layout.get("candidate_page_bits")
+            if candidates != [6, 7, 8, 9, 10]:
+                raise DataError(f"manifest.artifacts.{name}.layout candidates drifted")
+            if (
+                layout.get("kind") != "deduplicated-pages"
+                or layout.get("index_type") != "U8"
+                or layout.get("value_type") != "U8"
+                or layout.get("ascii") != contract.ascii
+            ):
+                raise DataError(f"manifest.artifacts.{name}.layout has unsupported representation")
+            for field in (
+                "page_bits", "expected_index_entries", "expected_distinct_pages",
+                "expected_logical_bytes", "max_logical_bytes",
+            ):
+                if not isinstance(layout.get(field), int):
+                    raise DataError(f"manifest.artifacts.{name}.layout.{field} has the wrong type")
+            if layout["expected_index_entries"] != (MAX_CODE_POINT + 1) >> int(layout["page_bits"]):
+                raise DataError(f"manifest.artifacts.{name}.layout index extent drifted")
+            if int(layout["expected_logical_bytes"]) > int(layout["max_logical_bytes"]):
+                raise DataError(f"manifest.artifacts.{name}.layout exceeds its budget")
         dependencies[name] = artifact_dependencies
+
+    if declared_generators != set(GENERATOR_CONTRACTS):
+        missing = sorted(set(GENERATOR_CONTRACTS) - declared_generators)
+        raise DataError(f"manifest omits implemented generators {missing}")
 
     visiting: set[str] = set()
     visited: set[str] = set()
@@ -357,6 +701,36 @@ def _entry(manifest: dict[str, object], name: str) -> dict[str, object]:
     return item
 
 
+def _source_for(
+    manifest: dict[str, object], source_format: str, properties: tuple[str, ...]
+) -> str:
+    sources = _require_dict(manifest["sources"], "manifest.sources")
+    matches = []
+    for name, raw_source in sources.items():
+        item = _require_dict(raw_source, f"manifest.sources.{name}")
+        if item.get("format") == source_format and tuple(
+            _require_string_list(item.get("properties"), f"manifest.sources.{name}.properties")
+        ) == properties:
+            matches.append(name)
+    if len(matches) != 1:
+        raise DataError(
+            f"manifest must declare exactly one {source_format!r} source for {properties!r}"
+        )
+    return matches[0]
+
+
+def _artifact_for_generator(manifest: dict[str, object], generator: str) -> str:
+    artifacts = _require_dict(manifest["artifacts"], "manifest.artifacts")
+    matches = [
+        name
+        for name, raw_artifact in artifacts.items()
+        if _require_dict(raw_artifact, f"manifest.artifacts.{name}").get("generator") == generator
+    ]
+    if len(matches) != 1:
+        raise DataError(f"manifest must declare exactly one {generator!r} generator")
+    return matches[0]
+
+
 def data_path(manifest: dict[str, object], name: str) -> Path:
     relative = Path(str(_entry(manifest, name)["path"]))
     if relative.is_absolute() or ".." in relative.parts:
@@ -380,7 +754,7 @@ def verify_source(manifest: dict[str, object], name: str) -> str:
         text = content.decode("utf-8")
     except UnicodeDecodeError as err:
         raise DataError(f"{path} is not UTF-8: {err}") from err
-    if str(item["header"]) not in text:
+    if text.splitlines().count(str(item["header"])) != 1:
         raise DataError(f"missing header marker {item['header']!r} in {path}")
     records = sum(
         1 for line in text.splitlines() if line.strip() and not line.lstrip().startswith("#")
@@ -547,20 +921,119 @@ def parse_missing_defaults(text: str, *, source: str) -> tuple[MissingDefault, .
     return tuple(defaults)
 
 
-def _full_domain_default(
-    defaults: Iterable[MissingDefault], *, source: str, property_name: str | None
-) -> str:
+def _required_formal_default(
+    text: str,
+    *,
+    source: str,
+    property_name: str,
+    declared_property: str | None,
+    value: str,
+) -> MissingDefault:
     matches = [
         default
-        for default in defaults
+        for default in parse_missing_defaults(text, source=source)
         if default.start == 0
         and default.end == MAX_CODE_POINT
-        and (property_name is None or default.property == property_name)
+        and default.property == declared_property
+        and default.value == value
     ]
     if len(matches) != 1:
-        label = property_name or "the property"
-        raise DataError(f"{source}: expected exactly one full-domain @missing default for {label}")
-    return matches[0].value
+        raise DataError(
+            f"{source}: expected exactly one formal full-domain default for {property_name}={value}"
+        )
+    match = matches[0]
+    return MissingDefault(match.start, match.end, property_name, match.value, match.line)
+
+
+def _validate_default_precedence(
+    records: Iterable[RangeRecord],
+    defaults: Iterable[MissingDefault],
+    *,
+    source: str,
+    properties: Iterable[str],
+) -> None:
+    records = tuple(records)
+    defaults = tuple(defaults)
+    properties = tuple(properties)
+    for prop in properties:
+        prop_defaults = [default for default in defaults if default.property == prop]
+        if not prop_defaults:
+            raise DataError(f"{source}: {prop} has no canonical default declaration")
+        first = prop_defaults[0]
+        if first.start != 0 or first.end != MAX_CODE_POINT:
+            raise DataError(f"{source}: {prop} defaults do not cover the scalar domain")
+        for default in prop_defaults[1:]:
+            if default.start < first.start or default.end > first.end:
+                raise DataError(f"{source}:{default.line}: ranged default escapes base coverage")
+        if len(properties) > 1 and not any(record.property == prop for record in records):
+            raise DataError(f"{source}: {prop} has no explicit records")
+    if len(properties) == 1 and not records:
+        raise DataError(f"{source}: {properties[0]} has no explicit records")
+
+
+def parse_east_asian_width_defaults(text: str, *, source: str) -> tuple[MissingDefault, ...]:
+    formal = _required_formal_default(
+        text,
+        source=source,
+        property_name="East_Asian_Width",
+        declared_property=None,
+        value="N",
+    )
+    required_prose = (
+        '#  - The unassigned code points in the following blocks default to "W":',
+        "#  - All undesignated code points in Planes 2 and 3, whether inside or",
+        '#      outside of allocated blocks, default to "W":',
+    )
+    lines = text.splitlines()
+    for declaration in required_prose:
+        if lines.count(declaration) != 1:
+            raise DataError(f"{source}: missing formal East_Asian_Width default prose {declaration!r}")
+    expected = (
+        (0x3400, 0x4DBF),
+        (0x4E00, 0x9FFF),
+        (0xF900, 0xFAFF),
+        (0x20000, 0x2FFFD),
+        (0x30000, 0x3FFFD),
+    )
+    ranged: list[MissingDefault] = []
+    range_pattern = re.compile(r"U\+([0-9A-F]{4,6})\.\.U\+([0-9A-F]{4,6})$")
+    for line_number, raw_line in enumerate(lines, 1):
+        match = range_pattern.search(raw_line)
+        if match is not None and line_number < formal.line:
+            ranged.append(
+                MissingDefault(
+                    int(match.group(1), 16),
+                    int(match.group(2), 16),
+                    "East_Asian_Width",
+                    "W",
+                    line_number,
+                )
+            )
+    if tuple((item.start, item.end) for item in ranged) != expected:
+        raise DataError(f"{source}: East_Asian_Width ranged defaults drifted")
+    return (formal, *ranged)
+
+
+def parse_emoji_defaults(text: str, *, source: str) -> tuple[MissingDefault, ...]:
+    pattern = re.compile(r"^# All omitted code points have ([A-Za-z_]+)=No$")
+    defaults: list[MissingDefault] = []
+    for line_number, line in enumerate(text.splitlines(), 1):
+        match = pattern.fullmatch(line)
+        if match is not None:
+            defaults.append(
+                MissingDefault(0, MAX_CODE_POINT, match.group(1), "No", line_number)
+            )
+    if tuple(default.property for default in defaults) != EMOJI_PROPERTIES:
+        raise DataError(f"{source}: expected the six ordered Emoji default declarations")
+    return tuple(defaults)
+
+
+def _section_values(text: str, prefix: str) -> tuple[str, ...]:
+    return tuple(
+        line[len(prefix) :].strip()
+        for line in text.splitlines()
+        if line.startswith(prefix)
+    )
 
 
 def parse_numeric_ranges(text: str, *, source: str) -> list[RangeRecord]:
@@ -614,10 +1087,6 @@ def _validate_full_coverage(records: Iterable[RangeRecord], *, source: str) -> N
 
 
 def parse_incb(text: str, *, source: str) -> list[RangeRecord]:
-    default_marker = "# @missing: 0000..10FFFF; InCB; None"
-    if default_marker not in text:
-        raise DataError(f"{source}: missing required default marker {default_marker!r}")
-
     records: list[RangeRecord] = []
     for line_number, raw_line in enumerate(text.splitlines(), 1):
         line = raw_line.strip()
@@ -645,48 +1114,115 @@ def parse_incb(text: str, *, source: str) -> list[RangeRecord]:
             raise DataError(
                 f"{source}:{current.line}: InCB range overlaps line {previous.line}"
             )
+    if _section_values(text, "# Indic_Conjunct_Break=") != (
+        "Linker", "Consonant", "Extend"
+    ):
+        raise DataError(f"{source}: Indic_Conjunct_Break sections drifted")
     return records
 
 
 def load_property_data(
     manifest: dict[str, object],
-) -> tuple[
-    list[RangeRecord],
-    list[RangeRecord],
-    list[RangeRecord],
-    list[RangeRecord],
-]:
+) -> AlgorithmProperties:
+    gcb_name = _source_for(
+        manifest, "ucd-property-ranges", ("Grapheme_Cluster_Break",)
+    )
+    gcb_text = verify_source(manifest, gcb_name)
+    gcb_source = str(data_path(manifest, gcb_name))
     gcb = parse_ranges(
-        verify_source(manifest, "grapheme_break_property"),
-        source=str(data_path(manifest, "grapheme_break_property")),
+        gcb_text,
+        source=gcb_source,
         allowed_properties=GCB_PROPERTIES,
-        default_marker="# @missing: 0000..10FFFF; Other",
+        default_marker=None,
     )
+    gcb_defaults = (
+        _required_formal_default(
+            gcb_text,
+            source=gcb_source,
+            property_name="Grapheme_Cluster_Break",
+            declared_property=None,
+            value="Other",
+        ),
+    )
+    eaw_name = _source_for(manifest, "ucd-property-ranges", ("East_Asian_Width",))
+    eaw_text = verify_source(manifest, eaw_name)
+    eaw_source = str(data_path(manifest, eaw_name))
     eaw = parse_ranges(
-        verify_source(manifest, "east_asian_width"),
-        source=str(data_path(manifest, "east_asian_width")),
+        eaw_text,
+        source=eaw_source,
         allowed_properties=EAW_PROPERTIES,
-        default_marker="explicitly are given the value \"N\"",
+        default_marker=None,
     )
+    eaw_defaults = parse_east_asian_width_defaults(eaw_text, source=eaw_source)
+    emoji_name = _source_for(
+        manifest, "ucd-binary-property-ranges", EMOJI_PROPERTIES
+    )
+    emoji_text = verify_source(manifest, emoji_name)
+    emoji_source = str(data_path(manifest, emoji_name))
     emoji = parse_ranges(
-        verify_source(manifest, "emoji_data"),
-        source=str(data_path(manifest, "emoji_data")),
+        emoji_text,
+        source=emoji_source,
         allowed_properties=EMOJI_PROPERTIES,
-        default_marker="# All omitted code points have Emoji=No",
+        default_marker=None,
         overlaps_by_property=True,
     )
-    incb = parse_incb(
-        verify_source(manifest, "derived_core_properties"),
-        source=str(data_path(manifest, "derived_core_properties")),
+    emoji_defaults = parse_emoji_defaults(emoji_text, source=emoji_source)
+    incb_name = _source_for(
+        manifest, "ucd-derived-core-properties", ("Indic_Conjunct_Break",)
     )
-    return gcb, eaw, emoji, incb
+    incb_text = verify_source(manifest, incb_name)
+    incb_source = str(data_path(manifest, incb_name))
+    incb = parse_incb(
+        incb_text,
+        source=incb_source,
+    )
+    incb_defaults = (
+        _required_formal_default(
+            incb_text,
+            source=incb_source,
+            property_name="Indic_Conjunct_Break",
+            declared_property="InCB",
+            value="None",
+        ),
+    )
+    _validate_default_precedence(
+        gcb, gcb_defaults, source=gcb_source, properties=("Grapheme_Cluster_Break",)
+    )
+    _validate_default_precedence(
+        eaw, eaw_defaults, source=eaw_source, properties=("East_Asian_Width",)
+    )
+    _validate_default_precedence(
+        emoji, emoji_defaults, source=emoji_source, properties=EMOJI_PROPERTIES
+    )
+    _validate_default_precedence(
+        incb, incb_defaults, source=incb_source, properties=("Indic_Conjunct_Break",)
+    )
+    if {record.property for record in gcb} != set(GCB_PROPERTIES):
+        raise DataError(f"{gcb_source}: Grapheme_Cluster_Break values/sections drifted")
+    if {record.property for record in eaw} != set(EAW_PROPERTIES):
+        raise DataError(f"{eaw_source}: East_Asian_Width values drifted")
+    if {record.property for record in incb} != set(INCB_PROPERTIES):
+        raise DataError(f"{incb_source}: Indic_Conjunct_Break values drifted")
+    return AlgorithmProperties(
+        PropertySource(tuple(gcb), gcb_defaults),
+        PropertySource(tuple(eaw), eaw_defaults),
+        PropertySource(tuple(emoji), emoji_defaults),
+        PropertySource(tuple(incb), incb_defaults),
+    )
 
 
 def load_canonical_properties(manifest: dict[str, object]) -> CanonicalProperties:
-    property_alias_path = data_path(manifest, "property_aliases")
-    property_value_alias_path = data_path(manifest, "property_value_aliases")
-    property_alias_text = verify_source(manifest, "property_aliases")
-    property_value_alias_text = verify_source(manifest, "property_value_aliases")
+    alias_properties = ("Canonical_Combining_Class", "General_Category")
+    property_alias_name = _source_for(
+        manifest, "ucd-property-aliases", alias_properties
+    )
+    property_value_alias_name = _source_for(
+        manifest, "ucd-property-value-aliases", alias_properties
+    )
+    property_alias_path = data_path(manifest, property_alias_name)
+    property_value_alias_path = data_path(manifest, property_value_alias_name)
+    property_alias_text = verify_source(manifest, property_alias_name)
+    property_value_alias_text = verify_source(manifest, property_value_alias_name)
     property_aliases = parse_property_aliases(
         property_alias_text, source=str(property_alias_path)
     )
@@ -697,8 +1233,11 @@ def load_canonical_properties(manifest: dict[str, object]) -> CanonicalPropertie
         if required not in property_aliases or required not in value_aliases:
             raise DataError(f"property alias sources are missing required property {required!r}")
 
-    general_category_path = data_path(manifest, "derived_general_category")
-    general_category_text = verify_source(manifest, "derived_general_category")
+    general_category_name = _source_for(
+        manifest, "ucd-property-ranges", ("General_Category",)
+    )
+    general_category_path = data_path(manifest, general_category_name)
+    general_category_text = verify_source(manifest, general_category_name)
     general_category_values = value_aliases["gc"]
     general_category_aliases = {record.identity for record in general_category_values}
     general_category = parse_ranges(
@@ -708,30 +1247,44 @@ def load_canonical_properties(manifest: dict[str, object]) -> CanonicalPropertie
         default_marker=None,
     )
     _validate_full_coverage(general_category, source=str(general_category_path))
-    general_category_missing = _full_domain_default(
-        parse_missing_defaults(property_value_alias_text, source=str(property_value_alias_path)),
+    general_category_missing = _required_formal_default(
+        property_value_alias_text,
         source=str(property_value_alias_path),
         property_name="General_Category",
+        declared_property="General_Category",
+        value="Unassigned",
     )
     general_category_default = _resolve_alias(
-        general_category_values, general_category_missing, source=str(property_value_alias_path)
+        general_category_values, general_category_missing.value, source=str(property_value_alias_path)
     )
     if general_category_default not in general_category_aliases:
         raise DataError("General_Category default is not a declared stable value")
+    observed_categories = {record.property for record in general_category}
+    section_categories = {
+        _resolve_alias(general_category_values, value, source=str(general_category_path))
+        for value in _section_values(general_category_text, "# General_Category=")
+    }
+    if section_categories != observed_categories or len(section_categories) != 30:
+        raise DataError(f"{general_category_path}: General_Category sections drifted")
 
-    combining_class_path = data_path(manifest, "derived_combining_class")
-    combining_class_text = verify_source(manifest, "derived_combining_class")
+    combining_class_name = _source_for(
+        manifest, "ucd-numeric-property-ranges", ("Canonical_Combining_Class",)
+    )
+    combining_class_path = data_path(manifest, combining_class_name)
+    combining_class_text = verify_source(manifest, combining_class_name)
     combining_class_values = value_aliases["ccc"]
     combining_class = parse_numeric_ranges(
         combining_class_text, source=str(combining_class_path)
     )
-    combining_class_missing = _full_domain_default(
-        parse_missing_defaults(combining_class_text, source=str(combining_class_path)),
+    combining_class_missing = _required_formal_default(
+        combining_class_text,
         source=str(combining_class_path),
-        property_name=None,
+        property_name="Canonical_Combining_Class",
+        declared_property=None,
+        value="Not_Reordered",
     )
     combining_class_default_identity = _resolve_alias(
-        combining_class_values, combining_class_missing, source=str(combining_class_path)
+        combining_class_values, combining_class_missing.value, source=str(combining_class_path)
     )
     combining_class_default = int(combining_class_default_identity)
     declared_classes = {int(record.identity) for record in combining_class_values}
@@ -741,6 +1294,15 @@ def load_canonical_properties(manifest: dict[str, object]) -> CanonicalPropertie
         raise DataError(
             f"Canonical_Combining_Class data use undeclared values {sorted(unknown_classes)}"
         )
+    combining_sections = _section_values(
+        combining_class_text, "# Canonical_Combining_Class="
+    )
+    section_classes = {
+        int(_resolve_alias(combining_class_values, value, source=str(combining_class_path)))
+        for value in combining_sections
+    }
+    if section_classes != observed_classes or len(section_classes) != len(combining_sections):
+        raise DataError(f"{combining_class_path}: Canonical_Combining_Class sections drifted")
 
     return CanonicalProperties(
         tuple(general_category),
@@ -756,9 +1318,10 @@ def parse_grapheme_tests(
     manifest: dict[str, object], text: str | None = None
 ) -> list[GraphemeCase]:
     version = release_version(manifest, "unicode")
-    source_name = "GraphemeBreakTest.txt"
+    source_key = _source_for(manifest, "uax-29-test", ())
+    source_name = Path(str(_entry(manifest, source_key)["path"])).name
     if text is None:
-        text = verify_source(manifest, "grapheme_break_test")
+        text = verify_source(manifest, source_key)
     cases: list[GraphemeCase] = []
     for line_number, raw_line in enumerate(text.splitlines(), 1):
         stripped = raw_line.strip()
@@ -813,7 +1376,7 @@ def parse_grapheme_tests(
                 rules=rules,
             )
         )
-    expected = _entry(manifest, "grapheme_break_test").get("cases")
+    expected = _entry(manifest, source_key).get("cases")
     if expected != len(cases):
         raise DataError(f"grapheme case-count drift: expected {expected}, got {len(cases)}")
     return cases
@@ -860,26 +1423,106 @@ def _roc_list(values: Iterable[int], *, per_line: int = 32) -> str:
     return "[\n    " + ",\n    ".join(lines) + ",\n]"
 
 
-def _paged_bytes(values: bytes | bytearray) -> PagedBytes:
+def _paged_bytes(values: bytes | bytearray, *, page_bits: int) -> PagedBytes:
     if len(values) != MAX_CODE_POINT + 1:
         raise DataError("paged scalar view must cover exactly U+0000..U+10FFFF")
+    page_size = 1 << page_bits
     page_ids: dict[bytes, int] = {}
     pages: list[bytes] = []
     page_index: list[int] = []
-    for start in range(0, len(values), PAGE_SIZE):
-        page = bytes(values[start : start + PAGE_SIZE])
+    for start in range(0, len(values), page_size):
+        page = bytes(values[start : start + page_size])
         page_id = page_ids.get(page)
         if page_id is None:
             page_id = len(pages)
             page_ids[page] = page_id
             pages.append(page)
         page_index.append(page_id)
-    if len(pages) > 0x10000:
-        raise DataError("page index no longer fits in U16")
-    return PagedBytes(tuple(page_index), tuple(pages))
+    if len(pages) <= 0x100:
+        index_type = "U8"
+    elif len(pages) <= 0x10000:
+        index_type = "U16"
+    elif len(pages) <= 0x100000000:
+        index_type = "U32"
+    else:
+        raise DataError("page index no longer fits in U32")
+    return PagedBytes(tuple(page_index), tuple(pages), page_bits, index_type)
+
+
+def _selected_paged_bytes(
+    values: bytes | bytearray,
+    *,
+    manifest: dict[str, object],
+    generator: str,
+) -> PagedBytes:
+    artifacts = _require_dict(manifest["artifacts"], "manifest.artifacts")
+    artifact_name = _artifact_for_generator(manifest, generator)
+    artifact = _require_dict(artifacts[artifact_name], f"manifest.artifacts.{artifact_name}")
+    layout = _require_dict(artifact["layout"], f"manifest.artifacts.{artifact_name}.layout")
+    raw_candidates = layout["candidate_page_bits"]
+    if not isinstance(raw_candidates, list) or not all(
+        isinstance(page_bits, int) for page_bits in raw_candidates
+    ):
+        raise DataError(f"manifest.artifacts.{artifact_name}.layout candidates are invalid")
+    candidates = tuple(
+        _paged_bytes(values, page_bits=int(page_bits))
+        for page_bits in raw_candidates
+    )
+    selected = min(
+        candidates,
+        key=lambda candidate: (
+            candidate.storage_bytes,
+            candidate.page_bits,
+            {"U8": 1, "U16": 2, "U32": 4}[candidate.index_type],
+        ),
+    )
+    expected = (
+        int(layout["page_bits"]),
+        str(layout["index_type"]),
+        int(layout["expected_index_entries"]),
+        int(layout["expected_distinct_pages"]),
+        int(layout["expected_logical_bytes"]),
+    )
+    actual = (
+        selected.page_bits,
+        selected.index_type,
+        len(selected.page_index),
+        len(selected.pages),
+        selected.storage_bytes,
+    )
+    if actual != expected:
+        raise DataError(
+            f"manifest.artifacts.{artifact_name}.layout drifted: expected {expected}, got {actual}"
+        )
+    if selected.storage_bytes > int(layout["max_logical_bytes"]):
+        raise DataError(f"manifest.artifacts.{artifact_name}.layout exceeds its byte budget")
+    return selected
+
+
+def _ascii_ranges(values: bytes | bytearray, target: int) -> list[RangeRecord]:
+    records: list[RangeRecord] = []
+    start: int | None = None
+    for code_point in range(128):
+        if values[code_point] == target and start is None:
+            start = code_point
+        if start is not None and (values[code_point] != target or code_point == 127):
+            end = code_point if values[code_point] == target and code_point == 127 else code_point - 1
+            records.append(RangeRecord(start, end, str(target), 0))
+            start = None
+    return records
+
+
+def _ascii_value_expression(values: bytes | bytearray, *, default: int) -> str:
+    branches = []
+    for value in sorted(set(values[:128])):
+        if value == default:
+            continue
+        branches.append(f"if {_condition(_ascii_ranges(values, value))} ({value})")
+    return " else ".join(branches) + f" else {default}" if branches else str(default)
 
 
 def render_grapheme_data(
+    manifest: dict[str, object],
     version: str,
     gcb_records: list[RangeRecord],
     incb_records: list[RangeRecord],
@@ -915,11 +1558,13 @@ def render_grapheme_data(
         for code_point in range(record.start, record.end + 1):
             encoded[code_point] |= 0x40
 
-    paged = _paged_bytes(encoded)
+    paged = _selected_paged_bytes(encoded, manifest=manifest, generator="grapheme-data")
+    page_size = 1 << paged.page_bits
+    ascii_expression = _ascii_value_expression(encoded, default=0)
 
     return (
         f"## GENERATED from Unicode {version}. Run `python3 scripts/unicode_data.py generate`. ##\n"
-        f"## layout: {len(paged.page_index)} U16 page ids + {len(paged.pages)} x {PAGE_SIZE} U8 values;"
+        f"## layout: {len(paged.page_index)} {paged.index_type} page ids + {len(paged.pages)} x {page_size} U8 values;"
         f" logical payload {paged.storage_bytes} bytes. ##\n\n"
         "InternalGraphemeData :: [].{\n"
         "    GCB : [Other, CR, LF, Control, Extend, ZWJ, RI, Prepend, SpacingMark, L, V, T, LV, LVT]\n"
@@ -927,9 +1572,15 @@ def render_grapheme_data(
         "    Props : { gcb : GCB, incb : InCB, extended_pictographic : Bool }\n\n"
         "    lookup : U32 -> Props\n"
         "    lookup = |scalar| {\n"
-        "        page_id = page_index.get(scalar.shr_wrap(8).to_u64()) ?? 0\n"
-        "        offset = page_id.to_u64() * 256 + scalar.bitwise_and(255).to_u64()\n"
-        "        value = pages.get(offset) ?? 0\n\n"
+        "        value = if scalar < 128 {\n"
+        "            ascii_value(scalar)\n"
+        "        } else if scalar > 0x10FFFF {\n"
+        "            0\n"
+        "        } else {\n"
+        f"            page_id = page_index.get(scalar.shr_wrap({paged.page_bits}).to_u64()) ?? 0\n"
+        f"            offset = page_id.to_u64() * {page_size} + scalar.bitwise_and({page_size - 1}).to_u64()\n"
+        "            pages.get(offset) ?? 0\n"
+        "        }\n\n"
         "        {\n"
         "            gcb: gcb_from_u8(value.bitwise_and(0x0F)),\n"
         "            incb: incb_from_u8(value.shr_wrap(4).bitwise_and(0x03)),\n"
@@ -937,6 +1588,8 @@ def render_grapheme_data(
         "        }\n"
         "    }\n"
         "}\n\n"
+        "ascii_value : U32 -> U8\n"
+        f"ascii_value = |u32| {ascii_expression}\n\n"
         "gcb_from_u8 : U8 -> InternalGraphemeData.GCB\n"
         "gcb_from_u8 = |value| {\n"
         "    match value {\n"
@@ -967,7 +1620,7 @@ def render_grapheme_data(
         "        _ => ...\n"
         "    }\n"
         "}\n\n"
-        "page_index : List(U16)\n"
+        f"page_index : List({paged.index_type})\n"
         f"page_index = {_roc_list(paged.page_index)}\n\n"
         "pages : List(U8)\n"
         f"pages = {_roc_list(paged.flat_pages)}\n"
@@ -975,6 +1628,7 @@ def render_grapheme_data(
 
 
 def render_general_category(
+    manifest: dict[str, object],
     version: str,
     records: Iterable[RangeRecord],
     default: str,
@@ -990,26 +1644,36 @@ def render_general_category(
     for record in records:
         value = private_ids[record.property]
         encoded[record.start : record.end + 1] = bytes((value,)) * (record.end - record.start + 1)
-    paged = _paged_bytes(encoded)
+    paged = _selected_paged_bytes(encoded, manifest=manifest, generator="general-category")
+    page_size = 1 << paged.page_bits
+    ascii_branches = []
+    for category in categories:
+        value = private_ids[category]
+        ranges = _ascii_ranges(encoded, value)
+        if ranges:
+            ascii_branches.append(f"if {_condition(ranges)} ({category})")
+    ascii_expression = " else ".join(ascii_branches) + f" else {default}"
     matches = "\n".join(
         f"        {private_ids[category]} => {category}" for category in categories
     )
     return (
         f"## GENERATED from Unicode {version} General_Category and aliases. Run `python3 scripts/unicode_data.py generate`. ##\n"
         "## Named tags are stable Unicode aliases; byte values below are private storage IDs. ##\n"
-        f"## default: {default}; layout: {len(paged.page_index)} U16 page ids + "
-        f"{len(paged.pages)} x {PAGE_SIZE} U8 values; logical payload {paged.storage_bytes} bytes. ##\n\n"
+        f"## default: {default}; layout: {len(paged.page_index)} {paged.index_type} page ids + "
+        f"{len(paged.pages)} x {page_size} U8 values; logical payload {paged.storage_bytes} bytes. ##\n\n"
         "InternalGeneralCategory :: [].{\n"
         f"    GeneralCategory : [{', '.join(categories)}]\n\n"
         "    lookup : U32 -> GeneralCategory\n"
         "    lookup = |scalar| {\n"
-        f"        if scalar > 0x10FFFF {{\n            {default}\n        }} else {{\n"
-        "            page_id = page_index.get(scalar.shr_wrap(8).to_u64()) ?? 0\n"
-        "            offset = page_id.to_u64() * 256 + scalar.bitwise_and(255).to_u64()\n"
+        f"        if scalar < 128 {{\n            ascii_category(scalar)\n        }} else if scalar > 0x10FFFF {{\n            {default}\n        }} else {{\n"
+        f"            page_id = page_index.get(scalar.shr_wrap({paged.page_bits}).to_u64()) ?? 0\n"
+        f"            offset = page_id.to_u64() * {page_size} + scalar.bitwise_and({page_size - 1}).to_u64()\n"
         f"            category_from_u8(pages.get(offset) ?? {private_ids[default]})\n"
         "        }\n"
         "    }\n"
         "}\n\n"
+        "ascii_category : U32 -> InternalGeneralCategory.GeneralCategory\n"
+        f"ascii_category = |u32| {ascii_expression}\n\n"
         "category_from_u8 : U8 -> InternalGeneralCategory.GeneralCategory\n"
         "category_from_u8 = |value| {\n"
         "    match value {\n"
@@ -1017,7 +1681,7 @@ def render_general_category(
         f"        _ => {default}\n"
         "    }\n"
         "}\n\n"
-        "page_index : List(U16)\n"
+        f"page_index : List({paged.index_type})\n"
         f"page_index = {_roc_list(paged.page_index)}\n\n"
         "pages : List(U8)\n"
         f"pages = {_roc_list(paged.flat_pages)}\n"
@@ -1025,6 +1689,7 @@ def render_general_category(
 
 
 def render_canonical_combining_class(
+    manifest: dict[str, object],
     version: str,
     records: Iterable[RangeRecord],
     default: int,
@@ -1033,23 +1698,26 @@ def render_canonical_combining_class(
     for record in records:
         value = int(record.property)
         encoded[record.start : record.end + 1] = bytes((value,)) * (record.end - record.start + 1)
-    paged = _paged_bytes(encoded)
+    paged = _selected_paged_bytes(
+        encoded, manifest=manifest, generator="canonical-combining-class"
+    )
+    page_size = 1 << paged.page_bits
     return (
         f"## GENERATED from Unicode {version} Canonical_Combining_Class and aliases. Run `python3 scripts/unicode_data.py generate`. ##\n"
         "## Returned U8 values are the stable, exact Unicode combining-class numbers. ##\n"
-        f"## default: {default}; layout: {len(paged.page_index)} U16 page ids + "
-        f"{len(paged.pages)} x {PAGE_SIZE} U8 values; logical payload {paged.storage_bytes} bytes. ##\n\n"
+        f"## default: {default}; layout: {len(paged.page_index)} {paged.index_type} page ids + "
+        f"{len(paged.pages)} x {page_size} U8 values; logical payload {paged.storage_bytes} bytes. ##\n\n"
         "InternalCanonicalCombiningClass :: [].{\n"
         "    lookup : U32 -> U8\n"
         "    lookup = |scalar| {\n"
-        f"        if scalar > 0x10FFFF {{\n            {default}\n        }} else {{\n"
-        "            page_id = page_index.get(scalar.shr_wrap(8).to_u64()) ?? 0\n"
-        "            offset = page_id.to_u64() * 256 + scalar.bitwise_and(255).to_u64()\n"
+        f"        if scalar < 128 {{\n            {default}\n        }} else if scalar > 0x10FFFF {{\n            {default}\n        }} else {{\n"
+        f"            page_id = page_index.get(scalar.shr_wrap({paged.page_bits}).to_u64()) ?? 0\n"
+        f"            offset = page_id.to_u64() * {page_size} + scalar.bitwise_and({page_size - 1}).to_u64()\n"
         f"            pages.get(offset) ?? {default}\n"
         "        }\n"
         "    }\n"
         "}\n\n"
-        "page_index : List(U16)\n"
+        f"page_index : List({paged.index_type})\n"
         f"page_index = {_roc_list(paged.page_index)}\n\n"
         "pages : List(U8)\n"
         f"pages = {_roc_list(paged.flat_pages)}\n"
@@ -1057,7 +1725,10 @@ def render_canonical_combining_class(
 
 
 def render_emoji_data(
-    version: str, emoji_version: str, records: Iterable[RangeRecord]
+    manifest: dict[str, object],
+    version: str,
+    emoji_version: str,
+    records: Iterable[RangeRecord],
 ) -> str:
     bits = {
         "Emoji": 0x01,
@@ -1072,12 +1743,14 @@ def render_emoji_data(
         bit = bits[record.property]
         for code_point in range(record.start, record.end + 1):
             encoded[code_point] |= bit
-    paged = _paged_bytes(encoded)
+    paged = _selected_paged_bytes(encoded, manifest=manifest, generator="emoji-properties")
+    page_size = 1 << paged.page_bits
+    ascii_expression = _ascii_value_expression(encoded, default=0)
     return (
         f"## GENERATED from Unicode {version} / Emoji {emoji_version}. Run `python3 scripts/unicode_data.py generate`. ##\n"
         "## Each binary Emoji property remains independently observable. ##\n"
-        f"## default: all False; layout: {len(paged.page_index)} U16 page ids + "
-        f"{len(paged.pages)} x {PAGE_SIZE} U8 bitsets; logical payload {paged.storage_bytes} bytes. ##\n\n"
+        f"## default: all False; layout: {len(paged.page_index)} {paged.index_type} page ids + "
+        f"{len(paged.pages)} x {page_size} U8 bitsets; logical payload {paged.storage_bytes} bytes. ##\n\n"
         "InternalEmojiData :: [].{\n"
         "    Properties : {\n"
         "        emoji : Bool,\n"
@@ -1089,11 +1762,13 @@ def render_emoji_data(
         "    }\n\n"
         "    lookup : U32 -> Properties\n"
         "    lookup = |scalar| {\n"
-        "        value = if scalar > 0x10FFFF {\n"
+        "        value = if scalar < 128 {\n"
+        "            ascii_value(scalar)\n"
+        "        } else if scalar > 0x10FFFF {\n"
         "            0\n"
         "        } else {\n"
-        "            page_id = page_index.get(scalar.shr_wrap(8).to_u64()) ?? 0\n"
-        "            offset = page_id.to_u64() * 256 + scalar.bitwise_and(255).to_u64()\n"
+        f"            page_id = page_index.get(scalar.shr_wrap({paged.page_bits}).to_u64()) ?? 0\n"
+        f"            offset = page_id.to_u64() * {page_size} + scalar.bitwise_and({page_size - 1}).to_u64()\n"
         "            pages.get(offset) ?? 0\n"
         "        }\n\n"
         "        {\n"
@@ -1106,7 +1781,9 @@ def render_emoji_data(
         "        }\n"
         "    }\n"
         "}\n\n"
-        "page_index : List(U16)\n"
+        "ascii_value : U32 -> U8\n"
+        f"ascii_value = |u32| {ascii_expression}\n\n"
+        f"page_index : List({paged.index_type})\n"
         f"page_index = {_roc_list(paged.page_index)}\n\n"
         "pages : List(U8)\n"
         f"pages = {_roc_list(paged.flat_pages)}\n"
@@ -1149,17 +1826,21 @@ def render_property_aliases(
     gc_matches = []
     for record in general_category_values:
         aliases = _unique_aliases((record.short, record.long, *record.aliases))
-        gc_matches.append(
-            f"        {record.identity} => [{', '.join(_roc_string(alias) for alias in aliases)}]"
-        )
+        for index, alias in enumerate(aliases):
+            gc_matches.append(
+                f"        ({record.identity}, {index}) => Ok(({_roc_string(alias)}, "
+                "{ category: state.category, index: state.index + 1 }))"
+            )
     ccc_matches = []
     for record in combining_class_values:
         aliases = _unique_aliases(
             (record.identity, record.short, record.long, *record.aliases)
         )
-        ccc_matches.append(
-            f"        {record.identity} => [{', '.join(_roc_string(alias) for alias in aliases)}]"
-        )
+        for index, alias in enumerate(aliases):
+            ccc_matches.append(
+                f"        ({record.identity}, {index}) => Ok(({_roc_string(alias)}, "
+                "{ value: state.value, index: state.index + 1 }))"
+            )
 
     return (
         f"## GENERATED from Unicode {version} PropertyAliases and PropertyValueAliases. Run `python3 scripts/unicode_data.py generate`. ##\n"
@@ -1169,6 +1850,8 @@ def render_property_aliases(
         "import InternalGeneralCategory\n\n"
         "InternalPropertyAliases :: [].{\n"
         "    PropertyName : { short : Str, long : Str }\n\n"
+        "    GeneralCategoryAliasState : { category : InternalGeneralCategory.GeneralCategory, index : U8 }\n"
+        "    CombiningClassAliasState : { value : U8, index : U8 }\n\n"
         "    general_category_property : PropertyName\n"
         "    general_category_property = { "
         f"short: {_roc_string(general_category_property.short)}, "
@@ -1177,18 +1860,27 @@ def render_property_aliases(
         "    canonical_combining_class_property = { "
         f"short: {_roc_string(combining_class_property.short)}, "
         f"long: {_roc_string(combining_class_property.long)} }}\n\n"
-        "    general_category_aliases : InternalGeneralCategory.GeneralCategory -> List(Str)\n"
+        "    general_category_aliases : InternalGeneralCategory.GeneralCategory -> Iter(Str)\n"
         "    general_category_aliases = |category| {\n"
-        "        match category {\n"
-        + "\n".join(gc_matches)
-        + "\n        }\n"
+        "        Iter.custom({ category, index: 0 }, Unknown, next_general_category_alias)\n"
         "    }\n\n"
-        "    canonical_combining_class_aliases : U8 -> List(Str)\n"
+        "    canonical_combining_class_aliases : U8 -> Iter(Str)\n"
         "    canonical_combining_class_aliases = |value| {\n"
-        "        match value {\n"
+        "        Iter.custom({ value, index: 0 }, Unknown, next_combining_class_alias)\n"
+        "    }\n"
+        "}\n\n"
+        "next_general_category_alias : InternalPropertyAliases.GeneralCategoryAliasState -> Try((Str, InternalPropertyAliases.GeneralCategoryAliasState), [NoMore])\n"
+        "next_general_category_alias = |state| {\n"
+        "    match (state.category, state.index) {\n"
+        + "\n".join(gc_matches)
+        + "\n        _ => Err(NoMore)\n"
+        "    }\n"
+        "}\n\n"
+        "next_combining_class_alias : InternalPropertyAliases.CombiningClassAliasState -> Try((Str, InternalPropertyAliases.CombiningClassAliasState), [NoMore])\n"
+        "next_combining_class_alias = |state| {\n"
+        "    match (state.value, state.index) {\n"
         + "\n".join(ccc_matches)
-        + "\n            _ => []\n"
-        "        }\n"
+        + "\n        _ => Err(NoMore)\n"
         "    }\n"
         "}\n"
     )
@@ -1246,11 +1938,19 @@ def render_gcb(version: str, records: list[RangeRecord]) -> str:
     )
 
 
-def render_eaw(version: str, records: list[RangeRecord]) -> str:
+def render_eaw(
+    version: str, records: list[RangeRecord], defaults: Iterable[MissingDefault]
+) -> str:
     branches = []
-    for prop in ("Na", "A", "W", "H", "F"):
+    for prop in ("Na", "A", "W", "H", "F", "N"):
         ranges = _merge_adjacent(_ranges_for(records, prop))
         branches.append(f"if {_condition(ranges, hexadecimal=True)} ({prop})")
+    wide_defaults = [
+        RangeRecord(default.start, default.end, default.value, default.line)
+        for default in defaults
+        if default.value == "W"
+    ]
+    branches.append(f"if {_condition(wide_defaults, hexadecimal=True)} (W)")
     expression = " else ".join(branches) + " else N"
     return (
         f"## GENERATED from vendor/unicode/{version}. Run `python3 scripts/unicode_data.py generate`. ##\n"
@@ -1340,57 +2040,35 @@ def render_unicode_version(version: str) -> str:
 
 
 def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
-    gcb, eaw, emoji, incb = load_property_data(manifest)
+    properties = load_property_data(manifest)
+    gcb = list(properties.grapheme.records)
+    eaw = list(properties.east_asian_width.records)
+    emoji = list(properties.emoji.records)
+    incb = list(properties.indic_conjunct_break.records)
     canonical = load_canonical_properties(manifest)
     version = release_version(manifest, "unicode")
     emoji_version = release_version(manifest, "emoji")
-    generators: dict[str, tuple[Callable[[], str], frozenset[str]]] = {
-        "unicode-version": (lambda: render_unicode_version(version), frozenset()),
-        "grapheme-data": (
-            lambda: render_grapheme_data(version, gcb, incb, emoji),
-            frozenset(("grapheme_break_property", "derived_core_properties", "emoji_data")),
+    generators: dict[str, Callable[[], str]] = {
+        "unicode-version": lambda: render_unicode_version(version),
+        "grapheme-data": lambda: render_grapheme_data(manifest, version, gcb, incb, emoji),
+        "legacy-grapheme-break": lambda: render_gcb(version, gcb),
+        "east-asian-width": lambda: render_eaw(
+            version, eaw, properties.east_asian_width.defaults
         ),
-        "legacy-grapheme-break": (
-            lambda: render_gcb(version, gcb),
-            frozenset(("grapheme_break_property",)),
+        "emoji-properties": lambda: render_emoji_data(
+            manifest, version, emoji_version, emoji
         ),
-        "east-asian-width": (
-            lambda: render_eaw(version, eaw),
-            frozenset(("east_asian_width",)),
+        "legacy-emoji": lambda: render_legacy_emoji(version, emoji_version),
+        "general-category": lambda: render_general_category(
+            manifest, version, canonical.general_category, canonical.general_category_default
         ),
-        "emoji-properties": (
-            lambda: render_emoji_data(version, emoji_version, emoji),
-            frozenset(("emoji_data",)),
+        "canonical-combining-class": lambda: render_canonical_combining_class(
+            manifest,
+            version,
+            canonical.canonical_combining_class,
+            canonical.canonical_combining_class_default,
         ),
-        "legacy-emoji": (
-            lambda: render_legacy_emoji(version, emoji_version),
-            frozenset(),
-        ),
-        "general-category": (
-            lambda: render_general_category(
-                version, canonical.general_category, canonical.general_category_default
-            ),
-            frozenset(("derived_general_category", "property_aliases", "property_value_aliases")),
-        ),
-        "canonical-combining-class": (
-            lambda: render_canonical_combining_class(
-                version,
-                canonical.canonical_combining_class,
-                canonical.canonical_combining_class_default,
-            ),
-            frozenset(("derived_combining_class", "property_aliases", "property_value_aliases")),
-        ),
-        "property-aliases": (
-            lambda: render_property_aliases(version, canonical),
-            frozenset(
-                (
-                    "property_aliases",
-                    "property_value_aliases",
-                    "derived_general_category",
-                    "derived_combining_class",
-                )
-            ),
-        ),
+        "property-aliases": lambda: render_property_aliases(version, canonical),
     }
 
     artifacts = _require_dict(manifest["artifacts"], "manifest.artifacts")
@@ -1405,18 +2083,7 @@ def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
                 raise DataError(
                     f"manifest.artifacts.{name}.generator {generator_name!r} is not implemented"
                 )
-            render, required_sources = definition
-            declared_sources = frozenset(
-                _require_string_list(
-                    artifact["sources"], f"manifest.artifacts.{name}.sources"
-                )
-            )
-            missing_sources = required_sources - declared_sources
-            if missing_sources:
-                raise DataError(
-                    f"manifest.artifacts.{name} omits generator sources {sorted(missing_sources)}"
-                )
-            rendered[_path_below_root(str(artifact["output"]), f"manifest.artifacts.{name}.output")] = render()
+            rendered[_path_below_root(str(artifact["output"]), f"manifest.artifacts.{name}.output")] = definition()
         return rendered
 
     first = render_once()
@@ -1440,6 +2107,7 @@ def validate_all(manifest: dict[str, object]) -> None:
     load_property_data(manifest)
     load_canonical_properties(manifest)
     parse_grapheme_tests(manifest)
+    rendered_modules(manifest)
 
 
 def generate(manifest: dict[str, object], *, check: bool) -> None:

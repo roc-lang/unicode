@@ -17,19 +17,23 @@
   "specifications": {
     "uax_11": {
       "revision": "44",
-      "release": "unicode"
+      "release": "unicode",
+      "document": "https://www.unicode.org/reports/tr11/tr11-44.html"
     },
     "uax_29": {
       "revision": "47",
-      "release": "unicode"
+      "release": "unicode",
+      "document": "https://www.unicode.org/reports/tr29/tr29-47.html"
     },
     "uax_44": {
       "revision": "36",
-      "release": "unicode"
+      "release": "unicode",
+      "document": "https://www.unicode.org/reports/tr44/tr44-36.html"
     },
     "uts_51": {
       "revision": "29",
-      "release": "emoji"
+      "release": "emoji",
+      "document": "https://www.unicode.org/reports/tr51/tr51-29.html"
     }
   },
   "authorities": {
@@ -154,7 +158,7 @@
       "storage_release": "unicode",
       "release_axes": ["unicode"],
       "format": "ucd-property-aliases",
-      "properties": ["Property_Aliases"]
+      "properties": ["Canonical_Combining_Class", "General_Category"]
     },
     "property_value_aliases": {
       "path": "vendor/unicode/17.0.0/PropertyValueAliases.txt",
@@ -167,7 +171,7 @@
       "storage_release": "unicode",
       "release_axes": ["unicode"],
       "format": "ucd-property-value-aliases",
-      "properties": ["Property_Value_Aliases"]
+      "properties": ["Canonical_Combining_Class", "General_Category"]
     }
   },
   "artifacts": {
@@ -183,7 +187,19 @@
       "output": "package/InternalGraphemeData.roc",
       "sources": ["grapheme_break_property", "derived_core_properties", "emoji_data"],
       "specifications": ["uax_29", "uts_51"],
-      "artifacts": []
+      "artifacts": [],
+      "layout": {
+        "kind": "deduplicated-pages",
+        "candidate_page_bits": [6, 7, 8, 9, 10],
+        "page_bits": 7,
+        "index_type": "U8",
+        "value_type": "U8",
+        "expected_index_entries": 8704,
+        "expected_distinct_pages": 164,
+        "expected_logical_bytes": 29696,
+        "max_logical_bytes": 29696,
+        "ascii": "computed"
+      }
     },
     "legacy_grapheme_break": {
       "generator": "legacy-grapheme-break",
@@ -204,7 +220,19 @@
       "output": "package/InternalEmojiData.roc",
       "sources": ["emoji_data"],
       "specifications": ["uts_51"],
-      "artifacts": []
+      "artifacts": [],
+      "layout": {
+        "kind": "deduplicated-pages",
+        "candidate_page_bits": [6, 7, 8, 9, 10],
+        "page_bits": 8,
+        "index_type": "U8",
+        "value_type": "U8",
+        "expected_index_entries": 4352,
+        "expected_distinct_pages": 28,
+        "expected_logical_bytes": 11520,
+        "max_logical_bytes": 11520,
+        "ascii": "computed"
+      }
     },
     "legacy_emoji": {
       "generator": "legacy-emoji",
@@ -218,21 +246,45 @@
       "output": "package/InternalGeneralCategory.roc",
       "sources": ["derived_general_category", "property_aliases", "property_value_aliases"],
       "specifications": ["uax_44"],
-      "artifacts": []
+      "artifacts": [],
+      "layout": {
+        "kind": "deduplicated-pages",
+        "candidate_page_bits": [6, 7, 8, 9, 10],
+        "page_bits": 8,
+        "index_type": "U8",
+        "value_type": "U8",
+        "expected_index_entries": 4352,
+        "expected_distinct_pages": 162,
+        "expected_logical_bytes": 45824,
+        "max_logical_bytes": 45824,
+        "ascii": "computed"
+      }
     },
     "canonical_combining_class": {
       "generator": "canonical-combining-class",
       "output": "package/InternalCanonicalCombiningClass.roc",
       "sources": ["derived_combining_class", "property_aliases", "property_value_aliases"],
       "specifications": ["uax_44"],
-      "artifacts": []
+      "artifacts": [],
+      "layout": {
+        "kind": "deduplicated-pages",
+        "candidate_page_bits": [6, 7, 8, 9, 10],
+        "page_bits": 7,
+        "index_type": "U8",
+        "value_type": "U8",
+        "expected_index_entries": 8704,
+        "expected_distinct_pages": 97,
+        "expected_logical_bytes": 21120,
+        "max_logical_bytes": 21120,
+        "ascii": "constant-zero"
+      }
     },
     "property_aliases": {
       "generator": "property-aliases",
       "output": "package/InternalPropertyAliases.roc",
-      "sources": ["property_aliases", "property_value_aliases", "derived_general_category", "derived_combining_class"],
+      "sources": ["property_aliases", "property_value_aliases", "derived_general_category"],
       "specifications": ["uax_44"],
-      "artifacts": ["general_category", "canonical_combining_class"]
+      "artifacts": ["general_category"]
     }
   }
 }

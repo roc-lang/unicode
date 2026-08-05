@@ -18,6 +18,13 @@ from scripts import unicode_data  # noqa: E402
 
 
 class UnicodeDataTests(unittest.TestCase):
+    def assert_manifest_rejected(self, manifest: dict[str, object], message: str) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "manifest.json"
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+            with self.assertRaisesRegex(unicode_data.DataError, message):
+                unicode_data.load_manifest(path)
+
     def test_repository_data_is_valid_and_generation_is_deterministic(self) -> None:
         manifest = unicode_data.load_manifest()
         unicode_data.validate_all(manifest)
@@ -40,6 +47,98 @@ class UnicodeDataTests(unittest.TestCase):
             path.write_text(json.dumps(manifest), encoding="utf-8")
             with self.assertRaisesRegex(unicode_data.DataError, "does not match its storage release"):
                 unicode_data.load_manifest(path)
+
+    def test_manifest_rejects_release_and_dependency_relabeling(self) -> None:
+        base = json.loads(unicode_data.MANIFEST_PATH.read_text(encoding="utf-8"))
+        changed_versions = json.loads(json.dumps(base))
+        changed_versions["releases"]["unicode"]["version"] = "7.0.0"
+        changed_versions["releases"]["emoji"]["version"] = "7.0"
+        self.assert_manifest_rejected(changed_versions, "exact version")
+
+        changed_spec = json.loads(json.dumps(base))
+        changed_spec["artifacts"]["general_category"]["specifications"] = ["uts_51"]
+        self.assert_manifest_rejected(changed_spec, "dependencies do not exactly match")
+
+        changed_format = json.loads(json.dumps(base))
+        changed_format["sources"]["derived_general_category"]["format"] = "uax-29-test"
+        self.assert_manifest_rejected(changed_format, "fields drifted|format/properties")
+
+        changed_properties = json.loads(json.dumps(base))
+        changed_properties["sources"]["derived_general_category"]["properties"] = []
+        self.assert_manifest_rejected(changed_properties, "format/properties")
+
+    def test_manifest_graph_names_are_not_a_parallel_implementation_graph(self) -> None:
+        base = unicode_data.load_manifest()
+        renamed = json.loads(json.dumps(base))
+        renamed["sources"]["gc_snapshot"] = renamed["sources"].pop(
+            "derived_general_category"
+        )
+        for artifact in renamed["artifacts"].values():
+            artifact["sources"] = [
+                "gc_snapshot" if source == "derived_general_category" else source
+                for source in artifact["sources"]
+            ]
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "manifest.json"
+            path.write_text(json.dumps(renamed), encoding="utf-8")
+            loaded = unicode_data.load_manifest(path)
+        unicode_data.validate_all(loaded)
+        baseline = unicode_data.rendered_modules(base)
+        self.assertEqual(
+            tuple(baseline.values()), tuple(unicode_data.rendered_modules(loaded).values())
+        )
+
+    def test_required_property_defaults_reject_deleted_declarations(self) -> None:
+        manifest = unicode_data.load_manifest()
+        eaw_path = unicode_data.data_path(manifest, "east_asian_width")
+        eaw = unicode_data.verify_source(manifest, "east_asian_width")
+        eaw_without_formal = eaw.replace("# @missing: 0000..10FFFF; N\n", "")
+        with self.assertRaisesRegex(unicode_data.DataError, "formal full-domain default"):
+            unicode_data.parse_east_asian_width_defaults(
+                eaw_without_formal, source=str(eaw_path)
+            )
+
+        emoji_path = unicode_data.data_path(manifest, "emoji_data")
+        emoji = unicode_data.verify_source(manifest, "emoji_data")
+        emoji_without_defaults = "\n".join(
+            line
+            for line in emoji.splitlines()
+            if not line.startswith("# All omitted code points have ")
+        )
+        with self.assertRaisesRegex(unicode_data.DataError, "six ordered Emoji"):
+            unicode_data.parse_emoji_defaults(
+                emoji_without_defaults, source=str(emoji_path)
+            )
+
+        emoji_without_component = "\n".join(
+            line for line in emoji.splitlines() if "; Emoji_Component" not in line
+        )
+        component_records = unicode_data.parse_ranges(
+            emoji_without_component,
+            source=str(emoji_path),
+            allowed_properties=unicode_data.EMOJI_PROPERTIES,
+            default_marker=None,
+            overlaps_by_property=True,
+        )
+        component_defaults = unicode_data.parse_emoji_defaults(
+            emoji_without_component, source=str(emoji_path)
+        )
+        with self.assertRaisesRegex(unicode_data.DataError, "Emoji_Component has no explicit records"):
+            unicode_data._validate_default_precedence(
+                component_records,
+                component_defaults,
+                source=str(emoji_path),
+                properties=unicode_data.EMOJI_PROPERTIES,
+            )
+
+    def test_generated_alias_access_is_static_and_allocation_free_in_shape(self) -> None:
+        manifest = unicode_data.load_manifest()
+        aliases = unicode_data.rendered_modules(manifest)[
+            unicode_data.ROOT / "package" / "InternalPropertyAliases.roc"
+        ]
+        self.assertNotIn("List(Str)", aliases)
+        self.assertNotIn("=> [", aliases)
+        self.assertEqual(aliases.count("Iter.custom("), 2)
 
     def test_source_rejects_hash_header_and_count_drift(self) -> None:
         content = "# Header\n0041 ; A\n"

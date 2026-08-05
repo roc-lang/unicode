@@ -1,6 +1,6 @@
 ## GENERATED from Unicode 17.0.0 / Emoji 17.0. Run `python3 scripts/unicode_data.py generate`. ##
 ## Each binary Emoji property remains independently observable. ##
-## default: all False; layout: 4352 U16 page ids + 28 x 256 U8 bitsets; logical payload 15872 bytes. ##
+## default: all False; layout: 4352 U8 page ids + 28 x 256 U8 bitsets; logical payload 11520 bytes. ##
 
 InternalEmojiData :: [].{
     Properties : {
@@ -14,7 +14,9 @@ InternalEmojiData :: [].{
 
     lookup : U32 -> Properties
     lookup = |scalar| {
-        value = if scalar > 0x10FFFF {
+        value = if scalar < 128 {
+            ascii_value(scalar)
+        } else if scalar > 0x10FFFF {
             0
         } else {
             page_id = page_index.get(scalar.shr_wrap(8).to_u64()) ?? 0
@@ -33,7 +35,10 @@ InternalEmojiData :: [].{
     }
 }
 
-page_index : List(U16)
+ascii_value : U32 -> U8
+ascii_value = |u32| if u32 == 35 or u32 == 42 or (u32 >= 48 and u32 <= 57) (17) else 0
+
+page_index : List(U8)
 page_index = [
     0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
     2, 3, 1, 4, 5, 6, 7, 8, 1, 9, 1, 10, 1, 1, 1, 1, 11, 1, 12, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,

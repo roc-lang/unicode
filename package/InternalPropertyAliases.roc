@@ -7,110 +7,235 @@ import InternalGeneralCategory
 InternalPropertyAliases :: [].{
     PropertyName : { short : Str, long : Str }
 
+    GeneralCategoryAliasState : { category : InternalGeneralCategory.GeneralCategory, index : U8 }
+    CombiningClassAliasState : { value : U8, index : U8 }
+
     general_category_property : PropertyName
     general_category_property = { short: "gc", long: "General_Category" }
 
     canonical_combining_class_property : PropertyName
     canonical_combining_class_property = { short: "ccc", long: "Canonical_Combining_Class" }
 
-    general_category_aliases : InternalGeneralCategory.GeneralCategory -> List(Str)
+    general_category_aliases : InternalGeneralCategory.GeneralCategory -> Iter(Str)
     general_category_aliases = |category| {
-        match category {
-        Cc => ["Cc", "Control", "cntrl"]
-        Cf => ["Cf", "Format"]
-        Cn => ["Cn", "Unassigned"]
-        Co => ["Co", "Private_Use"]
-        Cs => ["Cs", "Surrogate"]
-        Ll => ["Ll", "Lowercase_Letter"]
-        Lm => ["Lm", "Modifier_Letter"]
-        Lo => ["Lo", "Other_Letter"]
-        Lt => ["Lt", "Titlecase_Letter"]
-        Lu => ["Lu", "Uppercase_Letter"]
-        Mc => ["Mc", "Spacing_Mark"]
-        Me => ["Me", "Enclosing_Mark"]
-        Mn => ["Mn", "Nonspacing_Mark"]
-        Nd => ["Nd", "Decimal_Number", "digit"]
-        Nl => ["Nl", "Letter_Number"]
-        No => ["No", "Other_Number"]
-        Pc => ["Pc", "Connector_Punctuation"]
-        Pd => ["Pd", "Dash_Punctuation"]
-        Pe => ["Pe", "Close_Punctuation"]
-        Pf => ["Pf", "Final_Punctuation"]
-        Pi => ["Pi", "Initial_Punctuation"]
-        Po => ["Po", "Other_Punctuation"]
-        Ps => ["Ps", "Open_Punctuation"]
-        Sc => ["Sc", "Currency_Symbol"]
-        Sk => ["Sk", "Modifier_Symbol"]
-        Sm => ["Sm", "Math_Symbol"]
-        So => ["So", "Other_Symbol"]
-        Zl => ["Zl", "Line_Separator"]
-        Zp => ["Zp", "Paragraph_Separator"]
-        Zs => ["Zs", "Space_Separator"]
-        }
+        Iter.custom({ category, index: 0 }, Unknown, next_general_category_alias)
     }
 
-    canonical_combining_class_aliases : U8 -> List(Str)
+    canonical_combining_class_aliases : U8 -> Iter(Str)
     canonical_combining_class_aliases = |value| {
-        match value {
-        0 => ["0", "NR", "Not_Reordered"]
-        1 => ["1", "OV", "Overlay"]
-        6 => ["6", "HANR", "Han_Reading"]
-        7 => ["7", "NK", "Nukta"]
-        8 => ["8", "KV", "Kana_Voicing"]
-        9 => ["9", "VR", "Virama"]
-        10 => ["10", "CCC10"]
-        11 => ["11", "CCC11"]
-        12 => ["12", "CCC12"]
-        13 => ["13", "CCC13"]
-        14 => ["14", "CCC14"]
-        15 => ["15", "CCC15"]
-        16 => ["16", "CCC16"]
-        17 => ["17", "CCC17"]
-        18 => ["18", "CCC18"]
-        19 => ["19", "CCC19"]
-        20 => ["20", "CCC20"]
-        21 => ["21", "CCC21"]
-        22 => ["22", "CCC22"]
-        23 => ["23", "CCC23"]
-        24 => ["24", "CCC24"]
-        25 => ["25", "CCC25"]
-        26 => ["26", "CCC26"]
-        27 => ["27", "CCC27"]
-        28 => ["28", "CCC28"]
-        29 => ["29", "CCC29"]
-        30 => ["30", "CCC30"]
-        31 => ["31", "CCC31"]
-        32 => ["32", "CCC32"]
-        33 => ["33", "CCC33"]
-        34 => ["34", "CCC34"]
-        35 => ["35", "CCC35"]
-        36 => ["36", "CCC36"]
-        84 => ["84", "CCC84"]
-        91 => ["91", "CCC91"]
-        103 => ["103", "CCC103"]
-        107 => ["107", "CCC107"]
-        118 => ["118", "CCC118"]
-        122 => ["122", "CCC122"]
-        129 => ["129", "CCC129"]
-        130 => ["130", "CCC130"]
-        132 => ["132", "CCC132"]
-        133 => ["133", "CCC133"]
-        200 => ["200", "ATBL", "Attached_Below_Left"]
-        202 => ["202", "ATB", "Attached_Below"]
-        214 => ["214", "ATA", "Attached_Above"]
-        216 => ["216", "ATAR", "Attached_Above_Right"]
-        218 => ["218", "BL", "Below_Left"]
-        220 => ["220", "B", "Below"]
-        222 => ["222", "BR", "Below_Right"]
-        224 => ["224", "L", "Left"]
-        226 => ["226", "R", "Right"]
-        228 => ["228", "AL", "Above_Left"]
-        230 => ["230", "A", "Above"]
-        232 => ["232", "AR", "Above_Right"]
-        233 => ["233", "DB", "Double_Below"]
-        234 => ["234", "DA", "Double_Above"]
-        240 => ["240", "IS", "Iota_Subscript"]
-            _ => []
-        }
+        Iter.custom({ value, index: 0 }, Unknown, next_combining_class_alias)
+    }
+}
+
+next_general_category_alias : InternalPropertyAliases.GeneralCategoryAliasState -> Try((Str, InternalPropertyAliases.GeneralCategoryAliasState), [NoMore])
+next_general_category_alias = |state| {
+    match (state.category, state.index) {
+        (Cc, 0) => Ok(("Cc", { category: state.category, index: state.index + 1 }))
+        (Cc, 1) => Ok(("Control", { category: state.category, index: state.index + 1 }))
+        (Cc, 2) => Ok(("cntrl", { category: state.category, index: state.index + 1 }))
+        (Cf, 0) => Ok(("Cf", { category: state.category, index: state.index + 1 }))
+        (Cf, 1) => Ok(("Format", { category: state.category, index: state.index + 1 }))
+        (Cn, 0) => Ok(("Cn", { category: state.category, index: state.index + 1 }))
+        (Cn, 1) => Ok(("Unassigned", { category: state.category, index: state.index + 1 }))
+        (Co, 0) => Ok(("Co", { category: state.category, index: state.index + 1 }))
+        (Co, 1) => Ok(("Private_Use", { category: state.category, index: state.index + 1 }))
+        (Cs, 0) => Ok(("Cs", { category: state.category, index: state.index + 1 }))
+        (Cs, 1) => Ok(("Surrogate", { category: state.category, index: state.index + 1 }))
+        (Ll, 0) => Ok(("Ll", { category: state.category, index: state.index + 1 }))
+        (Ll, 1) => Ok(("Lowercase_Letter", { category: state.category, index: state.index + 1 }))
+        (Lm, 0) => Ok(("Lm", { category: state.category, index: state.index + 1 }))
+        (Lm, 1) => Ok(("Modifier_Letter", { category: state.category, index: state.index + 1 }))
+        (Lo, 0) => Ok(("Lo", { category: state.category, index: state.index + 1 }))
+        (Lo, 1) => Ok(("Other_Letter", { category: state.category, index: state.index + 1 }))
+        (Lt, 0) => Ok(("Lt", { category: state.category, index: state.index + 1 }))
+        (Lt, 1) => Ok(("Titlecase_Letter", { category: state.category, index: state.index + 1 }))
+        (Lu, 0) => Ok(("Lu", { category: state.category, index: state.index + 1 }))
+        (Lu, 1) => Ok(("Uppercase_Letter", { category: state.category, index: state.index + 1 }))
+        (Mc, 0) => Ok(("Mc", { category: state.category, index: state.index + 1 }))
+        (Mc, 1) => Ok(("Spacing_Mark", { category: state.category, index: state.index + 1 }))
+        (Me, 0) => Ok(("Me", { category: state.category, index: state.index + 1 }))
+        (Me, 1) => Ok(("Enclosing_Mark", { category: state.category, index: state.index + 1 }))
+        (Mn, 0) => Ok(("Mn", { category: state.category, index: state.index + 1 }))
+        (Mn, 1) => Ok(("Nonspacing_Mark", { category: state.category, index: state.index + 1 }))
+        (Nd, 0) => Ok(("Nd", { category: state.category, index: state.index + 1 }))
+        (Nd, 1) => Ok(("Decimal_Number", { category: state.category, index: state.index + 1 }))
+        (Nd, 2) => Ok(("digit", { category: state.category, index: state.index + 1 }))
+        (Nl, 0) => Ok(("Nl", { category: state.category, index: state.index + 1 }))
+        (Nl, 1) => Ok(("Letter_Number", { category: state.category, index: state.index + 1 }))
+        (No, 0) => Ok(("No", { category: state.category, index: state.index + 1 }))
+        (No, 1) => Ok(("Other_Number", { category: state.category, index: state.index + 1 }))
+        (Pc, 0) => Ok(("Pc", { category: state.category, index: state.index + 1 }))
+        (Pc, 1) => Ok(("Connector_Punctuation", { category: state.category, index: state.index + 1 }))
+        (Pd, 0) => Ok(("Pd", { category: state.category, index: state.index + 1 }))
+        (Pd, 1) => Ok(("Dash_Punctuation", { category: state.category, index: state.index + 1 }))
+        (Pe, 0) => Ok(("Pe", { category: state.category, index: state.index + 1 }))
+        (Pe, 1) => Ok(("Close_Punctuation", { category: state.category, index: state.index + 1 }))
+        (Pf, 0) => Ok(("Pf", { category: state.category, index: state.index + 1 }))
+        (Pf, 1) => Ok(("Final_Punctuation", { category: state.category, index: state.index + 1 }))
+        (Pi, 0) => Ok(("Pi", { category: state.category, index: state.index + 1 }))
+        (Pi, 1) => Ok(("Initial_Punctuation", { category: state.category, index: state.index + 1 }))
+        (Po, 0) => Ok(("Po", { category: state.category, index: state.index + 1 }))
+        (Po, 1) => Ok(("Other_Punctuation", { category: state.category, index: state.index + 1 }))
+        (Ps, 0) => Ok(("Ps", { category: state.category, index: state.index + 1 }))
+        (Ps, 1) => Ok(("Open_Punctuation", { category: state.category, index: state.index + 1 }))
+        (Sc, 0) => Ok(("Sc", { category: state.category, index: state.index + 1 }))
+        (Sc, 1) => Ok(("Currency_Symbol", { category: state.category, index: state.index + 1 }))
+        (Sk, 0) => Ok(("Sk", { category: state.category, index: state.index + 1 }))
+        (Sk, 1) => Ok(("Modifier_Symbol", { category: state.category, index: state.index + 1 }))
+        (Sm, 0) => Ok(("Sm", { category: state.category, index: state.index + 1 }))
+        (Sm, 1) => Ok(("Math_Symbol", { category: state.category, index: state.index + 1 }))
+        (So, 0) => Ok(("So", { category: state.category, index: state.index + 1 }))
+        (So, 1) => Ok(("Other_Symbol", { category: state.category, index: state.index + 1 }))
+        (Zl, 0) => Ok(("Zl", { category: state.category, index: state.index + 1 }))
+        (Zl, 1) => Ok(("Line_Separator", { category: state.category, index: state.index + 1 }))
+        (Zp, 0) => Ok(("Zp", { category: state.category, index: state.index + 1 }))
+        (Zp, 1) => Ok(("Paragraph_Separator", { category: state.category, index: state.index + 1 }))
+        (Zs, 0) => Ok(("Zs", { category: state.category, index: state.index + 1 }))
+        (Zs, 1) => Ok(("Space_Separator", { category: state.category, index: state.index + 1 }))
+        _ => Err(NoMore)
+    }
+}
+
+next_combining_class_alias : InternalPropertyAliases.CombiningClassAliasState -> Try((Str, InternalPropertyAliases.CombiningClassAliasState), [NoMore])
+next_combining_class_alias = |state| {
+    match (state.value, state.index) {
+        (0, 0) => Ok(("0", { value: state.value, index: state.index + 1 }))
+        (0, 1) => Ok(("NR", { value: state.value, index: state.index + 1 }))
+        (0, 2) => Ok(("Not_Reordered", { value: state.value, index: state.index + 1 }))
+        (1, 0) => Ok(("1", { value: state.value, index: state.index + 1 }))
+        (1, 1) => Ok(("OV", { value: state.value, index: state.index + 1 }))
+        (1, 2) => Ok(("Overlay", { value: state.value, index: state.index + 1 }))
+        (6, 0) => Ok(("6", { value: state.value, index: state.index + 1 }))
+        (6, 1) => Ok(("HANR", { value: state.value, index: state.index + 1 }))
+        (6, 2) => Ok(("Han_Reading", { value: state.value, index: state.index + 1 }))
+        (7, 0) => Ok(("7", { value: state.value, index: state.index + 1 }))
+        (7, 1) => Ok(("NK", { value: state.value, index: state.index + 1 }))
+        (7, 2) => Ok(("Nukta", { value: state.value, index: state.index + 1 }))
+        (8, 0) => Ok(("8", { value: state.value, index: state.index + 1 }))
+        (8, 1) => Ok(("KV", { value: state.value, index: state.index + 1 }))
+        (8, 2) => Ok(("Kana_Voicing", { value: state.value, index: state.index + 1 }))
+        (9, 0) => Ok(("9", { value: state.value, index: state.index + 1 }))
+        (9, 1) => Ok(("VR", { value: state.value, index: state.index + 1 }))
+        (9, 2) => Ok(("Virama", { value: state.value, index: state.index + 1 }))
+        (10, 0) => Ok(("10", { value: state.value, index: state.index + 1 }))
+        (10, 1) => Ok(("CCC10", { value: state.value, index: state.index + 1 }))
+        (11, 0) => Ok(("11", { value: state.value, index: state.index + 1 }))
+        (11, 1) => Ok(("CCC11", { value: state.value, index: state.index + 1 }))
+        (12, 0) => Ok(("12", { value: state.value, index: state.index + 1 }))
+        (12, 1) => Ok(("CCC12", { value: state.value, index: state.index + 1 }))
+        (13, 0) => Ok(("13", { value: state.value, index: state.index + 1 }))
+        (13, 1) => Ok(("CCC13", { value: state.value, index: state.index + 1 }))
+        (14, 0) => Ok(("14", { value: state.value, index: state.index + 1 }))
+        (14, 1) => Ok(("CCC14", { value: state.value, index: state.index + 1 }))
+        (15, 0) => Ok(("15", { value: state.value, index: state.index + 1 }))
+        (15, 1) => Ok(("CCC15", { value: state.value, index: state.index + 1 }))
+        (16, 0) => Ok(("16", { value: state.value, index: state.index + 1 }))
+        (16, 1) => Ok(("CCC16", { value: state.value, index: state.index + 1 }))
+        (17, 0) => Ok(("17", { value: state.value, index: state.index + 1 }))
+        (17, 1) => Ok(("CCC17", { value: state.value, index: state.index + 1 }))
+        (18, 0) => Ok(("18", { value: state.value, index: state.index + 1 }))
+        (18, 1) => Ok(("CCC18", { value: state.value, index: state.index + 1 }))
+        (19, 0) => Ok(("19", { value: state.value, index: state.index + 1 }))
+        (19, 1) => Ok(("CCC19", { value: state.value, index: state.index + 1 }))
+        (20, 0) => Ok(("20", { value: state.value, index: state.index + 1 }))
+        (20, 1) => Ok(("CCC20", { value: state.value, index: state.index + 1 }))
+        (21, 0) => Ok(("21", { value: state.value, index: state.index + 1 }))
+        (21, 1) => Ok(("CCC21", { value: state.value, index: state.index + 1 }))
+        (22, 0) => Ok(("22", { value: state.value, index: state.index + 1 }))
+        (22, 1) => Ok(("CCC22", { value: state.value, index: state.index + 1 }))
+        (23, 0) => Ok(("23", { value: state.value, index: state.index + 1 }))
+        (23, 1) => Ok(("CCC23", { value: state.value, index: state.index + 1 }))
+        (24, 0) => Ok(("24", { value: state.value, index: state.index + 1 }))
+        (24, 1) => Ok(("CCC24", { value: state.value, index: state.index + 1 }))
+        (25, 0) => Ok(("25", { value: state.value, index: state.index + 1 }))
+        (25, 1) => Ok(("CCC25", { value: state.value, index: state.index + 1 }))
+        (26, 0) => Ok(("26", { value: state.value, index: state.index + 1 }))
+        (26, 1) => Ok(("CCC26", { value: state.value, index: state.index + 1 }))
+        (27, 0) => Ok(("27", { value: state.value, index: state.index + 1 }))
+        (27, 1) => Ok(("CCC27", { value: state.value, index: state.index + 1 }))
+        (28, 0) => Ok(("28", { value: state.value, index: state.index + 1 }))
+        (28, 1) => Ok(("CCC28", { value: state.value, index: state.index + 1 }))
+        (29, 0) => Ok(("29", { value: state.value, index: state.index + 1 }))
+        (29, 1) => Ok(("CCC29", { value: state.value, index: state.index + 1 }))
+        (30, 0) => Ok(("30", { value: state.value, index: state.index + 1 }))
+        (30, 1) => Ok(("CCC30", { value: state.value, index: state.index + 1 }))
+        (31, 0) => Ok(("31", { value: state.value, index: state.index + 1 }))
+        (31, 1) => Ok(("CCC31", { value: state.value, index: state.index + 1 }))
+        (32, 0) => Ok(("32", { value: state.value, index: state.index + 1 }))
+        (32, 1) => Ok(("CCC32", { value: state.value, index: state.index + 1 }))
+        (33, 0) => Ok(("33", { value: state.value, index: state.index + 1 }))
+        (33, 1) => Ok(("CCC33", { value: state.value, index: state.index + 1 }))
+        (34, 0) => Ok(("34", { value: state.value, index: state.index + 1 }))
+        (34, 1) => Ok(("CCC34", { value: state.value, index: state.index + 1 }))
+        (35, 0) => Ok(("35", { value: state.value, index: state.index + 1 }))
+        (35, 1) => Ok(("CCC35", { value: state.value, index: state.index + 1 }))
+        (36, 0) => Ok(("36", { value: state.value, index: state.index + 1 }))
+        (36, 1) => Ok(("CCC36", { value: state.value, index: state.index + 1 }))
+        (84, 0) => Ok(("84", { value: state.value, index: state.index + 1 }))
+        (84, 1) => Ok(("CCC84", { value: state.value, index: state.index + 1 }))
+        (91, 0) => Ok(("91", { value: state.value, index: state.index + 1 }))
+        (91, 1) => Ok(("CCC91", { value: state.value, index: state.index + 1 }))
+        (103, 0) => Ok(("103", { value: state.value, index: state.index + 1 }))
+        (103, 1) => Ok(("CCC103", { value: state.value, index: state.index + 1 }))
+        (107, 0) => Ok(("107", { value: state.value, index: state.index + 1 }))
+        (107, 1) => Ok(("CCC107", { value: state.value, index: state.index + 1 }))
+        (118, 0) => Ok(("118", { value: state.value, index: state.index + 1 }))
+        (118, 1) => Ok(("CCC118", { value: state.value, index: state.index + 1 }))
+        (122, 0) => Ok(("122", { value: state.value, index: state.index + 1 }))
+        (122, 1) => Ok(("CCC122", { value: state.value, index: state.index + 1 }))
+        (129, 0) => Ok(("129", { value: state.value, index: state.index + 1 }))
+        (129, 1) => Ok(("CCC129", { value: state.value, index: state.index + 1 }))
+        (130, 0) => Ok(("130", { value: state.value, index: state.index + 1 }))
+        (130, 1) => Ok(("CCC130", { value: state.value, index: state.index + 1 }))
+        (132, 0) => Ok(("132", { value: state.value, index: state.index + 1 }))
+        (132, 1) => Ok(("CCC132", { value: state.value, index: state.index + 1 }))
+        (133, 0) => Ok(("133", { value: state.value, index: state.index + 1 }))
+        (133, 1) => Ok(("CCC133", { value: state.value, index: state.index + 1 }))
+        (200, 0) => Ok(("200", { value: state.value, index: state.index + 1 }))
+        (200, 1) => Ok(("ATBL", { value: state.value, index: state.index + 1 }))
+        (200, 2) => Ok(("Attached_Below_Left", { value: state.value, index: state.index + 1 }))
+        (202, 0) => Ok(("202", { value: state.value, index: state.index + 1 }))
+        (202, 1) => Ok(("ATB", { value: state.value, index: state.index + 1 }))
+        (202, 2) => Ok(("Attached_Below", { value: state.value, index: state.index + 1 }))
+        (214, 0) => Ok(("214", { value: state.value, index: state.index + 1 }))
+        (214, 1) => Ok(("ATA", { value: state.value, index: state.index + 1 }))
+        (214, 2) => Ok(("Attached_Above", { value: state.value, index: state.index + 1 }))
+        (216, 0) => Ok(("216", { value: state.value, index: state.index + 1 }))
+        (216, 1) => Ok(("ATAR", { value: state.value, index: state.index + 1 }))
+        (216, 2) => Ok(("Attached_Above_Right", { value: state.value, index: state.index + 1 }))
+        (218, 0) => Ok(("218", { value: state.value, index: state.index + 1 }))
+        (218, 1) => Ok(("BL", { value: state.value, index: state.index + 1 }))
+        (218, 2) => Ok(("Below_Left", { value: state.value, index: state.index + 1 }))
+        (220, 0) => Ok(("220", { value: state.value, index: state.index + 1 }))
+        (220, 1) => Ok(("B", { value: state.value, index: state.index + 1 }))
+        (220, 2) => Ok(("Below", { value: state.value, index: state.index + 1 }))
+        (222, 0) => Ok(("222", { value: state.value, index: state.index + 1 }))
+        (222, 1) => Ok(("BR", { value: state.value, index: state.index + 1 }))
+        (222, 2) => Ok(("Below_Right", { value: state.value, index: state.index + 1 }))
+        (224, 0) => Ok(("224", { value: state.value, index: state.index + 1 }))
+        (224, 1) => Ok(("L", { value: state.value, index: state.index + 1 }))
+        (224, 2) => Ok(("Left", { value: state.value, index: state.index + 1 }))
+        (226, 0) => Ok(("226", { value: state.value, index: state.index + 1 }))
+        (226, 1) => Ok(("R", { value: state.value, index: state.index + 1 }))
+        (226, 2) => Ok(("Right", { value: state.value, index: state.index + 1 }))
+        (228, 0) => Ok(("228", { value: state.value, index: state.index + 1 }))
+        (228, 1) => Ok(("AL", { value: state.value, index: state.index + 1 }))
+        (228, 2) => Ok(("Above_Left", { value: state.value, index: state.index + 1 }))
+        (230, 0) => Ok(("230", { value: state.value, index: state.index + 1 }))
+        (230, 1) => Ok(("A", { value: state.value, index: state.index + 1 }))
+        (230, 2) => Ok(("Above", { value: state.value, index: state.index + 1 }))
+        (232, 0) => Ok(("232", { value: state.value, index: state.index + 1 }))
+        (232, 1) => Ok(("AR", { value: state.value, index: state.index + 1 }))
+        (232, 2) => Ok(("Above_Right", { value: state.value, index: state.index + 1 }))
+        (233, 0) => Ok(("233", { value: state.value, index: state.index + 1 }))
+        (233, 1) => Ok(("DB", { value: state.value, index: state.index + 1 }))
+        (233, 2) => Ok(("Double_Below", { value: state.value, index: state.index + 1 }))
+        (234, 0) => Ok(("234", { value: state.value, index: state.index + 1 }))
+        (234, 1) => Ok(("DA", { value: state.value, index: state.index + 1 }))
+        (234, 2) => Ok(("Double_Above", { value: state.value, index: state.index + 1 }))
+        (240, 0) => Ok(("240", { value: state.value, index: state.index + 1 }))
+        (240, 1) => Ok(("IS", { value: state.value, index: state.index + 1 }))
+        (240, 2) => Ok(("Iota_Subscript", { value: state.value, index: state.index + 1 }))
+        _ => Err(NoMore)
     }
 }

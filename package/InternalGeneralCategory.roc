@@ -1,13 +1,15 @@
 ## GENERATED from Unicode 17.0.0 General_Category and aliases. Run `python3 scripts/unicode_data.py generate`. ##
 ## Named tags are stable Unicode aliases; byte values below are private storage IDs. ##
-## default: Cn; layout: 4352 U16 page ids + 162 x 256 U8 values; logical payload 50176 bytes. ##
+## default: Cn; layout: 4352 U8 page ids + 162 x 256 U8 values; logical payload 45824 bytes. ##
 
 InternalGeneralCategory :: [].{
     GeneralCategory : [Cc, Cf, Cn, Co, Cs, Ll, Lm, Lo, Lt, Lu, Mc, Me, Mn, Nd, Nl, No, Pc, Pd, Pe, Pf, Pi, Po, Ps, Sc, Sk, Sm, So, Zl, Zp, Zs]
 
     lookup : U32 -> GeneralCategory
     lookup = |scalar| {
-        if scalar > 0x10FFFF {
+        if scalar < 128 {
+            ascii_category(scalar)
+        } else if scalar > 0x10FFFF {
             Cn
         } else {
             page_id = page_index.get(scalar.shr_wrap(8).to_u64()) ?? 0
@@ -16,6 +18,9 @@ InternalGeneralCategory :: [].{
         }
     }
 }
+
+ascii_category : U32 -> InternalGeneralCategory.GeneralCategory
+ascii_category = |u32| if (u32 >= 0 and u32 <= 31) or u32 == 127 (Cc) else if (u32 >= 97 and u32 <= 122) (Ll) else if (u32 >= 65 and u32 <= 90) (Lu) else if (u32 >= 48 and u32 <= 57) (Nd) else if u32 == 95 (Pc) else if u32 == 45 (Pd) else if u32 == 41 or u32 == 93 or u32 == 125 (Pe) else if (u32 >= 33 and u32 <= 35) or (u32 >= 37 and u32 <= 39) or u32 == 42 or u32 == 44 or (u32 >= 46 and u32 <= 47) or (u32 >= 58 and u32 <= 59) or (u32 >= 63 and u32 <= 64) or u32 == 92 (Po) else if u32 == 40 or u32 == 91 or u32 == 123 (Ps) else if u32 == 36 (Sc) else if u32 == 94 or u32 == 96 (Sk) else if u32 == 43 or (u32 >= 60 and u32 <= 62) or u32 == 124 or u32 == 126 (Sm) else if u32 == 32 (Zs) else Cn
 
 category_from_u8 : U8 -> InternalGeneralCategory.GeneralCategory
 category_from_u8 = |value| {
@@ -54,7 +59,7 @@ category_from_u8 = |value| {
     }
 }
 
-page_index : List(U16)
+page_index : List(U8)
 page_index = [
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 17, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
     31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 33, 41, 42, 43, 44, 45, 46, 47, 48, 39, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17,

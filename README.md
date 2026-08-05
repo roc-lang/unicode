@@ -20,15 +20,25 @@ markers, and record counts. Its release snapshots, specification revisions,
 sources, and generated artifacts are separate dependency-graph nodes; this
 keeps the Unicode and Emoji version axes explicit and leaves room for later
 data authorities such as CLDR. All generated runtime views come from that one
-graph, so an implementation cannot silently mix releases. The selected Unicode
-release is also available at runtime as `UnicodeVersion.current`.
+graph, so an implementation cannot silently mix releases. The generator checks
+each source format and property projection and each artifact's source,
+specification, and artifact dependencies exactly. Unicode file headers, source
+URLs, and synchronized Unicode/Emoji major-minor versions anchor generated
+version labels to the pinned release. A newly declared format is rejected until
+there is an implementation that consumes it. The selected Unicode release is
+also available at runtime as `UnicodeVersion.current`.
 
 The canonical property substrate currently emits separate, U32-keyed paged
 views for General_Category, exact Canonical_Combining_Class values, and the
 independent Emoji binary properties. Property and value aliases retain stable
-Unicode identities; compact generated ordinals remain private table details.
+Unicode identities through allocation-free iterators; compact generated
+ordinals remain private table details. Property-specific defaults are parsed as
+ordered ranges and checked before explicit records take precedence, including
+all six Emoji defaults and East_Asian_Width's five wide unassigned ranges.
 Algorithm-specific fused views, such as grapheme data, remain separate from
-these canonical facts.
+these canonical facts. Deduplicated page layouts are chosen deterministically;
+the manifest records and enforces their page width, checked index type, logical
+byte count, and growth budget. ASCII lookups bypass those page indexes.
 
 ## Scalars and UTF-8
 

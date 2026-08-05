@@ -12,12 +12,13 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Sequence
+from typing import Callable, Iterable, Sequence
 
 from unicode_data import (
     DataError,
     GraphemeCase,
     MAX_CODE_POINT,
+    MissingDefault,
     RangeRecord,
     load_manifest,
     load_property_data,
@@ -349,8 +350,17 @@ def run_grapheme(binary: Path, jobs: int, spec: dict[str, object]) -> None:
     )
 
 
-def fill_property_table(records: list[RangeRecord], codes: dict[str, int], default: int) -> bytearray:
+def fill_property_table(
+    records: Iterable[RangeRecord],
+    codes: dict[str, int],
+    default: int,
+    defaults: Iterable[MissingDefault] = (),
+) -> bytearray:
     values = bytearray([default]) * (MAX_CODE_POINT + 1)
+    for declaration in defaults:
+        values[declaration.start : declaration.end + 1] = bytes([codes[declaration.value]]) * (
+            declaration.end - declaration.start + 1
+        )
     for record in records:
         values[record.start : record.end + 1] = bytes([codes[record.property]]) * (
             record.end - record.start + 1
@@ -360,11 +370,16 @@ def fill_property_table(records: list[RangeRecord], codes: dict[str, int], defau
 
 def build_property_tables() -> tuple[str, bytearray, bytearray, bytearray]:
     manifest = load_manifest()
-    gcb, eaw, emoji, _incb = load_property_data(manifest)
-    gcb_values = fill_property_table(gcb, GCB_CODES, 0)
-    eaw_values = fill_property_table(eaw, EAW_CODES, 0)
+    properties = load_property_data(manifest)
+    gcb_values = fill_property_table(properties.grapheme.records, GCB_CODES, 0)
+    eaw_values = fill_property_table(
+        properties.east_asian_width.records,
+        EAW_CODES,
+        0,
+        properties.east_asian_width.defaults,
+    )
     emoji_values = bytearray(MAX_CODE_POINT + 1)
-    for record in emoji:
+    for record in properties.emoji.records:
         bit = EMOJI_BITS[record.property]
         for code_point in range(record.start, record.end + 1):
             emoji_values[code_point] |= bit
