@@ -75,13 +75,7 @@ Script :: [].{
     contains : ScriptSet, Value -> Bool
     contains = |set, script| {
         private_id = InternalScriptData.private_id(script)
-        bit = 1.U64.shl_wrap(private_id % 64)
-        word = match private_id / 64 {
-            0 => set.word0
-            1 => set.word1
-            _ => set.word2
-        }
-        word.bitwise_and(bit) != 0
+        contains_private(set, private_id)
     }
 
     len : ScriptSet -> U64
@@ -92,7 +86,7 @@ Script :: [].{
         word0 = left.word0.bitwise_and(right.word0)
         word1 = left.word1.bitwise_and(right.word1)
         word2 = left.word2.bitwise_and(right.word2)
-        length = bit_count(word0) + bit_count(word1) + bit_count(word2)
+        length = U64.count_one_bits(word0) + U64.count_one_bits(word1) + U64.count_one_bits(word2)
         if length == 0 { None } else {
             Some({ word0, word1, word2, length })
         }
@@ -112,18 +106,23 @@ Script :: [].{
     ## Lexicographic comparison in stable canonical short-alias order.
     compare : ScriptSet, ScriptSet -> [Before, Equal, After]
     compare = |left, right| {
-        common = if left.length < right.length { left.length } else { right.length }
-        var index = 0.U8
-        while index < common {
-            left_script = match at(left, index) { Some(value) => value None => Zzzz }
-            right_script = match at(right, index) { Some(value) => value None => Zzzz }
-            left_id = InternalScriptData.private_id(left_script)
-            right_id = InternalScriptData.private_id(right_script)
-            if left_id < right_id { return Before }
-            if left_id > right_id { return After }
-            index = index + 1
+        var private_id = 0.U8
+        var left_seen = 0.U8
+        var right_seen = 0.U8
+        while private_id < 176 {
+            left_has = contains_private(left, private_id)
+            right_has = contains_private(right, private_id)
+            if left_has and right_has {
+                left_seen = left_seen + 1
+                right_seen = right_seen + 1
+            } else if left_has {
+                return if right_seen == right.length { After } else { Before }
+            } else if right_has {
+                return if left_seen == left.length { Before } else { After }
+            }
+            private_id = private_id + 1
         }
-        if left.length < right.length { Before } else if left.length > right.length { After } else { Equal }
+        Equal
     }
 
     ## Member by stable canonical short-alias order.
@@ -133,9 +132,8 @@ Script :: [].{
         var private_id = 0.U8
         var seen = 0.U8
         while private_id < 176 {
-            script = InternalScriptData.from_private_id(private_id)
-            if contains(set, script) {
-                if seen == wanted { return Some(script) }
+            if contains_private(set, private_id) {
+                if seen == wanted { return Some(InternalScriptData.from_private_id(private_id)) }
                 seen = seen + 1
             }
             private_id = private_id + 1
@@ -147,11 +145,12 @@ Script :: [].{
     walk : ScriptSet, state, (state, Value -> state) -> state
     walk = |set, initial, visit| {
         var state = initial
-        var index = 0.U8
-        while index < set.length {
-            script = match at(set, index) { Some(value) => value None => Zzzz }
-            state = visit(state, script)
-            index = index + 1
+        var private_id = 0.U8
+        while private_id < 176 {
+            if contains_private(set, private_id) {
+                state = visit(state, InternalScriptData.from_private_id(private_id))
+            }
+            private_id = private_id + 1
         }
         state
     }
@@ -165,7 +164,7 @@ remove = |set, script| {
     private_id = InternalScriptData.private_id(script)
     bit = 1.U64.shl_wrap(private_id % 64)
     mask = bit.bitwise_not()
-    if !Script.contains(set, script) { set } else {
+    if !contains_private(set, private_id) { set } else {
         match private_id / 64 {
             0 => { word0: set.word0.bitwise_and(mask), word1: set.word1, word2: set.word2, length: set.length - 1 }
             1 => { word0: set.word0, word1: set.word1.bitwise_and(mask), word2: set.word2, length: set.length - 1 }
@@ -174,12 +173,12 @@ remove = |set, script| {
     }
 }
 
-bit_count = |initial| {
-    var value = initial
-    var count = 0.U8
-    while value != 0 {
-        count = count + value.bitwise_and(1).to_u8_wrap()
-        value = value.shr_wrap(1)
+contains_private = |set, private_id| {
+    bit = 1.U64.shl_wrap(private_id % 64)
+    word = match private_id / 64 {
+        0 => set.word0
+        1 => set.word1
+        _ => set.word2
     }
-    count
+    word.bitwise_and(bit) != 0
 }
