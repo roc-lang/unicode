@@ -87,3 +87,24 @@ batch measured:
 Every complete-string signature remained identical to the indexed-scalar
 baseline. The independent scalar streaming cursor also reproduced every
 signature across all six corpora.
+
+## Current SIMD compiler blocker
+
+This scalar batch is an interim implementation, not an architectural decision.
+On the pinned `2026-August-04-1cb06bc` nightly, loading `U8x16` directly from
+`cursor.utf8.bytes` at the marked batch site in `next_unit` is unimplemented in
+the development backend and makes the optimizing compiler fail with a
+segmentation fault or corrupt layout. Moving that load behind a helper which
+accepts or returns the retained `UnitCursor`/`InternalUtf8.Cursor` instead
+corrupts the borrowed byte-list reference count during replay (observed at
+`roc_builtins_list_incref`), followed by a hang or segmentation fault.
+
+Any future SIMD replacement should reproduce those two shapes at the marked
+`next_unit` site with the repository-pinned compiler, then run:
+
+```sh
+ROC=/path/to/pinned/roc python3 benchmarks/script/run.py --validate-only
+```
+
+It must preserve the complete/scalar-cursor corpus signatures before replacing
+the compiler-safe scalar transition.

@@ -644,6 +644,8 @@ next_unit = |initial| {
             return NoMoreUnits(cursor)
         }
 
+        # This is deliberately scalar on the pinned compiler; see the current
+        # SIMD compiler blocker in benchmarks/script/README.md.
         # A one-byte retained cluster contains one ASCII scalar. Any following
         # printable ASCII scalar has GCB=Other and begins a new cluster after
         # printable ASCII or an ASCII control. Aggregate equal Latin/Common
