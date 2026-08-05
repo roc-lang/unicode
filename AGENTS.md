@@ -26,9 +26,9 @@ as enduring architecture.
 
 ## Integration workflow
 
-Treat `architecture/grapheme-strangler-spike` as the integration branch for
-the Unicode overhaul. Develop independent substrates and features in isolated
-branches and worktrees rooted at the current integration head.
+Develop independent substrates and features in isolated branches and
+worktrees rooted at the current designated integration branch. Do not develop
+independent feature work directly on the integration branch.
 
 Implement shared scalar, source, range, version, property-data, and scanning
 substrates before sharding algorithms that depend on them. Keep the broader
