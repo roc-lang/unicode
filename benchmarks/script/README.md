@@ -88,23 +88,27 @@ Every complete-string signature remained identical to the indexed-scalar
 baseline. The independent scalar streaming cursor also reproduced every
 signature across all six corpora.
 
-## Current SIMD compiler blocker
+## Historical SIMD compiler finding
 
 This scalar batch is an interim implementation, not an architectural decision.
-On the pinned `2026-August-04-1cb06bc` nightly, loading `U8x16` directly from
-`cursor.utf8.bytes` at the marked batch site in `next_unit` is unimplemented in
-the development backend and makes the optimizing compiler fail with a
-segmentation fault or corrupt layout. Moving that load behind a helper which
-accepts or returns the retained `UnitCursor`/`InternalUtf8.Cursor` instead
-corrupts the borrowed byte-list reference count during replay (observed at
-`roc_builtins_list_incref`), followed by a hang or segmentation fault.
+The failed SIMD spike was recorded with nightly `2026-August-03-94cbed3`, but
+was later attributed here to the pinned `2026-August-04-1cb06bc` compiler by
+mistake. The exact direct-load source fails before backend lowering at
+`c7cfb69b24^`: postcheck expands a record update before its open result row is
+finalized, so the resulting record expression omits fields present in the
+final Lambda Mono type. Commit `c7cfb69b24` preserves the update as an explicit
+base plus explicit fields through postcheck and fixes the source. The apparent
+SIMD lowering and byte-list reference-count failures were downstream symptoms
+of that missing-field layout.
 
-Any future SIMD replacement should reproduce those two shapes at the marked
-`next_unit` site with the repository-pinned compiler, then run:
+The direct and helper-returned cursor/vector shapes, together with the complete
+validation corpus below, pass on the pinned `2026-August-04-1cb06bc` compiler.
+There is no current compiler blocker to replacing the scalar transition with
+an exact allocation-free SIMD implementation. That replacement must run:
 
 ```sh
 ROC=/path/to/pinned/roc python3 benchmarks/script/run.py --validate-only
 ```
 
 It must preserve the complete/scalar-cursor corpus signatures before replacing
-the compiler-safe scalar transition.
+the scalar transition.
