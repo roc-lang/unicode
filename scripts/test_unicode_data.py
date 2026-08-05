@@ -457,16 +457,48 @@ class UnicodeDataTests(unittest.TestCase):
             unicode_data.ROOT / "package" / "InternalScriptData.roc"
         ]
         self.assertIn("loose_hash : Str -> U32", generated)
-        self.assertIn("for byte in value.iter_utf8()", generated)
+        self.assertIn("InternalUtf8.fold_scalars(", generated)
         self.assertNotIn("replace_each", generated)
         self.assertNotIn("List(Str)", generated)
+
+    def test_script_aliases_use_complete_uax44_lm3_normalization(self) -> None:
+        variants = (
+            "Greek",
+            "isGreek",
+            "Is_Greek",
+            "Gr\teek",
+            " Gr-_-eek ",
+            "Gr\u0085eek",
+            "Gr\u2003eek",
+            "Gr\u3000eek",
+        )
+        for variant in variants:
+            with self.subTest(variant=variant):
+                self.assertEqual(unicode_data.loose_alias(variant), "greek")
+                self.assertEqual(
+                    unicode_data.loose_alias_hash(variant),
+                    unicode_data.loose_alias_hash("Greek"),
+                )
+
+        # The initial prefix is removed once, not recursively.
+        self.assertEqual(unicode_data.loose_alias("isisGreek"), "isgreek")
+        self.assertEqual(unicode_data.loose_alias("IS"), "is")
+
+        generated = unicode_data.rendered_modules(unicode_data.load_manifest())[
+            unicode_data.ROOT / "package" / "InternalScriptData.roc"
+        ]
+        self.assertIn("PrefixInitialI", generated)
+        self.assertIn("PrefixInitialIs", generated)
+        self.assertIn("scalar == 0x3000", generated)
+        self.assertIn("loose_eq : Str, U64, U64, U64, U8 -> Bool", generated)
+        self.assertNotIn("value.iter_utf8()", generated)
 
     def test_script_extensions_parser_fails_closed(self) -> None:
         manifest = unicode_data.load_manifest()
         alias_name = unicode_data._source_for(
             manifest,
             "ucd-property-value-aliases",
-            ("Canonical_Combining_Class", "General_Category", "Script"),
+            unicode_data.PUBLIC_ALIAS_PROPERTIES,
         )
         aliases = unicode_data.parse_property_value_aliases(
             unicode_data.verify_source(manifest, alias_name), source=alias_name

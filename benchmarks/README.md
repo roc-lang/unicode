@@ -13,6 +13,8 @@ timings are unsuitable as merge gates.
 - [`properties`](properties/README.md) compares independent narrow property
   views with the fused composite row on ASCII, BMP, supplementary, and mixed
   corpora, including optimized binary-size impact.
+- [`script`](script/README.md) checks Script alias matching, itemization
+  semantics/allocation behavior, and complete/chunked parity.
 
 Keep correctness checks separate from timing thresholds. A benchmark must fail
 when implementations disagree on its semantic checksum; performance changes do

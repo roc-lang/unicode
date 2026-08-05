@@ -147,9 +147,10 @@ materializing convenience. Public set traversal and comparison use canonical
 short-alias lexicographic order; generated private IDs and bit positions are
 not public identities.
 
-All `sc` aliases declared by the pinned UCD are accepted with UAX #44 loose
+All `sc` aliases declared by the pinned UCD are accepted with UAX44-LM3 loose
 matching, including compatibility aliases such as `Qaai` and `Qaac`. Matching
-is case-insensitive and ignores spaces, hyphens, and underscores. It does not
+is ASCII-case-insensitive, ignores Unicode whitespace, hyphens, and underscores,
+and removes one initial `is` prefix after those ignored characters. It does not
 guess other ISO 15924 codes that are absent from the UCD `sc` namespace.
 Canonical short and long aliases are available without constructing strings.
 

@@ -33,7 +33,7 @@ Unit : {
 }
 
 PendingStart : [NoPending, Pending({ byte_start : U64, scalar_start : U64 })]
-ExplicitNeighbor : [NoExplicit, Explicit(PrivateScript)]
+ExplicitNeighbor : [NoExplicit, UnknownBoundary, Explicit(PrivateScript)]
 
 RunState(state) : {
     state : state,
@@ -442,7 +442,7 @@ next_resolved = |initial| {
                             UnknownBarrier => match state.pending {
                                 NoPending => return NextResolved({
                                     segment: { unit: step.unit, script: InternalScriptData.unknown_private_id },
-                                    state: { ..state, left: NoExplicit },
+                                    state: { ..state, left: UnknownBoundary },
                                 })
                                 Pending(start) => {
                                     delimiter = { unit: step.unit, script: InternalScriptData.unknown_private_id }
@@ -452,9 +452,9 @@ next_resolved = |initial| {
                                         step.unit.byte_start,
                                         step.unit.scalar_start,
                                         state.left,
-                                        NoExplicit,
+                                        UnknownBoundary,
                                         Delimiter(delimiter),
-                                        ResumeOuter(NoExplicit),
+                                        ResumeOuter(UnknownBoundary),
                                     )
                                     state = { ..state, pending: NoPending, mode: Replaying(replay) }
                                 }
@@ -559,17 +559,17 @@ next_replay_resolved = |state, initial_replay| {
                         match replay.common {
                             NoCommon => return NextResolved({
                                 segment: current,
-                                state: { ..state, mode: Replaying({ ..replay, left: NoExplicit }) },
+                                state: { ..state, mode: Replaying({ ..replay, left: UnknownBoundary }) },
                             })
                             CommonSpan(span) => {
-                                common_script = resolve_common(replay.left, NoExplicit)
+                                common_script = resolve_common(replay.left, UnknownBoundary)
                                 common = resolved_span(span, step.unit.byte_start, step.unit.scalar_start, common_script)
                                 return NextResolved({
                                     segment: common,
                                     state: {
                                         ..state,
                                         deferred: Deferred(current),
-                                        mode: Replaying({ ..replay, common: NoCommon, left: NoExplicit }),
+                                        mode: Replaying({ ..replay, common: NoCommon, left: UnknownBoundary }),
                                     },
                                 })
                             }
@@ -770,7 +770,7 @@ consume_stream_unit = |fold_state, unit| {
             UnknownBarrier => {
                 flushed = flush_stream_pending(
                     fold_state,
-                    NoExplicit,
+                    UnknownBoundary,
                     unit.byte_start,
                     unit.scalar_start,
                 )
@@ -782,7 +782,7 @@ consume_stream_unit = |fold_state, unit| {
                             cursor: {
                                 ..flushed.cursor,
                                 pending: [],
-                                left: NoExplicit,
+                                left: UnknownBoundary,
                             },
                             result: append_run(flushed.result, unit, InternalScriptData.unknown_private_id),
                         }
@@ -973,11 +973,11 @@ consume_replay = |state, unit| {
             }
         }
         UnknownBarrier => {
-            before = flush_common(state, unit.byte_start, unit.scalar_start, NoExplicit)
+            before = flush_common(state, unit.byte_start, unit.scalar_start, UnknownBoundary)
             {
                 ..before,
                 result: append_run(before.result, unit, InternalScriptData.unknown_private_id),
-                left: NoExplicit,
+                left: UnknownBoundary,
             }
         }
     }
@@ -1009,10 +1009,12 @@ resolve_restricted = |details, left, right, policy| {
     left_member = match left {
         Explicit(script) => if private_contains(details.candidates, script) Some(script) else None
         NoExplicit => None
+        UnknownBoundary => None
     }
     right_member = match right {
         Explicit(script) => if private_contains(details.candidates, script) Some(script) else None
         NoExplicit => None
+        UnknownBoundary => None
     }
     match (left_member, right_member) {
         (Some(left_script), Some(right_script)) => {
@@ -1044,6 +1046,8 @@ preference_or_primary = |details, policy| {
 resolve_common : ExplicitNeighbor, ExplicitNeighbor -> PrivateScript
 resolve_common = |left, right| {
     match (left, right) {
+        (UnknownBoundary, _) => InternalScriptData.common_private_id
+        (_, UnknownBoundary) => InternalScriptData.common_private_id
         (Explicit(left_script), Explicit(right_script)) => if left_script == right_script left_script else InternalScriptData.common_private_id
         (Explicit(script), NoExplicit) => script
         (NoExplicit, Explicit(script)) => script
