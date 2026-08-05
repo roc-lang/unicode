@@ -55,3 +55,9 @@ The grapheme suite covers all 766 official Unicode 17 conformance cases. The
 property suite covers every valid Unicode scalar for grapheme-break,
 East-Asian-width, and emoji properties. A separate allocation harness records
 the package's allocation behavior.
+
+## Benchmarks
+
+Opt-in local benchmarks live in [`benchmarks`](benchmarks/README.md). They are
+kept outside CI and include a reproducible Unicode 17 grapheme comparison with
+Rust and Go.
