@@ -21,6 +21,36 @@ views come from that one manifest, so an implementation cannot silently mix
 Unicode releases. The selected release is also available at runtime as
 `UnicodeVersion.current`.
 
+## Scalars and UTF-8
+
+`Scalar` is the sealed text-processing value. `Scalar.from_u32` rejects both
+surrogates and values above `U+10FFFF`; `Scalar.iter` traverses a valid Roc
+`Str` without an impossible UTF-8 error branch. Every yielded value includes a
+half-open `ByteRange` and an absolute scalar index. The iterator decodes only
+the visited prefix, uses constant algorithmic state and stack, and creates no
+intermediate byte or scalar list. It retains the source string for the
+iterator's lifetime, while yielded scalars and ranges do not retain it.
+
+`CodePoint` remains a distinct sealed type for the complete Unicode code-point
+domain, including surrogates. It deliberately has no UTF-8 encoder or decoder;
+callers validate it with `Scalar.from_code_point` before entering a text API.
+UTF-8 encoding accepts only `Scalar`, so it cannot emit surrogate encodings.
+
+Arbitrary bytes use the separate `Utf8.Cursor`. `push` accepts byte chunks and
+returns `Pushed` or a terminal `Failed` with an indexed typed error; a chunk
+edge is never end-of-text. `finish` explicitly returns `End` or reports an
+incomplete trailing sequence. The cursor retains at most three pending bytes,
+uses constant stack and auxiliary storage, performs no allocation itself, and
+does not retain consumed chunks. Error offsets and all emitted scalar/range
+coordinates are absolute from the beginning of the logical byte source.
+
+The package cannot turn a host allocator abort into a Unicode error. It avoids
+predictable growth instead: scalar encoding has a fixed one-to-four-byte
+result, appending accepts and checks a caller-selected output bound before
+reserving, and later algorithms use operation-specific limits where they
+intrinsically retain input-proportional state. There is intentionally no
+universal options or limits record.
+
 Grapheme segmentation follows the default, un-tailored Unicode 17 extended
 grapheme cluster algorithm. Its primary output is half-open UTF-8 byte ranges;
 callers can consume them lazily with `Grapheme.iter_ranges`, collect them with

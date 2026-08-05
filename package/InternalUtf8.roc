@@ -1,9 +1,11 @@
+import ByteRange
+import CodePoint
+
 ## Allocation-free traversal of the Unicode scalars in a valid Roc `Str`.
 InternalUtf8 :: [].{
     LocatedScalar : {
-        scalar : U32,
-        byte_start : U64,
-        byte_end : U64,
+        code_point : CodePoint,
+        byte_range : ByteRange,
         scalar_index : U64,
     }
 
@@ -64,18 +66,22 @@ InternalUtf8 :: [].{
                     _ => ...
                 }
 
-                byte_end = cursor.byte_offset + width
+                # Roc `Str` validity proves the decoded value and byte range;
+                # source-size bounds prove both checked counter increments.
+                byte_end = cursor.byte_offset.plus_try(width) ?? ...
+                code_point = CodePoint.from_u32(scalar) ?? ...
+                byte_range = ByteRange.from_bounds(cursor.byte_offset, byte_end) ?? ...
+                next_scalar_index = cursor.scalar_index.plus_try(1) ?? ...
                 One({
                     item: {
-                        scalar,
-                        byte_start: cursor.byte_offset,
-                        byte_end,
+                        code_point,
+                        byte_range,
                         scalar_index: cursor.scalar_index,
                     },
                     rest: {
                         bytes: rest,
                         byte_offset: byte_end,
-                        scalar_index: cursor.scalar_index + 1,
+                        scalar_index: next_scalar_index,
                     },
                 })
             }
@@ -95,9 +101,9 @@ InternalUtf8 :: [].{
                 One({ item, rest }) => {
                     result = step(
                         result,
-                        item.scalar,
-                        item.byte_start,
-                        item.byte_end,
+                        CodePoint.to_u32(item.code_point),
+                        ByteRange.start(item.byte_range),
+                        ByteRange.end(item.byte_range),
                         item.scalar_index,
                     )
                     cursor = rest

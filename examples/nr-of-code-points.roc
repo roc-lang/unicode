@@ -4,27 +4,22 @@ app [main!] {
 }
 
 import pf.Stdout
-import pf.Stderr
-import unicode.CodePoint exposing [Utf8ParseErr]
+import unicode.Scalar
 
-## Get the number of code points for a given Str
-nr_of_code_points : Str -> Try(U64, Utf8ParseErr)
-nr_of_code_points = |str| {
-    str.to_utf8()->CodePoint.parse_utf8().map_ok(List.len)
+## Get the number of Unicode scalar values in a valid Roc Str without
+## allocating a list of them.
+nr_of_scalars : Str -> U64
+nr_of_scalars = |str| {
+    var $count = 0.U64
+    for _ in Scalar.iter(str) {
+        $count = $count + 1
+    }
+    $count
 }
 
 main! = |_args| {
     word = "ẇ͓̞͒͟͡ǫ̠̠̉̏͠͡ͅr̬̺͚̍͛̔͒͢d̠͎̗̳͇͆̋̊͂͐"
-
-    match nr_of_code_points(word) {
-        Ok(nr) => {
-            Stdout.line!("String \"${word}\" consists of ${nr.to_str()} code points.")?
-            Ok({})
-        }
-
-        Err(_) => {
-            Stderr.line!("Failed to parse string ${word} as Utf8.")?
-            Err(Exit(1))
-        }
-    }
+    count = nr_of_scalars(word)
+    Stdout.line!("String \"${word}\" consists of ${count.to_str()} code points.")?
+    Ok({})
 }

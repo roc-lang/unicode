@@ -4,19 +4,24 @@ app [main!] {
 }
 
 import pf.Stdout
-import unicode.CodePoint
+import unicode.Scalar
 
 default_word = "世界"
 
-## Get the display width (in amount of characters) of a Str
-get_visual_width : Str -> Try(U32, CodePoint.Utf8ParseErr)
+## An application policy that treats Unicode East_Asian_Width Fullwidth and
+## Wide scalars as two cells, and all others as one. This is not a universal
+## terminal or glyph width algorithm.
+get_visual_width : Str -> U32
 get_visual_width = |str| {
-    str
-        .to_utf8()
-        ->CodePoint.parse_utf8()?
-        .map(CodePoint.visual_width)
-        .sum()
-        ->Ok()
+    var $width = 0.U32
+    for located in Scalar.iter(str) {
+        $width = $width + match Scalar.east_asian_width(located.scalar) {
+            Fullwidth => 2
+            Wide => 2
+            _ => 1
+        }
+    }
+    $width
 }
 
 main! = |args| {
@@ -25,15 +30,9 @@ main! = |args| {
         [_app] => default_word
         [_app, arg1, ..] => arg1
     }
-    match get_visual_width(word) {
-        Ok(width) => {
-            Stdout.line!("\n\nThe word ${word} will be displayed with the width of ${width.to_str()} characters on most UIs.\n\n")?
-            Ok({})
-        }
-        Err(_) => {
-            crash "ERROR: Unable to parse ${word}!"
-        }
-    }
+    width = get_visual_width(word)
+    Stdout.line!("\n\nThe word ${word} will be displayed with the width of ${width.to_str()} characters on most UIs.\n\n")?
+    Ok({})
 }
 
-expect get_visual_width(default_word) == Ok(4)
+expect get_visual_width(default_word) == 4

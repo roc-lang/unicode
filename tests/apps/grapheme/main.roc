@@ -3,9 +3,9 @@ app [run!] {
     unicode: "../../../package/main.roc",
 }
 
-import unicode.CodePoint
 import unicode.ByteRange
 import unicode.Grapheme
+import unicode.Scalar
 
 run! : Str => Str
 run! = |input| {
@@ -60,13 +60,11 @@ run_case = |line| {
             expected_offsets = expected_offsets_str.split_on(",").map(U64.from_str)
             match (keep_oks(code_points), keep_oks(expected_offsets)) {
                 (Ok(cps), Ok(expected)) => {
-                    source =
-                        cps
-                            .map(CodePoint.internal_from_u32_unchecked)
-                            ->CodePoint.to_str()
+                    source = keep_oks(cps.map(|value| Scalar.from_u32(value).map_ok(Scalar.to_str)))
                     match source {
                         Err(_) => Err({ case_id, message: "could not encode source scalars" })
-                        Ok(str) => {
+                        Ok(parts) => {
+                            str = Str.join_with(parts, "")
                             got = break_offsets(Grapheme.ranges(str))
                             if got == expected {
                                 Ok({})

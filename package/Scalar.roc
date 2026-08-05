@@ -1,184 +1,195 @@
+import ByteRange
 import CodePoint
+import InternalEAW
+import InternalUtf8
 
-## A [Unicode scalar value](http://www.unicode.org/glossary/#unicode_scalar_value) - that is,
-## any [code point](./CodePoint#CodePoint) except for [high-surrogate](./CodePoint#is_high_surrogate)
-## and [low-surrogate](./CodePoint#is_low_surrogate) code points.
-Scalar :: { cp : CodePoint }.{
-    to_u32 : Scalar -> U32
-    to_u32 = |{ cp }| {
-        cp.to_u32()
+## A Unicode scalar value: a code point other than a surrogate.
+##
+## `Scalar` is sealed. The only public numeric constructor checks both the
+## Unicode upper bound and the surrogate range. Every scalar decoded from a
+## Roc `Str` therefore needs no repeated validity check in later algorithms.
+Scalar :: { code_point : CodePoint }.{
+    ## A scalar and its absolute coordinates in the original logical source.
+    ## `byte_range` is half-open and `scalar_index` is zero based.
+    LocatedScalar : {
+        scalar : Scalar,
+        byte_range : ByteRange,
+        scalar_index : U64,
     }
 
-    ## Any Unicode code point except high-surrogate and low-surrogate code points.
+    EastAsianWidth := [Fullwidth, Wide, Ambiguous, Halfwidth, Neutral, Narrow]
+
+    ## Construct a scalar after rejecting surrogates and values above
+    ## `U+10FFFF`.
     ##
-    ## Note UTF-8 does not use surrogates as it is a variable-width encoding unlike UTF-16.
+    ## This is constant time, does not allocate, and is total for every `U32`.
     from_u32 : U32 -> Try(Scalar, [InvalidScalar])
-    from_u32 = |u32| {
-        in_range_a = u32 >= 0x0000 and u32 <= 0xD7FF
-        in_range_b = u32 >= 0xE000 and u32 <= 0x10FFFF
-        if in_range_a or in_range_b {
-            Ok({ cp: CodePoint.internal_from_u32_unchecked(u32) })
-        } else {
-            Err(InvalidScalar)
+    from_u32 = |value| {
+        match CodePoint.from_u32(value) {
+            Err(_) => Err(InvalidScalar)
+            Ok(code_point) => {
+                if CodePoint.is_surrogate(code_point) {
+                    Err(InvalidScalar)
+                } else {
+                    Ok({ code_point: code_point })
+                }
+            }
         }
     }
 
-    to_code_point : Scalar -> CodePoint
-    to_code_point = |{ cp }| cp
-
-    ## Convert a code point to a scalar value. This can fail if the given
-    ## code point is
-    from_code_point : CodePoint -> Try(Scalar, [NonScalarCodePt])
+    ## Validate a full-domain code point as a scalar.
+    ##
+    ## This is constant time and does not allocate.
+    from_code_point : CodePoint -> Try(Scalar, [Surrogate])
     from_code_point = |code_point| {
-        if code_point.is_valid_scalar() {
-            Ok({ cp: code_point })
+        if CodePoint.is_surrogate(code_point) {
+            Err(Surrogate)
         } else {
-            Err(NonScalarCodePt)
+            Ok({ code_point: code_point })
         }
     }
 
-    from_str : Str -> List(Scalar)
-    from_str = |_str| {
-        crash "TODO implement"
+    ## Return the numeric Unicode scalar value.
+    ##
+    ## This is constant time and does not allocate.
+    to_u32 : Scalar -> U32
+    to_u32 = |{ code_point }| CodePoint.to_u32(code_point)
+
+    ## Convert this scalar to the corresponding full-domain code point.
+    ##
+    ## This cannot fail because every scalar is in the code-point domain. It is
+    ## constant time and does not allocate.
+    to_code_point : Scalar -> CodePoint
+    to_code_point = |{ code_point }| code_point
+
+    ## Iterate lazily over the scalars in a valid Roc `Str`.
+    ##
+    ## Each result carries a half-open UTF-8 byte range and zero-based scalar
+    ## index, both absolute from the beginning of `source`. The scan is O(B) in
+    ## visited bytes, uses constant algorithmic state and stack, and creates no
+    ## intermediate byte/scalar list. Stopping iteration early leaves the
+    ## suffix undecoded. The iterator retains `source` for its own lifetime;
+    ## yielded scalars and integer ranges do not retain it.
+    iter : Str -> Iter(LocatedScalar)
+    iter = |source| {
+        next_located = |cursor| {
+            match InternalUtf8.next(cursor) {
+                Done => Err(NoMore)
+                One({ item, rest }) => {
+                    # The valid-Str decoder has already excluded surrogates;
+                    # constructing the sealed representation here removes a
+                    # redundant checked branch from every yielded item.
+                    scalar : Scalar
+                    scalar = { code_point: item.code_point }
+                    Ok(({
+                        scalar,
+                        byte_range: item.byte_range,
+                        scalar_index: item.scalar_index,
+                    }, rest))
+                }
+            }
+        }
+
+        Iter.custom(InternalUtf8.init(source), Unknown, next_located)
     }
 
-    # append_to_str : Scalar, Str -> Str
-    # append_to_str = |{ cp }, str| {
-    #     match Str.append_scalar(str, u32) {
-    #         Ok(answer) => answer
-    #         Err(InvalidScalar) => {
-    #             u32str = u32.to_str()
-    #
-    #             crash "append_to_str received a Scalar value of $(u32str). This is an invalid Unicode scalar value, so it should not have been possible to obtain a `Scalar` which wraps it!"
-    #         }
-    #     }
-    # }
-
-    # TODO WHAT IS THIS?
-    # fold_str : Str, state, (state, Scalar -> state) -> state
-
-    # TODO WHAT IS THIS?
-    # fold_str_until : Str, state, (state, U32 -> [Break state, Continue state]) -> state
-
-    ## If the string begins with a [Unicode code point](http://www.unicode.org/glossary/#code_point)
-    ## equal to the given [U32], returns [Bool.True]. Otherwise returns [Bool.Talse].
+    ## Return the number of bytes in this scalar's UTF-8 encoding.
     ##
-    ## If the given string is empty, or if the given [U32] is not a valid
-    ## code point, returns [Bool.False].
-    ## ```
-    ## expect Str.starts_with_scalar("鹏 means 'roc'", 40527) # "鹏" is Unicode scalar 40527
-    ## expect !Str.starts_with_scalar("9", 9) # the Unicode scalar for "9" is 57, not 9
-    ## expect !Str.starts_with_scalar("", 40527)
-    ## ```
-    ##
-    ## ## Performance Details
-    ##
-    ## This runs slightly faster than [Str.starts_with], so
-    ## if you want to check whether a string begins with something that's representable
-    ## in a single code point, you can use (for example) `Str.starts_with_scalar('鹏')`
-    ## instead of `Str.starts_with("鹏")`. ('鹏' evaluates to the [U32] value `40527`.)
-    ## This will not work for graphemes which take up multiple code points, however;
-    ## `Str.starts_with_scalar('👩‍👩‍👦‍👦')` would be a compiler error because 👩‍👩‍👦‍👦 takes up
-    ## multiple code points and cannot be represented as a single [U32].
-    ## You'd need to use `Str.starts_with_scalar("🕊")` instead.
-    #starts_with_scalar : Str, U32 -> Bool
-
-    ## Returns a [List] of the [Unicode scalar values](https://unicode.org/glossary/#unicode_scalar_value)
-    ## in the given string.
-    ##
-    ## (Roc strings contain only scalar values, not [surrogate code points](https://unicode.org/glossary/#surrogate_code_point),
-    ## so this is equivalent to returning a list of the string's [code points](https://unicode.org/glossary/#code_point).)
-    ## ```
-    ## expect Str.to_scalars("Roc") == [82, 111, 99]
-    ## expect Str.to_scalars("鹏") == [40527]
-    ## expect Str.to_scalars("சி") == [2970, 3007]
-    ## expect Str.to_scalars("🐦") == [128038]
-    ## expect Str.to_scalars("👩‍👩‍👦‍👦") == [128105, 8205, 128105, 8205, 128102, 8205, 128102]
-    ## expect Str.to_scalars("I ♥ Roc") == [73, 32, 9829, 32, 82, 111, 99]
-    ## expect Str.to_scalars("") == []
-    ## ```
-    #to_scalars : Str -> List(U32)
-
-    ## Append a [U32] scalar to the given string. If the given scalar is not a valid
-    ## unicode value, it returns [Err(InvalidScalar)].
-    ## ```
-    ## expect Str.append_scalar("H", 105) == Ok("Hi")
-    ## expect Str.append_scalar("😢", 0xabcdef) == Err(InvalidScalar)
-    ## ```
-    append_scalar : Str, U32 -> Try(Str, [InvalidScalar])
-    append_scalar = |string, u32| {
-        if CodePoint.is_valid_scalar(CodePoint.internal_from_u32_unchecked(u32)) {
-            Ok(append_scalar_unsafe(string, u32))
+    ## This is constant time and does not allocate.
+    utf8_len : Scalar -> U8
+    utf8_len = |scalar| {
+        value = Scalar.to_u32(scalar)
+        if value < 0x80 {
+            1
+        } else if value < 0x800 {
+            2
+        } else if value < 0x10000 {
+            3
         } else {
-            Err(InvalidScalar)
+            4
         }
     }
 
-    ## Folds over the unicode [U32] values for the given [Str] and calls a function
-    ## to update state for each.
-    ## ```
-    ## f : List U32, U32 -> List U32
-    ## f = |state, scalar| List.append state scalar
-    ## expect Str.fold_scalars "ABC" [] f == [65, 66, 67]
-    ## ```
-    # fold_scalars : Str, state, (state, U32 -> state) -> state
-    # fold_scalars = |string, init, step| {
-    #     fold_scalars_help(string, init, step, 0, Str.count_utf8_bytes(string))
-    # }
+    ## Encode one scalar as a newly allocated list of one to four UTF-8 bytes.
+    ##
+    ## The sealed input makes surrogate encoding impossible. Work and output
+    ## size are constant. The returned list owns its bytes.
+    to_utf8 : Scalar -> List(U8)
+    to_utf8 = |scalar| encode_append([], scalar)
 
-    # fold_scalars_until : Str, state, (state, U32 -> [Break(state), Continue(state)]) -> state
-    # fold_scalars_until = |string, init, step| {
-    #     fold_scalars_until_help(string, init, step, 0, Str.count_utf8_bytes(string))
-    # }
+    ## Append one scalar's UTF-8 encoding to an existing byte list, provided
+    ## the result does not exceed `max_output_bytes`.
+    ##
+    ## This is O(1) excluding a possible reallocation/copy of `bytes`. It never
+    ## emits a surrogate encoding. The caller-supplied, operation-specific
+    ## limit and all length arithmetic are checked before reserve or append;
+    ## failure leaves the caller's original list available.
+    append_utf8 : List(U8), Scalar, U64 -> Try(List(U8), [OutputLimitExceeded({ limit : U64, required : U64 })])
+    append_utf8 = |bytes, scalar, max_output_bytes| {
+        width = Scalar.utf8_len(scalar).to_u64()
+        required = match bytes.len().plus_try(width) {
+            Err(Overflow) => return Err(OutputLimitExceeded({ limit: max_output_bytes, required: U64.highest }))
+            Ok(length) => length
+        }
+
+        if required > max_output_bytes {
+            Err(OutputLimitExceeded({ limit: max_output_bytes, required }))
+        } else {
+            Ok(encode_append(bytes, scalar))
+        }
+    }
+
+    ## Encode this scalar as an independently owned `Str`.
+    ##
+    ## Work and output size are constant. The implementation creates at most
+    ## the fixed one-to-four-byte encoding and does not retain another source.
+    to_str : Scalar -> Str
+    to_str = |scalar| Str.from_utf8_lossy(Scalar.to_utf8(scalar))
+
+    ## Return this scalar's Unicode East_Asian_Width property.
+    ##
+    ## This is a scalar property, not a terminal-column or glyph-width result.
+    ## It is constant time and does not allocate.
+    east_asian_width : Scalar -> EastAsianWidth
+    east_asian_width = |scalar| {
+        match InternalEAW.east_asian_width_property(Scalar.to_u32(scalar)) {
+            F => Fullwidth
+            W => Wide
+            A => Ambiguous
+            H => Halfwidth
+            N => Neutral
+            Na => Narrow
+        }
+    }
+
+    ## Compare two scalars. This is constant time and does not allocate.
+    is_eq : Scalar, Scalar -> Bool
+    is_eq = |left, right| Scalar.to_u32(left) == Scalar.to_u32(right)
 }
 
-# private methods
-append_scalar_unsafe : Str, U32 -> Str
-append_scalar_unsafe = |_string, _scalar| {
-    crash "TODO"
+encode_append : List(U8), Scalar -> List(U8)
+encode_append = |bytes, scalar| {
+    value = Scalar.to_u32(scalar)
+
+    if value < 0x80 {
+        bytes.append(value.to_u8_wrap())
+    } else if value < 0x800 {
+        byte1 = value.shr_wrap(6).bitwise_or(0b11000000).to_u8_wrap()
+        byte2 = value.bitwise_and(0b00111111).bitwise_or(0b10000000).to_u8_wrap()
+
+        bytes.reserve(2).append(byte1).append(byte2)
+    } else if value < 0x10000 {
+        byte1 = value.shr_wrap(12).bitwise_or(0b11100000).to_u8_wrap()
+        byte2 = value.shr_wrap(6).bitwise_and(0b00111111).bitwise_or(0b10000000).to_u8_wrap()
+        byte3 = value.bitwise_and(0b00111111).bitwise_or(0b10000000).to_u8_wrap()
+
+        bytes.reserve(3).append(byte1).append(byte2).append(byte3)
+    } else {
+        byte1 = value.shr_wrap(18).bitwise_or(0b11110000).to_u8_wrap()
+        byte2 = value.shr_wrap(12).bitwise_and(0b00111111).bitwise_or(0b10000000).to_u8_wrap()
+        byte3 = value.shr_wrap(6).bitwise_and(0b00111111).bitwise_or(0b10000000).to_u8_wrap()
+        byte4 = value.bitwise_and(0b00111111).bitwise_or(0b10000000).to_u8_wrap()
+
+        bytes.reserve(4).append(byte1).append(byte2).append(byte3).append(byte4)
+    }
 }
-
-# get_scalar_unsafe : Str, U64 -> { scalar : U32, bytes_parsed : U64 }
-
-# fold_scalars_help : Str, state, (state, U32 -> state), U64, U64 -> state
-# fold_scalars_help = |string, state, step, index, length| {
-#     if index < length {
-#         { scalar, bytes_parsed } = get_scalar_unsafe(string, index)
-#         new_state = step(state, scalar)
-
-#         fold_scalars_help(string, new_state, step, (index + bytes_parsed), length)
-#     } else {
-#         state
-#     }
-# }
-
-## Folds over the unicode [U32] values for the given [Str] and calls a function
-## to update state for each.
-## ```
-## f : List(U32, U32) -> [Break(List(U32)), Continue(List(U32))]
-## f = |state, scalar| {
-##     check = 66
-##     if scalar == check
-##         Break([check])
-##     else
-##         Continue(state.append(scalar))
-## }
-## expect Str.fold_scalars_until("ABC", [], f) == [66]
-## expect Str.fold_scalars_until("AxC", [], f) == [65, 120, 67]
-## ```
-# fold_scalars_until_help : Str, state, (state, U32 -> [Break(state), Continue(state)]), U64, U64 -> state
-# fold_scalars_until_help = |string, state, step, index, length| {
-#     if index < length {
-#         { scalar, bytes_parsed } = get_scalar_unsafe(string, index)
-
-#         match step(state, scalar) {
-#             Continue(new_state) =>
-#                 fold_scalars_until_help(string, new_state, step, (index + bytes_parsed), length)
-
-#             Break(new_state) =>
-#                 new_state
-#             }
-#     } else {
-#         state
-#     }
-# }

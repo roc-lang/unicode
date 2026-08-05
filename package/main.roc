@@ -3,6 +3,8 @@ package
         ByteRange,
         CodePoint,
         Grapheme,
+        Scalar,
         UnicodeVersion,
+        Utf8,
     ]
     {}

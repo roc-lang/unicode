@@ -1,4 +1,5 @@
 import ByteRange
+import CodePoint
 import InternalGraphemeData
 import InternalUtf8
 
@@ -131,7 +132,11 @@ next_range = |state| {
                 }
             }
             One({ item, rest }) => {
-                transition = InternalGrapheme.push(machine, item.scalar, item.byte_start)
+                transition = InternalGrapheme.push(
+                    machine,
+                    CodePoint.to_u32(item.code_point),
+                    ByteRange.start(item.byte_range),
+                )
                 cursor = rest
                 machine = transition.machine
 
