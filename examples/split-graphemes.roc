@@ -4,12 +4,25 @@ app [main!] {
 }
 
 import pf.Stdout
-import pf.Stderr
-import unicode.Grapheme
+import unicode.Text
 
 default_string = "🇦🇺🦘🪃"
 
-expect Grapheme.split(default_string) == Ok(["🇦🇺", "🦘", "🪃"])
+expect Text.Grapheme.owned(default_string) == ["🇦🇺", "🦘", "🪃"]
+
+expect {
+    Text.Grapheme.ranges(default_string).map(|range| {
+        (Text.ByteRange.start(range), Text.ByteRange.end(range))
+    }) == [(0, 8), (8, 12), (12, 16)]
+}
+
+expect Text.Grapheme.slices(default_string) == ["🇦🇺", "🦘", "🪃"]
+
+expect {
+    Text.Grapheme.iter_ranges(default_string).fold([], |bounds, range| {
+        bounds.append((Text.ByteRange.start(range), Text.ByteRange.end(range)))
+    }) == [(0, 8), (8, 12), (12, 16)]
+}
 
 main! = |args| {
     string = match args {
@@ -17,15 +30,8 @@ main! = |args| {
         [_app] => default_string
         [_app, arg1, ..] => arg1
     }
-    match Grapheme.split(string) {
-        Ok(splitted) => {
-            Stdout.line!("\n\nThe string \"${string}\" has following graphemes:")?
-            Stdout.line!(Str.inspect(splitted))?
-            Ok({})
-        }
-        Err(_) => {
-            Stderr.line!("Error splitting the string.")?
-            Err(Exit(1))
-        }
-    }
+    graphemes = Text.Grapheme.owned(string)
+    Stdout.line!("\n\nThe string \"${string}\" has following graphemes:")?
+    Stdout.line!(Str.inspect(graphemes))?
+    Ok({})
 }

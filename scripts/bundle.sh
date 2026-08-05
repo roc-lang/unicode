@@ -31,6 +31,7 @@ roc_files=(
     main.roc
     CodePoint.roc
     Grapheme.roc
+    Text.roc
     InternalEAW.roc
     InternalEmoji.roc
     InternalGBP.roc
