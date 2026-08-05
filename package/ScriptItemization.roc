@@ -833,21 +833,7 @@ flush_stream_pending = |fold_state, right, byte_end, scalar_end| {
                 right,
                 policy: fold_state.cursor.policy,
             },
-            |state, unit| {
-                resolved = match unit.kind {
-                    Restricted(details) => {
-                        script = resolve_restricted(
-                            details,
-                            fold_state.cursor.left,
-                            right,
-                            fold_state.cursor.policy,
-                        )
-                        { ..unit, kind: Definite(script) }
-                    }
-                    _ => unit
-                }
-                consume_replay(state, resolved)
-            },
+            consume_replay,
         )
         final = flush_common(replayed, byte_end, scalar_end, right)
         {

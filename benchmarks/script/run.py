@@ -90,7 +90,7 @@ def build(roc: str, zig: str) -> dict[str, Path]:
         "-Doptimize=ReleaseFast",
     ])
     binaries: dict[str, Path] = {}
-    for name in ("performance", "semantic", "allocation"):
+    for name in ("performance", "semantic", "allocation", "parity"):
         source = BENCH / f"{name}.roc"
         binary = BUILD / name
         command([roc, "check", source, "--no-cache"])
@@ -195,11 +195,29 @@ def validate_semantics(binaries: dict[str, Path], target_bytes: int) -> dict[str
             )
         progress[str(length)] = output
 
+    corpus_parity: dict[str, str] = {}
+    for name, source in corpora(target_bytes).items():
+        output = run_output(binaries["parity"], source)
+        lines = output.splitlines()
+        if (
+            len(lines) != 3
+            or not lines[0].startswith("complete=")
+            or not lines[1].startswith("cursor=")
+            or lines[2] != "parity=true"
+            or lines[0][len("complete=") :] != lines[1][len("cursor=") :]
+        ):
+            raise BenchmarkFailure(
+                f"complete/cursor parity failed for {name}: {output!r}"
+            )
+        parse_signature(lines[0][len("complete=") :])
+        corpus_parity[name] = lines[0][len("complete=") :]
+
     return {
         "semantic_probe": semantic,
         "alias_allocation": alias,
         "itemization_allocations": allocations,
         "progress_signatures": progress,
+        "corpus_parity": corpus_parity,
     }
 
 
@@ -292,6 +310,7 @@ def provenance(args: argparse.Namespace, binaries: dict[str, Path]) -> dict[str,
             BENCH / "performance.roc",
             BENCH / "semantic.roc",
             BENCH / "allocation.roc",
+            BENCH / "parity.roc",
             ROOT / "tests/platform/build.zig",
         )
     }
@@ -386,7 +405,10 @@ def main() -> int:
 
     command([sys.executable, "scripts/unicode_data.py", "validate"])
     binaries = (
-        {name: BUILD / name for name in ("performance", "semantic", "allocation")}
+        {
+            name: BUILD / name
+            for name in ("performance", "semantic", "allocation", "parity")
+        }
         if args.no_build
         else build(args.roc, args.zig)
     )
