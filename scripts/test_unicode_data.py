@@ -56,7 +56,9 @@ class UnicodeDataTests(unittest.TestCase):
             root = Path(directory)
             vendor_root = root / "vendor" / "unicode"
             vendor_root.mkdir(parents=True)
-            (vendor_root / "fixture.txt").write_text(content, encoding="utf-8")
+            # This fixture validates its byte hash, so avoid platform newline
+            # translation when writing it on Windows.
+            (vendor_root / "fixture.txt").write_bytes(content.encode("utf-8"))
             for field, bad_value, message in (
                 ("sha256", "0" * 64, "SHA-256 mismatch"),
                 ("header", "# Wrong", "missing header marker"),
