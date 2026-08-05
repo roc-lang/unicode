@@ -13,9 +13,12 @@ contains = |scalar| {
     var high = bases.len()
     while low < high {
         middle = low + (high - low) / 2
-        if (bases.get(middle) ?? ...) < scalar { low = middle + 1 } else { high = middle }
+        candidate = match bases.get(middle) { Ok(value) => value, Err(_) => return Bool.False }
+        if candidate < scalar { low = middle + 1 } else { high = middle }
     }
-    low < bases.len() and (bases.get(low) ?? ...) == scalar
+    if low >= bases.len() { Bool.False } else {
+        match bases.get(low) { Ok(value) => value == scalar, Err(_) => Bool.False }
+    }
 }
 
 bases : List(U32)

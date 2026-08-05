@@ -1,15 +1,26 @@
 package
     [
         ByteRange,
+        BidiClass,
+        BidiProperties,
+        CanonicalCombiningClass,
         CodePoint,
         EastAsianWidth,
+        Emoji,
+        GeneralCategory,
         Grapheme,
+        IndicPositionalCategory,
+        IndicSyllabicCategory,
+        JoiningGroup,
+        JoiningType,
         LineBreak,
+        Property,
         Scalar,
         ScalarRange,
         TextPosition,
         TextRange,
         UnicodeVersion,
         Utf8,
+        VerticalOrientation,
     ]
     {}

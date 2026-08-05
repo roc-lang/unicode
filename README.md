@@ -30,14 +30,41 @@ to their declared package modules, and downstream imports are derived from
 those artifact declarations. The selected Unicode release is also available at
 runtime as `UnicodeVersion.current`.
 
-The canonical property substrate currently emits separate, U32-keyed paged
-views for General_Category, exact Canonical_Combining_Class values, and the
-independent Emoji binary properties. Property and value aliases retain stable
-Unicode identities through allocation-free short/long and count/index
-accessors; compact generated ordinals remain private table details.
+The public property layer exposes typed, scalar-only queries for
+`General_Category`, exact `Canonical_Combining_Class`, `Bidi_Class`, the bidi
+mirror/bracket facts, `Joining_Type`, `Joining_Group`, the Indic syllabic and
+positional categories, default-ignorable and variation-selector flags,
+`Vertical_Orientation`, and the six independent Emoji properties. Valid
+VS15/VS16 presentation requests are an optional pair lookup rather than an
+invented value for every base. These are immutable Unicode character facts;
+they do not implement UAX #9 paragraph analysis, choose glyphs, or perform
+font-specific shaping.
+
+Each enumerated module exposes the official short and long Unicode aliases,
+allocation-free alias enumeration, and loose ASCII alias parsing. Exact
+combining classes remain opaque numeric `U8` values, including values without
+well-known names. Property-specific scalar lookups use independent narrow
+paged views. `Property.of_scalar` uses a separate, measured fused row index
+when a consumer genuinely needs several facts. Its sealed `Property.Row`
+retains only the scalar and one private row ID; typed accessors load their
+columns lazily, and sparse bidi mappings are looked up only when requested.
+Querying one property directly does not construct a row or require the
+composite table.
+`Property.fold` and `Property.iter` decode a complete valid `Str` once and
+retain original half-open coordinates. Property modules also expose typed
+`fold_runs` and `iter_runs` operations for maximal adjacent `TextRange` runs;
+they do not materialize per-scalar substrings or an intermediate list.
+
+Generated scalar ordinals, row IDs, and bit positions remain private.
+The direct views and the composite-only fused index have independent checked
+static-size budgets in the manifest. The Unicode 17 composite contains 615
+rows: its U16 page index is 93,184 bytes, its eleven packed U8 columns are
+6,765 bytes, and its total logical payload is bounded at 99,949 bytes.
 Property-specific defaults are parsed as
 ordered ranges and checked before explicit records take precedence, including
-all six Emoji defaults and East_Asian_Width's five wide unassigned ranges.
+all six Emoji defaults, East_Asian_Width's five wide unassigned ranges, the 24
+ordered Bidi_Class defaults, Joining_Type's transparent derivation, and
+Vertical_Orientation's explicit upright unassigned ranges.
 Algorithm-specific fused views, such as grapheme data, remain separate from
 these canonical facts. Deduplicated page layouts are chosen deterministically;
 the manifest records and enforces their page width, checked index type, logical

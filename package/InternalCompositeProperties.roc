@@ -3,39 +3,64 @@
 ## layout: 8704 U16 ids + 296 x 128 U16 row ids (93184 bytes), 615 rows x 11 U8 columns (6765 bytes), total 99949 bytes. ##
 
 InternalCompositeProperties :: [].{
-    Row : {
-        general_category : U8,
-        canonical_combining_class : U8,
-        east_asian_width : U8,
-        emoji : U8,
-        bidi : U8,
-        joining_type : U8,
-        joining_group : U8,
-        indic_syllabic_category : U8,
-        indic_positional_category : U8,
-        vertical_orientation : U8,
-        flags : U8,
-    }
+    GeneralCategory : [Cc, Cf, Cn, Co, Cs, Ll, Lm, Lo, Lt, Lu, Mc, Me, Mn, Nd, Nl, No, Pc, Pd, Pe, Pf, Pi, Po, Ps, Sc, Sk, Sm, So, Zl, Zp, Zs]
+    EastAsianWidth : [A, F, H, N, Na, W]
+    BidiClass : [L, AL, AN, B, BN, CS, EN, ES, ET, FSI, LRE, LRI, LRO, NSM, ON, PDF, PDI, R, RLE, RLI, RLO, S, WS]
+    JoiningType : [U, C, D, L, R, T]
+    JoiningGroup : [No_Joining_Group, African_Feh, African_Noon, African_Qaf, Ain, Alaph, Alef, Beh, Beth, Burushaski_Yeh_Barree, Dal, Dalath_Rish, E, Farsi_Yeh, Fe, Feh, Final_Semkath, Gaf, Gamal, Hah, Hanifi_Rohingya_Kinna_Ya, Hanifi_Rohingya_Pa, He, Heh, Heh_Goal, Heth, Kaf, Kaph, Kashmiri_Yeh, Khaph, Knotted_Heh, Lam, Lamadh, Malayalam_Bha, Malayalam_Ja, Malayalam_Lla, Malayalam_Llla, Malayalam_Nga, Malayalam_Nna, Malayalam_Nnna, Malayalam_Nya, Malayalam_Ra, Malayalam_Ssa, Malayalam_Tta, Manichaean_Aleph, Manichaean_Ayin, Manichaean_Beth, Manichaean_Daleth, Manichaean_Dhamedh, Manichaean_Five, Manichaean_Gimel, Manichaean_Heth, Manichaean_Hundred, Manichaean_Kaph, Manichaean_Lamedh, Manichaean_Mem, Manichaean_Nun, Manichaean_One, Manichaean_Pe, Manichaean_Qoph, Manichaean_Resh, Manichaean_Sadhe, Manichaean_Samekh, Manichaean_Taw, Manichaean_Ten, Manichaean_Teth, Manichaean_Thamedh, Manichaean_Twenty, Manichaean_Waw, Manichaean_Yodh, Manichaean_Zayin, Meem, Mim, Noon, Nun, Nya, Pe, Qaf, Qaph, Reh, Reversed_Pe, Rohingya_Yeh, Sad, Sadhe, Seen, Semkath, Shin, Straight_Waw, Swash_Kaf, Syriac_Waw, Tah, Taw, Teh_Marbuta, Teh_Marbuta_Goal, Teth, Thin_Noon, Thin_Yeh, Vertical_Tail, Waw, Yeh, Yeh_Barree, Yeh_With_Tail, Yudh, Yudh_He, Zain, Zhain]
+    IndicSyllabicCategory : [Other, Avagraha, Bindu, Brahmi_Joining_Number, Cantillation_Mark, Consonant, Consonant_Dead, Consonant_Final, Consonant_Head_Letter, Consonant_Initial_Postfixed, Consonant_Killer, Consonant_Medial, Consonant_Placeholder, Consonant_Preceding_Repha, Consonant_Prefixed, Consonant_Subjoined, Consonant_Succeeding_Repha, Consonant_With_Stacker, Gemination_Mark, Invisible_Stacker, Joiner, Modifying_Letter, Non_Joiner, Nukta, Number, Number_Joiner, Pure_Killer, Register_Shifter, Reordering_Killer, Syllable_Modifier, Tone_Letter, Tone_Mark, Virama, Visarga, Vowel, Vowel_Dependent, Vowel_Independent]
+    IndicPositionalCategory : [NA, Bottom, Bottom_And_Left, Bottom_And_Right, Left, Left_And_Right, Overstruck, Right, Top, Top_And_Bottom, Top_And_Bottom_And_Left, Top_And_Bottom_And_Right, Top_And_Left, Top_And_Left_And_Right, Top_And_Right, Visual_Order_Left]
+    VerticalOrientation : [R, Tr, Tu, U]
+    EmojiProperties : { emoji : Bool, emoji_presentation : Bool, emoji_modifier : Bool, emoji_modifier_base : Bool, emoji_component : Bool, extended_pictographic : Bool }
+    RowId : U16
 
-    lookup : U32 -> Row
-    lookup = |scalar| {
+    ## Resolve the dense composite row once. Individual columns remain
+    ## lazy so callers do not materialize properties they never inspect.
+    lookup_id : U32 -> RowId
+    lookup_id = |scalar| {
         bounded = if scalar <= 0x10FFFF scalar else 0
         page_id = page_index.get(bounded.shr_wrap(7).to_u64()) ?? 0
-        row_id = row_ids.get(page_id.to_u64() * 128 + bounded.bitwise_and(127).to_u64()) ?? 0
-        {
-            general_category: general_category_rows.get(row_id) ?? 0,
-            canonical_combining_class: canonical_combining_class_rows.get(row_id) ?? 0,
-            east_asian_width: east_asian_width_rows.get(row_id) ?? 0,
-            emoji: emoji_rows.get(row_id) ?? 0,
-            bidi: bidi_rows.get(row_id) ?? 0,
-            joining_type: joining_type_rows.get(row_id) ?? 0,
-            joining_group: joining_group_rows.get(row_id) ?? 0,
-            indic_syllabic_category: indic_syllabic_category_rows.get(row_id) ?? 0,
-            indic_positional_category: indic_positional_category_rows.get(row_id) ?? 0,
-            vertical_orientation: vertical_orientation_rows.get(row_id) ?? 0,
-            flags: flags_rows.get(row_id) ?? 0,
-        }
+        row_ids.get(page_id.to_u64() * 128 + bounded.bitwise_and(127).to_u64()) ?? 0
     }
+
+    general_category : RowId -> GeneralCategory
+    general_category = |row_id| general_category_from_u8(general_category_rows.get(row_id.to_u64()) ?? 0)
+
+    canonical_combining_class : RowId -> U8
+    canonical_combining_class = |row_id| canonical_combining_class_rows.get(row_id.to_u64()) ?? 0
+
+    east_asian_width : RowId -> EastAsianWidth
+    east_asian_width = |row_id| east_asian_width_from_u8(east_asian_width_rows.get(row_id.to_u64()) ?? 0)
+
+    emoji : RowId -> EmojiProperties
+    emoji = |row_id| emoji_from_u8(emoji_rows.get(row_id.to_u64()) ?? 0)
+
+    bidi_class : RowId -> BidiClass
+    bidi_class = |row_id| bidi_class_from_u8((bidi_rows.get(row_id.to_u64()) ?? 0).bitwise_and(0x1F))
+
+    bidi_mirrored : RowId -> Bool
+    bidi_mirrored = |row_id| (bidi_rows.get(row_id.to_u64()) ?? 0).bitwise_and(0x20) != 0
+
+    joining_type : RowId -> JoiningType
+    joining_type = |row_id| joining_type_from_u8(joining_type_rows.get(row_id.to_u64()) ?? 0)
+
+    joining_group : RowId -> JoiningGroup
+    joining_group = |row_id| joining_group_from_u8(joining_group_rows.get(row_id.to_u64()) ?? 0)
+
+    indic_syllabic_category : RowId -> IndicSyllabicCategory
+    indic_syllabic_category = |row_id| indic_syllabic_category_from_u8(indic_syllabic_category_rows.get(row_id.to_u64()) ?? 0)
+
+    indic_positional_category : RowId -> IndicPositionalCategory
+    indic_positional_category = |row_id| indic_positional_category_from_u8(indic_positional_category_rows.get(row_id.to_u64()) ?? 0)
+
+    vertical_orientation : RowId -> VerticalOrientation
+    vertical_orientation = |row_id| vertical_orientation_from_u8(vertical_orientation_rows.get(row_id.to_u64()) ?? 0)
+
+    default_ignorable : RowId -> Bool
+    default_ignorable = |row_id| (flags_rows.get(row_id.to_u64()) ?? 0).bitwise_and(1) != 0
+
+    variation_selector : RowId -> Bool
+    variation_selector = |row_id| (flags_rows.get(row_id.to_u64()) ?? 0).bitwise_and(2) != 0
 }
 
 page_index : List(U16)
@@ -1501,6 +1526,300 @@ row_ids = [
     444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444,
     444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 444, 448, 448,
 ]
+
+emoji_from_u8 : U8 -> InternalCompositeProperties.EmojiProperties
+emoji_from_u8 = |value| {
+    emoji: value.bitwise_and(1) != 0,
+    emoji_presentation: value.bitwise_and(2) != 0,
+    emoji_modifier: value.bitwise_and(4) != 0,
+    emoji_modifier_base: value.bitwise_and(8) != 0,
+    emoji_component: value.bitwise_and(16) != 0,
+    extended_pictographic: value.bitwise_and(32) != 0,
+}
+
+general_category_from_u8 : U8 -> InternalCompositeProperties.GeneralCategory
+general_category_from_u8 = |value| {
+    match value {
+        0 => Cc
+        1 => Cf
+        2 => Cn
+        3 => Co
+        4 => Cs
+        5 => Ll
+        6 => Lm
+        7 => Lo
+        8 => Lt
+        9 => Lu
+        10 => Mc
+        11 => Me
+        12 => Mn
+        13 => Nd
+        14 => Nl
+        15 => No
+        16 => Pc
+        17 => Pd
+        18 => Pe
+        19 => Pf
+        20 => Pi
+        21 => Po
+        22 => Ps
+        23 => Sc
+        24 => Sk
+        25 => Sm
+        26 => So
+        27 => Zl
+        28 => Zp
+        29 => Zs
+        _ => Cc
+    }
+}
+
+east_asian_width_from_u8 : U8 -> InternalCompositeProperties.EastAsianWidth
+east_asian_width_from_u8 = |value| {
+    match value {
+        0 => A
+        1 => F
+        2 => H
+        3 => N
+        4 => Na
+        5 => W
+        _ => A
+    }
+}
+
+bidi_class_from_u8 : U8 -> InternalCompositeProperties.BidiClass
+bidi_class_from_u8 = |value| {
+    match value {
+        0 => L
+        1 => AL
+        2 => AN
+        3 => B
+        4 => BN
+        5 => CS
+        6 => EN
+        7 => ES
+        8 => ET
+        9 => FSI
+        10 => LRE
+        11 => LRI
+        12 => LRO
+        13 => NSM
+        14 => ON
+        15 => PDF
+        16 => PDI
+        17 => R
+        18 => RLE
+        19 => RLI
+        20 => RLO
+        21 => S
+        22 => WS
+        _ => L
+    }
+}
+
+joining_type_from_u8 : U8 -> InternalCompositeProperties.JoiningType
+joining_type_from_u8 = |value| {
+    match value {
+        0 => U
+        1 => C
+        2 => D
+        3 => L
+        4 => R
+        5 => T
+        _ => U
+    }
+}
+
+joining_group_from_u8 : U8 -> InternalCompositeProperties.JoiningGroup
+joining_group_from_u8 = |value| {
+    match value {
+        0 => No_Joining_Group
+        1 => African_Feh
+        2 => African_Noon
+        3 => African_Qaf
+        4 => Ain
+        5 => Alaph
+        6 => Alef
+        7 => Beh
+        8 => Beth
+        9 => Burushaski_Yeh_Barree
+        10 => Dal
+        11 => Dalath_Rish
+        12 => E
+        13 => Farsi_Yeh
+        14 => Fe
+        15 => Feh
+        16 => Final_Semkath
+        17 => Gaf
+        18 => Gamal
+        19 => Hah
+        20 => Hanifi_Rohingya_Kinna_Ya
+        21 => Hanifi_Rohingya_Pa
+        22 => He
+        23 => Heh
+        24 => Heh_Goal
+        25 => Heth
+        26 => Kaf
+        27 => Kaph
+        28 => Kashmiri_Yeh
+        29 => Khaph
+        30 => Knotted_Heh
+        31 => Lam
+        32 => Lamadh
+        33 => Malayalam_Bha
+        34 => Malayalam_Ja
+        35 => Malayalam_Lla
+        36 => Malayalam_Llla
+        37 => Malayalam_Nga
+        38 => Malayalam_Nna
+        39 => Malayalam_Nnna
+        40 => Malayalam_Nya
+        41 => Malayalam_Ra
+        42 => Malayalam_Ssa
+        43 => Malayalam_Tta
+        44 => Manichaean_Aleph
+        45 => Manichaean_Ayin
+        46 => Manichaean_Beth
+        47 => Manichaean_Daleth
+        48 => Manichaean_Dhamedh
+        49 => Manichaean_Five
+        50 => Manichaean_Gimel
+        51 => Manichaean_Heth
+        52 => Manichaean_Hundred
+        53 => Manichaean_Kaph
+        54 => Manichaean_Lamedh
+        55 => Manichaean_Mem
+        56 => Manichaean_Nun
+        57 => Manichaean_One
+        58 => Manichaean_Pe
+        59 => Manichaean_Qoph
+        60 => Manichaean_Resh
+        61 => Manichaean_Sadhe
+        62 => Manichaean_Samekh
+        63 => Manichaean_Taw
+        64 => Manichaean_Ten
+        65 => Manichaean_Teth
+        66 => Manichaean_Thamedh
+        67 => Manichaean_Twenty
+        68 => Manichaean_Waw
+        69 => Manichaean_Yodh
+        70 => Manichaean_Zayin
+        71 => Meem
+        72 => Mim
+        73 => Noon
+        74 => Nun
+        75 => Nya
+        76 => Pe
+        77 => Qaf
+        78 => Qaph
+        79 => Reh
+        80 => Reversed_Pe
+        81 => Rohingya_Yeh
+        82 => Sad
+        83 => Sadhe
+        84 => Seen
+        85 => Semkath
+        86 => Shin
+        87 => Straight_Waw
+        88 => Swash_Kaf
+        89 => Syriac_Waw
+        90 => Tah
+        91 => Taw
+        92 => Teh_Marbuta
+        93 => Teh_Marbuta_Goal
+        94 => Teth
+        95 => Thin_Noon
+        96 => Thin_Yeh
+        97 => Vertical_Tail
+        98 => Waw
+        99 => Yeh
+        100 => Yeh_Barree
+        101 => Yeh_With_Tail
+        102 => Yudh
+        103 => Yudh_He
+        104 => Zain
+        105 => Zhain
+        _ => No_Joining_Group
+    }
+}
+
+indic_syllabic_category_from_u8 : U8 -> InternalCompositeProperties.IndicSyllabicCategory
+indic_syllabic_category_from_u8 = |value| {
+    match value {
+        0 => Other
+        1 => Avagraha
+        2 => Bindu
+        3 => Brahmi_Joining_Number
+        4 => Cantillation_Mark
+        5 => Consonant
+        6 => Consonant_Dead
+        7 => Consonant_Final
+        8 => Consonant_Head_Letter
+        9 => Consonant_Initial_Postfixed
+        10 => Consonant_Killer
+        11 => Consonant_Medial
+        12 => Consonant_Placeholder
+        13 => Consonant_Preceding_Repha
+        14 => Consonant_Prefixed
+        15 => Consonant_Subjoined
+        16 => Consonant_Succeeding_Repha
+        17 => Consonant_With_Stacker
+        18 => Gemination_Mark
+        19 => Invisible_Stacker
+        20 => Joiner
+        21 => Modifying_Letter
+        22 => Non_Joiner
+        23 => Nukta
+        24 => Number
+        25 => Number_Joiner
+        26 => Pure_Killer
+        27 => Register_Shifter
+        28 => Reordering_Killer
+        29 => Syllable_Modifier
+        30 => Tone_Letter
+        31 => Tone_Mark
+        32 => Virama
+        33 => Visarga
+        34 => Vowel
+        35 => Vowel_Dependent
+        36 => Vowel_Independent
+        _ => Other
+    }
+}
+
+indic_positional_category_from_u8 : U8 -> InternalCompositeProperties.IndicPositionalCategory
+indic_positional_category_from_u8 = |value| {
+    match value {
+        0 => NA
+        1 => Bottom
+        2 => Bottom_And_Left
+        3 => Bottom_And_Right
+        4 => Left
+        5 => Left_And_Right
+        6 => Overstruck
+        7 => Right
+        8 => Top
+        9 => Top_And_Bottom
+        10 => Top_And_Bottom_And_Left
+        11 => Top_And_Bottom_And_Right
+        12 => Top_And_Left
+        13 => Top_And_Left_And_Right
+        14 => Top_And_Right
+        15 => Visual_Order_Left
+        _ => NA
+    }
+}
+
+vertical_orientation_from_u8 : U8 -> InternalCompositeProperties.VerticalOrientation
+vertical_orientation_from_u8 = |value| {
+    match value {
+        0 => R
+        1 => Tr
+        2 => Tu
+        3 => U
+        _ => R
+    }
+}
 
 general_category_rows : List(U8)
 general_category_rows = [

@@ -70,9 +70,10 @@ mirroring_glyph_targets = [
         match lookup_index(scalar, bracket_sources) {
             None => None
             Some(index) => {
-                target = bracket_targets.get(index) ?? ...
-                kind = if (bracket_kinds.get(index) ?? 0) == 1 Open else Close
-                Some({ scalar: target, kind })
+                match (bracket_targets.get(index), bracket_kinds.get(index)) {
+                    (Ok(target), Ok(kind_id)) => Some({ scalar: target, kind: if kind_id == 1 Open else Close })
+                    _ => None
+                }
             }
         }
     }
@@ -255,10 +256,10 @@ ascii_value : U32 -> U8
 ascii_value = |u32| if u32 == 10 or u32 == 13 or (u32 >= 28 and u32 <= 30) (3) else if (u32 >= 0 and u32 <= 8) or (u32 >= 14 and u32 <= 27) or u32 == 127 (4) else if u32 == 44 or (u32 >= 46 and u32 <= 47) or u32 == 58 (5) else if (u32 >= 48 and u32 <= 57) (6) else if u32 == 43 or u32 == 45 (7) else if (u32 >= 35 and u32 <= 37) (8) else if (u32 >= 33 and u32 <= 34) or (u32 >= 38 and u32 <= 39) or u32 == 42 or u32 == 59 or u32 == 61 or (u32 >= 63 and u32 <= 64) or u32 == 92 or (u32 >= 94 and u32 <= 96) or u32 == 124 or u32 == 126 (14) else if u32 == 9 or u32 == 11 or u32 == 31 (21) else if u32 == 12 or u32 == 32 (22) else if (u32 >= 40 and u32 <= 41) or u32 == 60 or u32 == 62 or u32 == 91 or u32 == 93 or u32 == 123 or u32 == 125 (46) else 0
 
 lookup_mapping : U32, List(U32), List(U32) -> [Some(U32), None]
-lookup_mapping = |scalar, sources, targets| {
+lookup_mapping = |scalar, sources, mapping_targets| {
     match lookup_index(scalar, sources) {
         None => None
-        Some(index) => Some(targets.get(index) ?? ...)
+        Some(index) => match mapping_targets.get(index) { Ok(target) => Some(target), Err(_) => None }
     }
 }
 
@@ -268,9 +269,12 @@ lookup_index = |scalar, sources| {
     var high = sources.len()
     while low < high {
         middle = low + (high - low) / 2
-        if (sources.get(middle) ?? ...) < scalar { low = middle + 1 } else { high = middle }
+        candidate = match sources.get(middle) { Ok(value) => value, Err(_) => return None }
+        if candidate < scalar { low = middle + 1 } else { high = middle }
     }
-    if low < sources.len() and (sources.get(low) ?? ...) == scalar Some(low) else None
+    if low >= sources.len() { None } else {
+        match sources.get(low) { Ok(value) if value == scalar => Some(low), _ => None }
+    }
 }
 
 page_index : List(U8)

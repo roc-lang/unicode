@@ -73,14 +73,25 @@ LINE_BREAK_PROPERTIES = (
 )
 PUBLIC_ALIAS_PROPERTIES = (
     "Bidi_Class",
+    "Bidi_Mirrored",
+    "Bidi_Mirroring_Glyph",
+    "Bidi_Paired_Bracket",
     "Bidi_Paired_Bracket_Type",
     "Canonical_Combining_Class",
+    "Default_Ignorable_Code_Point",
     "East_Asian_Width",
+    "Emoji",
+    "Emoji_Component",
+    "Emoji_Modifier",
+    "Emoji_Modifier_Base",
+    "Emoji_Presentation",
+    "Extended_Pictographic",
     "General_Category",
     "Indic_Positional_Category",
     "Indic_Syllabic_Category",
     "Joining_Group",
     "Joining_Type",
+    "Variation_Selector",
     "Vertical_Orientation",
 )
 FORMAL_PROPERTY_ALIASES = {
@@ -3062,6 +3073,7 @@ def render_enum_property(
     paged = _selected_paged_bytes(encoded, manifest=manifest, generator=generator)
     page_size = 1 << paged.page_bits
     ascii_expression = _ascii_value_expression(encoded, default=0)
+    ascii_parameter = "u32" if "u32" in ascii_expression else "_u32"
     from_matches = "\n".join(
         f"        {index} => {identity}" for index, identity in enumerate(identities)
     )
@@ -3109,7 +3121,7 @@ def render_enum_property(
         "    }\n"
         "}\n\n"
         "ascii_value : U32 -> U8\n"
-        f"ascii_value = |u32| {ascii_expression}\n\n"
+        f"ascii_value = |{ascii_parameter}| {ascii_expression}\n\n"
         f"page_index : List({paged.index_type})\n"
         f"page_index = {_roc_list(paged.page_index)}\n\n"
         "pages : List(U8)\n"
@@ -3181,9 +3193,10 @@ def render_bidi_properties(
         "        match lookup_index(scalar, bracket_sources) {\n"
         "            None => None\n"
         "            Some(index) => {\n"
-        "                target = bracket_targets.get(index) ?? ...\n"
-        "                kind = if (bracket_kinds.get(index) ?? 0) == 1 Open else Close\n"
-        "                Some({ scalar: target, kind })\n"
+        "                match (bracket_targets.get(index), bracket_kinds.get(index)) {\n"
+        "                    (Ok(target), Ok(kind_id)) => Some({ scalar: target, kind: if kind_id == 1 Open else Close })\n"
+        "                    _ => None\n"
+        "                }\n"
         "            }\n"
         "        }\n"
         "    }\n\n"
@@ -3194,10 +3207,10 @@ def render_bidi_properties(
         "ascii_value : U32 -> U8\n"
         f"ascii_value = |u32| {ascii_expression}\n\n"
         "lookup_mapping : U32, List(U32), List(U32) -> [Some(U32), None]\n"
-        "lookup_mapping = |scalar, sources, targets| {\n"
+        "lookup_mapping = |scalar, sources, mapping_targets| {\n"
         "    match lookup_index(scalar, sources) {\n"
         "        None => None\n"
-        "        Some(index) => Some(targets.get(index) ?? ...)\n"
+        "        Some(index) => match mapping_targets.get(index) { Ok(target) => Some(target), Err(_) => None }\n"
         "    }\n"
         "}\n\n"
         "lookup_index : U32, List(U32) -> [Some(U64), None]\n"
@@ -3205,9 +3218,12 @@ def render_bidi_properties(
         "    var low = 0.U64\n    var high = sources.len()\n"
         "    while low < high {\n"
         "        middle = low + (high - low) / 2\n"
-        "        if (sources.get(middle) ?? ...) < scalar { low = middle + 1 } else { high = middle }\n"
+        "        candidate = match sources.get(middle) { Ok(value) => value, Err(_) => return None }\n"
+        "        if candidate < scalar { low = middle + 1 } else { high = middle }\n"
         "    }\n"
-        "    if low < sources.len() and (sources.get(low) ?? ...) == scalar Some(low) else None\n"
+        "    if low >= sources.len() { None } else {\n"
+        "        match sources.get(low) { Ok(value) if value == scalar => Some(low), _ => None }\n"
+        "    }\n"
         "}\n\n"
         f"page_index : List({paged.index_type})\npage_index = {_roc_list(paged.page_index)}\n\n"
         f"pages : List(U8)\npages = {_roc_list(paged.flat_pages)}\n\n"
@@ -3258,9 +3274,12 @@ def render_emoji_variations(version: str, bases: tuple[int, ...]) -> str:
         "    var low = 0.U64\n    var high = bases.len()\n"
         "    while low < high {\n"
         "        middle = low + (high - low) / 2\n"
-        "        if (bases.get(middle) ?? ...) < scalar { low = middle + 1 } else { high = middle }\n"
+        "        candidate = match bases.get(middle) { Ok(value) => value, Err(_) => return Bool.False }\n"
+        "        if candidate < scalar { low = middle + 1 } else { high = middle }\n"
         "    }\n"
-        "    low < bases.len() and (bases.get(low) ?? ...) == scalar\n}\n\n"
+        "    if low >= bases.len() { Bool.False } else {\n"
+        "        match bases.get(low) { Ok(value) => value == scalar, Err(_) => Bool.False }\n"
+        "    }\n}\n\n"
         f"bases : List(U32)\nbases = {_roc_list(bases)}\n"
     )
 
@@ -3369,7 +3388,7 @@ def render_composite_properties(
     algorithm: AlgorithmProperties,
     public: PublicProperties,
 ) -> str:
-    scalar_columns, _ = _canonical_scalar_columns(canonical, algorithm, public)
+    scalar_columns, identities = _canonical_scalar_columns(canonical, algorithm, public)
     names = tuple(scalar_columns)
     row_ids: list[int] = []
     row_by_values: dict[tuple[int, ...], int] = {}
@@ -3396,13 +3415,31 @@ def render_composite_properties(
         )
     page_size = 1 << paged.page_bits
     column_lists = {name: tuple(row[index] for row in rows) for index, name in enumerate(names)}
-    fields = "\n".join(f"        {name} : U8," for name in names)
-    assignments = "\n".join(
-        f"            {name}: {name}_rows.get(row_id) ?? 0," for name in names
-    )
     rendered_columns = "\n\n".join(
         f"{name}_rows : List(U8)\n{name}_rows = {_roc_list(values)}"
         for name, values in column_lists.items()
+    )
+    def conversion(name: str, type_name: str) -> str:
+        values = identities[name]
+        matches = "\n".join(
+            f"        {index} => {identity}" for index, identity in enumerate(values)
+        )
+        return (
+            f"{name}_from_u8 : U8 -> InternalCompositeProperties.{type_name}\n"
+            f"{name}_from_u8 = |value| {{\n    match value {{\n{matches}\n        _ => {values[0]}\n    }}\n}}"
+        )
+
+    conversions = "\n\n".join(
+        (
+            conversion("general_category", "GeneralCategory"),
+            conversion("east_asian_width", "EastAsianWidth"),
+            conversion("bidi", "BidiClass").replace("bidi_from_u8", "bidi_class_from_u8"),
+            conversion("joining_type", "JoiningType"),
+            conversion("joining_group", "JoiningGroup"),
+            conversion("indic_syllabic_category", "IndicSyllabicCategory"),
+            conversion("indic_positional_category", "IndicPositionalCategory"),
+            conversion("vertical_orientation", "VerticalOrientation"),
+        )
     )
     return (
         f"## GENERATED from Unicode {version}. Composite-only fused scalar view. ##\n"
@@ -3411,20 +3448,63 @@ def render_composite_properties(
         f"({paged.storage_bytes} bytes), {len(rows)} rows x {len(names)} U8 columns ({column_bytes} bytes), "
         f"total {paged.storage_bytes + column_bytes} bytes. ##\n\n"
         "InternalCompositeProperties :: [].{\n"
-        "    Row : {\n"
-        f"{fields}\n"
-        "    }\n\n"
-        "    lookup : U32 -> Row\n"
-        "    lookup = |scalar| {\n"
+        f"    GeneralCategory : [{', '.join(identities['general_category'])}]\n"
+        f"    EastAsianWidth : [{', '.join(identities['east_asian_width'])}]\n"
+        f"    BidiClass : [{', '.join(identities['bidi'])}]\n"
+        f"    JoiningType : [{', '.join(identities['joining_type'])}]\n"
+        f"    JoiningGroup : [{', '.join(identities['joining_group'])}]\n"
+        f"    IndicSyllabicCategory : [{', '.join(identities['indic_syllabic_category'])}]\n"
+        f"    IndicPositionalCategory : [{', '.join(identities['indic_positional_category'])}]\n"
+        f"    VerticalOrientation : [{', '.join(identities['vertical_orientation'])}]\n"
+        "    EmojiProperties : { emoji : Bool, emoji_presentation : Bool, emoji_modifier : Bool, emoji_modifier_base : Bool, emoji_component : Bool, extended_pictographic : Bool }\n"
+        "    RowId : U16\n\n"
+        "    ## Resolve the dense composite row once. Individual columns remain\n"
+        "    ## lazy so callers do not materialize properties they never inspect.\n"
+        "    lookup_id : U32 -> RowId\n"
+        "    lookup_id = |scalar| {\n"
         "        bounded = if scalar <= 0x10FFFF scalar else 0\n"
         f"        page_id = page_index.get(bounded.shr_wrap({paged.page_bits}).to_u64()) ?? 0\n"
-        f"        row_id = row_ids.get(page_id.to_u64() * {page_size} + bounded.bitwise_and({page_size - 1}).to_u64()) ?? 0\n"
-        "        {\n"
-        f"{assignments}\n"
-        "        }\n"
-        "    }\n}\n\n"
+        f"        row_ids.get(page_id.to_u64() * {page_size} + bounded.bitwise_and({page_size - 1}).to_u64()) ?? 0\n"
+        "    }\n\n"
+        "    general_category : RowId -> GeneralCategory\n"
+        "    general_category = |row_id| general_category_from_u8(general_category_rows.get(row_id.to_u64()) ?? 0)\n\n"
+        "    canonical_combining_class : RowId -> U8\n"
+        "    canonical_combining_class = |row_id| canonical_combining_class_rows.get(row_id.to_u64()) ?? 0\n\n"
+        "    east_asian_width : RowId -> EastAsianWidth\n"
+        "    east_asian_width = |row_id| east_asian_width_from_u8(east_asian_width_rows.get(row_id.to_u64()) ?? 0)\n\n"
+        "    emoji : RowId -> EmojiProperties\n"
+        "    emoji = |row_id| emoji_from_u8(emoji_rows.get(row_id.to_u64()) ?? 0)\n\n"
+        "    bidi_class : RowId -> BidiClass\n"
+        "    bidi_class = |row_id| bidi_class_from_u8((bidi_rows.get(row_id.to_u64()) ?? 0).bitwise_and(0x1F))\n\n"
+        "    bidi_mirrored : RowId -> Bool\n"
+        "    bidi_mirrored = |row_id| (bidi_rows.get(row_id.to_u64()) ?? 0).bitwise_and(0x20) != 0\n\n"
+        "    joining_type : RowId -> JoiningType\n"
+        "    joining_type = |row_id| joining_type_from_u8(joining_type_rows.get(row_id.to_u64()) ?? 0)\n\n"
+        "    joining_group : RowId -> JoiningGroup\n"
+        "    joining_group = |row_id| joining_group_from_u8(joining_group_rows.get(row_id.to_u64()) ?? 0)\n\n"
+        "    indic_syllabic_category : RowId -> IndicSyllabicCategory\n"
+        "    indic_syllabic_category = |row_id| indic_syllabic_category_from_u8(indic_syllabic_category_rows.get(row_id.to_u64()) ?? 0)\n\n"
+        "    indic_positional_category : RowId -> IndicPositionalCategory\n"
+        "    indic_positional_category = |row_id| indic_positional_category_from_u8(indic_positional_category_rows.get(row_id.to_u64()) ?? 0)\n\n"
+        "    vertical_orientation : RowId -> VerticalOrientation\n"
+        "    vertical_orientation = |row_id| vertical_orientation_from_u8(vertical_orientation_rows.get(row_id.to_u64()) ?? 0)\n\n"
+        "    default_ignorable : RowId -> Bool\n"
+        "    default_ignorable = |row_id| (flags_rows.get(row_id.to_u64()) ?? 0).bitwise_and(1) != 0\n\n"
+        "    variation_selector : RowId -> Bool\n"
+        "    variation_selector = |row_id| (flags_rows.get(row_id.to_u64()) ?? 0).bitwise_and(2) != 0\n"
+        "}\n\n"
         f"page_index : List({paged.index_type})\npage_index = {_roc_list(paged.page_index)}\n\n"
         f"row_ids : List(U16)\nrow_ids = {_roc_list(paged.flat_pages)}\n\n"
+        "emoji_from_u8 : U8 -> InternalCompositeProperties.EmojiProperties\n"
+        "emoji_from_u8 = |value| {\n"
+        "    emoji: value.bitwise_and(1) != 0,\n"
+        "    emoji_presentation: value.bitwise_and(2) != 0,\n"
+        "    emoji_modifier: value.bitwise_and(4) != 0,\n"
+        "    emoji_modifier_base: value.bitwise_and(8) != 0,\n"
+        "    emoji_component: value.bitwise_and(16) != 0,\n"
+        "    extended_pictographic: value.bitwise_and(32) != 0,\n"
+        "}\n\n"
+        f"{conversions}\n\n"
         f"{rendered_columns}\n"
     )
 

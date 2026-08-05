@@ -706,7 +706,7 @@ to_u8 = |value| {
 }
 
 ascii_value : U32 -> U8
-ascii_value = |u32| 0
+ascii_value = |_u32| 0
 
 page_index : List(U8)
 page_index = [

@@ -36,7 +36,9 @@ next_significant = |initial| {
     while Bool.True {
         match Iter.next(iterator) {
             Done => return End
-            Skip({ rest }) => iterator = rest
+            Skip({ rest }) => {
+                iterator = rest
+            }
             One({ item, rest }) => {
                 iterator = rest
                 if item != 0x20 and item != 0x2D and item != 0x5F {

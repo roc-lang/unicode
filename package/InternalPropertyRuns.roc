@@ -1,18 +1,17 @@
 import InternalUtf8
+import TextPosition
+import TextRange
 
 ## Shared allocation-free scanner for maximal adjacent runs of one typed
-## scalar property. Coordinates are raw here; public modules seal them in
-## `TextRange`.
+## scalar property. Every emitted run carries the package's sealed
+## `TextRange` coordinate pair.
 InternalPropertyRuns :: [].{
-    RawRun value : {
-        byte_start : U64,
-        byte_end : U64,
-        scalar_start : U64,
-        scalar_end : U64,
+    Run(value) : {
+        range : TextRange,
         value : value,
     }
 
-    fold : Str, state, (U32 -> value), (value, value -> Bool), (state, RawRun(value) -> state) -> state
+    fold : Str, state, (U32 -> value), (value, value -> Bool), (state, Run(value) -> state) -> state
     fold = |source, initial, lookup, is_eq, emit| {
         scanned = InternalUtf8.fold_scalars(
             source,
@@ -33,7 +32,7 @@ InternalPropertyRuns :: [].{
                                 value: run.value,
                             }) }
                         } else {
-                            next_state = emit(scan.state, run)
+                            next_state = emit_raw(scan.state, run, emit)
                             { state: next_state, active: Active({ byte_start, byte_end, scalar_start: scalar_index, scalar_end: scalar_index + 1, value }) }
                         }
                     }
@@ -43,11 +42,11 @@ InternalPropertyRuns :: [].{
 
         match scanned.active {
             NoRun => scanned.state
-            Active(run) => emit(scanned.state, run)
+            Active(run) => emit_raw(scanned.state, run, emit)
         }
     }
 
-    iter : Str, (U32 -> value), (value, value -> Bool) -> Iter(RawRun(value))
+    iter : Str, (U32 -> value), (value, value -> Bool) -> Iter(Run(value))
     iter = |source, lookup, is_eq| {
         next_run = |initial| {
             first = match initial.pending {
@@ -66,13 +65,10 @@ InternalPropertyRuns :: [].{
                     while Bool.True {
                         match InternalUtf8.next(cursor) {
                             Done => {
-                                return Ok(({
-                                    byte_start: item.byte_start,
-                                    byte_end,
-                                    scalar_start: item.scalar_index,
-                                    scalar_end,
-                                    value,
-                                }, { utf8: cursor, pending: NoPending }))
+                                match make_run(item.byte_start, byte_end, item.scalar_index, scalar_end, value) {
+                                    Err(_) => return Err(NoMore)
+                                    Ok(run) => return Ok((run, { utf8: cursor, pending: NoPending }))
+                                }
                             }
                             One({ item: candidate, rest: after_candidate }) => {
                                 candidate_value = lookup(candidate.scalar)
@@ -81,13 +77,10 @@ InternalPropertyRuns :: [].{
                                     scalar_end = candidate.scalar_index + 1
                                     cursor = after_candidate
                                 } else {
-                                    return Ok(({
-                                        byte_start: item.byte_start,
-                                        byte_end,
-                                        scalar_start: item.scalar_index,
-                                        scalar_end,
-                                        value,
-                                    }, { utf8: after_candidate, pending: Pending(candidate) }))
+                                    match make_run(item.byte_start, byte_end, item.scalar_index, scalar_end, value) {
+                                        Err(_) => return Err(NoMore)
+                                        Ok(run) => return Ok((run, { utf8: after_candidate, pending: Pending(candidate) }))
+                                    }
                                 }
                             }
                         }
@@ -103,5 +96,21 @@ InternalPropertyRuns :: [].{
             Unknown,
             next_run,
         )
+    }
+}
+
+make_run = |byte_start, byte_end, scalar_start, scalar_end, value| {
+    start = TextPosition.from_offsets(byte_start, scalar_start)
+    end = TextPosition.from_offsets(byte_end, scalar_end)
+    match TextRange.from_positions(start, end) {
+        Err(error) => Err(error)
+        Ok(range) => Ok({ range, value })
+    }
+}
+
+emit_raw = |state, run, emit| {
+    match make_run(run.byte_start, run.byte_end, run.scalar_start, run.scalar_end, run.value) {
+        Err(_) => state
+        Ok(public_run) => emit(state, public_run)
     }
 }
