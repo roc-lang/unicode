@@ -22,6 +22,7 @@ from unicode_data import (
     load_manifest,
     load_property_data,
     parse_grapheme_tests,
+    release_version,
     validate_all,
 )
 
@@ -163,7 +164,7 @@ def load_app_specs() -> dict[str, dict[str, object]]:
         if not isinstance(spec.get("timeout_seconds"), int) or spec["timeout_seconds"] < 1:
             raise TestFailure(f"{name}: timeout_seconds must be positive")
         specs[name] = spec
-    manifest_files = set(load_manifest()["files"])
+    manifest_files = set(load_manifest()["sources"])
     if specs["grapheme"]["suite"] != "grapheme":
         raise TestFailure("grapheme spec suite has drifted")
     if specs["grapheme"]["unicode_manifest_file"] != "grapheme_break_test":
@@ -367,7 +368,7 @@ def build_property_tables() -> tuple[str, bytearray, bytearray, bytearray]:
         bit = EMOJI_BITS[record.property]
         for code_point in range(record.start, record.end + 1):
             emoji_values[code_point] |= bit
-    return str(manifest["unicode_version"]), gcb_values, eaw_values, emoji_values
+    return release_version(manifest, "unicode"), gcb_values, eaw_values, emoji_values
 
 
 def scalar_at(index: int) -> int:

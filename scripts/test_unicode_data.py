@@ -28,24 +28,24 @@ class UnicodeDataTests(unittest.TestCase):
     def test_manifest_rejects_unknown_schema(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "manifest.json"
-            path.write_text('{"schema_version": 2}', encoding="utf-8")
+            path.write_text('{"schema_version": 999}', encoding="utf-8")
             with self.assertRaisesRegex(unicode_data.DataError, "schema_version"):
                 unicode_data.load_manifest(path)
 
     def test_manifest_rejects_version_path_drift(self) -> None:
         manifest = json.loads(unicode_data.MANIFEST_PATH.read_text(encoding="utf-8"))
-        manifest["unicode_version"] = "16.0.0"
+        manifest["releases"]["unicode"]["vendor_prefix"] = "vendor/unicode/16.0.0"
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "manifest.json"
             path.write_text(json.dumps(manifest), encoding="utf-8")
-            with self.assertRaisesRegex(unicode_data.DataError, "does not match unicode_version"):
+            with self.assertRaisesRegex(unicode_data.DataError, "does not match its storage release"):
                 unicode_data.load_manifest(path)
 
     def test_source_rejects_hash_header_and_count_drift(self) -> None:
         content = "# Header\n0041 ; A\n"
         digest = hashlib.sha256(content.encode()).hexdigest()
         base_entry = {
-            "path": "fixture.txt",
+            "path": "vendor/unicode/fixture.txt",
             "url": "https://www.unicode.org/Public/fixture.txt",
             "sha256": digest,
             "header": "# Header",
@@ -66,7 +66,7 @@ class UnicodeDataTests(unittest.TestCase):
             ):
                 entry = dict(base_entry)
                 entry[field] = bad_value
-                manifest = {"files": {"fixture": entry}}
+                manifest = {"sources": {"fixture": entry}}
                 with (
                     self.subTest(field=field),
                     mock.patch.object(unicode_data, "ROOT", root),
@@ -97,7 +97,7 @@ class UnicodeDataTests(unittest.TestCase):
 
     def test_grapheme_parser_rejects_malformed_cases(self) -> None:
         manifest = json.loads(json.dumps(unicode_data.load_manifest()))
-        manifest["files"]["grapheme_break_test"]["cases"] = 1
+        manifest["sources"]["grapheme_break_test"]["cases"] = 1
         with self.assertRaisesRegex(unicode_data.DataError, "boundary marker"):
             unicode_data.parse_grapheme_tests(
                 manifest,

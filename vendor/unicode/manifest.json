@@ -1,55 +1,238 @@
 {
-  "schema_version": 1,
-  "unicode_version": "17.0.0",
-  "emoji_version": "17.0",
-  "standards": {
-    "uax_11_revision": "44",
-    "uax_29_revision": "47",
-    "uax_44_revision": "36",
-    "uts_51_revision": "29"
+  "schema_version": 2,
+  "releases": {
+    "unicode": {
+      "version": "17.0.0",
+      "authority": "unicode",
+      "kind": "ucd",
+      "vendor_prefix": "vendor/unicode/17.0.0"
+    },
+    "emoji": {
+      "version": "17.0",
+      "authority": "unicode",
+      "kind": "emoji",
+      "synchronized_with": "unicode"
+    }
   },
-  "license": "LICENSE-UNICODE",
-  "files": {
+  "specifications": {
+    "uax_11": {
+      "revision": "44",
+      "release": "unicode"
+    },
+    "uax_29": {
+      "revision": "47",
+      "release": "unicode"
+    },
+    "uax_44": {
+      "revision": "36",
+      "release": "unicode"
+    },
+    "uts_51": {
+      "revision": "29",
+      "release": "emoji"
+    }
+  },
+  "authorities": {
+    "unicode": {
+      "url_prefix": "https://www.unicode.org/",
+      "license": "unicode-data"
+    }
+  },
+  "licenses": {
+    "unicode-data": {
+      "path": "vendor/unicode/LICENSE-UNICODE"
+    }
+  },
+  "sources": {
     "east_asian_width": {
-      "path": "17.0.0/EastAsianWidth.txt",
+      "path": "vendor/unicode/17.0.0/EastAsianWidth.txt",
       "url": "https://www.unicode.org/Public/17.0.0/ucd/EastAsianWidth.txt",
       "sha256": "ea7ce50f3444a050333448dffef1cadd9325af55cbb764b4a2280faf52170a33",
       "header": "# EastAsianWidth-17.0.0.txt",
       "records": 2678,
-      "role": "production-and-conformance"
+      "role": "production-and-conformance",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "ucd-property-ranges",
+      "properties": ["East_Asian_Width"]
     },
     "grapheme_break_property": {
-      "path": "17.0.0/GraphemeBreakProperty.txt",
+      "path": "vendor/unicode/17.0.0/GraphemeBreakProperty.txt",
       "url": "https://www.unicode.org/Public/17.0.0/ucd/auxiliary/GraphemeBreakProperty.txt",
       "sha256": "d6b51d1d2ae5c33b451b7ed994b48f1f4dc62b2272a5831e7fd418514a6bae89",
       "header": "# GraphemeBreakProperty-17.0.0.txt",
       "records": 1429,
-      "role": "production-and-conformance"
+      "role": "production-and-conformance",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "ucd-property-ranges",
+      "properties": ["Grapheme_Cluster_Break"]
     },
     "grapheme_break_test": {
-      "path": "17.0.0/GraphemeBreakTest.txt",
+      "path": "vendor/unicode/17.0.0/GraphemeBreakTest.txt",
       "url": "https://www.unicode.org/Public/17.0.0/ucd/auxiliary/GraphemeBreakTest.txt",
       "sha256": "e2d134d2c52919bace503ebb6a551c1855fe1a1faec18478c78fff254a1793ec",
       "header": "# GraphemeBreakTest-17.0.0.txt",
       "records": 766,
       "cases": 766,
-      "role": "conformance"
+      "role": "conformance",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "uax-29-test",
+      "properties": []
     },
     "emoji_data": {
-      "path": "17.0.0/emoji-data.txt",
+      "path": "vendor/unicode/17.0.0/emoji-data.txt",
       "url": "https://www.unicode.org/Public/17.0.0/ucd/emoji/emoji-data.txt",
       "sha256": "2cb2bb9455cda83e8481541ecf5b6dfda66a3bb89efa3fa7c5297eccf607b72b",
       "header": "# Version: 17.0",
       "records": 1226,
-      "role": "production-and-conformance"
+      "role": "production-and-conformance",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode", "emoji"],
+      "format": "ucd-binary-property-ranges",
+      "properties": [
+        "Emoji",
+        "Emoji_Presentation",
+        "Emoji_Modifier",
+        "Emoji_Modifier_Base",
+        "Emoji_Component",
+        "Extended_Pictographic"
+      ]
     },
     "derived_core_properties": {
-      "path": "17.0.0/DerivedCoreProperties.txt",
+      "path": "vendor/unicode/17.0.0/DerivedCoreProperties.txt",
       "url": "https://www.unicode.org/Public/17.0.0/ucd/DerivedCoreProperties.txt",
       "sha256": "24c7fed1195c482faaefd5c1e7eb821c5ee1fb6de07ecdbaa64b56a99da22c08",
       "header": "# DerivedCoreProperties-17.0.0.txt",
       "records": 13345,
-      "role": "production-and-conformance"
+      "role": "production-and-conformance",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "ucd-derived-core-properties",
+      "properties": ["Indic_Conjunct_Break"]
+    },
+    "derived_general_category": {
+      "path": "vendor/unicode/17.0.0/DerivedGeneralCategory.txt",
+      "url": "https://www.unicode.org/Public/17.0.0/ucd/extracted/DerivedGeneralCategory.txt",
+      "sha256": "d62e5bab70ca74f099343f71224fa051cb1fdd61a1ab45c0488c44cfc0b6102e",
+      "header": "# DerivedGeneralCategory-17.0.0.txt",
+      "records": 4144,
+      "role": "production",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "ucd-property-ranges",
+      "properties": ["General_Category"]
+    },
+    "derived_combining_class": {
+      "path": "vendor/unicode/17.0.0/DerivedCombiningClass.txt",
+      "url": "https://www.unicode.org/Public/17.0.0/ucd/extracted/DerivedCombiningClass.txt",
+      "sha256": "191463abfbd202703c6fd6776a92a23ac44ec65e0476a7f95aa91ca492cef29b",
+      "header": "# DerivedCombiningClass-17.0.0.txt",
+      "records": 2477,
+      "role": "production",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "ucd-numeric-property-ranges",
+      "properties": ["Canonical_Combining_Class"]
+    },
+    "property_aliases": {
+      "path": "vendor/unicode/17.0.0/PropertyAliases.txt",
+      "url": "https://www.unicode.org/Public/17.0.0/ucd/PropertyAliases.txt",
+      "sha256": "4441f573caf952ffece1d7c892e7715bd7136dfc26f96eb6f268bf1e474715fb",
+      "header": "# PropertyAliases-17.0.0.txt",
+      "records": 145,
+      "role": "production-metadata",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "ucd-property-aliases",
+      "properties": ["Property_Aliases"]
+    },
+    "property_value_aliases": {
+      "path": "vendor/unicode/17.0.0/PropertyValueAliases.txt",
+      "url": "https://www.unicode.org/Public/17.0.0/ucd/PropertyValueAliases.txt",
+      "sha256": "64e9a5f76f7a1e8b5a47d6a1f9a26522a251208f5276bdfa1559dac7cf2e827a",
+      "header": "# PropertyValueAliases-17.0.0.txt",
+      "records": 1194,
+      "role": "production-metadata",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "ucd-property-value-aliases",
+      "properties": ["Property_Value_Aliases"]
+    }
+  },
+  "artifacts": {
+    "unicode_version": {
+      "generator": "unicode-version",
+      "output": "package/UnicodeVersion.roc",
+      "sources": [],
+      "specifications": ["uax_44"],
+      "artifacts": []
+    },
+    "grapheme_data": {
+      "generator": "grapheme-data",
+      "output": "package/InternalGraphemeData.roc",
+      "sources": ["grapheme_break_property", "derived_core_properties", "emoji_data"],
+      "specifications": ["uax_29", "uts_51"],
+      "artifacts": []
+    },
+    "legacy_grapheme_break": {
+      "generator": "legacy-grapheme-break",
+      "output": "package/InternalGBP.roc",
+      "sources": ["grapheme_break_property"],
+      "specifications": ["uax_29"],
+      "artifacts": []
+    },
+    "east_asian_width": {
+      "generator": "east-asian-width",
+      "output": "package/InternalEAW.roc",
+      "sources": ["east_asian_width"],
+      "specifications": ["uax_11"],
+      "artifacts": []
+    },
+    "emoji_properties": {
+      "generator": "emoji-properties",
+      "output": "package/InternalEmojiData.roc",
+      "sources": ["emoji_data"],
+      "specifications": ["uts_51"],
+      "artifacts": []
+    },
+    "legacy_emoji": {
+      "generator": "legacy-emoji",
+      "output": "package/InternalEmoji.roc",
+      "sources": [],
+      "specifications": ["uts_51"],
+      "artifacts": ["emoji_properties"]
+    },
+    "general_category": {
+      "generator": "general-category",
+      "output": "package/InternalGeneralCategory.roc",
+      "sources": ["derived_general_category", "property_aliases", "property_value_aliases"],
+      "specifications": ["uax_44"],
+      "artifacts": []
+    },
+    "canonical_combining_class": {
+      "generator": "canonical-combining-class",
+      "output": "package/InternalCanonicalCombiningClass.roc",
+      "sources": ["derived_combining_class", "property_aliases", "property_value_aliases"],
+      "specifications": ["uax_44"],
+      "artifacts": []
+    },
+    "property_aliases": {
+      "generator": "property-aliases",
+      "output": "package/InternalPropertyAliases.roc",
+      "sources": ["property_aliases", "property_value_aliases", "derived_general_category", "derived_combining_class"],
+      "specifications": ["uax_44"],
+      "artifacts": ["general_category", "canonical_combining_class"]
     }
   }
 }

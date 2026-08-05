@@ -16,10 +16,19 @@ The string/unicode rabbit hole goes deep, we have a [good overview](https://www.
 Production tables and conformance tests are generated from the official,
 versioned Unicode files in `vendor/unicode/17.0.0/`.
 `vendor/unicode/manifest.json` pins their source URLs, SHA-256 hashes, header
-markers, record counts, and relevant standard revisions. All generated runtime
-views come from that one manifest, so an implementation cannot silently mix
-Unicode releases. The selected release is also available at runtime as
-`UnicodeVersion.current`.
+markers, and record counts. Its release snapshots, specification revisions,
+sources, and generated artifacts are separate dependency-graph nodes; this
+keeps the Unicode and Emoji version axes explicit and leaves room for later
+data authorities such as CLDR. All generated runtime views come from that one
+graph, so an implementation cannot silently mix releases. The selected Unicode
+release is also available at runtime as `UnicodeVersion.current`.
+
+The canonical property substrate currently emits separate, U32-keyed paged
+views for General_Category, exact Canonical_Combining_Class values, and the
+independent Emoji binary properties. Property and value aliases retain stable
+Unicode identities; compact generated ordinals remain private table details.
+Algorithm-specific fused views, such as grapheme data, remain separate from
+these canonical facts.
 
 ## Scalars and UTF-8
 

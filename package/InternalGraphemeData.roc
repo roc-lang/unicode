@@ -1,5 +1,5 @@
 ## GENERATED from Unicode 17.0.0. Run `python3 scripts/unicode_data.py generate`. ##
-## 4352 scalar pages; 111 distinct 256-entry pages. ##
+## layout: 4352 U16 page ids + 111 x 256 U8 values; logical payload 37120 bytes. ##
 
 InternalGraphemeData :: [].{
     GCB : [Other, CR, LF, Control, Extend, ZWJ, RI, Prepend, SpacingMark, L, V, T, LV, LVT]
