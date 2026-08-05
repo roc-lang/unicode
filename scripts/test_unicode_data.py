@@ -404,6 +404,14 @@ class UnicodeDataTests(unittest.TestCase):
         self.assertEqual(len(properties.aliases), 176)
         self.assertEqual(properties.script_default, "Zzzz")
         self.assertEqual(len({record.scripts for record in properties.extensions}), 118)
+        ordered_aliases = unicode_data._script_aliases_by_identity(properties)
+        self.assertEqual(
+            tuple(record.short for record in ordered_aliases),
+            tuple(sorted(record.short for record in ordered_aliases)),
+        )
+        self.assertTrue(
+            all(record.identity == record.short for record in ordered_aliases)
+        )
 
         def primary(code_point: int) -> str:
             for record in properties.scripts:
@@ -444,6 +452,14 @@ class UnicodeDataTests(unittest.TestCase):
         alias_rows = {record.identity: record for record in properties.aliases}
         self.assertIn("Qaai", alias_rows["Zinh"].aliases)
         self.assertIn("Qaac", alias_rows["Copt"].aliases)
+
+        generated = unicode_data.rendered_modules(manifest)[
+            unicode_data.ROOT / "package" / "InternalScriptData.roc"
+        ]
+        self.assertIn("loose_hash : Str -> U32", generated)
+        self.assertIn("for byte in value.iter_utf8()", generated)
+        self.assertNotIn("replace_each", generated)
+        self.assertNotIn("List(Str)", generated)
 
     def test_script_extensions_parser_fails_closed(self) -> None:
         manifest = unicode_data.load_manifest()
