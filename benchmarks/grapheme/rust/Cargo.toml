@@ -1,0 +1,13 @@
+[package]
+name = "roc-unicode-grapheme-bench"
+version = "0.0.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+unicode-segmentation = "=1.13.3"
+
+[profile.release]
+codegen-units = 1
+lto = "fat"
+panic = "abort"
