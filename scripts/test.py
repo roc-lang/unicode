@@ -32,7 +32,6 @@ from unicode_data import (
 
 ROOT = Path(__file__).resolve().parents[1]
 TEST_TMP = ROOT / ".roc-unicode-tmp" / "tests"
-EXAMPLE_SPEC = ROOT / "examples" / "spec.json"
 APP_ROOT = ROOT / "tests" / "apps"
 APP_NAMES = {
     "grapheme": "grapheme",
@@ -523,71 +522,11 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
 def verify_pinned_roc(roc: str) -> None:
     completed = command([roc, "version"])
     pinned = (ROOT / ".roc-version").read_text(encoding="utf-8").strip()
-    if pinned not in completed.stdout:
+    pinned_revision = pinned.rsplit("-", 1)[-1]
+    if pinned not in completed.stdout and pinned_revision not in completed.stdout:
         raise TestFailure(
             f"repository requires {pinned}, got {completed.stdout.strip()!r}"
         )
-
-
-def load_example_spec() -> dict[str, dict[str, object]]:
-    try:
-        raw = json.loads(EXAMPLE_SPEC.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as err:
-        raise TestFailure(f"unable to read {EXAMPLE_SPEC}: {err}") from err
-    if raw.get("schema_version") != 1 or not isinstance(raw.get("examples"), dict):
-        raise TestFailure("invalid example test spec schema")
-    return raw["examples"]
-
-
-def run_examples(roc: str, examples_dir: Path) -> None:
-    spec = load_example_spec()
-    sources = {path.name: path for path in sorted(examples_dir.glob("*.roc"))}
-    if set(spec) != set(sources):
-        raise TestFailure(
-            f"example spec drift: missing={sorted(set(sources) - set(spec))}, "
-            f"stale={sorted(set(spec) - set(sources))}"
-        )
-    build_dir = TEST_TMP / "examples"
-    build_dir.mkdir(parents=True, exist_ok=True)
-    for name, source in sources.items():
-        item = spec[name]
-        required = {"args", "stdin", "exit_code", "stdout", "stderr", "test"}
-        if set(item) != required:
-            raise TestFailure(f"{name}: spec fields must be exactly {sorted(required)}")
-        if (
-            not isinstance(item["args"], list)
-            or not all(isinstance(arg, str) for arg in item["args"])
-            or not all(isinstance(item[field], str) for field in ("stdin", "stdout", "stderr"))
-            or not isinstance(item["exit_code"], int)
-            or not isinstance(item["test"], bool)
-        ):
-            raise TestFailure(f"{name}: invalid example spec field type")
-        command([roc, "check", str(source), "--no-cache"])
-        if item["test"]:
-            command([roc, "test", str(source), "--no-cache"])
-        output = build_dir / f"{Path(name).stem}{executable_suffix()}"
-        command(
-            [roc, "build", str(source), "--opt=speed", f"--output={output}", "--no-cache"]
-        )
-        completed = subprocess.run(
-            [str(output), *item["args"]],
-            cwd=source.parent,
-            input=item["stdin"],
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            timeout=30,
-        )
-        for field, got in (
-            ("exit_code", completed.returncode),
-            ("stdout", completed.stdout),
-            ("stderr", completed.stderr),
-        ):
-            if got != item[field]:
-                raise TestFailure(f"{name}: {field} expected {item[field]!r}, got {got!r}")
-        print(f"PASS example {name}")
 
 
 def run_data_checks() -> None:
@@ -602,14 +541,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "suite",
         nargs="?",
-        choices=("all", "data", "grapheme", "line-break", "properties", "allocations", "examples"),
+        choices=("all", "data", "grapheme", "line-break", "properties", "allocations"),
         default="all",
     )
     parser.add_argument("--roc", default=os.environ.get("ROC", "roc"))
     parser.add_argument("--zig", default=os.environ.get("ZIG", "zig"))
     parser.add_argument("--jobs", type=int, default=default_jobs())
     parser.add_argument("--skip-build", action="store_true")
-    parser.add_argument("--examples-dir", type=Path, default=ROOT / "examples")
     args = parser.parse_args(argv)
     if args.jobs < 1:
         parser.error("--jobs must be positive")
@@ -619,8 +557,6 @@ def main(argv: list[str] | None = None) -> int:
             verify_pinned_roc(args.roc)
         if args.suite in ("all", "data"):
             run_data_checks()
-        if args.suite in ("all", "examples"):
-            run_examples(args.roc, args.examples_dir.resolve())
         requested_apps = []
         if args.suite in ("all", "grapheme"):
             requested_apps.append("grapheme")
