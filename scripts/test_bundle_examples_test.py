@@ -12,6 +12,21 @@ from scripts import test_bundle_examples as harness
 
 
 class ExampleHarnessTests(unittest.TestCase):
+    def test_windows_bash_is_resolved_from_git_installation(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            git_root = Path(temporary) / "Git"
+            git = git_root / "cmd" / "git.exe"
+            bash = git_root / "bin" / "bash.exe"
+            git.parent.mkdir(parents=True)
+            bash.parent.mkdir(parents=True)
+            git.write_bytes(b"")
+            bash.write_bytes(b"")
+
+            self.assertEqual(
+                harness.bash_executable("nt", str(git)),
+                bash,
+            )
+
     def test_bundle_script_is_launched_through_bash(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             bundle_dir = Path(temporary)
@@ -24,12 +39,20 @@ class ExampleHarnessTests(unittest.TestCase):
             )
             with (
                 mock.patch.object(harness, "run", return_value=completed) as run,
+                mock.patch.object(
+                    harness,
+                    "bash_executable",
+                    return_value="bash-for-test",
+                ),
                 mock.patch("builtins.print"),
             ):
                 self.assertEqual(harness.bundle_package(bundle_dir, "roc"), bundle)
 
             command = run.call_args.args[0]
-            self.assertEqual(command[:2], ["bash", harness.ROOT / "scripts" / "bundle.sh"])
+            self.assertEqual(
+                command[:2],
+                ["bash-for-test", harness.ROOT / "scripts" / "bundle.sh"],
+            )
 
     def test_real_spec_is_valid(self) -> None:
         self.assertTrue(harness.load_spec())

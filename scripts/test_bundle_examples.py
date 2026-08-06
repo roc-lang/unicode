@@ -131,6 +131,27 @@ def string_list(owner: str, value: object) -> list[str]:
     return value
 
 
+def bash_executable(
+    platform_name: str = os.name,
+    git_executable: str | None = None,
+) -> str | Path:
+    if platform_name != "nt":
+        return "bash"
+
+    git = git_executable or shutil.which("git")
+    if git is None:
+        raise TestFailure("Git for Windows is required to run scripts/bundle.sh")
+    git_path = Path(git)
+    for directory in git_path.parents:
+        for candidate in (
+            directory / "bin" / "bash.exe",
+            directory / "usr" / "bin" / "bash.exe",
+        ):
+            if candidate.is_file():
+                return candidate
+    raise TestFailure(f"could not locate Git for Windows Bash from {git_path}")
+
+
 def validate_spec(
     data: object,
     discovered_apps: set[str],
@@ -274,7 +295,12 @@ def bundle_package(bundle_dir: Path, roc: str) -> Path:
     env = os.environ.copy()
     env["ROC"] = roc
     completed = run(
-        ["bash", ROOT / "scripts" / "bundle.sh", "--output-dir", bundle_dir],
+        [
+            bash_executable(),
+            ROOT / "scripts" / "bundle.sh",
+            "--output-dir",
+            bundle_dir,
+        ],
         env=env,
         capture=True,
     )
