@@ -15,16 +15,6 @@ if [ -z "${ROC:-}" ]; then
   exit 1
 fi
 
+python3 -m unittest scripts/test_bundle_examples_test.py
+python3 scripts/test_bundle_examples.py --roc "$ROC"
 python3 scripts/test.py all --roc "$ROC"
-
-for roc_file in package/*.roc; do
-    "$ROC" check "$roc_file" --no-cache
-done
-
-for roc_file in package/*.roc; do
-    if grep -q '^expect' "$roc_file"; then
-        "$ROC" test "$roc_file" --no-cache
-    fi
-done
-
-"$ROC" docs package/main.roc

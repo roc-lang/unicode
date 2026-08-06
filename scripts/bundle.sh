@@ -7,8 +7,9 @@ args=()
 roc_bin="${ROC:-roc}"
 
 pinned_roc="$(sed -n '1p' "$root_dir/.roc-version")"
+pinned_revision="${pinned_roc##*-}"
 actual_roc="$("$roc_bin" version)"
-if [[ "$actual_roc" != *"$pinned_roc"* ]]; then
+if [[ "$actual_roc" != *"$pinned_roc"* && "$actual_roc" != *"$pinned_revision"* ]]; then
     echo "ERROR: repository requires $pinned_roc, got '$actual_roc'" >&2
     exit 1
 fi
@@ -35,22 +36,4 @@ output_dir="$(cd "$output_dir" && pwd)"
 
 cd "$root_dir/package"
 
-roc_files=(
-    main.roc
-    ByteRange.roc
-    CodePoint.roc
-    Grapheme.roc
-    UnicodeVersion.roc
-    InternalGrapheme.roc
-    InternalGraphemeData.roc
-    InternalUtf8.roc
-    InternalEAW.roc
-    InternalEmoji.roc
-    InternalGBP.roc
-)
-
-if ((${#args[@]} > 0)); then
-    "$roc_bin" bundle "${roc_files[@]}" --output-dir "$output_dir" "${args[@]}"
-else
-    "$roc_bin" bundle "${roc_files[@]}" --output-dir "$output_dir"
-fi
+"$roc_bin" bundle main.roc --output-dir "$output_dir" "${args[@]}"

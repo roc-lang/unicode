@@ -1,29 +1,625 @@
 {
-  "schema_version": 1,
-  "examples": {
-    "get-visual-width.roc": {
-      "args": [],
-      "stdin": "",
-      "exit_code": 0,
-      "stdout": "\n\nUnder this simple policy, 世界 uses 4 cells.\n\n\n",
-      "stderr": "",
-      "test": false
+  "schema_version": 2,
+  "apps": [
+    {
+      "path": "examples/decode-utf8-stream.roc",
+      "cases": [
+        {
+          "name": "ascii",
+          "args": ["41,42,43"],
+          "stdout": "scalar 0: value=65 bytes=0..1\nscalar 1: value=66 bytes=1..2\nscalar 2: value=67 bytes=2..3\ncomplete: 3 bytes, 3 scalars\n"
+        },
+        {
+          "name": "two-three-four-byte-scalars",
+          "args": ["C2,A2", "E2,82,AC", "F0,9F,A6,98"],
+          "stdout": "scalar 0: value=162 bytes=0..2\nscalar 1: value=8364 bytes=2..5\nscalar 2: value=129432 bytes=5..9\ncomplete: 9 bytes, 3 scalars\n"
+        },
+        {
+          "name": "four-byte-scalar-split-every-byte",
+          "args": ["F0", "9F", "A6", "98"],
+          "stdout": "scalar 0: value=129432 bytes=0..4\ncomplete: 4 bytes, 1 scalars\n"
+        },
+        {
+          "name": "empty-chunks-are-no-ops",
+          "args": ["-", "41", "-"],
+          "stdout": "scalar 0: value=65 bytes=0..1\ncomplete: 1 bytes, 1 scalars\n"
+        },
+        {
+          "name": "invalid-start-byte",
+          "args": ["FF"],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "error: malformed UTF-8: InvalidStartByte at byte 0 (sequence start 0)\n"
+        },
+        {
+          "name": "expected-continuation",
+          "args": ["E2,28"],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "error: malformed UTF-8: ExpectedContinuation at byte 1 (sequence start 0)\n"
+        },
+        {
+          "name": "overlong-encoding",
+          "args": ["C0"],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "error: malformed UTF-8: OverlongEncoding at byte 0 (sequence start 0)\n"
+        },
+        {
+          "name": "surrogate-encoding",
+          "args": ["ED,A0,80"],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "error: malformed UTF-8: EncodesSurrogateHalf at byte 1 (sequence start 0)\n"
+        },
+        {
+          "name": "code-point-too-large",
+          "args": ["F4,90,80,80"],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "error: malformed UTF-8: CodePointTooLarge at byte 1 (sequence start 0)\n"
+        },
+        {
+          "name": "incomplete-at-finish",
+          "args": ["E2,82"],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "error: malformed UTF-8: UnexpectedEndOfSequence at byte 2 (sequence start 0)\n"
+        },
+        {
+          "name": "absolute-offset-after-valid-prefix",
+          "args": ["41", "E2,28"],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "error: malformed UTF-8: ExpectedContinuation at byte 2 (sequence start 1)\n"
+        },
+        {
+          "name": "invalid-hex-chunk",
+          "args": ["GG"],
+          "exit_code": 2,
+          "stdout": "",
+          "stderr": "error: invalid hexadecimal byte chunk \"GG\"\n"
+        },
+        {
+          "name": "missing-input",
+          "exit_code": 2,
+          "stdout": "",
+          "stderr": "usage: decode-utf8-stream HEX_BYTES [HEX_BYTES ...]\n       bytes are comma-separated; use - for an empty chunk\n"
+        }
+      ]
     },
-    "nr-of-code-points.roc": {
-      "args": [],
-      "stdin": "",
-      "exit_code": 0,
-      "stdout": "String \"ẇ͓̞͒͟͡ǫ̠̠̉̏͠͡ͅr̬̺͚̍͛̔͒͢d̠͎̗̳͇͆̋̊͂͐\" consists of 34 code points.\n",
-      "stderr": "",
-      "test": false
+    {
+      "path": "examples/encode-code-points.roc",
+      "cases": [
+        {
+          "name": "one-through-four-byte-scalars",
+          "args": ["10", "41", "E9", "20AC", "1F998"],
+          "stdout": "code-points: 41 E9 20AC 1F998\nutf8-bytes: 10\ntext: Aé€🦘\n"
+        },
+        {
+          "name": "exact-output-limit",
+          "args": ["4", "1F998"],
+          "stdout": "code-points: 1F998\nutf8-bytes: 4\ntext: 🦘\n"
+        },
+        {
+          "name": "private-use-and-unassigned-are-valid",
+          "args": ["5", "E000", "378"],
+          "stdout": "code-points: E000 378\nutf8-bytes: 5\ntext: ͸\n"
+        },
+        {
+          "name": "output-limit-exceeded",
+          "args": ["3", "1F998"],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "error: output limit 3 bytes would be exceeded; 4 bytes are required\n"
+        },
+        {
+          "name": "high-surrogate-rejected",
+          "args": ["4", "D800"],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "error: \"D800\" is a surrogate code point, not a Unicode scalar\n"
+        },
+        {
+          "name": "low-surrogate-rejected",
+          "args": ["4", "DFFF"],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "error: \"DFFF\" is a surrogate code point, not a Unicode scalar\n"
+        },
+        {
+          "name": "above-unicode-range",
+          "args": ["4", "110000"],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "error: \"110000\" is above U+10FFFF\n"
+        },
+        {
+          "name": "malformed-code-point",
+          "args": ["4", "XYZ"],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "error: \"XYZ\" is not hexadecimal\n"
+        },
+        {
+          "name": "invalid-limit",
+          "args": ["many", "41"],
+          "exit_code": 2,
+          "stdout": "",
+          "stderr": "error: MAX_OUTPUT_BYTES must be a non-negative integer\n"
+        },
+        {
+          "name": "missing-code-points",
+          "args": ["4"],
+          "exit_code": 2,
+          "stdout": "",
+          "stderr": "usage: encode-code-points MAX_OUTPUT_BYTES HEX_CODE_POINT [HEX_CODE_POINT ...]\n"
+        }
+      ]
     },
-    "split-graphemes.roc": {
-      "args": [],
-      "stdin": "",
-      "exit_code": 0,
-      "stdout": "\n\nThe string \"🇦🇺🦘🪃\" has following graphemes:\n[\"🇦🇺\", \"🦘\", \"🪃\"]\n",
-      "stderr": "",
-      "test": true
+    {
+      "path": "examples/font-script-runs.roc",
+      "cases": [
+        {
+          "name": "empty",
+          "args": ["complete", "-", ""],
+          "stdout": "mode: complete-str\npolicy: ConservativeScxV1\npreferred-scripts: none\nruns: 0\n"
+        },
+        {
+          "name": "latin",
+          "args": ["complete", "-", "abc"],
+          "stdout": "mode: complete-str\npolicy: ConservativeScxV1\npreferred-scripts: none\nruns: 1\nbytes=0..3 scalars=0..3 script=Latn (Latin)\n"
+        },
+        {
+          "name": "mixed-latin-greek",
+          "args": ["complete", "-", "aβ"],
+          "stdout": "mode: complete-str\npolicy: ConservativeScxV1\npreferred-scripts: none\nruns: 2\nbytes=0..1 scalars=0..1 script=Latn (Latin)\nbytes=1..3 scalars=1..2 script=Grek (Greek)\n"
+        },
+        {
+          "name": "combining-mark-stays-with-grapheme",
+          "args": ["complete", "-", "á"],
+          "stdout": "mode: complete-str\npolicy: ConservativeScxV1\npreferred-scripts: none\nruns: 1\nbytes=0..3 scalars=0..2 script=Latn (Latin)\n"
+        },
+        {
+          "name": "conflicting-neighbors-leave-common",
+          "args": ["complete", "-", "a.β"],
+          "stdout": "mode: complete-str\npolicy: ConservativeScxV1\npreferred-scripts: none\nruns: 3\nbytes=0..1 scalars=0..1 script=Latn (Latin)\nbytes=1..2 scalars=1..2 script=Zyyy (Common)\nbytes=2..4 scalars=2..3 script=Grek (Greek)\n"
+        },
+        {
+          "name": "hiragana-preference-resolves-scx",
+          "args": ["complete", "Hira", "ー"],
+          "stdout": "mode: complete-str\npolicy: ConservativeScxV1\npreferred-scripts: Hira\nruns: 1\nbytes=0..3 scalars=0..1 script=Hira (Hiragana)\n"
+        },
+        {
+          "name": "katakana-preference-resolves-scx",
+          "args": ["complete", "Kana", "ー"],
+          "stdout": "mode: complete-str\npolicy: ConservativeScxV1\npreferred-scripts: Kana\nruns: 1\nbytes=0..3 scalars=0..1 script=Kana (Katakana)\n"
+        },
+        {
+          "name": "loose-script-alias",
+          "args": ["complete", "is_greek", "β"],
+          "stdout": "mode: complete-str\npolicy: ConservativeScxV1\npreferred-scripts: Grek\nruns: 1\nbytes=0..2 scalars=0..1 script=Grek (Greek)\n"
+        },
+        {
+          "name": "streaming-chunks-through-grapheme",
+          "args": ["chunks", "8", "-", "a", "́", "β"],
+          "stdout": "mode: scalar-aligned-chunks\npolicy: ConservativeScxV1\npreferred-scripts: none\nruns: 2\nbytes=0..3 scalars=0..2 script=Latn (Latin)\nbytes=3..5 scalars=2..3 script=Grek (Greek)\n"
+        },
+        {
+          "name": "empty-stream-chunks",
+          "args": ["chunks", "8", "-", "-", "a", "-"],
+          "stdout": "mode: scalar-aligned-chunks\npolicy: ConservativeScxV1\npreferred-scripts: none\nruns: 1\nbytes=0..1 scalars=0..1 script=Latn (Latin)\n"
+        },
+        {
+          "name": "pending-unit-limit",
+          "args": ["chunks", "0", "-", " "],
+          "exit_code": 1,
+          "stdout": "",
+          "stderr": "error: script itemization failed: PendingUnitLimitExceeded limit=0 required=1 byte=0 scalar=0\n"
+        },
+        {
+          "name": "invalid-script-alias",
+          "args": ["complete", "NotAScript", "abc"],
+          "exit_code": 2,
+          "stdout": "",
+          "stderr": "error: unrecognized Unicode Script alias \"NotAScript\"\n"
+        },
+        {
+          "name": "invalid-pending-limit",
+          "args": ["chunks", "many", "-", "abc"],
+          "exit_code": 2,
+          "stdout": "",
+          "stderr": "error: MAX_PENDING must be a non-negative integer\n"
+        },
+        {
+          "name": "missing-input",
+          "exit_code": 2,
+          "stdout": "",
+          "stderr": "usage: font-script-runs complete PREFERRED_SCRIPTS TEXT\n       font-script-runs chunks MAX_PENDING PREFERRED_SCRIPTS CHUNK [CHUNK ...]\n       use - for no preferences or an empty chunk\n"
+        }
+      ]
+    },
+    {
+      "path": "examples/estimate-eaw-cells.roc",
+      "cases": [
+        {
+          "name": "default",
+          "stdout": "policy: Fullwidth/Wide=2, all other scalars=1\ntext: Hello, 世界\nscalars: 9\ncells: 11\n"
+        },
+        {
+          "name": "ascii",
+          "args": ["ASCII"],
+          "stdout": "policy: Fullwidth/Wide=2, all other scalars=1\ntext: ASCII\nscalars: 5\ncells: 5\n"
+        },
+        {
+          "name": "wide-cjk",
+          "args": ["世界"],
+          "stdout": "policy: Fullwidth/Wide=2, all other scalars=1\ntext: 世界\nscalars: 2\ncells: 4\n"
+        },
+        {
+          "name": "fullwidth-and-narrow",
+          "args": ["ＡA"],
+          "stdout": "policy: Fullwidth/Wide=2, all other scalars=1\ntext: ＡA\nscalars: 2\ncells: 3\n"
+        },
+        {
+          "name": "combining-mark-is-explicit-policy-input",
+          "args": ["é"],
+          "stdout": "policy: Fullwidth/Wide=2, all other scalars=1\ntext: é\nscalars: 2\ncells: 2\n"
+        },
+        {
+          "name": "empty",
+          "args": [""],
+          "stdout": "policy: Fullwidth/Wide=2, all other scalars=1\ntext: \nscalars: 0\ncells: 0\n"
+        },
+        {
+          "name": "too-many-arguments",
+          "args": ["one", "two"],
+          "exit_code": 2,
+          "stdout": "",
+          "stderr": "usage: estimate-eaw-cells [TEXT]\n"
+        }
+      ]
+    },
+    {
+      "path": "examples/limit-display-name.roc",
+      "cases": [
+        {
+          "name": "empty",
+          "args": ["3", ""],
+          "stdout": "input: \nlimit: 3 graphemes\ndisplay: \ntruncated: no\n"
+        },
+        {
+          "name": "zero-limit",
+          "args": ["0", "hello"],
+          "stdout": "input: hello\nlimit: 0 graphemes\ndisplay: …\ntruncated: yes\n"
+        },
+        {
+          "name": "below-limit",
+          "args": ["5", "hi"],
+          "stdout": "input: hi\nlimit: 5 graphemes\ndisplay: hi\ntruncated: no\n"
+        },
+        {
+          "name": "exact-limit",
+          "args": ["5", "hello"],
+          "stdout": "input: hello\nlimit: 5 graphemes\ndisplay: hello\ntruncated: no\n"
+        },
+        {
+          "name": "ascii-truncation",
+          "args": ["3", "hello"],
+          "stdout": "input: hello\nlimit: 3 graphemes\ndisplay: hel…\ntruncated: yes\n"
+        },
+        {
+          "name": "decomposed-accent-is-atomic",
+          "args": ["1", "éclair"],
+          "stdout": "input: éclair\nlimit: 1 graphemes\ndisplay: é…\ntruncated: yes\n"
+        },
+        {
+          "name": "emoji-zwj-and-modifier-are-atomic",
+          "args": ["1", "👩🏽‍🚀 mission"],
+          "stdout": "input: 👩🏽‍🚀 mission\nlimit: 1 graphemes\ndisplay: 👩🏽‍🚀…\ntruncated: yes\n"
+        },
+        {
+          "name": "regional-indicator-pair-is-atomic",
+          "args": ["1", "🇦🇺 team"],
+          "stdout": "input: 🇦🇺 team\nlimit: 1 graphemes\ndisplay: 🇦🇺…\ntruncated: yes\n"
+        },
+        {
+          "name": "indic-conjunct-is-atomic",
+          "args": ["1", "क्षत्र"],
+          "stdout": "input: क्षत्र\nlimit: 1 graphemes\ndisplay: क्ष…\ntruncated: yes\n"
+        },
+        {
+          "name": "invalid-limit",
+          "args": ["many", "hello"],
+          "exit_code": 2,
+          "stdout": "",
+          "stderr": "error: MAX_GRAPHEMES must be a non-negative integer\n"
+        },
+        {
+          "name": "missing-input",
+          "args": ["3"],
+          "exit_code": 2,
+          "stdout": "",
+          "stderr": "usage: limit-display-name MAX_GRAPHEMES DISPLAY_NAME\n"
+        }
+      ]
+    },
+    {
+      "path": "examples/line-break-opportunities.roc",
+      "cases": [
+        {
+          "name": "empty",
+          "args": ["complete", "unicode", ""],
+          "stdout": "mode: complete-str\nprofile: unicode\nprofile-revision: none (exact Unicode default)\nopportunities: 1\nbyte=0 scalar=0 mandatory non-tailorable\n"
+        },
+        {
+          "name": "ascii-space",
+          "args": ["complete", "unicode", "a b"],
+          "stdout": "mode: complete-str\nprofile: unicode\nprofile-revision: none (exact Unicode default)\nopportunities: 2\nbyte=2 scalar=2 allowed tailorable\nbyte=3 scalar=3 mandatory non-tailorable\n"
+        },
+        {
+          "name": "crlf-is-one-mandatory-end",
+          "args": ["complete", "unicode", "\r\n"],
+          "stdout": "mode: complete-str\nprofile: unicode\nprofile-revision: none (exact Unicode default)\nopportunities: 1\nbyte=2 scalar=2 mandatory non-tailorable\n"
+        },
+        {
+          "name": "zero-width-space",
+          "args": ["complete", "unicode", "a​b"],
+          "stdout": "mode: complete-str\nprofile: unicode\nprofile-revision: none (exact Unicode default)\nopportunities: 2\nbyte=4 scalar=2 allowed non-tailorable\nbyte=5 scalar=3 mandatory non-tailorable\n"
+        },
+        {
+          "name": "cjk-opportunity",
+          "args": ["complete", "unicode", "中文"],
+          "stdout": "mode: complete-str\nprofile: unicode\nprofile-revision: none (exact Unicode default)\nopportunities: 2\nbyte=3 scalar=1 allowed tailorable\nbyte=6 scalar=2 mandatory non-tailorable\n"
+        },
+        {
+          "name": "no-break-space",
+          "args": ["complete", "unicode", "a b"],
+          "stdout": "mode: complete-str\nprofile: unicode\nprofile-revision: none (exact Unicode default)\nopportunities: 1\nbyte=4 scalar=3 mandatory non-tailorable\n"
+        },
+        {
+          "name": "unicode-default-allows-prepend-break",
+          "args": ["complete", "unicode", "؀一"],
+          "stdout": "mode: complete-str\nprofile: unicode\nprofile-revision: none (exact Unicode default)\nopportunities: 2\nbyte=2 scalar=1 allowed tailorable\nbyte=5 scalar=2 mandatory non-tailorable\n"
+        },
+        {
+          "name": "explicit-profile-preserves-grapheme",
+          "args": ["complete", "preserve-graphemes", "؀一"],
+          "stdout": "mode: complete-str\nprofile: preserve-graphemes\nprofile-revision: PreserveGraphemesV1\nopportunities: 1\nbyte=5 scalar=2 mandatory non-tailorable\n"
+        },
+        {
+          "name": "chunked-parity",
+          "args": ["chunks", "unicode", "a", " ", "b"],
+          "stdout": "mode: scalar-aligned-chunks\nprofile: unicode\nprofile-revision: none (exact Unicode default)\nopportunities: 2\nbyte=2 scalar=2 allowed tailorable\nbyte=3 scalar=3 mandatory non-tailorable\n"
+        },
+        {
+          "name": "empty-chunks",
+          "args": ["chunks", "unicode", "-", "a", "-", " ", "b", "-"],
+          "stdout": "mode: scalar-aligned-chunks\nprofile: unicode\nprofile-revision: none (exact Unicode default)\nopportunities: 2\nbyte=2 scalar=2 allowed tailorable\nbyte=3 scalar=3 mandatory non-tailorable\n"
+        },
+        {
+          "name": "unknown-profile",
+          "args": ["complete", "loose", "abc"],
+          "exit_code": 2,
+          "stdout": "",
+          "stderr": "error: unknown profile \"loose\"; expected unicode or preserve-graphemes\n"
+        },
+        {
+          "name": "missing-input",
+          "exit_code": 2,
+          "stdout": "",
+          "stderr": "usage: line-break-opportunities complete PROFILE TEXT\n       line-break-opportunities chunks PROFILE CHUNK [CHUNK ...]\n       PROFILE is unicode or preserve-graphemes; use - for an empty chunk\n"
+        }
+      ]
+    },
+    {
+      "path": "examples/count-scalars.roc",
+      "cases": [
+        {
+          "name": "default",
+          "stdout": "text: café ☕\nutf8-bytes: 9\nunicode-scalars: 6\n0: value=99 bytes=0..1\n1: value=97 bytes=1..2\n2: value=102 bytes=2..3\n3: value=233 bytes=3..5\n4: value=32 bytes=5..6\n5: value=9749 bytes=6..9\n"
+        },
+        {
+          "name": "empty",
+          "args": [""],
+          "stdout": "text: \nutf8-bytes: 0\nunicode-scalars: 0\n"
+        },
+        {
+          "name": "ascii",
+          "args": ["abc"],
+          "stdout": "text: abc\nutf8-bytes: 3\nunicode-scalars: 3\n0: value=97 bytes=0..1\n1: value=98 bytes=1..2\n2: value=99 bytes=2..3\n"
+        },
+        {
+          "name": "mixed-utf8-widths",
+          "args": ["aé🦘"],
+          "stdout": "text: aé🦘\nutf8-bytes: 7\nunicode-scalars: 3\n0: value=97 bytes=0..1\n1: value=233 bytes=1..3\n2: value=129432 bytes=3..7\n"
+        },
+        {
+          "name": "combining-scalars-remain-distinct",
+          "args": ["é"],
+          "stdout": "text: é\nutf8-bytes: 3\nunicode-scalars: 2\n0: value=101 bytes=0..1\n1: value=769 bytes=1..3\n"
+        },
+        {
+          "name": "too-many-arguments",
+          "args": ["one", "two"],
+          "exit_code": 2,
+          "stdout": "",
+          "stderr": "usage: count-scalars [TEXT]\n"
+        }
+      ]
+    },
+    {
+      "path": "examples/shaping-facts.roc",
+      "cases": [
+        {
+          "name": "empty",
+          "args": [""],
+          "stdout": "unicode: 17.0.0\nscalars: 0\nvariation-requests: 0\n"
+        },
+        {
+          "name": "latin-letter",
+          "args": ["A"],
+          "stdout": "unicode: 17.0.0\nscalars: 1\nvariation-requests: 0\n0 value=65 bytes=0..1\n  gc=Lu ccc=0 eaw=Na\n  script=Latn scx=Latn bidi=L mirrored=N mirror=none bracket=none\n  joining=U/No_Joining_Group indic=Other/NA vertical=R\n  default-ignorable=N variation-selector=N emoji=N emoji-presentation=N modifier=N modifier-base=N component=N extended-pictographic=N\n"
+        },
+        {
+          "name": "combining-acute",
+          "args": ["́"],
+          "stdout": "unicode: 17.0.0\nscalars: 1\nvariation-requests: 0\n0 value=769 bytes=0..2\n  gc=Mn ccc=230 eaw=A\n  script=Zinh scx=Cher+Cyrl+Grek+Latn+Osge+Sunu+Tale+Todr bidi=NSM mirrored=N mirror=none bracket=none\n  joining=T/No_Joining_Group indic=Other/NA vertical=R\n  default-ignorable=N variation-selector=N emoji=N emoji-presentation=N modifier=N modifier-base=N component=N extended-pictographic=N\n"
+        },
+        {
+          "name": "arabic-alef",
+          "args": ["ا"],
+          "stdout": "unicode: 17.0.0\nscalars: 1\nvariation-requests: 0\n0 value=1575 bytes=0..2\n  gc=Lo ccc=0 eaw=N\n  script=Arab scx=Arab bidi=AL mirrored=N mirror=none bracket=none\n  joining=R/Alef indic=Other/NA vertical=R\n  default-ignorable=N variation-selector=N emoji=N emoji-presentation=N modifier=N modifier-base=N component=N extended-pictographic=N\n"
+        },
+        {
+          "name": "devanagari-virama",
+          "args": ["्"],
+          "stdout": "unicode: 17.0.0\nscalars: 1\nvariation-requests: 0\n0 value=2381 bytes=0..3\n  gc=Mn ccc=9 eaw=N\n  script=Deva scx=Deva bidi=NSM mirrored=N mirror=none bracket=none\n  joining=T/No_Joining_Group indic=Virama/Bottom vertical=R\n  default-ignorable=N variation-selector=N emoji=N emoji-presentation=N modifier=N modifier-base=N component=N extended-pictographic=N\n"
+        },
+        {
+          "name": "ideograph",
+          "args": ["一"],
+          "stdout": "unicode: 17.0.0\nscalars: 1\nvariation-requests: 0\n0 value=19968 bytes=0..3\n  gc=Lo ccc=0 eaw=W\n  script=Hani scx=Hani bidi=L mirrored=N mirror=none bracket=none\n  joining=U/No_Joining_Group indic=Other/NA vertical=U\n  default-ignorable=N variation-selector=N emoji=N emoji-presentation=N modifier=N modifier-base=N component=N extended-pictographic=N\n"
+        },
+        {
+          "name": "independent-emoji-properties",
+          "args": ["👍🏽"],
+          "stdout": "unicode: 17.0.0\nscalars: 2\nvariation-requests: 0\n0 value=128077 bytes=0..4\n  gc=So ccc=0 eaw=W\n  script=Zyyy scx=Zyyy bidi=ON mirrored=N mirror=none bracket=none\n  joining=U/No_Joining_Group indic=Other/NA vertical=U\n  default-ignorable=N variation-selector=N emoji=Y emoji-presentation=Y modifier=N modifier-base=Y component=N extended-pictographic=Y\n1 value=127997 bytes=4..8\n  gc=Sk ccc=0 eaw=W\n  script=Zyyy scx=Zyyy bidi=ON mirrored=N mirror=none bracket=none\n  joining=U/No_Joining_Group indic=Other/NA vertical=U\n  default-ignorable=N variation-selector=N emoji=Y emoji-presentation=Y modifier=Y modifier-base=N component=Y extended-pictographic=N\n"
+        },
+        {
+          "name": "emoji-variation-selector",
+          "args": ["♥️"],
+          "stdout": "unicode: 17.0.0\nscalars: 2\nvariation-requests: 1\n0 value=9829 bytes=0..3\n  gc=So ccc=0 eaw=A\n  script=Zyyy scx=Zyyy bidi=ON mirrored=N mirror=none bracket=none\n  joining=U/No_Joining_Group indic=Other/NA vertical=U\n  default-ignorable=N variation-selector=N emoji=Y emoji-presentation=N modifier=N modifier-base=N component=N extended-pictographic=Y\n1 value=65039 bytes=3..6\n  gc=Mn ccc=0 eaw=A\n  script=Zinh scx=Zinh bidi=NSM mirrored=N mirror=none bracket=none\n  joining=T/No_Joining_Group indic=Other/NA vertical=R\n  default-ignorable=Y variation-selector=Y emoji=N emoji-presentation=N modifier=N modifier-base=N component=Y extended-pictographic=N\n  base=9829 selector=65039 presentation=emoji\n"
+        },
+        {
+          "name": "text-variation-selector",
+          "args": ["♥︎"],
+          "stdout": "unicode: 17.0.0\nscalars: 2\nvariation-requests: 1\n0 value=9829 bytes=0..3\n  gc=So ccc=0 eaw=A\n  script=Zyyy scx=Zyyy bidi=ON mirrored=N mirror=none bracket=none\n  joining=U/No_Joining_Group indic=Other/NA vertical=U\n  default-ignorable=N variation-selector=N emoji=Y emoji-presentation=N modifier=N modifier-base=N component=N extended-pictographic=Y\n1 value=65038 bytes=3..6\n  gc=Mn ccc=0 eaw=A\n  script=Zinh scx=Zinh bidi=NSM mirrored=N mirror=none bracket=none\n  joining=T/No_Joining_Group indic=Other/NA vertical=R\n  default-ignorable=Y variation-selector=Y emoji=N emoji-presentation=N modifier=N modifier-base=N component=N extended-pictographic=N\n  base=9829 selector=65038 presentation=text\n"
+        },
+        {
+          "name": "unlisted-variation-pair",
+          "args": ["A️"],
+          "stdout": "unicode: 17.0.0\nscalars: 2\nvariation-requests: 0\n0 value=65 bytes=0..1\n  gc=Lu ccc=0 eaw=Na\n  script=Latn scx=Latn bidi=L mirrored=N mirror=none bracket=none\n  joining=U/No_Joining_Group indic=Other/NA vertical=R\n  default-ignorable=N variation-selector=N emoji=N emoji-presentation=N modifier=N modifier-base=N component=N extended-pictographic=N\n1 value=65039 bytes=1..4\n  gc=Mn ccc=0 eaw=A\n  script=Zinh scx=Zinh bidi=NSM mirrored=N mirror=none bracket=none\n  joining=T/No_Joining_Group indic=Other/NA vertical=R\n  default-ignorable=Y variation-selector=Y emoji=N emoji-presentation=N modifier=N modifier-base=N component=Y extended-pictographic=N\n"
+        },
+        {
+          "name": "mirrored-paired-bracket",
+          "args": ["("],
+          "stdout": "unicode: 17.0.0\nscalars: 1\nvariation-requests: 0\n0 value=40 bytes=0..1\n  gc=Ps ccc=0 eaw=Na\n  script=Zyyy scx=Zyyy bidi=ON mirrored=Y mirror=41 bracket=41:open\n  joining=U/No_Joining_Group indic=Other/NA vertical=R\n  default-ignorable=N variation-selector=N emoji=N emoji-presentation=N modifier=N modifier-base=N component=N extended-pictographic=N\n"
+        },
+        {
+          "name": "private-use-is-valid",
+          "args": [""],
+          "stdout": "unicode: 17.0.0\nscalars: 1\nvariation-requests: 0\n0 value=57344 bytes=0..3\n  gc=Co ccc=0 eaw=A\n  script=Zzzz scx=Zzzz bidi=L mirrored=N mirror=none bracket=none\n  joining=U/No_Joining_Group indic=Other/NA vertical=U\n  default-ignorable=N variation-selector=N emoji=N emoji-presentation=N modifier=N modifier-base=N component=N extended-pictographic=N\n"
+        },
+        {
+          "name": "unassigned-is-valid",
+          "args": ["͸"],
+          "stdout": "unicode: 17.0.0\nscalars: 1\nvariation-requests: 0\n0 value=888 bytes=0..2\n  gc=Cn ccc=0 eaw=N\n  script=Zzzz scx=Zzzz bidi=L mirrored=N mirror=none bracket=none\n  joining=U/No_Joining_Group indic=Other/NA vertical=R\n  default-ignorable=N variation-selector=N emoji=N emoji-presentation=N modifier=N modifier-base=N component=N extended-pictographic=N\n"
+        },
+        {
+          "name": "mixed-byte-coordinates",
+          "args": ["A一🦘"],
+          "stdout": "unicode: 17.0.0\nscalars: 3\nvariation-requests: 0\n0 value=65 bytes=0..1\n  gc=Lu ccc=0 eaw=Na\n  script=Latn scx=Latn bidi=L mirrored=N mirror=none bracket=none\n  joining=U/No_Joining_Group indic=Other/NA vertical=R\n  default-ignorable=N variation-selector=N emoji=N emoji-presentation=N modifier=N modifier-base=N component=N extended-pictographic=N\n1 value=19968 bytes=1..4\n  gc=Lo ccc=0 eaw=W\n  script=Hani scx=Hani bidi=L mirrored=N mirror=none bracket=none\n  joining=U/No_Joining_Group indic=Other/NA vertical=U\n  default-ignorable=N variation-selector=N emoji=N emoji-presentation=N modifier=N modifier-base=N component=N extended-pictographic=N\n2 value=129432 bytes=4..8\n  gc=So ccc=0 eaw=W\n  script=Zyyy scx=Zyyy bidi=ON mirrored=N mirror=none bracket=none\n  joining=U/No_Joining_Group indic=Other/NA vertical=U\n  default-ignorable=N variation-selector=N emoji=Y emoji-presentation=Y modifier=N modifier-base=N component=N extended-pictographic=Y\n"
+        },
+        {
+          "name": "missing-input",
+          "exit_code": 2,
+          "stdout": "",
+          "stderr": "usage: shaping-facts TEXT\n"
+        }
+      ]
+    },
+    {
+      "path": "examples/split-graphemes.roc",
+      "cases": [
+        {
+          "name": "default",
+          "stdout": "unicode: 17.0.0\ntext: 🇦🇺🦘🪃\ngraphemes: 3\nbytes 0..8: \"🇦🇺\"\nbytes 8..12: \"🦘\"\nbytes 12..16: \"🪃\"\n"
+        },
+        {
+          "name": "empty",
+          "args": [""],
+          "stdout": "unicode: 17.0.0\ntext: \ngraphemes: 0\n"
+        },
+        {
+          "name": "decomposed-accent",
+          "args": ["é"],
+          "stdout": "unicode: 17.0.0\ntext: é\ngraphemes: 1\nbytes 0..3: \"é\"\n"
+        },
+        {
+          "name": "emoji-zwj-sequence",
+          "args": ["👩‍🚀"],
+          "stdout": "unicode: 17.0.0\ntext: 👩‍🚀\ngraphemes: 1\nbytes 0..11: \"👩‍🚀\"\n"
+        },
+        {
+          "name": "regional-indicator-pair",
+          "args": ["🇦🇺"],
+          "stdout": "unicode: 17.0.0\ntext: 🇦🇺\ngraphemes: 1\nbytes 0..8: \"🇦🇺\"\n"
+        },
+        {
+          "name": "indic-conjunct",
+          "args": ["क्ष"],
+          "stdout": "unicode: 17.0.0\ntext: क्ष\ngraphemes: 1\nbytes 0..9: \"क्ष\"\n"
+        },
+        {
+          "name": "ascii-partition",
+          "args": ["abc"],
+          "stdout": "unicode: 17.0.0\ntext: abc\ngraphemes: 3\nbytes 0..1: \"a\"\nbytes 1..2: \"b\"\nbytes 2..3: \"c\"\n"
+        },
+        {
+          "name": "too-many-arguments",
+          "args": ["one", "two"],
+          "exit_code": 2,
+          "stdout": "",
+          "stderr": "usage: split-graphemes [TEXT]\n"
+        }
+      ]
+    },
+    {
+      "path": "examples/stream-grapheme-ranges.roc",
+      "cases": [
+        {
+          "name": "ascii-across-chunks",
+          "args": ["a", "bc"],
+          "stdout": "unicode: 17.0.0\nmode: scalar-aligned-chunks\nchunks: 2\nbytes: 3\ngraphemes: 3\nbytes=0..1\nbytes=1..2\nbytes=2..3\n"
+        },
+        {
+          "name": "combining-mark-crosses-chunk",
+          "args": ["e", "́"],
+          "stdout": "unicode: 17.0.0\nmode: scalar-aligned-chunks\nchunks: 2\nbytes: 3\ngraphemes: 1\nbytes=0..3\n"
+        },
+        {
+          "name": "emoji-zwj-crosses-chunks",
+          "args": ["👩", "‍", "🚀"],
+          "stdout": "unicode: 17.0.0\nmode: scalar-aligned-chunks\nchunks: 3\nbytes: 11\ngraphemes: 1\nbytes=0..11\n"
+        },
+        {
+          "name": "regional-indicator-pair-crosses-chunk",
+          "args": ["🇦", "🇺"],
+          "stdout": "unicode: 17.0.0\nmode: scalar-aligned-chunks\nchunks: 2\nbytes: 8\ngraphemes: 1\nbytes=0..8\n"
+        },
+        {
+          "name": "indic-conjunct-crosses-chunks",
+          "args": ["क", "्", "ष"],
+          "stdout": "unicode: 17.0.0\nmode: scalar-aligned-chunks\nchunks: 3\nbytes: 9\ngraphemes: 1\nbytes=0..9\n"
+        },
+        {
+          "name": "empty-source-chunk",
+          "args": ["-"],
+          "stdout": "unicode: 17.0.0\nmode: scalar-aligned-chunks\nchunks: 1\nbytes: 0\ngraphemes: 0\n"
+        },
+        {
+          "name": "empty-chunk-is-no-op",
+          "args": ["a", "-", "b"],
+          "stdout": "unicode: 17.0.0\nmode: scalar-aligned-chunks\nchunks: 3\nbytes: 2\ngraphemes: 2\nbytes=0..1\nbytes=1..2\n"
+        },
+        {
+          "name": "missing-input",
+          "exit_code": 2,
+          "stdout": "",
+          "stderr": "usage: stream-grapheme-ranges CHUNK [CHUNK ...]\n       chunks must be scalar-aligned; use - for an empty chunk\n"
+        }
+      ]
     }
-  }
+  ]
 }

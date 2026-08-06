@@ -1,71 +1,67 @@
 app [main!] {
-    pf: platform "https://github.com/lukewilliamboswell/roc-platform-template-zig/releases/download/1.1.0/ABFgWwu8SwPJfp7tzxDoTL41b1jFeHEac3RxUFSt1WWp.tar.zst",
-    unicode: "../package/main.roc", # use release URL (ends in tar.br) for local example, see github.com/roc/unicode/releases
+	pf: platform "https://github.com/lukewilliamboswell/roc-platform-template-zig/releases/download/1.1.0/ABFgWwu8SwPJfp7tzxDoTL41b1jFeHEac3RxUFSt1WWp.tar.zst",
+	unicode: "../package/main.roc",
 }
 
+import pf.Stderr
 import pf.Stdout
-import unicode.ByteRange
 import unicode.Grapheme
 import unicode.UnicodeVersion
 
-default_string = "🇦🇺🦘🪃"
+default_text = "🇦🇺🦘🪃"
 
-expect Grapheme.owned(default_string) == ["🇦🇺", "🦘", "🪃"]
-
-expect {
-    Grapheme.ranges(default_string).map(|range| {
-        (ByteRange.start(range), ByteRange.end(range))
-    }) == [(0, 8), (8, 12), (12, 16)]
+## Return zero-copy extended grapheme cluster slices with byte coordinates.
+## The slices retain the source backing storage, which is appropriate while
+## producing this report; use Grapheme.owned only when independent copies are
+## required. Deriving offsets from each slice avoids segmenting the text twice.
+segment : Str -> List({ end : U64, start : U64, text : Str })
+segment = |source| {
+	var $offset = 0.U64
+	var $clusters = []
+	for slice in Grapheme.slices(source) {
+		end = $offset + slice.count_utf8_bytes()
+		$clusters = $clusters.append({ start: $offset, end, text: slice })
+		$offset = end
+	}
+	$clusters
 }
 
-append_bounds = |bounds, range| {
-    bounds.append((ByteRange.start(range), ByteRange.end(range)))
+report : Str -> Str
+report = |source| {
+	clusters = segment(source)
+	lines = clusters.map(
+		|cluster| {
+			"bytes ${cluster.start.to_str()}..${cluster.end.to_str()}: ${Str.inspect(cluster.text)}"
+		},
+	)
+	Str.join_with(
+		[
+			"unicode: ${UnicodeVersion.to_str(UnicodeVersion.current)}",
+			"text: ${source}",
+			"graphemes: ${clusters.len().to_str()}",
+		].concat(lines),
+		"\n",
+	)
 }
 
-expect {
-    first = Grapheme.Cursor.push(
-        Grapheme.Cursor.init({}),
-        "🇦",
-        [],
-        append_bounds,
-    )
+expect segment("") == []
+expect segment("é") == [{ start: 0, end: 3, text: "é" }]
+expect segment("🇦🇺🦘") == [
+	{ start: 0, end: 8, text: "🇦🇺" },
+	{ start: 8, end: 12, text: "🦘" },
+]
+expect Grapheme.slices("👩‍🚀") == ["👩‍🚀"]
 
-    match first {
-        Err(_) => Bool.False
-        Ok({ cursor: after_first, state: first_bounds }) => {
-            second = Grapheme.Cursor.push(after_first, "🇺x", first_bounds, append_bounds)
-
-            match second {
-                Err(_) => Bool.False
-                Ok({ cursor: after_second, state: second_bounds }) => {
-                    match Grapheme.Cursor.finish(after_second, second_bounds, append_bounds) {
-                        Err(_) => Bool.False
-                        Ok({ state: final_bounds, .. }) => final_bounds == [(0, 8), (8, 9)]
-                    }
-                }
-            }
-        }
-    }
-}
-
-expect UnicodeVersion.to_str(UnicodeVersion.current) == "17.0.0"
-
-expect Grapheme.slices(default_string) == ["🇦🇺", "🦘", "🪃"]
-
-expect {
-    Grapheme.iter_ranges(default_string).fold([], |bounds, range| {
-        bounds.append((ByteRange.start(range), ByteRange.end(range)))
-    }) == [(0, 8), (8, 12), (12, 16)]
-}
-
+main! : List(Str) => Try({}, [Exit(I32), StderrErr(Str), StdoutErr(Str), ..])
 main! = |args| {
-    string = match args {
-        [] => default_string
-        [_app] => default_string
-        [_app, arg1, ..] => arg1
-    }
-    graphemes = Grapheme.owned(string)
-    Stdout.line!("\n\nThe string \"${string}\" has following graphemes:")?
-    Stdout.line!(Str.inspect(graphemes))?
-    Ok({})
+	source = match args {
+		[_app] => default_text
+		[_app, provided] => provided
+		_ => {
+			Stderr.line!("usage: split-graphemes [TEXT]")?
+			return Err(Exit(2))
+		}
+	}
+	Stdout.line!(report(source))?
+	Ok({})
 }

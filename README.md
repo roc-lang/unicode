@@ -6,6 +6,14 @@ Convenient functions for working with unicode.
 
 :book: [**documentation**](https://roc-lang.github.io/unicode)
 
+The examples are complete command-line applications rather than isolated API
+snippets. They include grapheme-safe display-name limiting, arbitrary-byte
+UTF-8 stream decoding, bounded code-point encoding, logical line-break
+opportunities, shaping-oriented script runs, and scalar property diagnostics.
+Each application handles invalid arguments and package error values explicitly;
+[`examples/spec.json`](examples/spec.json) exercises their happy paths,
+Unicode edge cases, streaming behavior, resource limits, and error output.
+
 
 ## Learning about Unicode
 
@@ -193,6 +201,14 @@ Regenerate them with `scripts/rebuild.sh`.
 Each purpose-built test app lives in `tests/apps/<suite>/main.roc` with an
 adjacent `spec.json`. The runner builds optimized binaries once, sends cases
 over a versioned stdin protocol, and executes deterministic shards in parallel.
+The example runner independently builds the package bundle, serves only that
+archive on loopback, rewrites temporary copies of every example to use it,
+formats/checks/tests/builds each application once, and then reuses those
+binaries for all named spec cases. The spec discovers every example, requires
+both successful and failing paths without numeric coverage thresholds, and
+uses exact output snapshots for deterministic behavior. Adding an unlisted
+example, omitting either outcome, duplicating a name, or leaving a spec field
+unrecognized fails the suite.
 
 ```sh
 ROC=roc scripts/all_tests.sh
@@ -200,6 +216,7 @@ python3 scripts/test.py grapheme
 python3 scripts/test.py line-break --jobs 8
 python3 scripts/test.py properties --jobs 8
 python3 scripts/test.py allocations
+python3 scripts/test_bundle_examples.py
 ```
 
 The grapheme suite covers all 766 official Unicode 17 conformance cases, and
@@ -212,6 +229,11 @@ for the compiler in `.roc-version`: when an intentional implementation change
 alters them, rerun `scripts/test.py allocations` with that pinned compiler and
 review the measured fixture counts before updating the adjacent baseline file.
 The runner never updates or silently accepts a new allocation baseline.
+Hand-authored package modules and all examples are gated by `roc fmt --check`.
+Compact generated Unicode modules remain byte-for-byte governed by
+`python3 scripts/unicode_data.py generate --check`; running the formatter over
+those generated tables would change the canonical generator output and expand
+its dense literals substantially.
 
 ## Benchmarks
 
