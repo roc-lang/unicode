@@ -3,8 +3,9 @@ app [run!] {
     unicode: "../../../package/main.roc",
 }
 
-import unicode.CodePoint
+import unicode.ByteRange
 import unicode.Grapheme
+import unicode.Scalar
 
 run! : Str => Str
 run! = |input| {
@@ -59,24 +60,19 @@ run_case = |line| {
             expected_offsets = expected_offsets_str.split_on(",").map(U64.from_str)
             match (keep_oks(code_points), keep_oks(expected_offsets)) {
                 (Ok(cps), Ok(expected)) => {
-                    source =
-                        cps
-                            .map(CodePoint.internal_from_u32_unchecked)
-                            ->CodePoint.to_str()
+                    source = keep_oks(cps.map(scalar_to_str))
                     match source {
                         Err(_) => Err({ case_id, message: "could not encode source scalars" })
-                        Ok(str) => match Grapheme.split(str) {
-                            Err(_) => Err({ case_id, message: "Grapheme.split returned an error" })
-                            Ok(parts) => {
-                                got = break_offsets(parts)
-                                if got == expected {
-                                    Ok({})
-                                } else {
-                                    Err({
-                                        case_id,
-                                        message: "expected ${Str.inspect(expected)}, got ${Str.inspect(got)}",
-                                    })
-                                }
+                        Ok(parts) => {
+                            str = Str.join_with(parts, "")
+                            got = break_offsets(Grapheme.ranges(str))
+                            if got == expected {
+                                Ok({})
+                            } else {
+                                Err({
+                                    case_id,
+                                    message: "expected ${Str.inspect(expected)}, got ${Str.inspect(got)}",
+                                })
                             }
                         }
                     }
@@ -89,11 +85,31 @@ run_case = |line| {
     }
 }
 
-break_offsets : List(Str) -> List(U64)
-break_offsets = |parts| {
-    parts.fold([0], |offsets, part| {
-        previous = offsets.last() ?? 0
-        offsets.append(previous + part.to_utf8().len())
+scalar_to_str : U32 -> Try(Str, [InvalidScalar, InternalEncodingFault])
+scalar_to_str = |value| {
+    match Scalar.from_u32(value) {
+        Err(_) => {
+            error : [InvalidScalar, InternalEncodingFault]
+            error = InvalidScalar
+            Err(error)
+        }
+        Ok(scalar) => {
+            match Scalar.to_str(scalar) {
+                Ok(encoded) => Ok(encoded)
+                Err(_) => {
+                    error : [InvalidScalar, InternalEncodingFault]
+                    error = InternalEncodingFault
+                    Err(error)
+                }
+            }
+        }
+    }
+}
+
+break_offsets : List(ByteRange) -> List(U64)
+break_offsets = |ranges| {
+    ranges.fold([0], |offsets, range| {
+        offsets.append(ByteRange.end(range))
     })
 }
 

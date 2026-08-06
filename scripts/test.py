@@ -12,18 +12,21 @@ import subprocess
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Sequence
+from typing import Callable, Iterable, Sequence
 
 from unicode_data import (
     DataError,
     GraphemeCase,
+    LineBreakCase,
     MAX_CODE_POINT,
+    MissingDefault,
     RangeRecord,
     load_manifest,
     load_property_data,
     parse_grapheme_tests,
+    parse_line_break_tests,
+    release_version,
     validate_all,
-    validate_skip_ledger,
 )
 
 
@@ -31,7 +34,12 @@ ROOT = Path(__file__).resolve().parents[1]
 TEST_TMP = ROOT / ".roc-unicode-tmp" / "tests"
 EXAMPLE_SPEC = ROOT / "examples" / "spec.json"
 APP_ROOT = ROOT / "tests" / "apps"
-APP_NAMES = {"grapheme": "grapheme", "properties": "properties", "allocation": "allocation"}
+APP_NAMES = {
+    "grapheme": "grapheme",
+    "line-break": "line-break",
+    "properties": "properties",
+    "allocation": "allocation",
+}
 GCB_CODES = {
     "CR": 1,
     "LF": 2,
@@ -130,7 +138,13 @@ def load_app_specs() -> dict[str, dict[str, object]]:
             "suite",
             "timeout_seconds",
             "unicode_manifest_file",
-            "skip_ledger",
+        },
+        "line-break": {
+            "schema_version",
+            "kind",
+            "suite",
+            "timeout_seconds",
+            "unicode_manifest_file",
         },
         "properties": {
             "schema_version",
@@ -165,14 +179,15 @@ def load_app_specs() -> dict[str, dict[str, object]]:
         if not isinstance(spec.get("timeout_seconds"), int) or spec["timeout_seconds"] < 1:
             raise TestFailure(f"{name}: timeout_seconds must be positive")
         specs[name] = spec
-    manifest_files = set(load_manifest()["files"])
+    manifest_files = set(load_manifest()["sources"])
     if specs["grapheme"]["suite"] != "grapheme":
         raise TestFailure("grapheme spec suite has drifted")
     if specs["grapheme"]["unicode_manifest_file"] != "grapheme_break_test":
         raise TestFailure("grapheme spec references an unknown manifest file")
-    grapheme_ledger = ROOT / str(specs["grapheme"]["skip_ledger"])
-    if grapheme_ledger.parent != APP_ROOT / "grapheme" or not grapheme_ledger.is_file():
-        raise TestFailure("grapheme skip ledger must be adjacent to its app")
+    if specs["line-break"]["suite"] != "line-break":
+        raise TestFailure("line-break spec suite has drifted")
+    if specs["line-break"]["unicode_manifest_file"] != "line_break_test":
+        raise TestFailure("line-break spec references an unknown manifest file")
     property_sources = set(specs["properties"]["unicode_manifest_files"])
     if property_sources != {
         "grapheme_break_property",
@@ -343,22 +358,46 @@ def grapheme_row(case: GraphemeCase) -> str:
 def run_grapheme(binary: Path, jobs: int, spec: dict[str, object]) -> None:
     manifest = load_manifest()
     cases = parse_grapheme_tests(manifest)
-    ledger_path = ROOT / str(spec["skip_ledger"])
-    skipped = validate_skip_ledger(cases, ledger_path)
-    supported = [case for case in cases if case.case_id not in skipped]
     run_parallel_suite(
         binary,
         "grapheme",
-        len(supported),
-        lambda index: grapheme_row(supported[index]),
+        len(cases),
+        lambda index: grapheme_row(cases[index]),
         jobs=jobs,
         timeout=int(spec["timeout_seconds"]),
     )
-    print(f"SKIP grapheme: {len(skipped)} cases tracked by issue #35")
 
 
-def fill_property_table(records: list[RangeRecord], codes: dict[str, int], default: int) -> bytearray:
+def line_break_row(case: LineBreakCase) -> str:
+    code_points = ",".join(f"{code_point:04X}" for code_point in case.code_points)
+    offsets = ",".join(str(offset) for offset in case.break_offsets)
+    return f"17.0.0:LineBreakTest.txt:{case.line}\t{code_points}\t{offsets}"
+
+
+def run_line_break(binary: Path, jobs: int, spec: dict[str, object]) -> None:
+    manifest = load_manifest()
+    cases = parse_line_break_tests(manifest)
+    run_parallel_suite(
+        binary,
+        "line-break",
+        len(cases),
+        lambda index: line_break_row(cases[index]),
+        jobs=jobs,
+        timeout=int(spec["timeout_seconds"]),
+    )
+
+
+def fill_property_table(
+    records: Iterable[RangeRecord],
+    codes: dict[str, int],
+    default: int,
+    defaults: Iterable[MissingDefault] = (),
+) -> bytearray:
     values = bytearray([default]) * (MAX_CODE_POINT + 1)
+    for declaration in defaults:
+        values[declaration.start : declaration.end + 1] = bytes([codes[declaration.value]]) * (
+            declaration.end - declaration.start + 1
+        )
     for record in records:
         values[record.start : record.end + 1] = bytes([codes[record.property]]) * (
             record.end - record.start + 1
@@ -366,17 +405,22 @@ def fill_property_table(records: list[RangeRecord], codes: dict[str, int], defau
     return values
 
 
-def build_property_tables() -> tuple[bytearray, bytearray, bytearray]:
+def build_property_tables() -> tuple[str, bytearray, bytearray, bytearray]:
     manifest = load_manifest()
-    gcb, eaw, emoji = load_property_data(manifest)
-    gcb_values = fill_property_table(gcb, GCB_CODES, 0)
-    eaw_values = fill_property_table(eaw, EAW_CODES, 0)
+    properties = load_property_data(manifest)
+    gcb_values = fill_property_table(properties.grapheme.records, GCB_CODES, 0)
+    eaw_values = fill_property_table(
+        properties.east_asian_width.records,
+        EAW_CODES,
+        0,
+        properties.east_asian_width.defaults,
+    )
     emoji_values = bytearray(MAX_CODE_POINT + 1)
-    for record in emoji:
+    for record in properties.emoji.records:
         bit = EMOJI_BITS[record.property]
         for code_point in range(record.start, record.end + 1):
             emoji_values[code_point] |= bit
-    return gcb_values, eaw_values, emoji_values
+    return release_version(manifest, "unicode"), gcb_values, eaw_values, emoji_values
 
 
 def scalar_at(index: int) -> int:
@@ -386,12 +430,12 @@ def scalar_at(index: int) -> int:
 def run_properties(binary: Path, jobs: int, spec: dict[str, object]) -> None:
     if spec["suite"] != "properties":
         raise TestFailure("properties spec suite has drifted")
-    gcb, eaw, emoji = build_property_tables()
+    version, gcb, eaw, emoji = build_property_tables()
 
     def row(index: int) -> str:
         code_point = scalar_at(index)
         return (
-            f"15.1.0:scalar:{code_point:06X}\t{code_point:X}\t"
+            f"{version}:scalar:{code_point:06X}\t{code_point:X}\t"
             f"{gcb[code_point]}\t{eaw[code_point]}\t{emoji[code_point]}"
         )
 
@@ -435,9 +479,20 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
     if spec["exact_baseline_target"] != "linux-x64":
         raise TestFailure("allocation spec exact baseline target has drifted")
     suites = spec["suites"]
-    if suites != ["allocation-calibration", "allocation-baselines"]:
+    if suites != [
+        "allocation-calibration",
+        "allocation-aliases",
+        "allocation-line-break-cursor",
+        "allocation-baselines",
+    ]:
         raise TestFailure("allocation spec suites have drifted")
     run_serial_suite(binary, suites[0], calibration, timeout=timeout)
+    run_serial_suite(binary, suites[1], ["all\t\t0"], timeout=timeout)
+    line_break_rows = [
+        f"{name}\t{utf8_hex(value)}\t0"
+        for name, value in ALLOCATION_FIXTURES.items()
+    ]
+    run_serial_suite(binary, suites[2], line_break_rows, timeout=timeout)
 
     machine = platform.machine().lower()
     if platform.system() != "Linux" or machine not in ("x86_64", "amd64"):
@@ -448,16 +503,13 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
         baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as err:
         raise TestFailure(f"unable to read allocation baselines: {err}") from err
-    pinned_roc = (ROOT / ".roc-version").read_text(encoding="utf-8").strip()
     if (
-        baseline.get("schema_version") != 1
+        baseline.get("schema_version") != 2
         or baseline.get("platform") != "roc-platform-template-zig-1.1.0+alloc-count"
         or baseline.get("target") != "x64musl"
         or baseline.get("optimize") != "speed"
     ):
         raise TestFailure("allocation baseline metadata has drifted")
-    if baseline.get("roc_version") != pinned_roc:
-        raise TestFailure("allocation baseline Roc version does not match .roc-version")
     expected = baseline.get("fixtures")
     if not isinstance(expected, dict) or set(expected) != set(ALLOCATION_FIXTURES):
         raise TestFailure("allocation baseline fixture set has drifted")
@@ -465,7 +517,7 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
         f"{name}\t{utf8_hex(value)}\t{expected[name]}"
         for name, value in ALLOCATION_FIXTURES.items()
     ]
-    run_serial_suite(binary, suites[1], rows, timeout=timeout)
+    run_serial_suite(binary, suites[3], rows, timeout=timeout)
 
 
 def verify_pinned_roc(roc: str) -> None:
@@ -473,7 +525,7 @@ def verify_pinned_roc(roc: str) -> None:
     pinned = (ROOT / ".roc-version").read_text(encoding="utf-8").strip()
     if pinned not in completed.stdout:
         raise TestFailure(
-            f"exact allocation baselines require {pinned}, got {completed.stdout.strip()!r}"
+            f"repository requires {pinned}, got {completed.stdout.strip()!r}"
         )
 
 
@@ -550,7 +602,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "suite",
         nargs="?",
-        choices=("all", "data", "grapheme", "properties", "allocations", "examples"),
+        choices=("all", "data", "grapheme", "line-break", "properties", "allocations", "examples"),
         default="all",
     )
     parser.add_argument("--roc", default=os.environ.get("ROC", "roc"))
@@ -563,6 +615,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--jobs must be positive")
     try:
         app_specs = load_app_specs()
+        if args.suite != "data":
+            verify_pinned_roc(args.roc)
         if args.suite in ("all", "data"):
             run_data_checks()
         if args.suite in ("all", "examples"):
@@ -570,22 +624,20 @@ def main(argv: list[str] | None = None) -> int:
         requested_apps = []
         if args.suite in ("all", "grapheme"):
             requested_apps.append("grapheme")
+        if args.suite in ("all", "line-break"):
+            requested_apps.append("line-break")
         if args.suite in ("all", "properties"):
             requested_apps.append("properties")
         if args.suite in ("all", "allocations"):
             requested_apps.append("allocation")
         if requested_apps:
-            if (
-                "allocation" in requested_apps
-                and platform.system() == "Linux"
-                and platform.machine().lower() in ("x86_64", "amd64")
-            ):
-                verify_pinned_roc(args.roc)
             binaries = build_apps(
                 args.roc, requested_apps, args.zig, skip_build=args.skip_build
             )
             if "grapheme" in requested_apps:
                 run_grapheme(binaries["grapheme"], args.jobs, app_specs["grapheme"])
+            if "line-break" in requested_apps:
+                run_line_break(binaries["line-break"], args.jobs, app_specs["line-break"])
             if "properties" in requested_apps:
                 run_properties(binaries["properties"], args.jobs, app_specs["properties"])
             if "allocation" in requested_apps:

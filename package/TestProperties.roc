@@ -1,15 +1,13 @@
-import CodePoint
 import InternalEAW
 import InternalEmoji
-import InternalGBP
+import InternalGraphemeData
 
 ## Stable, test-private numeric encodings of generated Unicode properties.
 ## This module is exposed only by test-main.roc, never by the public package.
 TestProperties :: {}.{
     gcb : U32 -> U8
     gcb = |u32| {
-        cp = CodePoint.internal_from_u32_unchecked(u32)
-        match InternalGBP.from_cp(cp) {
+        match InternalGraphemeData.lookup(u32).gcb {
             Other => 0
             CR => 1
             LF => 2

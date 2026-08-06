@@ -1,1 +1,1 @@
-package [CodePoint, TestProperties] { }
+package [CodePoint, TestProperties, TestPropertyAliases] { }

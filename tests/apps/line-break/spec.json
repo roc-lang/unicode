@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "kind": "line-break",
+  "suite": "line-break",
+  "timeout_seconds": 180,
+  "unicode_manifest_file": "line_break_test"
+}

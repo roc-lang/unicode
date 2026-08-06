@@ -3,6 +3,8 @@
   "kind": "allocation",
   "suites": [
     "allocation-calibration",
+    "allocation-aliases",
+    "allocation-line-break-cursor",
     "allocation-baselines"
   ],
   "timeout_seconds": 120,
