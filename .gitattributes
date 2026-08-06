@@ -2,5 +2,9 @@
 # upstream LF line endings even when Git is configured to use CRLF on Windows.
 /vendor/unicode/** text eol=lf
 
+# Roc formatting is byte-sensitive, so keep source line endings identical on
+# every development and CI host.
+*.roc text eol=lf
+
 # Executable scripts are invoked by Bash on every CI host.
 /scripts/*.sh text eol=lf
