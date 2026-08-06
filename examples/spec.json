@@ -1,5 +1,6 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
+  "support_modules": ["examples/CliArgs.roc"],
   "apps": [
     {
       "path": "examples/decode-utf8-stream.roc",

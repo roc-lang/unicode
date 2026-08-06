@@ -1,15 +1,36 @@
 from __future__ import annotations
 
 import re
+import subprocess
 import tempfile
 import unittest
 import urllib.request
 from pathlib import Path
+from unittest import mock
 
 from scripts import test_bundle_examples as harness
 
 
 class ExampleHarnessTests(unittest.TestCase):
+    def test_bundle_script_is_launched_through_bash(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            bundle_dir = Path(temporary)
+            bundle = bundle_dir / "unicode.tar.zst"
+            bundle.write_bytes(b"bundle-fixture")
+            completed = subprocess.CompletedProcess(
+                args=[],
+                returncode=0,
+                stdout=f"Created: {bundle}\n",
+            )
+            with (
+                mock.patch.object(harness, "run", return_value=completed) as run,
+                mock.patch("builtins.print"),
+            ):
+                self.assertEqual(harness.bundle_package(bundle_dir, "roc"), bundle)
+
+            command = run.call_args.args[0]
+            self.assertEqual(command[:2], ["bash", harness.ROOT / "scripts" / "bundle.sh"])
+
     def test_real_spec_is_valid(self) -> None:
         self.assertTrue(harness.load_spec())
 
@@ -17,6 +38,7 @@ class ExampleHarnessTests(unittest.TestCase):
         path = "examples/example.roc"
         spec = {
             "schema_version": harness.SCHEMA_VERSION,
+            "support_modules": [],
             "apps": [
                 {
                     "path": path,
@@ -33,11 +55,36 @@ class ExampleHarnessTests(unittest.TestCase):
             ],
         }
 
-        self.assertEqual(harness.validate_spec(spec, {path}), spec["apps"])
+        self.assertEqual(harness.validate_spec(spec, {path}, set()), spec["apps"])
+
+    def test_spec_tracks_support_modules_exactly(self) -> None:
+        path = "examples/example.roc"
+        support = "examples/Support.roc"
+        spec = {
+            "schema_version": harness.SCHEMA_VERSION,
+            "support_modules": [],
+            "apps": [
+                {
+                    "path": path,
+                    "cases": [
+                        {"name": "works", "stdout": "ok\n"},
+                        {
+                            "name": "fails",
+                            "exit_code": 1,
+                            "stdout": "",
+                            "stderr": "error\n",
+                        },
+                    ],
+                }
+            ],
+        }
+
+        with self.assertRaisesRegex(harness.TestFailure, "support module spec drift"):
+            harness.validate_spec(spec, {path}, {support})
 
     def test_spec_requires_success_and_error_paths(self) -> None:
         path = "examples/example.roc"
-        base = {"schema_version": harness.SCHEMA_VERSION}
+        base = {"schema_version": harness.SCHEMA_VERSION, "support_modules": []}
         success_only = {
             **base,
             "apps": [
@@ -62,9 +109,9 @@ class ExampleHarnessTests(unittest.TestCase):
         }
 
         with self.assertRaisesRegex(harness.TestFailure, "error path"):
-            harness.validate_spec(success_only, {path})
+            harness.validate_spec(success_only, {path}, set())
         with self.assertRaisesRegex(harness.TestFailure, "successful path"):
-            harness.validate_spec(error_only, {path})
+            harness.validate_spec(error_only, {path}, set())
 
     def test_case_validation_rejects_unknown_fields(self) -> None:
         with self.assertRaisesRegex(harness.TestFailure, "unknown fields"):
@@ -101,21 +148,46 @@ class ExampleHarnessTests(unittest.TestCase):
         self.assertEqual(harness.normalize_output(raw), "alpha\nbeta\n")
         self.assertIn("\x1b[31m", raw)
 
+    def test_case_output_rejects_invalid_utf8(self) -> None:
+        with self.assertRaisesRegex(
+            harness.TestFailure,
+            r"example\.roc \[invalid-output\]: stdout is not valid UTF-8 at byte 1",
+        ):
+            harness.decode_case_output(
+                "example.roc",
+                "invalid-output",
+                "stdout",
+                b"a\xffb",
+            )
+
     def test_rewrite_uses_copies_and_every_example_uses_bundle(self) -> None:
         originals = {
             path.name: path.read_bytes()
             for path in (harness.ROOT / "examples").glob("*.roc")
         }
+        app_names = {
+            name
+            for name, contents in originals.items()
+            if harness.APP_HEADER_RE.search(contents.decode("utf-8")) is not None
+        }
+        support_names = set(originals) - app_names
+        self.assertTrue(support_names)
         with tempfile.TemporaryDirectory() as temporary:
+            destination = Path(temporary)
             rewritten = harness.copy_examples_with_bundle_url(
-                Path(temporary), "http://127.0.0.1:12345/unicode.tar.zst"
+                destination, "http://127.0.0.1:12345/unicode.tar.zst"
             )
-            self.assertEqual(set(rewritten), {f"examples/{name}" for name in originals})
+            self.assertEqual(set(rewritten), {f"examples/{name}" for name in app_names})
             for source in rewritten.values():
                 contents = source.read_text(encoding="utf-8")
                 self.assertIn("http://127.0.0.1:12345/unicode.tar.zst", contents)
                 self.assertNotIn(harness.LOCAL_PACKAGE_PATH, contents)
                 self.assertNotIn("\r\n", contents)
+            for name in support_names:
+                self.assertEqual(
+                    (destination / "examples" / name).read_bytes(),
+                    originals[name],
+                )
         for name, contents in originals.items():
             self.assertEqual((harness.ROOT / "examples" / name).read_bytes(), contents)
 

@@ -1,10 +1,13 @@
 app [main!] {
-	pf: platform "https://github.com/lukewilliamboswell/roc-platform-template-zig/releases/download/1.1.0/ABFgWwu8SwPJfp7tzxDoTL41b1jFeHEac3RxUFSt1WWp.tar.zst",
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.21.0/4rAQg8kUYZ3Vksr4qMQHpaFYNiHSn9GgS7gVxghd1XYV.tar.zst",
 	# Use a release bundle URL in applications. The end-to-end suite rewrites
 	# this local development dependency to the bundle served by the test driver.
 	unicode: "../package/main.roc",
 }
 
+import CliArgs
+import pf.IOErr exposing [IOErr]
+import pf.OsStr exposing [OsStr]
 import pf.Stderr
 import pf.Stdout
 import unicode.EastAsianWidth
@@ -45,8 +48,9 @@ expect measure_cells("世界") == { cells: 4, scalars: 2 }
 expect measure_cells("ＡA") == { cells: 3, scalars: 2 }
 expect measure_cells("é") == { cells: 2, scalars: 2 }
 
-main! : List(Str) => Try({}, [Exit(I32), StderrErr(Str), StdoutErr(Str), ..])
-main! = |args| {
+main! : List(OsStr) => Try({}, [Exit(I32), StderrErr(IOErr), StdoutErr(IOErr), ..])
+main! = |os_args| {
+	args = CliArgs.to_strs!(os_args)?
 	text = match args {
 		[_app] => default_text
 		[_app, provided] => provided

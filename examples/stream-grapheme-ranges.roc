@@ -1,8 +1,11 @@
 app [main!] {
-	pf: platform "https://github.com/lukewilliamboswell/roc-platform-template-zig/releases/download/1.1.0/ABFgWwu8SwPJfp7tzxDoTL41b1jFeHEac3RxUFSt1WWp.tar.zst",
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.21.0/4rAQg8kUYZ3Vksr4qMQHpaFYNiHSn9GgS7gVxghd1XYV.tar.zst",
 	unicode: "../package/main.roc",
 }
 
+import CliArgs
+import pf.IOErr exposing [IOErr]
+import pf.OsStr exposing [OsStr]
 import pf.Stderr
 import pf.Stdout
 import unicode.ByteRange
@@ -85,8 +88,9 @@ expect {
 	}
 }
 
-main! : List(Str) => Try({}, [Exit(I32), StderrErr(Str), StdoutErr(Str), ..])
-main! = |args| {
+main! : List(OsStr) => Try({}, [Exit(I32), StderrErr(IOErr), StdoutErr(IOErr), ..])
+main! = |os_args| {
+	args = CliArgs.to_strs!(os_args)?
 	chunks = args.drop_first(1)
 	if chunks.is_empty() {
 		Stderr.line!("usage: stream-grapheme-ranges CHUNK [CHUNK ...]")?

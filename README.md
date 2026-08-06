@@ -13,6 +13,9 @@ opportunities, shaping-oriented script runs, and scalar property diagnostics.
 Each application handles invalid arguments and package error values explicitly;
 [`examples/spec.json`](examples/spec.json) exercises their happy paths,
 Unicode edge cases, streaming behavior, resource limits, and error output.
+Native command-line arguments remain `OsStr` until the shared example helper
+validates them as Unicode text, so malformed Unix bytes or Windows UTF-16 are
+reported as usage errors instead of being passed to total `Str` APIs.
 
 
 ## Learning about Unicode

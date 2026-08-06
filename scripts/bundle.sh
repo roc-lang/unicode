@@ -36,4 +36,8 @@ output_dir="$(cd "$output_dir" && pwd)"
 
 cd "$root_dir/package"
 
-"$roc_bin" bundle main.roc --output-dir "$output_dir" "${args[@]}"
+bundle_command=("$roc_bin" bundle main.roc --output-dir "$output_dir")
+if ((${#args[@]} > 0)); then
+    bundle_command+=("${args[@]}")
+fi
+"${bundle_command[@]}"

@@ -1,8 +1,11 @@
 app [main!] {
-	pf: platform "https://github.com/lukewilliamboswell/roc-platform-template-zig/releases/download/1.1.0/ABFgWwu8SwPJfp7tzxDoTL41b1jFeHEac3RxUFSt1WWp.tar.zst",
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.21.0/4rAQg8kUYZ3Vksr4qMQHpaFYNiHSn9GgS7gVxghd1XYV.tar.zst",
 	unicode: "../package/main.roc",
 }
 
+import CliArgs
+import pf.IOErr exposing [IOErr]
+import pf.OsStr exposing [OsStr]
 import pf.Stderr
 import pf.Stdout
 import unicode.CodePoint
@@ -59,8 +62,9 @@ expect encode(["D800"], 4) == Err(Surrogate("D800"))
 expect encode(["110000"], 4) == Err(OutOfRange("110000"))
 expect encode(["1F998"], 3) == Err(LimitExceeded({ limit: 3, required: 4 }))
 
-main! : List(Str) => Try({}, [Exit(I32), StderrErr(Str), StdoutErr(Str), ..])
-main! = |args| {
+main! : List(OsStr) => Try({}, [Exit(I32), StderrErr(IOErr), StdoutErr(IOErr), ..])
+main! = |os_args| {
+	args = CliArgs.to_strs!(os_args)?
 	user_args = args.drop_first(1)
 	(limit_text, tokens) = match user_args {
 		[limit_arg, first, .. as rest] => (limit_arg, [first].concat(rest))

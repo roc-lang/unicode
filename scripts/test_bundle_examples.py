@@ -29,9 +29,10 @@ LOCAL_PACKAGE_PATH = "../package/main.roc"
 PACKAGE_DEPENDENCY_RE = re.compile(
     r'(?m)^(?P<indent>\s*)unicode:\s*"(?P<dependency>[^"]+)",(?P<suffix>\s*(?:#.*)?)$'
 )
+APP_HEADER_RE = re.compile(r"(?m)^app\s")
 ANSI_SGR_RE = re.compile(r"\x1b\[[0-9;]*m")
-SCHEMA_VERSION = 2
-ROOT_FIELDS = frozenset({"schema_version", "apps"})
+SCHEMA_VERSION = 3
+ROOT_FIELDS = frozenset({"schema_version", "support_modules", "apps"})
 APP_FIELDS = frozenset({"path", "cases"})
 STREAMS = ("stdout", "stderr")
 ASSERTION_KINDS = ("exact", "contains", "regex")
@@ -131,12 +132,28 @@ def string_list(owner: str, value: object) -> list[str]:
 
 
 def validate_spec(
-    data: object, discovered: set[str]
+    data: object,
+    discovered_apps: set[str],
+    discovered_support_modules: set[str],
 ) -> list[dict[str, object]]:
     if not isinstance(data, dict) or set(data) != ROOT_FIELDS:
-        raise TestFailure(f"{SPEC_PATH}: fields must be exactly schema_version and apps")
+        raise TestFailure(
+            f"{SPEC_PATH}: fields must be exactly schema_version, support_modules, and apps"
+        )
     if data["schema_version"] != SCHEMA_VERSION:
         raise TestFailure(f"{SPEC_PATH}: unsupported schema_version")
+    support_modules = string_list(
+        f"{SPEC_PATH} support_modules", data["support_modules"]
+    )
+    if len(support_modules) != len(set(support_modules)):
+        raise TestFailure(f"{SPEC_PATH}: support_modules must be unique")
+    specified_support_modules = set(support_modules)
+    if discovered_support_modules != specified_support_modules:
+        raise TestFailure(
+            "support module spec drift: "
+            f"missing={sorted(discovered_support_modules - specified_support_modules)}, "
+            f"stale={sorted(specified_support_modules - discovered_support_modules)}"
+        )
     apps = data["apps"]
     if (
         not isinstance(apps, list)
@@ -152,11 +169,14 @@ def validate_spec(
         raise TestFailure(f"{SPEC_PATH}: app paths must be unique")
 
     specified = set(paths)
-    if discovered != specified:
+    if discovered_apps != specified:
         raise TestFailure(
-            f"example spec drift: missing={sorted(discovered - specified)}, "
-            f"stale={sorted(specified - discovered)}"
+            f"example spec drift: missing={sorted(discovered_apps - specified)}, "
+            f"stale={sorted(specified - discovered_apps)}"
         )
+    overlap = specified & specified_support_modules
+    if overlap:
+        raise TestFailure(f"example apps cannot also be support modules: {sorted(overlap)}")
 
     for app in apps:
         path = str(app["path"])
@@ -190,10 +210,15 @@ def load_spec() -> list[dict[str, object]]:
     except (OSError, json.JSONDecodeError) as error:
         raise TestFailure(f"unable to read {SPEC_PATH}: {error}") from error
 
-    discovered = {
-        path.relative_to(ROOT).as_posix() for path in (ROOT / "examples").glob("*.roc")
-    }
-    return validate_spec(data, discovered)
+    discovered_apps: set[str] = set()
+    discovered_support_modules: set[str] = set()
+    for path in (ROOT / "examples").glob("*.roc"):
+        relative = path.relative_to(ROOT).as_posix()
+        if APP_HEADER_RE.search(path.read_text(encoding="utf-8")) is None:
+            discovered_support_modules.add(relative)
+        else:
+            discovered_apps.add(relative)
+    return validate_spec(data, discovered_apps, discovered_support_modules)
 
 
 def expected_exit_code(case: dict[str, object]) -> int:
@@ -249,7 +274,7 @@ def bundle_package(bundle_dir: Path, roc: str) -> Path:
     env = os.environ.copy()
     env["ROC"] = roc
     completed = run(
-        [ROOT / "scripts" / "bundle.sh", "--output-dir", bundle_dir],
+        ["bash", ROOT / "scripts" / "bundle.sh", "--output-dir", bundle_dir],
         env=env,
         capture=True,
     )
@@ -324,6 +349,8 @@ def copy_examples_with_bundle_url(destination: Path, bundle_url: str) -> dict[st
 
     for source in sorted(target_dir.glob("*.roc")):
         contents = source.read_text(encoding="utf-8")
+        if APP_HEADER_RE.search(contents) is None:
+            continue
         matches = [
             match
             for match in PACKAGE_DEPENDENCY_RE.finditer(contents)
@@ -398,6 +425,17 @@ def normalize_output(value: str) -> str:
     return ANSI_SGR_RE.sub("", newlines)
 
 
+def decode_case_output(path: str, name: str, stream: str, output: bytes) -> str:
+    try:
+        return output.decode("utf-8")
+    except UnicodeDecodeError as error:
+        nearby = output[max(0, error.start - 8) : error.end + 8]
+        raise TestFailure(
+            f"{path} [{name}]: {stream} is not valid UTF-8 at byte {error.start}; "
+            f"nearby bytes: {nearby!r}"
+        ) from error
+
+
 def assert_output(path: str, case: dict[str, object], stream: str, actual: str) -> None:
     name = str(case["name"])
     normalized = normalize_output(actual)
@@ -452,8 +490,8 @@ def run_case(path: str, binary: Path, case: dict[str, object]) -> None:
         )
     except subprocess.TimeoutExpired as error:
         raise TestFailure(f"{path} [{name}]: timed out after {error.timeout}s") from error
-    stdout = result.stdout.decode("utf-8", errors="replace")
-    stderr = result.stderr.decode("utf-8", errors="replace")
+    stdout = decode_case_output(path, name, "stdout", result.stdout)
+    stderr = decode_case_output(path, name, "stderr", result.stderr)
     expected_exit = expected_exit_code(case)
     if result.returncode != expected_exit:
         raise TestFailure(
