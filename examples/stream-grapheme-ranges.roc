@@ -46,15 +46,18 @@ stream_ranges = |arguments| {
 }
 
 render = |chunk_count, result| {
-	Str.join_with(
-		[
-			"unicode: ${UnicodeVersion.to_str(UnicodeVersion.current)}",
-			"mode: scalar-aligned-chunks",
-			"chunks: ${chunk_count.to_str()}",
-			"bytes: ${result.byte_count.to_str()}",
-			"graphemes: ${result.ranges.len().to_str()}",
-		].concat(result.ranges),
-		"\n",
+	header =
+		\\unicode: ${UnicodeVersion.to_str(UnicodeVersion.current)}
+		\\mode: scalar-aligned-chunks
+		\\chunks: ${chunk_count.to_str()}
+		\\bytes: ${result.byte_count.to_str()}
+		\\graphemes: ${result.ranges.len().to_str()}
+	result.ranges.fold(
+		header,
+		|current, range| {
+			\\${current}
+			\\${range}
+		},
 	)
 }
 

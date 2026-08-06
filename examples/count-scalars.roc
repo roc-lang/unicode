@@ -33,12 +33,17 @@ scalar_summary = |text| {
 report : Str -> Str
 report = |text| {
 	summary = scalar_summary(text)
-	header = [
-		"text: ${text}",
-		"utf8-bytes: ${summary.byte_count.to_str()}",
-		"unicode-scalars: ${summary.scalar_count.to_str()}",
-	]
-	Str.join_with(header.concat(summary.positions), "\n")
+	header =
+		\\text: ${text}
+		\\utf8-bytes: ${summary.byte_count.to_str()}
+		\\unicode-scalars: ${summary.scalar_count.to_str()}
+	summary.positions.fold(
+		header,
+		|current, position| {
+			\\${current}
+			\\${position}
+		},
+	)
 }
 
 expect scalar_summary("").scalar_count == 0

@@ -34,13 +34,16 @@ report = |source| {
 			"bytes ${cluster.start.to_str()}..${cluster.end.to_str()}: ${Str.inspect(cluster.text)}"
 		},
 	)
-	Str.join_with(
-		[
-			"unicode: ${UnicodeVersion.to_str(UnicodeVersion.current)}",
-			"text: ${source}",
-			"graphemes: ${clusters.len().to_str()}",
-		].concat(lines),
-		"\n",
+	header =
+		\\unicode: ${UnicodeVersion.to_str(UnicodeVersion.current)}
+		\\text: ${source}
+		\\graphemes: ${clusters.len().to_str()}
+	lines.fold(
+		header,
+		|current, line| {
+			\\${current}
+			\\${line}
+		},
 	)
 }
 

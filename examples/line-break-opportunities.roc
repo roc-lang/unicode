@@ -64,14 +64,17 @@ chunk_opportunities = |chunks, profile| {
 }
 
 render = |mode, profile, opportunities| {
-	Str.join_with(
-		[
-			"mode: ${mode}",
-			"profile: ${profile_name(profile)}",
-			"profile-revision: ${profile_revision(profile)}",
-			"opportunities: ${opportunities.len().to_str()}",
-		].concat(opportunities),
-		"\n",
+	header =
+		\\mode: ${mode}
+		\\profile: ${profile_name(profile)}
+		\\profile-revision: ${profile_revision(profile)}
+		\\opportunities: ${opportunities.len().to_str()}
+	opportunities.fold(
+		header,
+		|current, opportunity| {
+			\\${current}
+			\\${opportunity}
+		},
 	)
 }
 

@@ -103,32 +103,39 @@ decode_chunks = |arguments| {
 		Failed({ error, .. }) => return Err(DecodeFailed(cursor_error_message(error)))
 		End(value) => value
 	}
+	scalars = $lines.fold(
+		"",
+		|current, line| {
+			if current == "" {
+				line
+			} else {
+				\\${current}
+				\\${line}
+			}
+		},
+	)
+	summary = "complete: ${finished.byte_offset.to_str()} bytes, ${finished.scalar_count.to_str()} scalars"
 	Ok(
-		Str.join_with(
-			$lines.concat([
-				"complete: ${finished.byte_offset.to_str()} bytes, ${finished.scalar_count.to_str()} scalars",
-			]),
-			"\n",
-		),
+		if scalars == "" {
+			summary
+		} else {
+			\\${scalars}
+			\\${summary}
+		},
 	)
 }
 
 expect decode_chunks(["41", "C3,A9", "F0,9F,A6,98"]) == Ok(
-	Str.join_with(
-		[
-			"scalar 0: value=65 bytes=0..1",
-			"scalar 1: value=233 bytes=1..3",
-			"scalar 2: value=129432 bytes=3..7",
-			"complete: 7 bytes, 3 scalars",
-		],
-		"\n",
-	),
+	\\scalar 0: value=65 bytes=0..1
+	\\scalar 1: value=233 bytes=1..3
+	\\scalar 2: value=129432 bytes=3..7
+	\\complete: 7 bytes, 3 scalars
+	,
 )
 expect decode_chunks(["F0", "9F", "A6", "98"]) == Ok(
-	Str.join_with(
-		["scalar 0: value=129432 bytes=0..4", "complete: 4 bytes, 1 scalars"],
-		"\n",
-	),
+	\\scalar 0: value=129432 bytes=0..4
+	\\complete: 4 bytes, 1 scalars
+	,
 )
 expect decode_chunks(["E2,82"]) == Err(DecodeFailed("UnexpectedEndOfSequence at byte 2 (sequence start 0)"))
 expect decode_chunks(["FF"]) == Err(DecodeFailed("InvalidStartByte at byte 0 (sequence start 0)"))

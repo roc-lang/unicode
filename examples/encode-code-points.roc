@@ -75,14 +75,10 @@ main! = |args| {
 	}
 	match encode(tokens, limit) {
 		Ok(text) => Stdout.line!(
-			Str.join_with(
-				[
-					"code-points: ${Str.join_with(tokens, " ")}",
-					"utf8-bytes: ${text.count_utf8_bytes().to_str()}",
-					"text: ${text}",
-				],
-				"\n",
-			),
+			\\code-points: ${Str.join_with(tokens, " ")}
+			\\utf8-bytes: ${text.count_utf8_bytes().to_str()}
+			\\text: ${text}
+			,
 		)?
 		Err(problem) => {
 			Stderr.line!("error: ${error_message(problem)}")?

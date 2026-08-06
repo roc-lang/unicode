@@ -30,15 +30,11 @@ render = |source, limit| {
 	result = limit_display_name(source, limit)?
 	suffix = if result.truncated "…" else ""
 	Ok(
-		Str.join_with(
-			[
-				"input: ${source}",
-				"limit: ${limit.to_str()} graphemes",
-				"display: ${result.slice}${suffix}",
-				"truncated: ${if result.truncated "yes" else "no"}",
-			],
-			"\n",
-		),
+		\\input: ${source}
+		\\limit: ${limit.to_str()} graphemes
+		\\display: ${result.slice}${suffix}
+		\\truncated: ${if result.truncated "yes" else "no"}
+		,
 	)
 }
 

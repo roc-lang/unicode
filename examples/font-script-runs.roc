@@ -66,14 +66,17 @@ stream_runs = |chunks, policy, max_pending_units| {
 
 render = |mode, preferred, runs| {
 	names = preferred.map(Script.short_alias)
-	Str.join_with(
-		[
-			"mode: ${mode}",
-			"policy: ${ScriptItemization.policy_revision}",
-			"preferred-scripts: ${if names.is_empty() "none" else Str.join_with(names, ",")}",
-			"runs: ${runs.len().to_str()}",
-		].concat(runs),
-		"\n",
+	header =
+		\\mode: ${mode}
+		\\policy: ${ScriptItemization.policy_revision}
+		\\preferred-scripts: ${if names.is_empty() "none" else Str.join_with(names, ",")}
+		\\runs: ${runs.len().to_str()}
+	runs.fold(
+		header,
+		|current, run| {
+			\\${current}
+			\\${run}
+		},
 	)
 }
 

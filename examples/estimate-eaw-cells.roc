@@ -34,15 +34,10 @@ measure_cells = |text| {
 report : Str -> Str
 report = |text| {
 	measured = measure_cells(text)
-	Str.join_with(
-		[
-			"policy: Fullwidth/Wide=2, all other scalars=1",
-			"text: ${text}",
-			"scalars: ${measured.scalars.to_str()}",
-			"cells: ${measured.cells.to_str()}",
-		],
-		"\n",
-	)
+	\\policy: Fullwidth/Wide=2, all other scalars=1
+	\\text: ${text}
+	\\scalars: ${measured.scalars.to_str()}
+	\\cells: ${measured.cells.to_str()}
 }
 
 expect measure_cells("ASCII") == { cells: 5, scalars: 5 }
