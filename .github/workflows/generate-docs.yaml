@@ -1,10 +1,24 @@
 name: Generate docs
 
 on:
-  # Run when a release is published
-  release:
-    types:
-      - published
+  # Keep the published docs in sync with the package on main.
+  #
+  # This deliberately does not trigger on `release: published`. Releases are
+  # created by the Release workflow using GITHUB_TOKEN, and events raised by
+  # that token never start another workflow run, so a release trigger would
+  # silently never fire.
+  push:
+    branches:
+      - main
+    paths:
+      - "package/**"
+      - ".roc-version"
+      - ".github/workflows/generate-docs.yaml"
+  workflow_dispatch:
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
 
 # Do not add permissions here! Configure them at the job level!
 permissions: {}
@@ -13,16 +27,19 @@ jobs:
   generate-docs:
     name: Generate docs
     runs-on: ubuntu-26.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     permissions:
       pages: write
       id-token: write
     steps:
       - name: Check out the repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Read pinned Roc version
         run: printf 'ROC_NIGHTLY_TAG=%s\n' "$(sed -n '1p' .roc-version)" >> "$GITHUB_ENV"
-      
+
       - uses: roc-lang/setup-roc@cbe782d6f165b89c87d99f50a59ac4f5f73b4427
         with:
           version: nightly-new-compiler
@@ -30,17 +47,17 @@ jobs:
 
       - run: roc version
 
+      - name: Setup Pages
+        uses: actions/configure-pages@v6
+
       - name: Generate docs
         run: roc docs package/main.roc
-      
-      - name: Fix absolute paths
-        run: |
-          find generated-docs/ -type f -name '*.html' -exec sed -i "s/\(href\|src\)=\"\//\1=\"\/${{ github.event.repository.name }}\//g" {} +
-      
+
       - name: Upload docs artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: generated-docs
 
       - name: Deploy docs
-        uses: actions/deploy-pages@v4
+        id: deployment
+        uses: actions/deploy-pages@v5
