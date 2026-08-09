@@ -5,6 +5,7 @@ package
 		BidiClass,
 		BidiProperties,
 		CanonicalCombiningClass,
+		Case,
 		CodePoint,
 		EastAsianWidth,
 		Emoji,
