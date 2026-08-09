@@ -8,6 +8,7 @@ import pf.Host
 import test_unicode.TestPropertyAliases
 import unicode.Bidi
 import unicode.ByteRange
+import unicode.Case
 import unicode.Grapheme
 import unicode.LineBreak
 import unicode.TextPosition
@@ -117,6 +118,20 @@ run_case! = |suite, line| {
 
 							if signature == 0 {
 								Err({ case_id, message: "word probe failed or was optimized away" })
+							} else if allocations == expected {
+								Ok({})
+							} else {
+								Err({ case_id, message: "expected ${expected.to_str()}, got ${allocations.to_str()} allocations" })
+							}
+						} else if suite.starts_with("allocation-case-") {
+							before = Host.alloc_count!({})
+							signature = case_signature(suite, case_id, str)
+							after = Host.alloc_count!({})
+							allocations = after - before
+							expected = U64.from_str(expectation) ?? 18446744073709551615
+
+							if signature == 0 {
+								Err({ case_id, message: "Case probe failed or was optimized away" })
 							} else if allocations == expected {
 								Ok({})
 							} else {
@@ -272,6 +287,62 @@ word_cursor_signature = |source| {
 		End(value) => value
 	}
 	finished.state
+}
+
+case_signature : Str, Str, Str -> U64
+case_signature = |suite, case_id, source| {
+	max = U64.highest
+	outcome = if suite == "allocation-case-lower-default" {
+		Case.to_lower(source, Case.unicode_default, Case.unlimited_limits)
+	} else if suite == "allocation-case-lower-turkic" {
+		Case.to_lower(source, Case.turkic, Case.unlimited_limits)
+	} else if suite == "allocation-case-upper-default" {
+		Case.to_upper(source, Case.unicode_default, Case.unlimited_limits)
+	} else if suite == "allocation-case-upper-lithuanian" {
+		Case.to_upper(source, Case.lithuanian, Case.unlimited_limits)
+	} else if suite == "allocation-case-title-default" {
+		Case.to_title(source, Case.unicode_default, Case.unlimited_limits)
+	} else if suite == "allocation-case-title-turkic" {
+		Case.to_title(source, Case.turkic, Case.unlimited_limits)
+	} else if suite == "allocation-case-fold-full" {
+		Case.fold(source, Case.full, Case.unlimited_limits)
+	} else if suite == "allocation-case-fold-simple" {
+		Case.fold(source, Case.simple, Case.unlimited_limits)
+	} else if suite == "allocation-case-fold-turkic-full" {
+		Case.fold(source, Case.turkic_full, Case.unlimited_limits)
+	} else if suite == "allocation-case-fold-turkic-simple" {
+		Case.fold(source, Case.turkic_simple, Case.unlimited_limits)
+	} else if suite == "allocation-case-limits" {
+		limits = match case_id {
+			"input-bytes" => Case.limits(0, max, max, max, max)
+			"input-scalars" => Case.limits(max, 0, max, max, max)
+			"output-bytes" => Case.limits(max, max, 0, max, max)
+			"output-scalars" => Case.limits(max, max, max, 0, max)
+			"facts" => Case.limits(max, max, max, max, 0)
+			_ => return 0
+		}
+		Case.to_lower(source, Case.unicode_default, limits)
+	} else {
+		return 0
+	}
+
+	match outcome {
+		Ok(result) => {
+			facts = Case.result_facts(result)
+			result_bytes = Case.result_text(result).count_utf8_bytes()
+			facts.fold(
+				result_bytes + 1,
+				|sum, fact| {
+					output = TextRange.byte_range(Case.fact_output(fact))
+					sum + ByteRange.end(output) + 1
+				},
+			)
+		}
+		Err(error) => match (Case.error_kind(error), Case.error_limit(error)) {
+			(LimitExceeded, Some(limit)) => limit.limit + limit.required + 1
+			_ => 0
+		}
+	}
 }
 
 decode_hex = |hex| {

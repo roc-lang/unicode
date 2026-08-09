@@ -16,6 +16,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable, Sequence
 
+import unicode_data
+
 from unicode_data import (
     BidiCharacterCase,
     BidiTestCase,
@@ -49,6 +51,7 @@ APP_NAMES = {
     "grapheme": "grapheme",
     "line-break": "line-break",
     "word": "word",
+    "case": "case",
     "properties": "properties",
     "allocation": "allocation",
 }
@@ -191,6 +194,13 @@ def load_app_specs() -> dict[str, dict[str, object]]:
             "timeout_seconds",
             "unicode_manifest_file",
         },
+        "case": {
+            "schema_version",
+            "kind",
+            "suite",
+            "timeout_seconds",
+            "unicode_manifest_files",
+        },
         "properties": {
             "schema_version",
             "kind",
@@ -256,6 +266,16 @@ def load_app_specs() -> dict[str, dict[str, object]]:
         raise TestFailure("word spec suite has drifted")
     if specs["word"]["unicode_manifest_file"] != "word_break_test":
         raise TestFailure("word spec references an unknown manifest file")
+    case_sources = set(specs["case"]["unicode_manifest_files"])
+    if specs["case"]["suite"] != "case" or case_sources != {
+        "unicode_data",
+        "special_casing",
+        "case_folding",
+        "derived_core_properties",
+        "prop_list",
+        "derived_combining_class",
+    } or not case_sources <= manifest_files:
+        raise TestFailure("case spec must name the complete Case data source graph")
     property_sources = set(specs["properties"]["unicode_manifest_files"])
     if property_sources != {
         "grapheme_break_property",
@@ -680,6 +700,414 @@ def run_word(binary: Path, jobs: int, spec: dict[str, object]) -> None:
     )
 
 
+FOLD_PROFILES = ("full", "simple", "turkic-full", "turkic-simple")
+
+
+def _range_contains(records: Sequence[RangeRecord], code_point: int) -> bool:
+    return any(record.start <= code_point <= record.end for record in records)
+
+
+def _range_value(
+    records: Sequence[RangeRecord], code_point: int, default: int
+) -> int:
+    for record in records:
+        if record.start <= code_point <= record.end:
+            return int(record.property)
+    return default
+
+
+def _case_maps(case: unicode_data.CaseData) -> dict[str, dict[int, int]]:
+    return {
+        "lower": {item.source: item.target for item in case.simple_lower},
+        "upper": {item.source: item.target for item in case.simple_upper},
+        "title": {item.source: item.target for item in case.simple_title},
+    }
+
+
+def _languages_match(languages: Sequence[str], profile: str) -> bool:
+    if not languages:
+        return True
+    return (
+        profile == "turkic" and any(language in ("az", "tr") for language in languages)
+    ) or (profile == "lithuanian" and "lt" in languages)
+
+
+def _left_context(
+    source: Sequence[int], stop: int, case: unicode_data.CaseData,
+    canonical: unicode_data.CanonicalProperties,
+) -> tuple[bool, bool, bool]:
+    before_final_sigma = False
+    after_soft_dotted = False
+    after_i = False
+    for scalar in source[:stop]:
+        case_ignorable = _range_contains(case.case_ignorable, scalar)
+        ccc = _range_value(
+            canonical.canonical_combining_class,
+            scalar,
+            canonical.canonical_combining_class_default,
+        )
+        if not case_ignorable:
+            before_final_sigma = _range_contains(case.cased, scalar)
+        if _range_contains(case.soft_dotted, scalar):
+            after_soft_dotted = True
+        elif ccc == 0 or ccc == 230:
+            after_soft_dotted = False
+        if scalar == 0x49:
+            after_i = True
+        elif ccc == 0 or ccc == 230:
+            after_i = False
+    return before_final_sigma, after_soft_dotted, after_i
+
+
+def _more_above(
+    source: Sequence[int], start: int, canonical: unicode_data.CanonicalProperties
+) -> bool:
+    for scalar in source[start:]:
+        ccc = _range_value(
+            canonical.canonical_combining_class,
+            scalar,
+            canonical.canonical_combining_class_default,
+        )
+        if ccc == 230:
+            return True
+        if ccc == 0:
+            return False
+    return False
+
+
+def _before_dot(
+    source: Sequence[int], start: int, canonical: unicode_data.CanonicalProperties
+) -> bool:
+    for scalar in source[start:]:
+        if scalar == 0x307:
+            return True
+        ccc = _range_value(
+            canonical.canonical_combining_class,
+            scalar,
+            canonical.canonical_combining_class_default,
+        )
+        if ccc == 0 or ccc == 230:
+            return False
+    return False
+
+
+def _contexts_match(
+    contexts: Sequence[str], source: Sequence[int], index: int,
+    case: unicode_data.CaseData, canonical: unicode_data.CanonicalProperties,
+) -> bool:
+    before_final_sigma, after_soft_dotted, after_i = _left_context(source, index, case, canonical)
+    for context in contexts:
+        if context == "Final_Sigma":
+            following_cased = next(
+                (
+                    _range_contains(case.cased, scalar)
+                    for scalar in source[index + 1:]
+                    if not _range_contains(case.case_ignorable, scalar)
+                ),
+                False,
+            )
+            matched = before_final_sigma and not following_cased
+        elif context == "After_Soft_Dotted":
+            matched = after_soft_dotted
+        elif context == "More_Above":
+            matched = _more_above(source, index + 1, canonical)
+        elif context == "Before_Dot":
+            matched = _before_dot(source, index + 1, canonical)
+        elif context == "After_I":
+            matched = after_i
+        elif context == "Not_Before_Dot":
+            matched = not _before_dot(source, index + 1, canonical)
+        else:  # The strict generator parser makes new conditions an explicit update.
+            raise TestFailure(f"unsupported SpecialCasing context {context!r}")
+        if not matched:
+            return False
+    return True
+
+
+def _case_mapping(
+    operation: str, profile: str, source: Sequence[int], index: int,
+    case: unicode_data.CaseData, canonical: unicode_data.CanonicalProperties,
+    maps: dict[str, dict[int, int]],
+) -> tuple[tuple[int, ...], bool]:
+    scalar = source[index]
+    chosen: unicode_data.SpecialCaseMapping | None = None
+    chosen_specificity = -1
+    for special in case.special:
+        if special.source != scalar:
+            continue
+        if not _languages_match(special.languages, profile):
+            continue
+        if not _contexts_match(special.contexts, source, index, case, canonical):
+            continue
+        specificity = len(special.languages) + len(special.contexts)
+        if specificity > chosen_specificity:
+            chosen = special
+            chosen_specificity = specificity
+    if chosen is not None:
+        return getattr(chosen, operation), bool(chosen.contexts)
+    target = maps[operation].get(scalar)
+    return ((scalar,) if target is None else (target,)), False
+
+
+def _case_oracle(
+    operation: str, profile: str, source: Sequence[int], case: unicode_data.CaseData,
+    canonical: unicode_data.CanonicalProperties, maps: dict[str, dict[int, int]],
+) -> tuple[tuple[tuple[int, ...], ...], tuple[bool, ...]]:
+    if operation == "title":
+        # Generated SpecialCasing witnesses contain one unbroken word segment.
+        # Model R3 directly: the first cased scalar title-maps, every later
+        # scalar lower-maps, and an uncased leading prefix stays unchanged.
+        after_first_cased = False
+        mapped: list[tuple[tuple[int, ...], bool]] = []
+        for index, scalar in enumerate(source):
+            if not after_first_cased and not _range_contains(case.cased, scalar):
+                mapped.append(((scalar,), True))
+            else:
+                selected_operation = "lower" if after_first_cased else "title"
+                mapped.append(_case_mapping(
+                    selected_operation, profile, source, index, case, canonical, maps
+                ))
+                after_first_cased = True
+        return tuple(item[0] for item in mapped), (True,) * len(mapped)
+    mapped = [_case_mapping(operation, profile, source, index, case, canonical, maps) for index in range(len(source))]
+    return tuple(item[0] for item in mapped), tuple(item[1] for item in mapped)
+
+
+def _fold_mapping(
+    profile: str, scalar: int, folds: dict[tuple[int, str], tuple[int, ...]]
+) -> tuple[int, ...]:
+    common = folds.get((scalar, "C"))
+    full = folds.get((scalar, "F"))
+    simple = folds.get((scalar, "S"))
+    turkic = folds.get((scalar, "T"))
+    if profile in ("turkic-full", "turkic-simple") and turkic is not None:
+        return turkic
+    if profile in ("full", "turkic-full"):
+        return full or common or (scalar,)
+    return simple or common or (scalar,)
+
+
+def _encode_scalars(values: Sequence[int]) -> str:
+    return ",".join(f"{value:X}" for value in values) if values else "_"
+
+
+def _encode_case_row(
+    case_id: str, operation: str, profile: str, source: Sequence[int],
+    mappings: Sequence[Sequence[int]], contextual: Sequence[bool],
+) -> str:
+    if len(source) != len(mappings) or len(source) != len(contextual):
+        raise TestFailure(f"{case_id}: oracle fact count drifted")
+    return "\t".join((
+        case_id,
+        operation,
+        profile,
+        _encode_scalars(source),
+        "/".join(_encode_scalars(mapping) for mapping in mappings) if mappings else "_",
+        "/".join("1" if value else "0" for value in contextual) if contextual else "_",
+    ))
+
+
+def _special_witness(record: unicode_data.SpecialCaseMapping, *, negative: bool) -> tuple[int, ...]:
+    # The pinned context vocabulary is conjunction-only. These witnesses are
+    # intentionally constructed from raw scalar facts, not from Case runtime
+    # behavior, so a contextual implementation cannot certify itself.
+    prefix: list[int] = []
+    suffix: list[int] = []
+    if "Final_Sigma" in record.contexts:
+        if negative:
+            suffix.append(0x41)
+        else:
+            prefix.append(0x41)
+    if "After_Soft_Dotted" in record.contexts:
+        if negative:
+            prefix.append(0x41)
+        else:
+            prefix.append(0x69)
+    if "After_I" in record.contexts:
+        if negative:
+            prefix.append(0x41)
+        else:
+            prefix.append(0x49)
+    if "More_Above" in record.contexts:
+        suffix.append(0x41 if negative else 0x301)
+    if "Before_Dot" in record.contexts:
+        suffix.append(0x41 if negative else 0x307)
+    if "Not_Before_Dot" in record.contexts:
+        suffix.append(0x307 if negative else 0x41)
+    return tuple(prefix + [record.source] + suffix)
+
+
+def _special_profile(record: unicode_data.SpecialCaseMapping) -> str:
+    if any(language in ("az", "tr") for language in record.languages):
+        return "turkic"
+    if "lt" in record.languages:
+        return "lithuanian"
+    return "default"
+
+
+def case_rows() -> list[str]:
+    manifest = load_manifest()
+    canonical = unicode_data.load_canonical_properties(manifest)
+    case = unicode_data.load_case_data(manifest, canonical)
+    maps = _case_maps(case)
+    hand_rows = [_encode_case_row("empty", "lower", "default", (), (), ())]
+    unicode_rows: list[str] = []
+    special_witness_rows: list[str] = []
+    locale_mismatch_rows: list[str] = []
+    false_context_rows: list[str] = []
+    folding_rows: list[str] = []
+
+    # Each UnicodeData simple mapping is exercised through the public full API.
+    # The oracle separately applies SpecialCasing, so these rows also catch an
+    # accidental omission of a full override for a simple source mapping.
+    for operation, records in (
+        ("lower", case.simple_lower),
+        ("upper", case.simple_upper),
+        ("title", case.simple_title),
+    ):
+        for record in records:
+            source = (record.source,)
+            output, contextual = _case_oracle(operation, "default", source, case, canonical, maps)
+            unicode_rows.append(_encode_case_row(
+                f"UnicodeData:{record.line}:{operation}", operation, "default", source, output, contextual
+            ))
+
+    language_rules = [record for record in case.special if record.languages]
+    context_rules = [record for record in case.special if record.contexts]
+    language_context_rules = [record for record in case.special if record.languages and record.contexts]
+    if (len(case.special), len(language_rules), len(context_rules), len(language_context_rules)) != (119, 15, 9, 8):
+        raise TestFailure("Unicode 17 SpecialCasing conditional rule inventory drifted")
+
+    for record in case.special:
+        profile = _special_profile(record)
+        witness = _special_witness(record, negative=False)
+        for operation in ("lower", "title", "upper"):
+            output, contextual = _case_oracle(operation, profile, witness, case, canonical, maps)
+            special_witness_rows.append(_encode_case_row(
+                f"SpecialCasing:{record.line}:{operation}:witness", operation, profile,
+                witness, output, contextual,
+            ))
+            if record.languages:
+                # A named-language rule must not leak into the Unicode default
+                # profile even when every source-context predicate is true.
+                output, contextual = _case_oracle(
+                    operation, "default", witness, case, canonical, maps
+                )
+                locale_mismatch_rows.append(_encode_case_row(
+                    f"SpecialCasing:{record.line}:{operation}:locale-mismatch", operation,
+                    "default", witness, output, contextual,
+                ))
+            if record.contexts:
+                # A matching Turkic/Lithuanian profile must still reject its
+                # row when the source-context condition is false.
+                false_context = _special_witness(record, negative=True)
+                output, contextual = _case_oracle(
+                    operation, profile, false_context, case, canonical, maps
+                )
+                false_context_rows.append(_encode_case_row(
+                    f"SpecialCasing:{record.line}:{operation}:false-context", operation,
+                    profile, false_context, output, contextual,
+                ))
+
+    folds = {(record.source, record.status): record.mapping for record in case.folding}
+    for record in case.folding:
+        for profile in FOLD_PROFILES:
+            source = (record.source,)
+            folding_rows.append(_encode_case_row(
+                f"CaseFolding:{record.line}:{record.status}:{profile}", "fold", profile,
+                source, (_fold_mapping(profile, record.source, folds),), (False,),
+            ))
+
+    # R3 titlecasing must follow Word segments: uncased leading scalars do not
+    # consume the first-cased position, apostrophes remain inside their word,
+    # and the next segment restarts title selection. The maps are intentionally
+    # spelled here rather than derived from Word runtime output.
+    title_source = tuple(ord(value) for value in "123ABC's XYZ")
+    title_maps = tuple((scalar,) for scalar in title_source[:3]) + (
+        (ord("A"),), (ord("b"),), (ord("c"),), (ord("'"),), (ord("s"),),
+        (ord(" "),), (ord("X"),), (ord("y"),), (ord("z"),),
+    )
+    hand_rows.append(_encode_case_row(
+        "R3:word-boundary-title", "title", "default", title_source, title_maps,
+        (True,) * len(title_source),
+    ))
+
+    # Context probes can be arbitrarily long. These two rows exercise both
+    # outcomes of Final_Sigma through more than a thousand case-ignorable
+    # scalars, without normalization.
+    long_marks = (0x301,) * 1024
+    for name, source in (
+        ("long-final-sigma", (0x391, 0x3A3, *long_marks)),
+        ("long-nonfinal-sigma", (0x391, 0x3A3, *long_marks, 0x391)),
+    ):
+        output, contextual = _case_oracle("lower", "default", source, case, canonical, maps)
+        hand_rows.append(_encode_case_row(f"context:{name}", "lower", "default", source, output, contextual))
+
+    # Canonically equivalent-looking inputs remain distinct transformations;
+    # Case never normalizes them.
+    for name, source in (
+        ("no-normalization-composed", (0x130,)),
+        ("no-normalization-decomposed", (0x49, 0x307)),
+        ("supplementary-deseret", (0x10400,)),
+    ):
+        output, contextual = _case_oracle("lower", "default", source, case, canonical, maps)
+        hand_rows.append(_encode_case_row(f"identity:{name}", "lower", "default", source, output, contextual))
+    source = (0x390,)
+    output, contextual = _case_oracle("upper", "default", source, case, canonical, maps)
+    hand_rows.append(_encode_case_row(
+        "identity:no-normalization-expansion", "upper", "default", source, output, contextual
+    ))
+    # The app's focused exact-limit probes use these same sources; retaining
+    # them as protocol rows also keeps their ordinary facts and provenance
+    # independently checked when limit coverage evolves.
+    for name, operation, profile, source in (
+        ("limit-empty", "lower", "default", ()),
+        ("limit-ascii", "lower", "default", (0x41,)),
+        ("limit-multibyte", "lower", "default", (0x130,)),
+        ("limit-expansion", "upper", "default", (0xDF,)),
+        ("limit-deletion", "lower", "turkic", (0x49, 0x307)),
+    ):
+        output, contextual = _case_oracle(operation, profile, source, case, canonical, maps)
+        hand_rows.append(_encode_case_row(
+            f"limits:{name}", operation, profile, source, output, contextual
+        ))
+    # These deliberately pin the committed Unicode 17 corpus and each harness
+    # projection. A vendor/parser change cannot silently reduce one family.
+    component_counts = (
+        len(unicode_rows),
+        len(special_witness_rows),
+        len(locale_mismatch_rows),
+        len(false_context_rows),
+        len(folding_rows),
+        len(hand_rows),
+    )
+    if component_counts != (4502, 357, 45, 27, 6472, 13):
+        raise TestFailure(f"Case conformance row inventory drifted: {component_counts}")
+    rows = [
+        *unicode_rows,
+        *special_witness_rows,
+        *locale_mismatch_rows,
+        *false_context_rows,
+        *folding_rows,
+        *hand_rows,
+    ]
+    if len(rows) != 11416:
+        raise TestFailure(f"Case conformance total drifted: {len(rows)}")
+    return rows
+
+
+def run_case(binary: Path, jobs: int, spec: dict[str, object]) -> None:
+    rows = case_rows()
+    run_parallel_suite(
+        binary,
+        "case",
+        len(rows),
+        lambda index: rows[index],
+        jobs=jobs,
+        timeout=int(spec["timeout_seconds"]),
+    )
+
+
 def fill_property_table(
     records: Iterable[RangeRecord],
     codes: dict[str, int],
@@ -816,6 +1244,47 @@ ALLOCATION_BIDI_SCALING_FIXTURES = {
     "isolates": ("a \u2068אב (12)\u2069 ب " * 64, "a \u2068אב (12)\u2069 ب " * 256),
 }
 
+CASE_ALLOCATION_MODES = (
+    "lower-default",
+    "lower-turkic",
+    "upper-default",
+    "upper-lithuanian",
+    "title-default",
+    "title-turkic",
+    "fold-full",
+    "fold-simple",
+    "fold-turkic-full",
+    "fold-turkic-simple",
+    "limits",
+)
+
+CASE_ALLOCATION_SUCCESS_MODES = CASE_ALLOCATION_MODES[:-1]
+CASE_ALLOCATION_ASCII_HALF_SCALARS = 320
+CASE_ALLOCATION_ASCII_SCALARS = 640
+CASE_ALLOCATION_ASCII_DELTA = 2 * (CASE_ALLOCATION_ASCII_SCALARS - CASE_ALLOCATION_ASCII_HALF_SCALARS)
+
+# These sources make result ownership and the Case-specific context paths
+# visible to exact allocation baselines across distinct scalar and byte-count
+# regimes, rather than letting a baseline change hide in one ASCII example.
+CASE_ALLOCATION_FIXTURES = {
+    "ascii-half": "ASCII Case" * 32,
+    "ascii": "ASCII Case" * 64,
+    "expansion-heavy": "\u0390" * 256,
+    "long-case-ignorable": "\u0391\u03a3" + "\u0301" * 1024,
+    "alternating-sigma": "\u0391\u03a3" * 512,
+    "turkic": ("I\u0307I\u0323\u0307i" * 128),
+    "lithuanian": ("I\u0301J\u0300\u012e\u0301" * 128),
+    "many-title-words": ("123ABC's XYZ " * 256),
+}
+
+CASE_LIMIT_FIXTURES = {
+    "input-bytes": "A",
+    "input-scalars": "A",
+    "output-bytes": "A",
+    "output-scalars": "A",
+    "facts": "A",
+}
+
 
 def run_serial_suite(binary: Path, suite: str, rows: Sequence[str], timeout: int = 120) -> None:
     error = invoke_app(binary, suite, rows, timeout)
@@ -844,6 +1313,17 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
         "allocation-word-ranges",
         "allocation-word-slices",
         "allocation-word-owned",
+        "allocation-case-lower-default",
+        "allocation-case-lower-turkic",
+        "allocation-case-upper-default",
+        "allocation-case-upper-lithuanian",
+        "allocation-case-title-default",
+        "allocation-case-title-turkic",
+        "allocation-case-fold-full",
+        "allocation-case-fold-simple",
+        "allocation-case-fold-turkic-full",
+        "allocation-case-fold-turkic-simple",
+        "allocation-case-limits",
         "allocation-baselines",
     ]:
         raise TestFailure("allocation spec suites have drifted")
@@ -875,7 +1355,7 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
     except (OSError, json.JSONDecodeError) as err:
         raise TestFailure(f"unable to read allocation baselines: {err}") from err
     if (
-        baseline.get("schema_version") != 3
+        baseline.get("schema_version") != 4
         or baseline.get("platform") != "roc-platform-template-zig-1.1.0+alloc-count"
         or baseline.get("target") != "x64musl"
         or baseline.get("optimize") != "speed"
@@ -891,6 +1371,27 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
         expected_word = word[mode]
         if not isinstance(expected_word, dict) or set(expected_word) != set(WORD_ALLOCATION_FIXTURES):
             raise TestFailure(f"word allocation baseline fixture set has drifted for {mode}")
+    case = baseline.get("case")
+    if not isinstance(case, dict) or set(case) != set(CASE_ALLOCATION_MODES):
+        raise TestFailure("case allocation baseline modes have drifted")
+    case_ascii_linear_deltas = baseline.get("case_ascii_linear_deltas")
+    if not isinstance(case_ascii_linear_deltas, dict) or set(case_ascii_linear_deltas) != set(CASE_ALLOCATION_SUCCESS_MODES):
+        raise TestFailure("case ASCII linear allocation baseline modes have drifted")
+    for mode in CASE_ALLOCATION_MODES:
+        expected_case = case[mode]
+        fixtures = CASE_LIMIT_FIXTURES if mode == "limits" else CASE_ALLOCATION_FIXTURES
+        if not isinstance(expected_case, dict) or set(expected_case) != set(fixtures):
+            raise TestFailure(f"case allocation baseline fixture set has drifted for {mode}")
+        if mode in CASE_ALLOCATION_SUCCESS_MODES:
+            documented_delta = case_ascii_linear_deltas[mode]
+            actual_delta = expected_case["ascii"] - expected_case["ascii-half"]
+            if not isinstance(documented_delta, int) or documented_delta != CASE_ALLOCATION_ASCII_DELTA or actual_delta != documented_delta:
+                raise TestFailure(f"case ASCII allocation scaling has drifted for {mode}")
+        rows = [
+            f"{name}\t{utf8_hex(value)}\t{expected_case[name]}"
+            for name, value in fixtures.items()
+        ]
+        run_serial_suite(binary, f"allocation-case-{mode}", rows, timeout=timeout)
     rows = [
         f"{name}\t{utf8_hex(value)}\t{expected[name]}"
         for name, value in ALLOCATION_FIXTURES.items()
@@ -933,7 +1434,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "suite",
         nargs="?",
-        choices=("all", "data", "bidi", "grapheme", "line-break", "word", "properties", "allocations"),
+        choices=("all", "data", "bidi", "grapheme", "line-break", "word", "case", "properties", "allocations"),
         default="all",
     )
     parser.add_argument("--roc", default=os.environ.get("ROC", "roc"))
@@ -958,6 +1459,8 @@ def main(argv: list[str] | None = None) -> int:
             requested_apps.append("line-break")
         if args.suite in ("all", "word"):
             requested_apps.append("word")
+        if args.suite in ("all", "case"):
+            requested_apps.append("case")
         if args.suite in ("all", "properties"):
             requested_apps.append("properties")
         if args.suite in ("all", "allocations"):
@@ -974,6 +1477,8 @@ def main(argv: list[str] | None = None) -> int:
                 run_line_break(binaries["line-break"], args.jobs, app_specs["line-break"])
             if "word" in requested_apps:
                 run_word(binaries["word"], args.jobs, app_specs["word"])
+            if "case" in requested_apps:
+                run_case(binaries["case"], args.jobs, app_specs["case"])
             if "properties" in requested_apps:
                 run_properties(binaries["properties"], args.jobs, app_specs["properties"])
             if "allocation" in requested_apps:

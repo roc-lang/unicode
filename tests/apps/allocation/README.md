@@ -28,3 +28,17 @@ The `allocation-word-*` suites record exact Linux x64 counts for lazy
 iteration, cursor folding, range collection, seamless slices, and owned text.
 They share the Unicode-shaped fixtures above and add a multi-segment input, so
 the baseline observes both bounded streaming state and materializer growth.
+
+The `allocation-case-*` suites measure complete-string lower, upper, R3 title,
+and fold operations under default, Turkic, Lithuanian, full, and simple
+profiles. Their fixtures cover 320- and 640-scalar ASCII scaling, mapping
+expansion, long case-ignorable right context, alternating sigma, Turkic and
+Lithuanian conditions, and many Word-driven title segments. The pinned baseline
+records the exact 640-allocation delta for every successful Case mode across
+that doubling, rejecting a changed or superlinear slope. It attributes the
+observed linear result-buffer allocations to the pinned Roc compiler's current
+COW behavior: flat Fact coordinates, eager buffer reservation, and a
+specialized scalar-driver A/B did not reduce it. A separate limits mode measures
+each typed, atomic Case limit failure. Case owns its transformed bytes and one
+mapping fact per source scalar, so these are result-allocation baselines rather
+than a claim of allocation-free transformation.

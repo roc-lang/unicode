@@ -1,5 +1,5 @@
 {
-  "schema_version": 3,
+  "schema_version": 4,
   "platform": "roc-platform-template-zig-1.1.0+alloc-count",
   "target": "x64musl",
   "optimize": "speed",
@@ -57,5 +57,126 @@
       "long": 4,
       "segmented": 6
     }
+  },
+  "case": {
+    "lower-default": {
+      "ascii-half": 641,
+      "ascii": 1281,
+      "expansion-heavy": 513,
+      "long-case-ignorable": 2053,
+      "alternating-sigma": 2049,
+      "turkic": 1537,
+      "lithuanian": 1537,
+      "many-title-words": 6657
+    },
+    "lower-turkic": {
+      "ascii-half": 642,
+      "ascii": 1282,
+      "expansion-heavy": 514,
+      "long-case-ignorable": 2054,
+      "alternating-sigma": 2050,
+      "turkic": 1282,
+      "lithuanian": 1538,
+      "many-title-words": 6658
+    },
+    "upper-default": {
+      "ascii-half": 643,
+      "ascii": 1283,
+      "expansion-heavy": 1027,
+      "long-case-ignorable": 2055,
+      "alternating-sigma": 2051,
+      "turkic": 1539,
+      "lithuanian": 1539,
+      "many-title-words": 6659
+    },
+    "upper-lithuanian": {
+      "ascii-half": 644,
+      "ascii": 1284,
+      "expansion-heavy": 1028,
+      "long-case-ignorable": 2056,
+      "alternating-sigma": 2052,
+      "turkic": 1540,
+      "lithuanian": 1540,
+      "many-title-words": 6660
+    },
+    "title-default": {
+      "ascii-half": 645,
+      "ascii": 1285,
+      "expansion-heavy": 519,
+      "long-case-ignorable": 2057,
+      "alternating-sigma": 2053,
+      "turkic": 1541,
+      "lithuanian": 1541,
+      "many-title-words": 6661
+    },
+    "title-turkic": {
+      "ascii-half": 646,
+      "ascii": 1286,
+      "expansion-heavy": 520,
+      "long-case-ignorable": 2058,
+      "alternating-sigma": 2054,
+      "turkic": 1286,
+      "lithuanian": 1542,
+      "many-title-words": 6662
+    },
+    "fold-full": {
+      "ascii-half": 647,
+      "ascii": 1287,
+      "expansion-heavy": 1031,
+      "long-case-ignorable": 2059,
+      "alternating-sigma": 2055,
+      "turkic": 1543,
+      "lithuanian": 1543,
+      "many-title-words": 6663
+    },
+    "fold-simple": {
+      "ascii-half": 648,
+      "ascii": 1288,
+      "expansion-heavy": 520,
+      "long-case-ignorable": 2060,
+      "alternating-sigma": 2056,
+      "turkic": 1544,
+      "lithuanian": 1544,
+      "many-title-words": 6664
+    },
+    "fold-turkic-full": {
+      "ascii-half": 649,
+      "ascii": 1289,
+      "expansion-heavy": 1033,
+      "long-case-ignorable": 2061,
+      "alternating-sigma": 2057,
+      "turkic": 1545,
+      "lithuanian": 1545,
+      "many-title-words": 6665
+    },
+    "fold-turkic-simple": {
+      "ascii-half": 650,
+      "ascii": 1290,
+      "expansion-heavy": 522,
+      "long-case-ignorable": 2062,
+      "alternating-sigma": 2058,
+      "turkic": 1546,
+      "lithuanian": 1546,
+      "many-title-words": 6666
+    },
+    "limits": {
+      "input-bytes": 10,
+      "input-scalars": 10,
+      "output-bytes": 10,
+      "output-scalars": 10,
+      "facts": 10
+    }
+  },
+  "case_ascii_linear_deltas": {
+    "lower-default": 640,
+    "lower-turkic": 640,
+    "upper-default": 640,
+    "upper-lithuanian": 640,
+    "title-default": 640,
+    "title-turkic": 640,
+    "fold-full": 640,
+    "fold-simple": 640,
+    "fold-turkic-full": 640,
+    "fold-turkic-simple": 640
   }
 }
