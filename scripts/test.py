@@ -22,6 +22,7 @@ from unicode_data import (
     DataError,
     GraphemeCase,
     LineBreakCase,
+    WordBreakCase,
     MAX_CODE_POINT,
     MissingDefault,
     RangeRecord,
@@ -33,6 +34,7 @@ from unicode_data import (
     parse_bidi_character_tests,
     parse_bidi_tests,
     parse_line_break_tests,
+    parse_word_break_tests,
     release_version,
     validate_all,
 )
@@ -46,6 +48,7 @@ APP_NAMES = {
     "bidi": "bidi",
     "grapheme": "grapheme",
     "line-break": "line-break",
+    "word": "word",
     "properties": "properties",
     "allocation": "allocation",
 }
@@ -181,6 +184,13 @@ def load_app_specs() -> dict[str, dict[str, object]]:
             "timeout_seconds",
             "unicode_manifest_file",
         },
+        "word": {
+            "schema_version",
+            "kind",
+            "suite",
+            "timeout_seconds",
+            "unicode_manifest_file",
+        },
         "properties": {
             "schema_version",
             "kind",
@@ -242,6 +252,10 @@ def load_app_specs() -> dict[str, dict[str, object]]:
     for field in ("bidi_test_executions", "bidi_character_test_executions", "metamorphic_seed", "metamorphic_cases"):
         if not isinstance(specs["bidi"][field], int) or specs["bidi"][field] < 1:
             raise TestFailure(f"bidi spec {field} must be positive")
+    if specs["word"]["suite"] != "word":
+        raise TestFailure("word spec suite has drifted")
+    if specs["word"]["unicode_manifest_file"] != "word_break_test":
+        raise TestFailure("word spec references an unknown manifest file")
     property_sources = set(specs["properties"]["unicode_manifest_files"])
     if property_sources != {
         "grapheme_break_property",
@@ -647,6 +661,25 @@ def run_bidi(binary: Path, jobs: int, spec: dict[str, object]) -> None:
     )
 
 
+def word_row(case: WordBreakCase) -> str:
+    code_points = ",".join(f"{code_point:04X}" for code_point in case.code_points)
+    offsets = ",".join(str(offset) for offset in case.break_offsets)
+    return f"{case.case_id}\t{code_points}\t{offsets}"
+
+
+def run_word(binary: Path, jobs: int, spec: dict[str, object]) -> None:
+    manifest = load_manifest()
+    cases = parse_word_break_tests(manifest)
+    run_parallel_suite(
+        binary,
+        "word",
+        len(cases),
+        lambda index: word_row(cases[index]),
+        jobs=jobs,
+        timeout=int(spec["timeout_seconds"]),
+    )
+
+
 def fill_property_table(
     records: Iterable[RangeRecord],
     codes: dict[str, int],
@@ -868,7 +901,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "suite",
         nargs="?",
-        choices=("all", "data", "bidi", "grapheme", "line-break", "properties", "allocations"),
+        choices=("all", "data", "bidi", "grapheme", "line-break", "word", "properties", "allocations"),
         default="all",
     )
     parser.add_argument("--roc", default=os.environ.get("ROC", "roc"))
@@ -891,6 +924,8 @@ def main(argv: list[str] | None = None) -> int:
             requested_apps.append("grapheme")
         if args.suite in ("all", "line-break"):
             requested_apps.append("line-break")
+        if args.suite in ("all", "word"):
+            requested_apps.append("word")
         if args.suite in ("all", "properties"):
             requested_apps.append("properties")
         if args.suite in ("all", "allocations"):
@@ -905,6 +940,8 @@ def main(argv: list[str] | None = None) -> int:
                 run_bidi(binaries["bidi"], args.jobs, app_specs["bidi"])
             if "line-break" in requested_apps:
                 run_line_break(binaries["line-break"], args.jobs, app_specs["line-break"])
+            if "word" in requested_apps:
+                run_word(binaries["word"], args.jobs, app_specs["word"])
             if "properties" in requested_apps:
                 run_properties(binaries["properties"], args.jobs, app_specs["properties"])
             if "allocation" in requested_apps:

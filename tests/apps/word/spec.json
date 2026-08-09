@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "kind": "word",
+  "suite": "word",
+  "timeout_seconds": 180,
+  "unicode_manifest_file": "word_break_test"
+}
