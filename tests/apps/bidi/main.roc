@@ -63,6 +63,12 @@ verify_global_range_api = |protocol_input| {
 	if Bidi.visual_to_logical(line) != [3] {
 		return Err("range analysis did not retain global visual indices")
 	}
+	bracket_source = "a\r\n()${empty_input}"
+	bracket_range = Bidi.paragraph_ranges(bracket_source).get(1) ?? return Err("P1 did not return bracket paragraph")
+	bracket_analysis = bidi_result(Bidi.analyze_range(bracket_source, bracket_range, Auto, Bidi.default_limits))?
+	if Bidi.matched_brackets(bracket_analysis).get(0) != Ok(Some(4)) {
+		return Err("range analysis rebased paired-bracket indices")
+	}
 	verify_empty_line_and_mirroring(protocol_input)?
 	verify_limits_and_bracket_cap(protocol_input)?
 	Ok({})
@@ -361,4 +367,4 @@ require = |option, case_id, message| match option {
 }
 
 fail : Str, Str -> Str
-fail = |case_id, message| "FAIL\t${case_id}\t${message.replace_each("\t", " ").replace_each("\n", " ")}" 
+fail = |case_id, message| "FAIL\t${case_id}\t${message.replace_each("\t", " ").replace_each("\n", " ")}"

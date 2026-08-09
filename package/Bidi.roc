@@ -253,13 +253,28 @@ analyze_source = |source, base_direction, limits, origin| {
 				isolates = prepare_isolates(entries)
 				base = base_level(entries, base_direction, isolates.partners)
 				resolved = resolve_explicit(entries, base, isolates)
-				scalar_end = match TextPosition.scalar_offset(origin).plus_try(resolved.len()) { Ok(value) => value, Err(Overflow) => U64.highest }
-				paragraph_range = range_from_offsets(TextPosition.byte_offset(origin), byte_end, TextPosition.scalar_offset(origin), scalar_end)
-				Ok({ requested_base: base_direction, paragraph_range, paragraph_level: base, entries: resolved, byte_len, scalar_len: resolved.len() })
+				scalar_origin = TextPosition.scalar_offset(origin)
+				global_resolved = if scalar_origin == 0 { resolved } else { rebase_matched_brackets(resolved, scalar_origin) }
+				scalar_end = match scalar_origin.plus_try(global_resolved.len()) { Ok(value) => value, Err(Overflow) => U64.highest }
+				paragraph_range = range_from_offsets(TextPosition.byte_offset(origin), byte_end, scalar_origin, scalar_end)
+				Ok({ requested_base: base_direction, paragraph_range, paragraph_level: base, entries: global_resolved, byte_len, scalar_len: global_resolved.len() })
 			}
 		}
 	}
 }
+
+## Pairing is performed over the paragraph-local tape. Retained metadata uses
+## absolute scalar indices so it agrees with every `TextRange` from
+## `analyze_range`.
+rebase_matched_brackets = |entries, scalar_origin| entries.map(|entry| {
+	match entry.matched_bracket {
+		None => entry
+		Some(local) => match local.plus_try(scalar_origin) {
+			Ok(global) => { ..entry, matched_bracket: Some(global) }
+			Err(Overflow) => { ..entry, matched_bracket: None }
+		}
+	}
+})
 
 collect_entries = |source, limit, origin| {
 	var entries = []
