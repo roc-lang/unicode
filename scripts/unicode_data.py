@@ -71,6 +71,12 @@ LINE_BREAK_PROPERTIES = (
     "NU", "OP", "PO", "PR", "QU", "RI", "SA", "SG", "SP", "SY", "VF",
     "VI", "WJ", "XX", "ZW", "ZWJ",
 )
+BIDI_CLASS_VALUES = (
+    "L", "AL", "AN", "B", "BN", "CS", "EN", "ES", "ET", "FSI",
+    "LRE", "LRI", "LRO", "NSM", "ON", "PDF", "PDI", "R", "RLE",
+    "RLI", "RLO", "S", "WS",
+)
+BIDI_TEST_MODE_BITS = ((1, 0), (2, 1), (4, 2))
 PUBLIC_ALIAS_PROPERTIES = (
     "Bidi_Class",
     "Bidi_Mirrored",
@@ -167,6 +173,25 @@ class LineBreakCase:
     line: int
     code_points: tuple[int, ...]
     break_offsets: tuple[int, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class BidiTestCase:
+    line: int
+    classes: tuple[str, ...]
+    paragraph_modes: tuple[int, ...]
+    levels: tuple[int | None, ...]
+    reorder: tuple[int, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class BidiCharacterCase:
+    line: int
+    code_points: tuple[int, ...]
+    paragraph_mode: int
+    paragraph_level: int
+    levels: tuple[int | None, ...]
+    reorder: tuple[int, ...]
 
 
 @dataclass(frozen=True)
@@ -319,6 +344,7 @@ class SourceProjectionContract:
     release_axes: tuple[str, ...] = ("unicode",)
     emoji_header: bool = False
     has_cases: bool = False
+    cases_match_records: bool = True
     header: str | None = None
 
 
@@ -340,6 +366,12 @@ SOURCE_PROJECTION_CONTRACTS = {
     ),
     ("uax-29-test", ()): SourceProjectionContract(
         "ucd/auxiliary/GraphemeBreakTest.txt", "conformance", has_cases=True
+    ),
+    ("uax-9-bidi-test", ()): SourceProjectionContract(
+        "ucd/BidiTest.txt", "conformance", has_cases=True, cases_match_records=False
+    ),
+    ("uax-9-bidi-character-test", ()): SourceProjectionContract(
+        "ucd/BidiCharacterTest.txt", "conformance", has_cases=True
     ),
     ("ucd-binary-property-ranges", EMOJI_PROPERTIES): SourceProjectionContract(
         "ucd/emoji/emoji-data.txt",
@@ -946,7 +978,11 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
             raise DataError(f"manifest.sources.{name}.properties contains duplicates")
         if item["role"] != projection_contract.role:
             raise DataError(f"manifest.sources.{name}.role does not match its parser contract")
-        if projection_contract.has_cases and item.get("cases") != item["records"]:
+        if (
+            projection_contract.has_cases
+            and projection_contract.cases_match_records
+            and item.get("cases") != item["records"]
+        ):
             raise DataError(f"manifest.sources.{name}.cases must exactly match data records")
         unicode_version = release_version(manifest, storage_release)
         authority_prefix = str(authority["url_prefix"])
@@ -2583,6 +2619,214 @@ def parse_line_break_tests(
     if expected != len(cases):
         raise DataError(f"line-break case-count drift: expected {expected}, got {len(cases)}")
     return cases
+
+
+def _parse_bidi_levels(
+    value: str, *, source: str, line_number: int, scalar_count: int
+) -> tuple[int | None, ...]:
+    tokens = value.split()
+    if len(tokens) != scalar_count:
+        raise DataError(
+            f"{source}:{line_number}: expected {scalar_count} resolved levels, got {len(tokens)}"
+        )
+    levels: list[int | None] = []
+    for token in tokens:
+        if token == "x":
+            levels.append(None)
+        elif token.isascii() and token.isdecimal() and int(token) <= 125:
+            levels.append(int(token))
+        else:
+            raise DataError(f"{source}:{line_number}: invalid resolved level {token!r}")
+    return tuple(levels)
+
+
+def _parse_bidi_reorder(
+    value: str,
+    *,
+    source: str,
+    line_number: int,
+    levels: tuple[int | None, ...],
+) -> tuple[int, ...]:
+    tokens = value.split()
+    if any(not token.isascii() or not token.isdecimal() for token in tokens):
+        raise DataError(f"{source}:{line_number}: invalid visual reorder index")
+    reorder = tuple(int(token) for token in tokens)
+    expected = tuple(index for index, level in enumerate(levels) if level is not None)
+    if len(reorder) != len(expected) or set(reorder) != set(expected):
+        raise DataError(
+            f"{source}:{line_number}: visual reorder must contain every non-X9 index exactly once"
+        )
+    return reorder
+
+
+def _parse_bidi_code_points(
+    value: str, *, source: str, line_number: int
+) -> tuple[int, ...]:
+    tokens = value.split()
+    if not tokens:
+        raise DataError(f"{source}:{line_number}: bidi test input is empty")
+    code_points: list[int] = []
+    for token in tokens:
+        if HEX_RE.fullmatch(token) is None:
+            raise DataError(f"{source}:{line_number}: invalid code point {token!r}")
+        code_point = int(token, 16)
+        if code_point > MAX_CODE_POINT or 0xD800 <= code_point <= 0xDFFF:
+            raise DataError(f"{source}:{line_number}: invalid scalar U+{code_point:04X}")
+        code_points.append(code_point)
+    return tuple(code_points)
+
+
+def parse_bidi_tests(
+    manifest: dict[str, object], text: str | None = None
+) -> Iterable[BidiTestCase]:
+    source_key = _source_for(manifest, "uax-9-bidi-test", ())
+    source_name = Path(str(_entry(manifest, source_key)["path"])).name
+    if text is None:
+        text = verify_source(manifest, source_key)
+
+    def cases() -> Iterable[BidiTestCase]:
+        levels: tuple[int | None, ...] | None = None
+        reorder: tuple[int, ...] | None = None
+        count = 0
+        block_count = 0
+        total_count: int | None = None
+        for line_number, raw_line in enumerate(text.splitlines(), 1):
+            line = raw_line.strip()
+            if not line:
+                continue
+            if line.startswith("#Count:"):
+                match = re.fullmatch(r"#Count:\s*([0-9]+)", line)
+                if match is None or total_count is not None:
+                    raise DataError(f"{source_name}:{line_number}: malformed #Count declaration")
+                expected_block_count = int(match.group(1))
+                if expected_block_count == 0 or expected_block_count != block_count:
+                    raise DataError(
+                        f"{source_name}:{line_number}: #Count does not match its preceding records"
+                    )
+                block_count = 0
+                continue
+            if line.startswith("#Total Count:"):
+                match = re.fullmatch(r"#Total Count:\s*([0-9]+)", line)
+                if match is None or total_count is not None or block_count != 0:
+                    raise DataError(f"{source_name}:{line_number}: malformed #Total Count declaration")
+                total_count = int(match.group(1))
+                if total_count != count:
+                    raise DataError(
+                        f"{source_name}:{line_number}: #Total Count does not match its records"
+                    )
+                continue
+            if line.startswith("#"):
+                continue
+            if total_count is not None:
+                raise DataError(f"{source_name}:{line_number}: record follows #Total Count")
+            if line.startswith("@"):
+                directive, separator, value = line.partition(":")
+                if not separator or directive not in ("@Levels", "@Reorder"):
+                    raise DataError(f"{source_name}:{line_number}: unknown bidi test directive")
+                if directive == "@Levels":
+                    tokens = value.split()
+                    if not tokens:
+                        raise DataError(f"{source_name}:{line_number}: empty @Levels directive")
+                    levels = _parse_bidi_levels(
+                        value,
+                        source=source_name,
+                        line_number=line_number,
+                        scalar_count=len(tokens),
+                    )
+                    reorder = None
+                else:
+                    if levels is None:
+                        raise DataError(f"{source_name}:{line_number}: @Reorder precedes @Levels")
+                    reorder = _parse_bidi_reorder(
+                        value,
+                        source=source_name,
+                        line_number=line_number,
+                        levels=levels,
+                    )
+                continue
+
+            fields = line.split(";")
+            if len(fields) != 2:
+                raise DataError(f"{source_name}:{line_number}: malformed bidi test record")
+            if levels is None or reorder is None:
+                raise DataError(f"{source_name}:{line_number}: missing @Levels or @Reorder directive")
+            classes = tuple(fields[0].split())
+            if not classes or any(value not in BIDI_CLASS_VALUES for value in classes):
+                raise DataError(f"{source_name}:{line_number}: unknown Bidi_Class value")
+            if len(classes) != len(levels):
+                raise DataError(
+                    f"{source_name}:{line_number}: input length does not match @Levels"
+                )
+            bitset_text = fields[1].strip()
+            if re.fullmatch(r"[0-9A-Fa-f]+", bitset_text) is None:
+                raise DataError(f"{source_name}:{line_number}: invalid paragraph mode bitset")
+            bitset = int(bitset_text, 16)
+            if bitset == 0 or bitset & ~0x7:
+                raise DataError(f"{source_name}:{line_number}: unsupported paragraph mode bitset")
+            modes = tuple(mode for bit, mode in BIDI_TEST_MODE_BITS if bitset & bit)
+            count += 1
+            block_count += 1
+            yield BidiTestCase(line_number, classes, modes, levels, reorder)
+
+        if block_count != 0 or total_count is None:
+            raise DataError(f"{source_name}: unterminated #Count block")
+        expected = _entry(manifest, source_key).get("cases")
+        if expected != count:
+            raise DataError(f"bidi test case-count drift: expected {expected}, got {count}")
+
+    return cases()
+
+
+def parse_bidi_character_tests(
+    manifest: dict[str, object], text: str | None = None
+) -> Iterable[BidiCharacterCase]:
+    source_key = _source_for(manifest, "uax-9-bidi-character-test", ())
+    source_name = Path(str(_entry(manifest, source_key)["path"])).name
+    if text is None:
+        text = verify_source(manifest, source_key)
+
+    def cases() -> Iterable[BidiCharacterCase]:
+        count = 0
+        for line_number, raw_line in enumerate(text.splitlines(), 1):
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            fields = [field.strip() for field in line.split(";")]
+            if len(fields) != 5:
+                raise DataError(f"{source_name}:{line_number}: malformed bidi character test record")
+            code_points = _parse_bidi_code_points(
+                fields[0], source=source_name, line_number=line_number
+            )
+            if fields[1] not in ("0", "1", "2"):
+                raise DataError(f"{source_name}:{line_number}: invalid paragraph mode")
+            if fields[2] not in ("0", "1"):
+                raise DataError(f"{source_name}:{line_number}: invalid paragraph level")
+            levels = _parse_bidi_levels(
+                fields[3],
+                source=source_name,
+                line_number=line_number,
+                scalar_count=len(code_points),
+            )
+            reorder = _parse_bidi_reorder(
+                fields[4], source=source_name, line_number=line_number, levels=levels
+            )
+            count += 1
+            yield BidiCharacterCase(
+                line_number,
+                code_points,
+                int(fields[1]),
+                int(fields[2]),
+                levels,
+                reorder,
+            )
+
+        expected = _entry(manifest, source_key).get("cases")
+        if expected != count:
+            raise DataError(
+                f"bidi character test case-count drift: expected {expected}, got {count}"
+            )
+
+    return cases()
 
 
 def load_line_break_properties(
@@ -4798,6 +5042,8 @@ def validate_all(manifest: dict[str, object]) -> None:
     load_script_properties(manifest)
     parse_grapheme_tests(manifest)
     parse_line_break_tests(manifest)
+    sum(1 for _ in parse_bidi_tests(manifest))
+    sum(1 for _ in parse_bidi_character_tests(manifest))
     rendered_modules(manifest)
 
 
