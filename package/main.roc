@@ -25,5 +25,6 @@ package
 		UnicodeVersion,
 		Utf8,
 		VerticalOrientation,
+		Word,
 	]
 	{}
