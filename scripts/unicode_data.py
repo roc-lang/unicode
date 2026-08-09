@@ -9,6 +9,7 @@ specification axes, canonical sources, and the artifacts that depend on them.
 from __future__ import annotations
 
 import argparse
+from array import array
 import hashlib
 import json
 import re
@@ -63,6 +64,29 @@ EMOJI_PROPERTIES = (
     "Emoji_Component",
     "Extended_Pictographic",
 )
+DERIVED_CORE_PROPERTIES = (
+    "Default_Ignorable_Code_Point",
+    "Indic_Conjunct_Break",
+    "Cased",
+    "Case_Ignorable",
+)
+PROP_LIST_PROPERTIES = ("Variation_Selector", "Soft_Dotted")
+UNICODE_DATA_PROPERTIES = (
+    "Bidi_Mirrored",
+    "Simple_Uppercase_Mapping",
+    "Simple_Lowercase_Mapping",
+    "Simple_Titlecase_Mapping",
+)
+SPECIAL_CASING_LANGUAGES = ("az", "lt", "tr")
+SPECIAL_CASING_CONTEXTS = (
+    "Final_Sigma",
+    "After_Soft_Dotted",
+    "More_Above",
+    "Before_Dot",
+    "After_I",
+    "Not_Before_Dot",
+)
+CASE_FOLDING_STATUSES = ("C", "F", "S", "T")
 INCB_PROPERTIES = ("Consonant", "Extend", "Linker")
 WORD_BREAK_PROPERTIES = (
     "Other",
@@ -334,6 +358,37 @@ class SparseMapping:
 
 
 @dataclass(frozen=True)
+class SpecialCaseMapping:
+    source: int
+    lower: tuple[int, ...]
+    title: tuple[int, ...]
+    upper: tuple[int, ...]
+    languages: tuple[str, ...]
+    contexts: tuple[str, ...]
+    line: int
+
+
+@dataclass(frozen=True)
+class CaseFoldingMapping:
+    source: int
+    status: str
+    mapping: tuple[int, ...]
+    line: int
+
+
+@dataclass(frozen=True)
+class CaseData:
+    simple_upper: tuple[SparseMapping, ...]
+    simple_lower: tuple[SparseMapping, ...]
+    simple_title: tuple[SparseMapping, ...]
+    special: tuple[SpecialCaseMapping, ...]
+    folding: tuple[CaseFoldingMapping, ...]
+    cased: tuple[RangeRecord, ...]
+    case_ignorable: tuple[RangeRecord, ...]
+    soft_dotted: tuple[RangeRecord, ...]
+
+
+@dataclass(frozen=True)
 class BidiBracket:
     source: int
     target: int
@@ -416,7 +471,7 @@ SOURCE_PROJECTION_CONTRACTS = {
         ("unicode", "emoji"),
         True,
     ),
-    ("ucd-derived-core-properties", ("Default_Ignorable_Code_Point", "Indic_Conjunct_Break")): SourceProjectionContract(
+    ("ucd-derived-core-properties", DERIVED_CORE_PROPERTIES): SourceProjectionContract(
         "ucd/DerivedCoreProperties.txt", "production-and-conformance"
     ),
     ("ucd-property-ranges", ("General_Category",)): SourceProjectionContract(
@@ -440,7 +495,7 @@ SOURCE_PROJECTION_CONTRACTS = {
     ("ucd-property-ranges", ("Bidi_Class",)): SourceProjectionContract(
         "ucd/extracted/DerivedBidiClass.txt", "production"
     ),
-    ("ucd-unicode-data", ("Bidi_Mirrored",)): SourceProjectionContract(
+    ("ucd-unicode-data", UNICODE_DATA_PROPERTIES): SourceProjectionContract(
         "ucd/UnicodeData.txt",
         "production",
         header="0000;<control>;Cc;0;BN;;;;;N;NULL;;;;",
@@ -463,8 +518,14 @@ SOURCE_PROJECTION_CONTRACTS = {
     ("ucd-property-ranges", ("Indic_Positional_Category",)): SourceProjectionContract(
         "ucd/IndicPositionalCategory.txt", "production"
     ),
-    ("ucd-binary-property-ranges", ("Variation_Selector",)): SourceProjectionContract(
+    ("ucd-binary-property-ranges", PROP_LIST_PROPERTIES): SourceProjectionContract(
         "ucd/PropList.txt", "production"
+    ),
+    ("ucd-special-casing", ("Lowercase_Mapping", "Titlecase_Mapping", "Uppercase_Mapping")): SourceProjectionContract(
+        "ucd/SpecialCasing.txt", "production"
+    ),
+    ("ucd-case-folding", ("Case_Folding",)): SourceProjectionContract(
+        "ucd/CaseFolding.txt", "production"
     ),
     ("ucd-property-ranges", ("Vertical_Orientation",)): SourceProjectionContract(
         "ucd/VerticalOrientation.txt", "production"
@@ -493,7 +554,7 @@ GENERATOR_CONTRACTS = {
     "grapheme-data": GeneratorContract(
         (
             ("ucd-property-ranges", ("Grapheme_Cluster_Break",)),
-            ("ucd-derived-core-properties", ("Default_Ignorable_Code_Point", "Indic_Conjunct_Break")),
+            ("ucd-derived-core-properties", DERIVED_CORE_PROPERTIES),
             ("ucd-binary-property-ranges", EMOJI_PROPERTIES),
         ),
         ("uax_29", "uts_51"),
@@ -518,6 +579,22 @@ GENERATOR_CONTRACTS = {
         "package/InternalWordData.roc",
         True,
         "computed",
+    ),
+    "case-data": GeneratorContract(
+        (
+            ("ucd-unicode-data", UNICODE_DATA_PROPERTIES),
+            ("ucd-special-casing", ("Lowercase_Mapping", "Titlecase_Mapping", "Uppercase_Mapping")),
+            ("ucd-case-folding", ("Case_Folding",)),
+            ("ucd-derived-core-properties", DERIVED_CORE_PROPERTIES),
+            ("ucd-binary-property-ranges", PROP_LIST_PROPERTIES),
+            ("ucd-numeric-property-ranges", ("Canonical_Combining_Class",)),
+        ),
+        ("uax_44",),
+        (),
+        "package/InternalCaseData.roc",
+        True,
+        "computed",
+        "U16",
     ),
     "east-asian-width": GeneratorContract(
         (("ucd-property-ranges", ("East_Asian_Width",)),),
@@ -584,7 +661,7 @@ GENERATOR_CONTRACTS = {
     "bidi-properties": GeneratorContract(
         (
             ("ucd-property-ranges", ("Bidi_Class",)),
-            ("ucd-unicode-data", ("Bidi_Mirrored",)),
+            ("ucd-unicode-data", UNICODE_DATA_PROPERTIES),
             ("ucd-bidi-mirroring", ("Bidi_Mirroring_Glyph",)),
             ("ucd-bidi-brackets", ("Bidi_Paired_Bracket", "Bidi_Paired_Bracket_Type")),
             ("ucd-property-aliases", PUBLIC_ALIAS_PROPERTIES),
@@ -659,8 +736,8 @@ GENERATOR_CONTRACTS = {
     ),
     "character-flags": GeneratorContract(
         (
-            ("ucd-derived-core-properties", ("Default_Ignorable_Code_Point", "Indic_Conjunct_Break")),
-            ("ucd-binary-property-ranges", ("Variation_Selector",)),
+            ("ucd-derived-core-properties", DERIVED_CORE_PROPERTIES),
+            ("ucd-binary-property-ranges", PROP_LIST_PROPERTIES),
         ),
         ("uax_44",),
         (),
@@ -681,14 +758,14 @@ GENERATOR_CONTRACTS = {
             ("ucd-property-ranges", ("East_Asian_Width",)),
             ("ucd-binary-property-ranges", EMOJI_PROPERTIES),
             ("ucd-property-ranges", ("Bidi_Class",)),
-            ("ucd-unicode-data", ("Bidi_Mirrored",)),
+            ("ucd-unicode-data", UNICODE_DATA_PROPERTIES),
             ("ucd-property-ranges", ("Joining_Type",)),
             ("ucd-arabic-shaping", ("Joining_Type", "Joining_Group")),
             ("ucd-property-ranges", ("Indic_Syllabic_Category",)),
             ("ucd-property-ranges", ("Indic_Positional_Category",)),
             ("ucd-property-ranges", ("Vertical_Orientation",)),
-            ("ucd-derived-core-properties", ("Default_Ignorable_Code_Point", "Indic_Conjunct_Break")),
-            ("ucd-binary-property-ranges", ("Variation_Selector",)),
+            ("ucd-derived-core-properties", DERIVED_CORE_PROPERTIES),
+            ("ucd-binary-property-ranges", PROP_LIST_PROPERTIES),
             ("ucd-property-aliases", PUBLIC_ALIAS_PROPERTIES),
             ("ucd-property-value-aliases", PUBLIC_ALIAS_PROPERTIES),
         ),
@@ -1821,7 +1898,7 @@ def load_property_data(
     incb_name = _source_for(
         manifest,
         "ucd-derived-core-properties",
-        ("Default_Ignorable_Code_Point", "Indic_Conjunct_Break"),
+        DERIVED_CORE_PROPERTIES,
     )
     incb_text = verify_source(manifest, incb_name)
     incb_source = str(data_path(manifest, incb_name))
@@ -1973,6 +2050,60 @@ def load_canonical_properties(manifest: dict[str, object]) -> CanonicalPropertie
     )
 
 
+def load_case_data(manifest: dict[str, object], canonical: CanonicalProperties) -> CaseData:
+    def load_source(source_format: str, projection: tuple[str, ...]) -> tuple[str, str, str]:
+        name = _source_for(manifest, source_format, projection)
+        return name, verify_source(manifest, name), str(data_path(manifest, name))
+
+    unicode_name, unicode_text, unicode_path = load_source(
+        "ucd-unicode-data", UNICODE_DATA_PROPERTIES
+    )
+    simple_upper, simple_lower, simple_title = _parse_unicode_data_case_mappings(
+        unicode_text, source=unicode_path
+    )
+    special_name, special_text, special_path = load_source(
+        "ucd-special-casing", ("Lowercase_Mapping", "Titlecase_Mapping", "Uppercase_Mapping")
+    )
+    special = parse_special_casing(special_text, source=special_path)
+    folding_name, folding_text, folding_path = load_source(
+        "ucd-case-folding", ("Case_Folding",)
+    )
+    folding = parse_case_folding(folding_text, source=folding_path)
+    derived_name, derived_text, derived_path = load_source(
+        "ucd-derived-core-properties", DERIVED_CORE_PROPERTIES
+    )
+    cased = _parse_binary_projection(derived_text, source=derived_path, property_name="Cased")
+    case_ignorable = _parse_binary_projection(
+        derived_text, source=derived_path, property_name="Case_Ignorable"
+    )
+    prop_name, prop_text, prop_path = load_source(
+        "ucd-binary-property-ranges", PROP_LIST_PROPERTIES
+    )
+    soft_dotted = _parse_binary_projection(prop_text, source=prop_path, property_name="Soft_Dotted")
+
+    if len(special) != int(_entry(manifest, special_name)["records"]):
+        raise DataError(f"{special_path}: SpecialCasing record count drifted")
+    if len(folding) != int(_entry(manifest, folding_name)["records"]):
+        raise DataError(f"{folding_path}: CaseFolding record count drifted")
+    if not simple_upper or not simple_lower or not simple_title:
+        raise DataError(f"{unicode_path}: simple case mappings are unexpectedly empty")
+    if not cased or not case_ignorable or not soft_dotted:
+        raise DataError("case contextual property projection is unexpectedly empty")
+    if not canonical.canonical_combining_class:
+        raise DataError("Canonical_Combining_Class is unexpectedly empty for case data")
+    _ = unicode_name, derived_name, prop_name
+    return CaseData(
+        simple_upper,
+        simple_lower,
+        simple_title,
+        special,
+        folding,
+        cased,
+        case_ignorable,
+        soft_dotted,
+    )
+
+
 def _alias_spellings(records: Iterable[PropertyValueAlias]) -> set[str]:
     return {
         alias
@@ -2082,6 +2213,158 @@ def _parse_unicode_data_mirrored(text: str, *, source: str) -> tuple[RangeRecord
         raise DataError(f"{source}: unterminated UnicodeData range")
     if not records:
         raise DataError(f"{source}: no Bidi_Mirrored=Yes records")
+    return tuple(records)
+
+
+def _parse_unicode_data_case_mappings(
+    text: str, *, source: str
+) -> tuple[tuple[SparseMapping, ...], tuple[SparseMapping, ...], tuple[SparseMapping, ...]]:
+    mappings = ([], [], [])
+    previous = -1
+    pending_first: tuple[int, str, tuple[str, str, str], int] | None = None
+
+    def mapping_fields(fields: tuple[str, ...], line_number: int) -> tuple[str, str, str]:
+        result = tuple(fields[index] for index in (12, 13, 14))
+        for value in result:
+            if value and HEX_RE.fullmatch(value) is None:
+                raise DataError(f"{source}:{line_number}: malformed simple case mapping")
+        return result
+
+    def append_mappings(code_point: int, values: tuple[str, str, str], line_number: int) -> None:
+        for index, value in enumerate(values):
+            if not value:
+                continue
+            target = int(value, 16)
+            if not _is_unicode_scalar(code_point) or not _is_unicode_scalar(target):
+                raise DataError(f"{source}:{line_number}: non-scalar simple case mapping")
+            mappings[index].append(SparseMapping(code_point, target, line_number))
+
+    for line_number, raw_line in enumerate(text.splitlines(), 1):
+        line = raw_line.strip()
+        if not line:
+            continue
+        fields = tuple(line.split(";"))
+        if len(fields) != 15 or HEX_RE.fullmatch(fields[0]) is None:
+            raise DataError(f"{source}:{line_number}: malformed UnicodeData record")
+        code_point = int(fields[0], 16)
+        if code_point <= previous or code_point > MAX_CODE_POINT:
+            raise DataError(f"{source}:{line_number}: UnicodeData code points are not strictly ordered")
+        previous = code_point
+        name = fields[1]
+        values = mapping_fields(fields, line_number)
+        if name.endswith(", First>"):
+            if pending_first is not None:
+                raise DataError(f"{source}:{line_number}: nested UnicodeData First range")
+            pending_first = (code_point, name[:-8], values, line_number)
+        elif name.endswith(", Last>"):
+            if pending_first is None or pending_first[1] != name[:-7]:
+                raise DataError(f"{source}:{line_number}: unmatched UnicodeData Last range")
+            _start, _name, first_values, first_line = pending_first
+            if first_values != values:
+                raise DataError(f"{source}:{line_number}: UnicodeData range changes simple case mapping")
+            if any(values):
+                raise DataError(f"{source}:{first_line}: simple case mappings must not occur in UnicodeData ranges")
+            pending_first = None
+        else:
+            if pending_first is not None:
+                raise DataError(f"{source}:{line_number}: unterminated UnicodeData range")
+            append_mappings(code_point, values, line_number)
+    if pending_first is not None:
+        raise DataError(f"{source}: unterminated UnicodeData range")
+    return tuple(tuple(mapping) for mapping in mappings)
+
+
+def _parse_case_sequence(
+    value: str, *, source: str, line_number: int, allow_empty: bool = False
+) -> tuple[int, ...]:
+    fields = tuple(value.split())
+    if (not fields and not allow_empty) or any(HEX_RE.fullmatch(field) is None for field in fields):
+        raise DataError(f"{source}:{line_number}: malformed case mapping sequence")
+    sequence = tuple(int(field, 16) for field in fields)
+    if any(not _is_unicode_scalar(code_point) for code_point in sequence):
+        raise DataError(f"{source}:{line_number}: non-scalar case mapping endpoint")
+    return sequence
+
+
+def parse_special_casing(text: str, *, source: str) -> tuple[SpecialCaseMapping, ...]:
+    records: list[SpecialCaseMapping] = []
+    seen: set[tuple[int, tuple[str, ...], tuple[str, ...]]] = set()
+    language_names = {value.lower(): value for value in SPECIAL_CASING_LANGUAGES}
+    context_names = {value.lower(): value for value in SPECIAL_CASING_CONTEXTS}
+    for line_number, raw_line in enumerate(text.splitlines(), 1):
+        body = raw_line.split("#", 1)[0].strip()
+        if not body:
+            continue
+        fields = tuple(field.strip() for field in body.split(";"))
+        if fields and fields[-1] == "":
+            fields = fields[:-1]
+        if len(fields) not in (4, 5) or HEX_RE.fullmatch(fields[0]) is None:
+            raise DataError(f"{source}:{line_number}: malformed SpecialCasing record")
+        code_point = int(fields[0], 16)
+        if not _is_unicode_scalar(code_point):
+            raise DataError(f"{source}:{line_number}: non-scalar SpecialCasing source")
+        languages: list[str] = []
+        contexts: list[str] = []
+        for condition in (fields[4] if len(fields) == 5 else "").split():
+            canonical_language = language_names.get(condition.lower())
+            canonical_context = context_names.get(condition.lower())
+            if canonical_language is not None:
+                languages.append(canonical_language)
+            elif canonical_context is not None:
+                contexts.append(canonical_context)
+            else:
+                raise DataError(f"{source}:{line_number}: unknown SpecialCasing condition {condition!r}")
+        if len(languages) != len(set(languages)) or len(contexts) != len(set(contexts)):
+            raise DataError(f"{source}:{line_number}: duplicate SpecialCasing condition")
+        key = (code_point, tuple(sorted(languages)), tuple(sorted(contexts)))
+        if key in seen:
+            raise DataError(f"{source}:{line_number}: duplicate or conflicting SpecialCasing condition")
+        seen.add(key)
+        records.append(
+            SpecialCaseMapping(
+                code_point,
+                _parse_case_sequence(fields[1], source=source, line_number=line_number, allow_empty=True),
+                _parse_case_sequence(fields[2], source=source, line_number=line_number, allow_empty=True),
+                _parse_case_sequence(fields[3], source=source, line_number=line_number, allow_empty=True),
+                key[1],
+                key[2],
+                line_number,
+            )
+        )
+    if not records:
+        raise DataError(f"{source}: no SpecialCasing records")
+    return tuple(records)
+
+
+def parse_case_folding(text: str, *, source: str) -> tuple[CaseFoldingMapping, ...]:
+    records: list[CaseFoldingMapping] = []
+    seen: set[tuple[int, str]] = set()
+    for line_number, raw_line in enumerate(text.splitlines(), 1):
+        body = raw_line.split("#", 1)[0].strip()
+        if not body:
+            continue
+        fields = tuple(field.strip() for field in body.split(";"))
+        if fields and fields[-1] == "":
+            fields = fields[:-1]
+        if len(fields) != 3 or HEX_RE.fullmatch(fields[0]) is None or fields[1] not in CASE_FOLDING_STATUSES:
+            raise DataError(f"{source}:{line_number}: malformed CaseFolding record")
+        code_point = int(fields[0], 16)
+        if not _is_unicode_scalar(code_point):
+            raise DataError(f"{source}:{line_number}: non-scalar CaseFolding source")
+        key = (code_point, fields[1])
+        if key in seen:
+            raise DataError(f"{source}:{line_number}: duplicate or conflicting CaseFolding status")
+        seen.add(key)
+        records.append(
+            CaseFoldingMapping(
+                code_point,
+                fields[1],
+                _parse_case_sequence(fields[2], source=source, line_number=line_number),
+                line_number,
+            )
+        )
+    if not records:
+        raise DataError(f"{source}: no CaseFolding records")
     return tuple(records)
 
 
@@ -2311,7 +2594,7 @@ def load_public_properties(
             f"{bidi_path}: Bidi_Class @missing declarations drifted from the exact Unicode 17.0.0 cascade"
         )
 
-    unicode_data_text, unicode_data_path = load_source("ucd-unicode-data", ("Bidi_Mirrored",))
+    unicode_data_text, unicode_data_path = load_source("ucd-unicode-data", UNICODE_DATA_PROPERTIES)
     mirrored = _parse_unicode_data_mirrored(unicode_data_text, source=unicode_data_path)
     mirroring_text, mirroring_path = load_source("ucd-bidi-mirroring", ("Bidi_Mirroring_Glyph",))
     mirroring = _parse_sparse_mapping(mirroring_text, source=mirroring_path)
@@ -2409,12 +2692,12 @@ def load_public_properties(
 
     derived_text, derived_path = load_source(
         "ucd-derived-core-properties",
-        ("Default_Ignorable_Code_Point", "Indic_Conjunct_Break"),
+        DERIVED_CORE_PROPERTIES,
     )
     default_ignorable = _parse_binary_projection(
         derived_text, source=derived_path, property_name="Default_Ignorable_Code_Point"
     )
-    prop_text, prop_path = load_source("ucd-binary-property-ranges", ("Variation_Selector",))
+    prop_text, prop_path = load_source("ucd-binary-property-ranges", PROP_LIST_PROPERTIES)
     variation_selector = _parse_binary_projection(
         prop_text, source=prop_path, property_name="Variation_Selector"
     )
@@ -3417,6 +3700,186 @@ def render_word_data(
     )
 
 
+def render_case_data(
+    manifest: dict[str, object], version: str, canonical: CanonicalProperties, case: CaseData
+) -> str:
+    simple_maps = []
+    for records in (case.simple_upper, case.simple_lower, case.simple_title):
+        mapping = {record.source: record.target for record in records}
+        if len(mapping) != len(records):
+            raise DataError("duplicate simple case mapping source")
+        simple_maps.append(mapping)
+
+    ccc = bytearray(MAX_CODE_POINT + 1)
+    for record in canonical.canonical_combining_class:
+        value = int(record.property)
+        if value > 0xFF:
+            raise DataError("Canonical_Combining_Class no longer fits the case-data U8 field")
+        ccc[record.start : record.end + 1] = bytes((value,)) * (record.end - record.start + 1)
+    flags = bytearray(MAX_CODE_POINT + 1)
+    for bit, records in ((1, case.cased), (2, case.case_ignorable), (4, case.soft_dotted)):
+        for record in records:
+            for code_point in range(record.start, record.end + 1):
+                flags[code_point] |= bit
+
+    special_by_source: dict[int, list[SpecialCaseMapping]] = {}
+    for record in case.special:
+        special_by_source.setdefault(record.source, []).append(record)
+    fold_by_source: dict[int, list[CaseFoldingMapping]] = {}
+    for record in case.folding:
+        fold_by_source.setdefault(record.source, []).append(record)
+    specials: list[SpecialCaseMapping] = []
+    special_slice: dict[int, tuple[int, int]] = {}
+    for source, records in sorted(special_by_source.items()):
+        start = len(specials)
+        specials.extend(sorted(records, key=lambda record: record.line))
+        special_slice[source] = (start, len(records))
+    folds: list[CaseFoldingMapping] = []
+    fold_slice: dict[int, tuple[int, int]] = {}
+    for source, records in sorted(fold_by_source.items()):
+        start = len(folds)
+        folds.extend(sorted(records, key=lambda record: (record.status, record.line)))
+        fold_slice[source] = (start, len(records))
+    if len(specials) > 0xFFFF or len(folds) > 0xFFFF:
+        raise DataError("case-data mapping table no longer fits U16 offsets")
+    if any(count > 0xFF for _start, count in (*special_slice.values(), *fold_slice.values())):
+        raise DataError("case-data mapping count no longer fits U8")
+
+    all_sources = set().union(
+        simple_maps[0], simple_maps[1], simple_maps[2], special_slice, fold_slice
+    )
+    for records in (case.cased, case.case_ignorable, case.soft_dotted, canonical.canonical_combining_class):
+        for record in records:
+            all_sources.update(range(record.start, record.end + 1))
+    props = [(0, 0, 0, 0, 0, 0, 0, 0, 0)]
+    prop_ids = {(0, 0, 0, 0, 0, 0, 0, 0, 0): 0}
+    encoded = array("H", [0]) * (MAX_CODE_POINT + 1)
+    for code_point in sorted(all_sources):
+        special_start, special_count = special_slice.get(code_point, (0, 0))
+        fold_start, fold_count = fold_slice.get(code_point, (0, 0))
+        row = (
+            simple_maps[0].get(code_point, 0),
+            simple_maps[1].get(code_point, 0),
+            simple_maps[2].get(code_point, 0),
+            ccc[code_point],
+            flags[code_point],
+            special_start,
+            special_count,
+            fold_start,
+            fold_count,
+        )
+        row_id = prop_ids.get(row)
+        if row_id is None:
+            row_id = len(props)
+            if row_id > 0xFFFF:
+                raise DataError("case-data row IDs no longer fit U16")
+            prop_ids[row] = row_id
+            props.append(row)
+        encoded[code_point] = row_id
+
+    paged = _selected_paged_u16(encoded, manifest=manifest, generator="case-data")
+    page_size = 1 << paged.page_bits
+    artifact = _require_dict(
+        _require_dict(manifest["artifacts"], "manifest.artifacts")[_artifact_for_generator(manifest, "case-data")],
+        "manifest.artifacts.case_data",
+    )
+    layout = _require_dict(artifact["layout"], "manifest.artifacts.case_data.layout")
+    # This is the logical non-page payload: fixed-width row fields, every U32
+    # mapping scalar, and each U8 condition and folding-status identity.
+    # It deliberately excludes Roc List headers, whose ABI layout is not a
+    # Unicode-data contract, but includes every generated data value.
+    row_bytes = len(props) * 20
+    special_mapping_bytes = 4 * sum(
+        len(record.lower) + len(record.title) + len(record.upper) for record in specials
+    )
+    special_condition_bytes = sum(
+        len(record.languages) + len(record.contexts) for record in specials
+    )
+    fold_mapping_bytes = 4 * sum(len(record.mapping) for record in folds)
+    fold_status_bytes = len(folds)
+    case_table_bytes = (
+        row_bytes
+        + special_mapping_bytes
+        + special_condition_bytes
+        + fold_mapping_bytes
+        + fold_status_bytes
+    )
+    expected_counts = (int(layout["expected_row_count"]), int(layout["expected_column_bytes"]))
+    actual_counts = (len(props), case_table_bytes)
+    if actual_counts != expected_counts:
+        raise DataError(
+            f"manifest.artifacts.case_data.layout table counts drifted: expected {expected_counts}, got {actual_counts}"
+        )
+    if paged.storage_bytes + case_table_bytes > int(layout["max_total_bytes"]):
+        raise DataError("manifest.artifacts.case_data.layout exceeds its total byte budget")
+
+    languages = {"az": "Azeri", "lt": "Lithuanian", "tr": "Turkish"}
+    contexts = {value: value for value in SPECIAL_CASING_CONTEXTS}
+    statuses = {"C": "Common", "F": "Full", "S": "Simple", "T": "Turkic"}
+
+    def roc_u32s(values: tuple[int, ...]) -> str:
+        if not values:
+            return "[]"
+        return _roc_list(values, per_line=16).replace("\n    ", " ").replace("\n", " ").strip()
+
+    def special_row(record: SpecialCaseMapping) -> str:
+        language_values = ", ".join(languages[value] for value in record.languages)
+        context_values = ", ".join(contexts[value] for value in record.contexts)
+        return (
+            "{ lower: " + roc_u32s(record.lower)
+            + ", title: " + roc_u32s(record.title)
+            + ", upper: " + roc_u32s(record.upper)
+            + f", languages: [{language_values}], contexts: [{context_values}] }}"
+        )
+
+    def fold_row(record: CaseFoldingMapping) -> str:
+        return f"{{ status: {statuses[record.status]}, mapping: {roc_u32s(record.mapping)} }}"
+
+    rows = "\n    ".join(
+        "{ simple_upper: %d, simple_lower: %d, simple_title: %d, ccc: %d, flags: %d, special_start: %d, special_count: %d, fold_start: %d, fold_count: %d },"
+        % row
+        for row in props
+    )
+    special_rows = "\n    ".join(f"{special_row(record)}," for record in specials)
+    fold_rows = "\n    ".join(f"{fold_row(record)}," for record in folds)
+    return (
+        f"## GENERATED from Unicode {version} case mappings and contextual case properties. Run `python3 scripts/unicode_data.py generate`. ##\n"
+        "## Simple-map zero is a private identity sentinel; table row IDs and mapping offsets are private. ##\n"
+        f"## layout: {len(paged.page_index)} {paged.index_type} page ids + {len(paged.pages)} x {page_size} U16 values;"
+        f" logical page payload {paged.storage_bytes} bytes; logical non-page payload {case_table_bytes} bytes; {len(props)} rows, {len(specials)} special entries, {len(folds)} folding entries. ##\n\n"
+        "InternalCaseData :: [].{\n"
+        "    Language : [Azeri, Lithuanian, Turkish]\n"
+        "    Context : [Final_Sigma, After_Soft_Dotted, More_Above, Before_Dot, After_I, Not_Before_Dot]\n"
+        "    FoldStatus : [Common, Full, Simple, Turkic]\n"
+        "    Special : { lower : List(U32), title : List(U32), upper : List(U32), languages : List(Language), contexts : List(Context) }\n"
+        "    Fold : { status : FoldStatus, mapping : List(U32) }\n"
+        "    Props : { simple_upper : U32, simple_lower : U32, simple_title : U32, ccc : U8, cased : Bool, case_ignorable : Bool, soft_dotted : Bool, special_start : U16, special_count : U8, fold_start : U16, fold_count : U8 }\n\n"
+        "    lookup : U32 -> Props\n"
+        "    lookup = |scalar| {\n"
+        "        row_id = if scalar > 0x10FFFF { 0 } else {\n"
+        f"            page_id = page_index.get(scalar.shr_wrap({paged.page_bits}).to_u64()) ?? 0\n"
+        f"            pages.get(page_id.to_u64() * {page_size} + scalar.bitwise_and({page_size - 1}).to_u64()) ?? 0\n"
+        "        }\n"
+        "        row = rows.get(row_id.to_u64()) ?? (rows.get(0) ?? ...)\n"
+        "        {\n"
+        "            simple_upper: row.simple_upper, simple_lower: row.simple_lower, simple_title: row.simple_title, ccc: row.ccc,\n"
+        "            cased: row.flags.bitwise_and(1.U8) != 0.U8, case_ignorable: row.flags.bitwise_and(2.U8) != 0.U8, soft_dotted: row.flags.bitwise_and(4.U8) != 0.U8,\n"
+        "            special_start: row.special_start, special_count: row.special_count, fold_start: row.fold_start, fold_count: row.fold_count,\n"
+        "        }\n"
+        "    }\n"
+        "\n    special_entries : List(Special)\n"
+        "    special_entries = specials\n"
+        "\n    fold_entries : List(Fold)\n"
+        "    fold_entries = folds\n"
+        "}\n\n"
+        "Row : { simple_upper : U32, simple_lower : U32, simple_title : U32, ccc : U8, flags : U8, special_start : U16, special_count : U8, fold_start : U16, fold_count : U8 }\n\n"
+        "rows : List(Row)\nrows = [\n    " + rows + "\n]\n\n"
+        "specials : List(InternalCaseData.Special)\nspecials = [\n    " + special_rows + "\n]\n\n"
+        "folds : List(InternalCaseData.Fold)\nfolds = [\n    " + fold_rows + "\n]\n\n"
+        f"page_index : List({paged.index_type})\npage_index = {_roc_list(paged.page_index)}\n\n"
+        "pages : List(U16)\n"
+        f"pages = {_roc_list(paged.flat_pages)}\n"
+    )
 def render_line_break_data(
     manifest: dict[str, object],
     version: str,
@@ -5086,6 +5549,7 @@ def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
     emoji = list(properties.emoji.records)
     incb = list(properties.indic_conjunct_break.records)
     canonical = load_canonical_properties(manifest)
+    case = load_case_data(manifest, canonical)
     _line_break_records, line_break_values = load_line_break_properties(manifest)
     public = load_public_properties(manifest, canonical)
     scripts = load_script_properties(manifest)
@@ -5105,6 +5569,7 @@ def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
         "grapheme-data": lambda: render_grapheme_data(manifest, version, gcb, incb, emoji),
         "legacy-grapheme-break": lambda: render_gcb(version, gcb),
         "word-data": lambda: render_word_data(manifest, version, word_break, emoji),
+        "case-data": lambda: render_case_data(manifest, version, canonical, case),
         "east-asian-width": lambda: render_eaw(
             version, eaw, properties.east_asian_width.defaults
         ),
@@ -5249,6 +5714,7 @@ def validate_all(manifest: dict[str, object]) -> None:
         verify_source(manifest, source)
     load_property_data(manifest)
     canonical = load_canonical_properties(manifest)
+    load_case_data(manifest, canonical)
     load_line_break_properties(manifest)
     load_public_properties(manifest, canonical)
     load_script_properties(manifest)

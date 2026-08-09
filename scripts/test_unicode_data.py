@@ -238,6 +238,43 @@ class UnicodeDataTests(unittest.TestCase):
                 list(properties.emoji.records),
             )
 
+    def test_case_data_parsers_and_generated_view_are_pinned(self) -> None:
+        manifest = unicode_data.load_manifest()
+        canonical = unicode_data.load_canonical_properties(manifest)
+        case = unicode_data.load_case_data(manifest, canonical)
+        self.assertEqual(len(case.special), 119)
+        self.assertEqual(len(case.folding), 1618)
+        self.assertTrue(case.simple_upper and case.simple_lower and case.simple_title)
+        generated = unicode_data.rendered_modules(manifest)[
+            unicode_data.ROOT / "package" / "InternalCaseData.roc"
+        ]
+        self.assertIn("InternalCaseData :: [].{", generated)
+        self.assertIn("case_ignorable : Bool", generated)
+        self.assertIn("FoldStatus : [Common, Full, Simple, Turkic]", generated)
+        self.assertIn("lower: []", generated)
+        self.assertIn("logical non-page payload 72774 bytes", generated)
+
+        constrained = json.loads(json.dumps(manifest))
+        constrained["artifacts"]["case_data"]["layout"]["max_total_bytes"] -= 1
+        with self.assertRaisesRegex(unicode_data.DataError, "total byte budget"):
+            unicode_data.render_case_data(
+                constrained,
+                unicode_data.release_version(manifest, "unicode"),
+                canonical,
+                case,
+            )
+
+        for parser, text, message in (
+            (unicode_data.parse_special_casing, "0041; 0061; 0041; 0041; xx;\n", "unknown SpecialCasing condition"),
+            (unicode_data.parse_special_casing, "D800; 0061; 0041; 0041;\n", "non-scalar SpecialCasing source"),
+            (unicode_data.parse_case_folding, "0041; X; 0061;\n", "malformed CaseFolding"),
+            (unicode_data.parse_case_folding, "0041; C; D800;\n", "non-scalar case mapping endpoint"),
+            (unicode_data.parse_case_folding, "0041; C; 0061;\n0041; C; 0061;\n", "duplicate or conflicting"),
+        ):
+            with self.subTest(text=text):
+                with self.assertRaisesRegex(unicode_data.DataError, message):
+                    parser(text, source="case-test")
+
     def test_word_break_loaders_reject_default_property_and_test_drift(self) -> None:
         manifest = unicode_data.load_manifest()
         verified_source = unicode_data.verify_source

@@ -206,7 +206,7 @@
       "storage_release": "unicode",
       "release_axes": ["unicode"],
       "format": "ucd-derived-core-properties",
-      "properties": ["Default_Ignorable_Code_Point", "Indic_Conjunct_Break"]
+      "properties": ["Default_Ignorable_Code_Point", "Indic_Conjunct_Break", "Cased", "Case_Ignorable"]
     },
     "derived_general_category": {
       "path": "vendor/unicode/17.0.0/DerivedGeneralCategory.txt",
@@ -356,7 +356,33 @@
       "storage_release": "unicode",
       "release_axes": ["unicode"],
       "format": "ucd-unicode-data",
-      "properties": ["Bidi_Mirrored"]
+      "properties": ["Bidi_Mirrored", "Simple_Uppercase_Mapping", "Simple_Lowercase_Mapping", "Simple_Titlecase_Mapping"]
+    },
+    "special_casing": {
+      "path": "vendor/unicode/17.0.0/SpecialCasing.txt",
+      "url": "https://www.unicode.org/Public/17.0.0/ucd/SpecialCasing.txt",
+      "sha256": "efc25faf19de21b92c1194c111c932e03d2a5eaf18194e33f1156e96de4c9588",
+      "header": "# SpecialCasing-17.0.0.txt",
+      "records": 119,
+      "role": "production",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "ucd-special-casing",
+      "properties": ["Lowercase_Mapping", "Titlecase_Mapping", "Uppercase_Mapping"]
+    },
+    "case_folding": {
+      "path": "vendor/unicode/17.0.0/CaseFolding.txt",
+      "url": "https://www.unicode.org/Public/17.0.0/ucd/CaseFolding.txt",
+      "sha256": "ff8d8fefbf123574205085d6714c36149eb946d717a0c585c27f0f4ef58c4183",
+      "header": "# CaseFolding-17.0.0.txt",
+      "records": 1618,
+      "role": "production",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "ucd-case-folding",
+      "properties": ["Case_Folding"]
     },
     "bidi_mirroring": {
       "path": "vendor/unicode/17.0.0/BidiMirroring.txt",
@@ -475,7 +501,7 @@
       "storage_release": "unicode",
       "release_axes": ["unicode"],
       "format": "ucd-binary-property-ranges",
-      "properties": ["Variation_Selector"]
+      "properties": ["Variation_Selector", "Soft_Dotted"]
     },
     "vertical_orientation": {
       "path": "vendor/unicode/17.0.0/VerticalOrientation.txt",
@@ -567,6 +593,28 @@
         "expected_logical_bytes": 37504,
         "max_logical_bytes": 37504,
         "ascii": "computed"
+      }
+    },
+    "case_data": {
+      "generator": "case-data",
+      "output": "package/InternalCaseData.roc",
+      "sources": ["unicode_data", "special_casing", "case_folding", "derived_core_properties", "prop_list", "derived_combining_class"],
+      "specifications": ["uax_44"],
+      "artifacts": [],
+      "layout": {
+        "kind": "deduplicated-pages",
+        "candidate_page_bits": [6, 7, 8, 9, 10],
+        "page_bits": 7,
+        "index_type": "U8",
+        "value_type": "U16",
+        "expected_index_entries": 8704,
+        "expected_distinct_pages": 170,
+        "expected_logical_bytes": 52224,
+        "max_logical_bytes": 52224,
+        "ascii": "computed",
+        "expected_row_count": 3100,
+        "expected_column_bytes": 72774,
+        "max_total_bytes": 124998
       }
     },
     "legacy_grapheme_break": {
