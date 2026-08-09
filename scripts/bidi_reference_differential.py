@@ -163,7 +163,7 @@ def run_candidate(candidate: Path, rows: list[tuple[str, str, int]], expected: l
     completed = subprocess.run([str(candidate)], cwd=ROOT, input=payload, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     expected_output = f"PASS\tbidi-character-test\t{len(protocol_rows)}"
     if completed.returncode != 0 or completed.stdout.strip() != expected_output:
-        # Keep the scheduled failure actionable: rerun one row at a time and
+        # Keep a differential failure actionable: rerun one row at a time and
         # preserve the seed-derived scalar sequence, base mode, Code9 result,
         # and Roc app's exact expected/actual diagnostic.
         for row, oracle in zip(rows, expected, strict=True):

@@ -16,19 +16,19 @@ The generated JSON is intentionally untracked. Its `scaling_seconds_ratio`
 compares every adversarial corpus at the default 4 KiB, 16 KiB, and 64 KiB
 sizes. Retained state and work should grow linearly with paragraph size.
 
-## Scheduled external differential
+## Optional external differential
 
 Normal CI uses the vendored Unicode 17 BidiTest and BidiCharacterTest data.
-The weekly `Bidi reference differential gate` additionally downloads Unicode's
-official Code9 C reference source for Unicode 17.0.0, verifies every source
-file against the SHA-256 digests recorded in
-`scripts/bidi_reference_differential.py`, compiles an isolated query wrapper,
-and compares 256 deterministic seeded scalar cases against the Roc test app.
-The script verifies the Roc compiler against `.roc-version`; a failed download,
-checksum, compile, or mismatch fails the job. The source is not vendored, so
-the scheduled run remains auditable against Unicode's published release while
-keeping the repository's canonical UCD data as its local source of truth.
-On a seeded or differential failure, CI uploads a `bidi-regressions` artifact
-containing the minimized tab-separated row. Re-run it by placing that row after
-a `ROC_UNICODE_TEST_V1` header for its documented suite, or promote the row to
-the adjacent Bidi test fixture after review.
+`scripts/bidi_reference_differential.py` is an explicit local verification tool.
+It downloads Unicode's official Code9 C reference source for Unicode 17.0.0,
+verifies every source file against recorded SHA-256 digests, compiles an
+isolated query wrapper, and compares deterministic seeded scalar cases against
+the Roc test app. It verifies the Roc compiler against `.roc-version`; a failed
+download, checksum, compile, or mismatch fails the command. The source is not
+vendored, so the repository's canonical UCD data remains its local source of
+truth.
+
+On a differential failure, the command writes a minimized tab-separated row
+under `.roc-unicode-tmp/failures`. Re-run it by placing that row after a
+`ROC_UNICODE_TEST_V1` header for its documented suite, or promote the row to the
+adjacent Bidi test fixture after review.
