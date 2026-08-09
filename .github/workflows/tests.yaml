@@ -52,3 +52,11 @@ jobs:
 
       - name: Run all tests
         run: ROC=roc ./scripts/all_tests.sh
+
+      - name: Upload minimized Bidi regressions
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bidi-regressions-${{ matrix.os }}
+          path: .roc-unicode-tmp/failures
+          if-no-files-found: ignore

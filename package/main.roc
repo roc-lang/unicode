@@ -1,6 +1,7 @@
 package
 	[
 		ByteRange,
+		Bidi,
 		BidiClass,
 		BidiProperties,
 		CanonicalCombiningClass,

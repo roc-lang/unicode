@@ -4,10 +4,12 @@
 from __future__ import annotations
 
 import argparse
+from array import array
 import concurrent.futures
 import json
 import os
 import platform
+import random
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -15,6 +17,8 @@ from pathlib import Path
 from typing import Callable, Iterable, Sequence
 
 from unicode_data import (
+    BidiCharacterCase,
+    BidiTestCase,
     DataError,
     GraphemeCase,
     LineBreakCase,
@@ -22,18 +26,24 @@ from unicode_data import (
     MissingDefault,
     RangeRecord,
     load_manifest,
+    load_canonical_properties,
     load_property_data,
+    load_public_properties,
     parse_grapheme_tests,
+    parse_bidi_character_tests,
+    parse_bidi_tests,
     parse_line_break_tests,
     release_version,
     validate_all,
 )
+from bidi_reduce import capture, minimize
 
 
 ROOT = Path(__file__).resolve().parents[1]
 TEST_TMP = ROOT / ".roc-unicode-tmp" / "tests"
 APP_ROOT = ROOT / "tests" / "apps"
 APP_NAMES = {
+    "bidi": "bidi",
     "grapheme": "grapheme",
     "line-break": "line-break",
     "properties": "properties",
@@ -63,6 +73,32 @@ EMOJI_BITS = {
     "Emoji_Component": 16,
     "Extended_Pictographic": 32,
 }
+BIDI_CODES = {
+    "L": 0,
+    "AL": 1,
+    "AN": 2,
+    "B": 3,
+    "BN": 4,
+    "CS": 5,
+    "EN": 6,
+    "ES": 7,
+    "ET": 8,
+    "FSI": 9,
+    "LRE": 10,
+    "LRI": 11,
+    "LRO": 12,
+    "NSM": 13,
+    "ON": 14,
+    "PDF": 15,
+    "PDI": 16,
+    "R": 17,
+    "RLE": 18,
+    "RLI": 19,
+    "RLO": 20,
+    "S": 21,
+    "WS": 22,
+}
+BIDI_ABSENT_SCALAR = 0xFFFFFFFF
 VALID_SCALAR_COUNT = MAX_CODE_POINT + 1 - 0x800
 
 
@@ -161,6 +197,17 @@ def load_app_specs() -> dict[str, dict[str, object]]:
             "baseline_file",
             "exact_baseline_target",
         },
+        "bidi": {
+            "schema_version",
+            "kind",
+            "suites",
+            "timeout_seconds",
+            "unicode_manifest_files",
+            "bidi_test_executions",
+            "bidi_character_test_executions",
+            "metamorphic_seed",
+            "metamorphic_cases",
+        },
     }
     for name, directory in sorted(directories.items()):
         source = directory / "main.roc"
@@ -187,13 +234,25 @@ def load_app_specs() -> dict[str, dict[str, object]]:
         raise TestFailure("line-break spec suite has drifted")
     if specs["line-break"]["unicode_manifest_file"] != "line_break_test":
         raise TestFailure("line-break spec references an unknown manifest file")
+    bidi_sources = set(specs["bidi"]["unicode_manifest_files"])
+    if bidi_sources != {"bidi_test", "bidi_character_test"} or not bidi_sources <= manifest_files:
+        raise TestFailure("bidi spec must cover both official Unicode bidi conformance files")
+    if specs["bidi"]["suites"] != ["bidi-test", "bidi-character-test", "bidi-metamorphic"]:
+        raise TestFailure("bidi spec suites have drifted")
+    for field in ("bidi_test_executions", "bidi_character_test_executions", "metamorphic_seed", "metamorphic_cases"):
+        if not isinstance(specs["bidi"][field], int) or specs["bidi"][field] < 1:
+            raise TestFailure(f"bidi spec {field} must be positive")
     property_sources = set(specs["properties"]["unicode_manifest_files"])
     if property_sources != {
         "grapheme_break_property",
         "east_asian_width",
         "emoji_data",
+        "derived_bidi_class",
+        "unicode_data",
+        "bidi_mirroring",
+        "bidi_brackets",
     } or not property_sources <= manifest_files:
-        raise TestFailure("properties spec must cover all three production property files")
+        raise TestFailure("properties spec must cover every production property view")
     if specs["properties"]["scalar_domain"] != "valid-unicode-scalars":
         raise TestFailure("properties spec must cover the valid Unicode scalar domain")
     allocation_baseline = ROOT / str(specs["allocation"]["baseline_file"])
@@ -303,6 +362,20 @@ def isolate_failure(binary: Path, suite: str, rows: Sequence[str], timeout: int)
         return "failure was not reproducible"
     if len(rows) == 1:
         case_id = rows[0].split("\t", 1)[0]
+        if suite == "bidi-metamorphic":
+            fields = rows[0].split("\t")
+            values = fields[1].split(",")
+            signature = error.split(";", 1)[0]
+
+            def reproduces(candidate: list[str]) -> bool:
+                candidate_row = "\t".join([fields[0], ",".join(candidate), fields[2]])
+                retry = invoke_app(binary, suite, [candidate_row], timeout)
+                return retry is not None and retry.split(";", 1)[0] == signature
+
+            reduced = minimize(values, reproduces)
+            reduced_row = "\t".join([fields[0], ",".join(reduced), fields[2]])
+            path = capture(f"bidi-metamorphic-{case_id.rsplit(':', 1)[-1]}.tsv", f"# import with suite bidi-metamorphic\n{reduced_row}\n")
+            return f"{case_id}: {error}; minimized={reduced_row!r}; regression-artifact={path.relative_to(ROOT)}"
         return f"{case_id}: {error}"
     midpoint = len(rows) // 2
     left = rows[:midpoint]
@@ -348,6 +421,80 @@ def run_parallel_suite(
     print(f"PASS {suite}: {count} cases")
 
 
+def run_parallel_stream(
+    binary: Path,
+    suite: str,
+    rows: Iterable[str],
+    expected_count: int,
+    *,
+    jobs: int,
+    timeout: int = 120,
+    batch_size: int = 8192,
+) -> None:
+    """Run a large protocol suite without retaining every serialized row."""
+    if expected_count < 1 or batch_size < 1:
+        raise TestFailure("parallel stream count and batch size must be positive")
+
+    def run(index: int, batch: list[str]) -> tuple[int, int, str | None]:
+        error = invoke_app(binary, suite, batch, timeout)
+        if error is not None:
+            error = isolate_failure(binary, suite, batch, timeout)
+        return index, len(batch), error
+
+    submitted = 0
+    results: list[tuple[int, int, str | None]] = []
+    in_flight: set[concurrent.futures.Future[tuple[int, int, str | None]]] = set()
+    batch_count = 0
+
+    def collect_completed(wait_for_all: bool) -> None:
+        if not in_flight:
+            return
+        done, _ = concurrent.futures.wait(
+            in_flight,
+            return_when=(
+                concurrent.futures.ALL_COMPLETED
+                if wait_for_all
+                else concurrent.futures.FIRST_COMPLETED
+            ),
+        )
+        for future in done:
+            in_flight.remove(future)
+            results.append(future.result())
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as executor:
+        batch: list[str] = []
+        batch_index = 0
+        for row in rows:
+            batch.append(row)
+            if len(batch) == batch_size:
+                in_flight.add(executor.submit(run, batch_index, batch))
+                submitted += len(batch)
+                batch = []
+                batch_index += 1
+                batch_count += 1
+                if len(in_flight) >= jobs * 2:
+                    collect_completed(False)
+        if batch:
+            in_flight.add(executor.submit(run, batch_index, batch))
+            submitted += len(batch)
+            batch_count += 1
+        if submitted != expected_count:
+            raise TestFailure(
+                f"{suite} parser execution-count drift: expected {expected_count}, got {submitted}"
+            )
+        collect_completed(True)
+
+    failures = []
+    for index, size, error in sorted(results):
+        if error is None:
+            print(f"PASS {suite} batch {index + 1}/{batch_count} ({size} cases)")
+        else:
+            failures.append(f"batch {index + 1}/{batch_count}: {error}")
+    if failures:
+        raise TestFailure(f"{suite} failed:\n" + "\n".join(failures))
+    print(f"PASS {suite}: {submitted} cases")
+
+
 def grapheme_row(case: GraphemeCase) -> str:
     code_points = ",".join(f"{code_point:04X}" for code_point in case.code_points)
     offsets = ",".join(str(offset) for offset in case.break_offsets)
@@ -386,6 +533,120 @@ def run_line_break(binary: Path, jobs: int, spec: dict[str, object]) -> None:
     )
 
 
+def bidi_levels(levels: tuple[int | None, ...]) -> str:
+    return ",".join("x" if level is None else str(level) for level in levels)
+
+
+def bidi_reorder(reorder: tuple[int, ...]) -> str:
+    return ",".join(str(index) for index in reorder) if reorder else "-"
+
+
+def bidi_test_rows(cases: Iterable[BidiTestCase], version: str) -> Iterable[str]:
+    for case in cases:
+        classes = ",".join(case.classes)
+        levels = bidi_levels(case.levels)
+        reorder = bidi_reorder(case.reorder)
+        for mode in case.paragraph_modes:
+            yield f"{version}:BidiTest.txt:{case.line}:mode-{mode}\t{classes}\t{mode}\t{levels}\t{reorder}"
+
+
+def bidi_character_rows(cases: Iterable[BidiCharacterCase], version: str) -> Iterable[str]:
+    for case in cases:
+        code_points = ",".join(f"{code_point:04X}" for code_point in case.code_points)
+        yield (
+            f"{version}:BidiCharacterTest.txt:{case.line}\t{code_points}\t"
+            f"{case.paragraph_mode}\t{case.paragraph_level}\t"
+            f"{bidi_levels(case.levels)}\t{bidi_reorder(case.reorder)}"
+        )
+
+
+BIDI_METAMORPHIC_SCALARS = (
+    0x0061,  # L
+    0x05D0,  # R
+    0x0627,  # AL
+    0x0030,  # EN
+    0x0660,  # AN
+    0x002B,  # ES
+    0x0024,  # ET
+    0x002C,  # CS
+    0x0300,  # NSM
+    0x200C,  # ZWNJ
+    0x200D,  # ZWJ
+    0x000D,  # CR: P1 boundary coverage
+    0x000A,  # LF: P1 boundary coverage
+    0x2029,  # B: P1 boundary coverage
+    0x0009,  # S
+    0x0020,  # WS
+    0x0021,  # ON
+    0x202A,  # LRE
+    0x202B,  # RLE
+    0x202C,  # PDF
+    0x202D,  # LRO
+    0x202E,  # RLO
+    0x2066,  # LRI
+    0x2067,  # RLI
+    0x2068,  # FSI
+    0x2069,  # PDI
+    0x200B,  # BN
+    0x0028,  # paired bracket
+    0x0029,
+    0x3008,
+    0x3009,
+    0x2201,  # Bidi_Mirrored without Bidi_Mirroring_Glyph
+    0xE000,  # private-use scalar
+    0xFDD0,  # noncharacter
+    0x1E8C5,  # unassigned scalar in a DerivedBidiClass R default range
+    0x1F600,  # supplementary scalar
+)
+
+
+def bidi_metamorphic_rows(seed: int, count: int, version: str) -> list[str]:
+    """Deterministic malformed-and-well-nested-control invariant coverage."""
+    generator = random.Random(seed)
+    rows = []
+    for index in range(count):
+        length = generator.randrange(1, 97)
+        code_points = [generator.choice(BIDI_METAMORPHIC_SCALARS) for _ in range(length)]
+        code_points_text = ",".join(f"{code_point:04X}" for code_point in code_points)
+        # BidiTest's compact encoding: 0 Auto, 1 explicit LTR, 2 explicit RTL.
+        mode = generator.randrange(3)
+        rows.append(f"{version}:metamorphic:seed-{seed}:case-{index}\t{code_points_text}\t{mode}")
+    return rows
+
+
+def run_bidi(binary: Path, jobs: int, spec: dict[str, object]) -> None:
+    manifest = load_manifest()
+    version = release_version(manifest, "unicode")
+    timeout = int(spec["timeout_seconds"])
+    run_parallel_stream(
+        binary,
+        "bidi-test",
+        bidi_test_rows(parse_bidi_tests(manifest), version),
+        int(spec["bidi_test_executions"]),
+        jobs=jobs,
+        timeout=timeout,
+    )
+    metamorphic_rows = bidi_metamorphic_rows(
+        int(spec["metamorphic_seed"]), int(spec["metamorphic_cases"]), version
+    )
+    run_parallel_suite(
+        binary,
+        "bidi-metamorphic",
+        len(metamorphic_rows),
+        lambda index: metamorphic_rows[index],
+        jobs=jobs,
+        timeout=timeout,
+    )
+    run_parallel_stream(
+        binary,
+        "bidi-character-test",
+        bidi_character_rows(parse_bidi_character_tests(manifest), version),
+        int(spec["bidi_character_test_executions"]),
+        jobs=jobs,
+        timeout=timeout,
+    )
+
+
 def fill_property_table(
     records: Iterable[RangeRecord],
     codes: dict[str, int],
@@ -404,9 +665,20 @@ def fill_property_table(
     return values
 
 
-def build_property_tables() -> tuple[str, bytearray, bytearray, bytearray]:
+def build_property_tables() -> tuple[
+    str,
+    bytearray,
+    bytearray,
+    bytearray,
+    bytearray,
+    bytearray,
+    array,
+    array,
+    bytearray,
+]:
     manifest = load_manifest()
     properties = load_property_data(manifest)
+    public = load_public_properties(manifest, load_canonical_properties(manifest))
     gcb_values = fill_property_table(properties.grapheme.records, GCB_CODES, 0)
     eaw_values = fill_property_table(
         properties.east_asian_width.records,
@@ -419,7 +691,32 @@ def build_property_tables() -> tuple[str, bytearray, bytearray, bytearray]:
         bit = EMOJI_BITS[record.property]
         for code_point in range(record.start, record.end + 1):
             emoji_values[code_point] |= bit
-    return release_version(manifest, "unicode"), gcb_values, eaw_values, emoji_values
+    bidi_values = fill_property_table(
+        public.bidi_class.records,
+        BIDI_CODES,
+        BIDI_CODES["L"],
+        public.bidi_class.defaults,
+    )
+    mirrored_values = fill_property_table(public.bidi_mirrored, {"Y": 1}, 0)
+    mirroring_glyphs = array("I", [BIDI_ABSENT_SCALAR]) * (MAX_CODE_POINT + 1)
+    for record in public.bidi_mirroring_glyph:
+        mirroring_glyphs[record.source] = record.target
+    bracket_targets = array("I", [BIDI_ABSENT_SCALAR]) * (MAX_CODE_POINT + 1)
+    bracket_kinds = bytearray(MAX_CODE_POINT + 1)
+    for record in public.bidi_brackets:
+        bracket_targets[record.source] = record.target
+        bracket_kinds[record.source] = 1 if record.kind == "o" else 2
+    return (
+        release_version(manifest, "unicode"),
+        gcb_values,
+        eaw_values,
+        emoji_values,
+        bidi_values,
+        mirrored_values,
+        mirroring_glyphs,
+        bracket_targets,
+        bracket_kinds,
+    )
 
 
 def scalar_at(index: int) -> int:
@@ -429,13 +726,15 @@ def scalar_at(index: int) -> int:
 def run_properties(binary: Path, jobs: int, spec: dict[str, object]) -> None:
     if spec["suite"] != "properties":
         raise TestFailure("properties spec suite has drifted")
-    version, gcb, eaw, emoji = build_property_tables()
+    version, gcb, eaw, emoji, bidi, mirrored, mirroring_glyph, bracket_target, bracket_kind = build_property_tables()
 
     def row(index: int) -> str:
         code_point = scalar_at(index)
         return (
             f"{version}:scalar:{code_point:06X}\t{code_point:X}\t"
-            f"{gcb[code_point]}\t{eaw[code_point]}\t{emoji[code_point]}"
+            f"{gcb[code_point]}\t{eaw[code_point]}\t{emoji[code_point]}\t"
+            f"{bidi[code_point]}\t{mirrored[code_point]}\t{mirroring_glyph[code_point]}\t"
+            f"{bracket_target[code_point]}\t{bracket_kind[code_point]}"
         )
 
     run_parallel_suite(
@@ -460,6 +759,16 @@ ALLOCATION_FIXTURES = {
     "emoji-zwj": "👩‍🚀",
     "long": "abc" * 512,
 }
+ALLOCATION_BIDI_FIXTURES = {
+    "ltr": "The quick brown fox has 123 words.",
+    "mixed": "abc אבג 123 العربية",
+    "isolates": "a \u2068אב (12)\u2069 ب",
+}
+ALLOCATION_BIDI_SCALING_FIXTURES = {
+    "ltr": ("abc 123 " * 64, "abc 123 " * 256),
+    "mixed": ("a אב(12) ب " * 64, "a אב(12) ب " * 256),
+    "isolates": ("a \u2068אב (12)\u2069 ب " * 64, "a \u2068אב (12)\u2069 ب " * 256),
+}
 
 
 def run_serial_suite(binary: Path, suite: str, rows: Sequence[str], timeout: int = 120) -> None:
@@ -482,6 +791,8 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
         "allocation-calibration",
         "allocation-aliases",
         "allocation-line-break-cursor",
+        "allocation-bidi-analysis",
+        "allocation-bidi-scaling",
         "allocation-baselines",
     ]:
         raise TestFailure("allocation spec suites have drifted")
@@ -492,6 +803,16 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
         for name, value in ALLOCATION_FIXTURES.items()
     ]
     run_serial_suite(binary, suites[2], line_break_rows, timeout=timeout)
+    bidi_rows = [
+        f"{name}\t{utf8_hex(value)}\tpositive"
+        for name, value in ALLOCATION_BIDI_FIXTURES.items()
+    ]
+    run_serial_suite(binary, suites[3], bidi_rows, timeout=timeout)
+    bidi_scaling_rows = [
+        f"{name}\t{utf8_hex(small)}|{utf8_hex(large)}\tlinear"
+        for name, (small, large) in ALLOCATION_BIDI_SCALING_FIXTURES.items()
+    ]
+    run_serial_suite(binary, suites[4], bidi_scaling_rows, timeout=timeout)
 
     machine = platform.machine().lower()
     if platform.system() != "Linux" or machine not in ("x86_64", "amd64"):
@@ -516,7 +837,7 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
         f"{name}\t{utf8_hex(value)}\t{expected[name]}"
         for name, value in ALLOCATION_FIXTURES.items()
     ]
-    run_serial_suite(binary, suites[3], rows, timeout=timeout)
+    run_serial_suite(binary, suites[5], rows, timeout=timeout)
 
 
 def verify_pinned_roc(roc: str) -> None:
@@ -532,7 +853,13 @@ def verify_pinned_roc(roc: str) -> None:
 def run_data_checks() -> None:
     validate_all(load_manifest())
     command([sys.executable, "scripts/unicode_data.py", "generate", "--check"])
-    command([sys.executable, "-m", "unittest", "scripts/test_unicode_data.py"])
+    command([
+        sys.executable,
+        "-m",
+        "unittest",
+        "scripts/test_unicode_data.py",
+        "scripts/test_bidi_reduce.py",
+    ])
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -541,7 +868,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "suite",
         nargs="?",
-        choices=("all", "data", "grapheme", "line-break", "properties", "allocations"),
+        choices=("all", "data", "bidi", "grapheme", "line-break", "properties", "allocations"),
         default="all",
     )
     parser.add_argument("--roc", default=os.environ.get("ROC", "roc"))
@@ -558,6 +885,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.suite in ("all", "data"):
             run_data_checks()
         requested_apps = []
+        if args.suite in ("all", "bidi"):
+            requested_apps.append("bidi")
         if args.suite in ("all", "grapheme"):
             requested_apps.append("grapheme")
         if args.suite in ("all", "line-break"):
@@ -572,6 +901,8 @@ def main(argv: list[str] | None = None) -> int:
             )
             if "grapheme" in requested_apps:
                 run_grapheme(binaries["grapheme"], args.jobs, app_specs["grapheme"])
+            if "bidi" in requested_apps:
+                run_bidi(binaries["bidi"], args.jobs, app_specs["bidi"])
             if "line-break" in requested_apps:
                 run_line_break(binaries["line-break"], args.jobs, app_specs["line-break"])
             if "properties" in requested_apps:

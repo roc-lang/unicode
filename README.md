@@ -140,6 +140,39 @@ core. Its package policy is independently versioned as
 `LineBreak.preserve_graphemes_revision`, and `LineBreak.profile_revision`
 distinguishes that policy axis from the Unicode/UAX version.
 
+## Bidirectional text
+
+`Bidi` implements Unicode 17.0.0 UAX #9 revision 51 at conformance level
+UAX9-C1: P1--P3, X1--X10, W1--W7, N0--N2, I1--I2, and the line-specific
+L1--L4 steps. `Bidi.analyze_paragraph` retains paragraph analysis facts rather
+than replacing logical text: original scalar/text ranges, resolved levels,
+logical runs, X9-removal state, paired brackets, and mirroring information.
+`Bidi.paragraph_ranges` follows P1, assigning paragraph separators to their
+preceding range and treating CRLF as one separator. Empty input returns one
+empty paragraph range; a final separator does not add an artificial empty
+paragraph.
+
+For a paragraph selected from a larger `Str`, use
+`Bidi.analyze_range(source, paragraph_range, direction, limits)`. It validates
+that the supplied `TextRange` is one of the P1 ranges and retains absolute byte
+and scalar coordinates from the full source; line ranges, visual-to-logical
+mappings, and visual runs use those same coordinates. This range API validates
+through the selected P1 boundary and replays the selected paragraph for
+analysis; `Bidi.analyze_paragraph` decodes its single paragraph once.
+`Bidi.reorder_line`
+then applies L1/L2 to an actual, paragraph-contained logical line. It does not
+shape Arabic or replace source scalars: L4 is returned as a mirrored-glyph
+requirement and optional best-fit mapping for renderers. Paragraph limits are
+checked before retained analysis is committed, with typed errors identifying
+the ingestion stage and source range.
+
+For a requested line whose scalar range starts at `line_start`,
+`visual_to_logical[visual_position]` is an absolute source scalar index, while
+`logical_to_visual[absolute_scalar_index - line_start]` is the matching visual
+position (or absent for X9-removed controls). This intentionally makes the
+forward mapping directly usable against retained source coordinates while the
+inverse stays compact for the requested line.
+
 ## Scripts and shaping-oriented itemization
 
 `Script` exposes Unicode 17's normative `Script` and `Script_Extensions`

@@ -223,6 +223,63 @@ class UnicodeDataTests(unittest.TestCase):
                 ):
                     unicode_data.load_public_properties(manifest, canonical)
 
+    def test_bidi_conformance_sources_have_complete_strict_case_parsers(self) -> None:
+        manifest = unicode_data.load_manifest()
+        bidi_cases = list(unicode_data.parse_bidi_tests(manifest))
+        character_cases = list(unicode_data.parse_bidi_character_tests(manifest))
+        self.assertEqual(len(bidi_cases), manifest["sources"]["bidi_test"]["cases"])
+        self.assertEqual(
+            len(character_cases), manifest["sources"]["bidi_character_test"]["cases"]
+        )
+        self.assertEqual(bidi_cases[0].classes, ("LRE",))
+        self.assertEqual(bidi_cases[0].paragraph_modes, (0, 1, 2))
+        self.assertEqual(bidi_cases[0].levels, (None,))
+        self.assertEqual(bidi_cases[0].reorder, ())
+        self.assertEqual(character_cases[0].paragraph_mode, 0)
+        self.assertEqual(character_cases[0].paragraph_level, 0)
+        self.assertEqual(character_cases[0].code_points[:2], (0x05D0, 0x05D1))
+
+    def test_bidi_conformance_parsers_fail_closed(self) -> None:
+        manifest = json.loads(json.dumps(unicode_data.load_manifest()))
+        manifest["sources"]["bidi_test"]["cases"] = 1
+        valid_bidi = (
+            "@Levels: x 1 x\n@Reorder: 1\nLRE L PDF; 5\n"
+            "#Count: 1\n#Total Count: 1\n"
+        )
+        case = list(unicode_data.parse_bidi_tests(manifest, valid_bidi))[0]
+        self.assertEqual(case.paragraph_modes, (0, 2))
+        self.assertEqual(case.reorder, (1,))
+        for text, message in (
+            ("@Unknown: x\n", "unknown bidi test directive"),
+            ("@Levels: 0\nL; 1\n", "missing @Levels or @Reorder"),
+            ("@Levels: 0\n@Reorder: 0\n@Levels: 0\nL; 1\n", "missing @Levels or @Reorder"),
+            ("@Levels: 0\n@Reorder: 0\nNotAClass; 1\n", "unknown Bidi_Class"),
+            ("@Levels: 0 0\n@Reorder: 0 0\nL R; 1\n", "exactly once"),
+            ("@Levels: 0\n@Reorder: 0\nL; 8\n", "unsupported paragraph mode"),
+            ("@Levels: 0\n@Reorder: 0\nL; 1\n#Count: 2\n", "#Count does not match"),
+            ("@Levels: 0\n@Reorder: 0\nL; 1\n#Count: 1\n", "unterminated #Count"),
+        ):
+            with self.subTest(bidi=text):
+                with self.assertRaisesRegex(unicode_data.DataError, message):
+                    list(unicode_data.parse_bidi_tests(manifest, text))
+
+        manifest["sources"]["bidi_character_test"]["cases"] = 1
+        valid_character = "05D0 0028;2;1;1 1;1 0\n"
+        character_case = list(
+            unicode_data.parse_bidi_character_tests(manifest, valid_character)
+        )[0]
+        self.assertEqual(character_case.code_points, (0x05D0, 0x0028))
+        self.assertEqual(character_case.reorder, (1, 0))
+        for text, message in (
+            ("D800;0;0;0;0\n", "invalid scalar"),
+            ("0041;3;0;0;0\n", "invalid paragraph mode"),
+            ("0041;0;2;0;0\n", "invalid paragraph level"),
+            ("0041 0042;0;0;0 0;0 0\n", "exactly once"),
+        ):
+            with self.subTest(character=text):
+                with self.assertRaisesRegex(unicode_data.DataError, message):
+                    list(unicode_data.parse_bidi_character_tests(manifest, text))
+
     def test_sparse_public_data_rejects_every_non_scalar_endpoint(self) -> None:
         for invalid in ("D800", "110000"):
             with self.subTest(parser="mapping-source", invalid=invalid):

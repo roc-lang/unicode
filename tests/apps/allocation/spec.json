@@ -5,6 +5,8 @@
     "allocation-calibration",
     "allocation-aliases",
     "allocation-line-break-cursor",
+    "allocation-bidi-analysis",
+    "allocation-bidi-scaling",
     "allocation-baselines"
   ],
   "timeout_seconds": 120,
