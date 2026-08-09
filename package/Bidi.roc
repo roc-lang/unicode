@@ -16,6 +16,7 @@ Bidi :: [].{
 	LimitStage : [Ingestion]
 	ResolvedLevel : [Level(U8), RemovedByX9]
 	Limits : { max_scalars : U64, max_bytes : U64 }
+
 	## Limit errors identify the operation before the retained tape is committed.
 	## Their paragraph range is in the caller's original source coordinates.
 	Error : [ScalarLimitExceeded({ limit : U64, required : U64, stage : LimitStage, range : TextRange }), ByteLimitExceeded({ limit : U64, required : U64, stage : LimitStage, range : ByteRange }), MultipleParagraphs, InvalidParagraphRange(TextRange), LineOutOfBounds({ requested : ScalarRange, paragraph : ScalarRange })]
@@ -25,6 +26,7 @@ Bidi :: [].{
 	Analysis := { requested_base : BaseDirection, paragraph_range : TextRange, paragraph_level : U8, entries : List(ScalarInfo), byte_len : U64, scalar_len : U64 }
 	MirrorInfo : { needs_glyph : Bool, glyph : [Some(Scalar), None] }
 	LineOrder := { line_range : ScalarRange, levels : List([Some(U8), None]), visual_to_logical : List(U64), logical_to_visual : List([Some(U64), None]), visual_runs : List(VisualRun), mirroring : List(MirrorInfo) }
+
 	## Private intermediate links for the X10/N0 implementation. No public
 	## operation exposes this value.
 	RunSequences := { links : List([Some(U64), None]), starts : List(U64), sos : List(BidiClass.Value), eos : List(BidiClass.Value) }
@@ -43,9 +45,11 @@ Bidi :: [].{
 	analyze_paragraph : Str, BaseDirection, Limits -> Try(Analysis, Error)
 	analyze_paragraph = |source, base_direction, limits| analyze_source(source, base_direction, limits, TextPosition.from_offsets(0, 0))
 
-	## Analyze one P1 paragraph selected from a complete source. Unlike slicing and
-	## calling `analyze_paragraph`, every returned byte/scalar coordinate remains
-	## absolute to `source`; line ranges and visual mappings use those coordinates.
+	## Analyze one P1 paragraph selected from a complete source. Validation scans
+	## through the selected P1 boundary, then replays only the selected seamless
+	## slice for retained analysis; this explicit replay keeps global coordinates
+	## without retaining the source. Line ranges and visual mappings remain
+	## absolute to `source`.
 	analyze_range : Str, TextRange, BaseDirection, Limits -> Try(Analysis, Error)
 	analyze_range = |source, selected, base_direction, limits| {
 		if !is_p1_range(source, selected) {
@@ -78,40 +82,28 @@ Bidi :: [].{
 	matched_brackets = |analysis| analysis.entries.map(|entry| entry.matched_bracket)
 
 	levels : Analysis -> List(ResolvedLevel)
-	levels = |analysis| analysis.entries.map(|entry| match entry.level { Some(value) => Level(value), None => RemovedByX9 })
+	levels = |analysis| analysis.entries.map(
+		|entry| match entry.level {
+			Some(value) => Level(value)
+			None => RemovedByX9
+		},
+	)
 
 	direction : U8 -> Direction
 	direction = |level| if level % 2 == 0 LeftToRight else RightToLeft
 
-	logical_runs : Analysis -> List(LevelRun)
-	logical_runs = |analysis| {
+	## Lazily walk maximal same-level spans in the X9-filtered logical sequence.
+	## Removed controls bridge equal-level runs but are not themselves yielded.
+	logical_runs : Analysis -> Iter(LevelRun)
+	logical_runs = |analysis| Iter.custom({ analysis, at: 0.U64 }, Unknown, next_logical_run)
+
+	## Explicit materializing convenience for clients that need every retained
+	## run at once. `logical_runs` is the primary, early-stoppable traversal.
+	collect_logical_runs : Analysis -> List(LevelRun)
+	collect_logical_runs = |analysis| {
 		var output = []
-		var at = 0.U64
-		while at < analysis.scalar_len {
-			entry = analysis.entries.get(at) ?? break
-			match entry.level {
-				None => { at = at + 1 }
-				Some(level) => {
-					var end = at + 1
-					while end < analysis.scalar_len {
-						next = analysis.entries.get(end) ?? break
-						match next.level {
-							Some(next_level) => if next_level == level { end = end + 1 } else { break }
-							None => break
-						}
-					}
-					first = analysis.entries.get(at) ?? break
-					last = analysis.entries.get(end - 1) ?? break
-					first_bytes = TextRange.byte_range(first.range)
-					last_bytes = TextRange.byte_range(last.range)
-					bytes = ByteRange.from_bounds(ByteRange.start(first_bytes), ByteRange.end(last_bytes)) ?? ...
-					first_scalars = TextRange.scalar_range(first.range)
-					last_scalars = TextRange.scalar_range(last.range)
-					scalars = ScalarRange.from_bounds(ScalarRange.start(first_scalars), ScalarRange.end(last_scalars)) ?? ...
-					output = output.append({ range: TextRange.from_ranges(bytes, scalars), level, direction: Bidi.direction(level) })
-					at = end
-				}
-			}
+		for run in Bidi.logical_runs(analysis) {
+			output = output.append(run)
 		}
 		output
 	}
@@ -147,7 +139,12 @@ Bidi :: [].{
 	}
 
 	line_levels : LineOrder -> List(ResolvedLevel)
-	line_levels = |line| line.levels.map(|value| match value { Some(level) => Level(level), None => RemovedByX9 })
+	line_levels = |line| line.levels.map(
+		|value| match value {
+			Some(level) => Level(level)
+			None => RemovedByX9
+		},
+	)
 
 	visual_to_logical : LineOrder -> List(U64)
 	visual_to_logical = |line| line.visual_to_logical
@@ -162,6 +159,63 @@ Bidi :: [].{
 	line_mirroring = |line| line.mirroring
 }
 
+next_logical_run = |state| {
+	analysis = state.analysis
+	var at = state.at
+	while at < analysis.scalar_len {
+		entry = analysis.entries.get(at) ?? return Err(NoMore)
+		match entry.level {
+			None => {
+				at = match at.plus_try(1) {
+					Ok(next) => next
+					Err(Overflow) => return Err(NoMore)
+				}
+			}
+			Some(level) => {
+				first = at
+				var last = at
+				var cursor = match at.plus_try(1) {
+					Ok(next) => next
+					Err(Overflow) => return Err(NoMore)
+				}
+				while cursor < analysis.scalar_len {
+					candidate = analysis.entries.get(cursor) ?? break
+					match candidate.level {
+						None => {
+							next_cursor = match cursor.plus_try(1) {
+								Ok(next) => next
+								Err(Overflow) => break
+							}
+							cursor = next_cursor
+						}
+						Some(candidate_level) => if candidate_level == level {
+							last = cursor
+							next_cursor = match cursor.plus_try(1) {
+								Ok(next) => next
+								Err(Overflow) => break
+							}
+							cursor = next_cursor
+						} else {
+							break
+						}
+					}
+				}
+				first_entry = analysis.entries.get(first) ?? return Err(NoMore)
+				last_entry = analysis.entries.get(last) ?? return Err(NoMore)
+				first_bytes = TextRange.byte_range(first_entry.range)
+				last_bytes = TextRange.byte_range(last_entry.range)
+				bytes = ByteRange.from_bounds(ByteRange.start(first_bytes), ByteRange.end(last_bytes)) ?? return Err(NoMore)
+				first_scalars = TextRange.scalar_range(first_entry.range)
+				last_scalars = TextRange.scalar_range(last_entry.range)
+				scalars = ScalarRange.from_bounds(ScalarRange.start(first_scalars), ScalarRange.end(last_scalars)) ?? return Err(NoMore)
+				run = { range: TextRange.from_ranges(bytes, scalars), level, direction: Bidi.direction(level) }
+				return Ok((run, { analysis, at: cursor }))
+			}
+		}
+	}
+	Err(NoMore)
+}
+
 p1_ranges = |source| {
 	var ranges = []
 	var byte_start = 0.U64
@@ -171,7 +225,10 @@ p1_ranges = |source| {
 	var pending_cr = None
 	for located in Scalar.iter(source) {
 		final_byte = ByteRange.end(located.byte_range)
-		final_scalar = match located.scalar_index.plus_try(1) { Ok(next) => next, Err(Overflow) => U64.highest }
+		final_scalar = match located.scalar_index.plus_try(1) {
+			Ok(next) => next
+			Err(Overflow) => U64.highest
+		}
 		value = Scalar.to_u32(located.scalar)
 		match pending_cr {
 			Some(cr) => {
@@ -231,31 +288,131 @@ range_from_offsets = |byte_start, byte_end, scalar_start, scalar_end| {
 }
 
 is_p1_range = |source, selected| {
-	for candidate in p1_ranges(source) {
-		if TextRange.is_eq(candidate, selected) { return Bool.True }
+
+	## This deliberately does not call `p1_ranges`: range analysis must not
+	## allocate one result per preceding paragraph just to validate `selected`.
+	## A pending CR delays commitment until the next scalar determines whether
+	## it is the CR half of CR LF.
+	var byte_start = 0.U64
+	var scalar_start = 0.U64
+	var final_byte = 0.U64
+	var final_scalar = 0.U64
+	var pending_cr = None
+	for located in Scalar.iter(source) {
+		final_byte = ByteRange.end(located.byte_range)
+		final_scalar = match located.scalar_index.plus_try(1) {
+			Ok(next) => next
+			Err(Overflow) => return Bool.False
+		}
+		value = Scalar.to_u32(located.scalar)
+		match pending_cr {
+			Some(cr) => {
+				if value == 0x000A {
+					status = p1_candidate(selected, byte_start, final_byte, scalar_start, final_scalar)
+					if status.matches {
+						return Bool.True
+					}
+					if status.passed {
+						return Bool.False
+					}
+					byte_start = final_byte
+					scalar_start = final_scalar
+					pending_cr = None
+				} else {
+					status = p1_candidate(selected, byte_start, cr.byte_end, scalar_start, cr.scalar_end)
+					if status.matches {
+						return Bool.True
+					}
+					if status.passed {
+						return Bool.False
+					}
+					byte_start = cr.byte_end
+					scalar_start = cr.scalar_end
+					pending_cr = None
+					if value == 0x000D {
+						pending_cr = Some({ byte_end: final_byte, scalar_end: final_scalar })
+					} else if is_p1_separator(value) {
+						separator_status = p1_candidate(selected, byte_start, final_byte, scalar_start, final_scalar)
+						if separator_status.matches {
+							return Bool.True
+						}
+						if separator_status.passed {
+							return Bool.False
+						}
+						byte_start = final_byte
+						scalar_start = final_scalar
+					}
+				}
+			}
+			None => {
+				if value == 0x000D {
+					pending_cr = Some({ byte_end: final_byte, scalar_end: final_scalar })
+				} else if is_p1_separator(value) {
+					status = p1_candidate(selected, byte_start, final_byte, scalar_start, final_scalar)
+					if status.matches {
+						return Bool.True
+					}
+					if status.passed {
+						return Bool.False
+					}
+					byte_start = final_byte
+					scalar_start = final_scalar
+				}
+			}
+		}
 	}
-	Bool.False
+	match pending_cr {
+		Some(cr) => p1_candidate(selected, byte_start, cr.byte_end, scalar_start, cr.scalar_end).matches
+		None => if final_scalar == 0 {
+			TextRange.is_eq(selected, range_from_offsets(0, 0, 0, 0))
+		} else if scalar_start < final_scalar {
+			p1_candidate(selected, byte_start, final_byte, scalar_start, final_scalar).matches
+		} else {
+			Bool.False
+		}
+	}
+}
+
+## Exact candidate matching plus monotonic early rejection. Once a selected
+## byte start lies inside a completed P1 range, no later P1 range can match.
+p1_candidate = |selected, byte_start, byte_end, scalar_start, scalar_end| {
+	candidate = range_from_offsets(byte_start, byte_end, scalar_start, scalar_end)
+	if TextRange.is_eq(candidate, selected) {
+		{ matches: Bool.True, passed: Bool.False }
+	} else {
+		selected_bytes = TextRange.byte_range(selected)
+		{ matches: Bool.False, passed: ByteRange.start(selected_bytes) < byte_end }
+	}
 }
 
 analyze_source = |source, base_direction, limits, origin| {
 	byte_len = source.count_utf8_bytes()
-	byte_end = match TextPosition.byte_offset(origin).plus_try(byte_len) { Ok(value) => value, Err(Overflow) => U64.highest }
+	byte_end = match TextPosition.byte_offset(origin).plus_try(byte_len) {
+		Ok(value) => value
+		Err(Overflow) => U64.highest
+	}
 	byte_range = ByteRange.from_bounds(TextPosition.byte_offset(origin), byte_end) ?? ...
 	if byte_len > limits.max_bytes {
 		Err(ByteLimitExceeded({ limit: limits.max_bytes, required: byte_len, stage: Ingestion, range: byte_range }))
-	} else if p1_ranges(source).len() > 1 {
-		Err(MultipleParagraphs)
 	} else {
 		collected = collect_entries(source, limits.max_scalars, origin)
 		match collected {
+			Multiple => Err(MultipleParagraphs)
 			Limit(limit) => Err(ScalarLimitExceeded({ limit: limits.max_scalars, required: limit.required, stage: Ingestion, range: limit.range }))
 			Entries(entries) => {
 				isolates = prepare_isolates(entries)
 				base = base_level(entries, base_direction, isolates.partners)
 				resolved = resolve_explicit(entries, base, isolates)
 				scalar_origin = TextPosition.scalar_offset(origin)
-				global_resolved = if scalar_origin == 0 { resolved } else { rebase_matched_brackets(resolved, scalar_origin) }
-				scalar_end = match scalar_origin.plus_try(global_resolved.len()) { Ok(value) => value, Err(Overflow) => U64.highest }
+				global_resolved = if scalar_origin == 0 {
+					resolved
+				} else {
+					rebase_matched_brackets(resolved, scalar_origin)
+				}
+				scalar_end = match scalar_origin.plus_try(global_resolved.len()) {
+					Ok(value) => value
+					Err(Overflow) => U64.highest
+				}
 				paragraph_range = range_from_offsets(TextPosition.byte_offset(origin), byte_end, scalar_origin, scalar_end)
 				Ok({ requested_base: base_direction, paragraph_range, paragraph_level: base, entries: global_resolved, byte_len, scalar_len: global_resolved.len() })
 			}
@@ -266,29 +423,64 @@ analyze_source = |source, base_direction, limits, origin| {
 ## Pairing is performed over the paragraph-local tape. Retained metadata uses
 ## absolute scalar indices so it agrees with every `TextRange` from
 ## `analyze_range`.
-rebase_matched_brackets = |entries, scalar_origin| entries.map(|entry| {
-	match entry.matched_bracket {
-		None => entry
-		Some(local) => match local.plus_try(scalar_origin) {
-			Ok(global) => { ..entry, matched_bracket: Some(global) }
-			Err(Overflow) => { ..entry, matched_bracket: None }
+rebase_matched_brackets = |entries, scalar_origin| entries.map(
+	|entry| {
+		match entry.matched_bracket {
+			None => entry
+			Some(local) => match local.plus_try(scalar_origin) {
+				Ok(global) => { ..entry, matched_bracket: Some(global) }
+				Err(Overflow) => { ..entry, matched_bracket: None }
+			}
 		}
-	}
-})
+	},
+)
 
 collect_entries = |source, limit, origin| {
 	var entries = []
 	var count = 0.U64
+	var saw_separator = Bool.False
+	var pending_cr = Bool.False
 	origin_range = range_from_offsets(TextPosition.byte_offset(origin), TextPosition.byte_offset(origin), TextPosition.scalar_offset(origin), TextPosition.scalar_offset(origin))
 	for located in Scalar.iter(source) {
-		byte_start = match TextPosition.byte_offset(origin).plus_try(ByteRange.start(located.byte_range)) { Ok(value) => value, Err(Overflow) => return Limit({ required: U64.highest, range: origin_range }) }
-		byte_end = match TextPosition.byte_offset(origin).plus_try(ByteRange.end(located.byte_range)) { Ok(value) => value, Err(Overflow) => return Limit({ required: U64.highest, range: origin_range }) }
-		scalar_start = match TextPosition.scalar_offset(origin).plus_try(located.scalar_index) { Ok(value) => value, Err(Overflow) => return Limit({ required: U64.highest, range: origin_range }) }
-		scalar_end = match scalar_start.plus_try(1) { Ok(value) => value, Err(Overflow) => return Limit({ required: U64.highest, range: origin_range }) }
+		p1_value = Scalar.to_u32(located.scalar)
+		if saw_separator {
+			if pending_cr and p1_value == 0x000A {
+				# P1 treats CR LF as one separator, not an empty paragraph.
+				pending_cr = Bool.False
+			} else {
+				return Multiple
+			}
+		} else if p1_value == 0x000D {
+			saw_separator = Bool.True
+			pending_cr = Bool.True
+		} else if is_p1_separator(p1_value) {
+			saw_separator = Bool.True
+		}
+		byte_start = match TextPosition.byte_offset(origin).plus_try(ByteRange.start(located.byte_range)) {
+			Ok(value) => value
+			Err(Overflow) => return Limit({ required: U64.highest, range: origin_range })
+		}
+		byte_end = match TextPosition.byte_offset(origin).plus_try(ByteRange.end(located.byte_range)) {
+			Ok(value) => value
+			Err(Overflow) => return Limit({ required: U64.highest, range: origin_range })
+		}
+		scalar_start = match TextPosition.scalar_offset(origin).plus_try(located.scalar_index) {
+			Ok(value) => value
+			Err(Overflow) => return Limit({ required: U64.highest, range: origin_range })
+		}
+		scalar_end = match scalar_start.plus_try(1) {
+			Ok(value) => value
+			Err(Overflow) => return Limit({ required: U64.highest, range: origin_range })
+		}
 		bytes = ByteRange.from_bounds(byte_start, byte_end) ?? return Limit({ required: U64.highest, range: origin_range })
 		scalars = ScalarRange.from_bounds(scalar_start, scalar_end) ?? return Limit({ required: U64.highest, range: origin_range })
-		count = match count.plus_try(1) { Ok(next) => next, Err(Overflow) => return Limit({ required: U64.highest, range: TextRange.from_ranges(bytes, scalars) }) }
-		if count > limit { return Limit({ required: count, range: TextRange.from_ranges(bytes, scalars) }) }
+		count = match count.plus_try(1) {
+			Ok(next) => next
+			Err(Overflow) => return Limit({ required: U64.highest, range: TextRange.from_ranges(bytes, scalars) })
+		}
+		if count > limit {
+			return Limit({ required: count, range: TextRange.from_ranges(bytes, scalars) })
+		}
 		class = BidiClass.of_scalar(located.scalar)
 		entries = entries.append({
 			range: TextRange.from_ranges(bytes, scalars),
@@ -336,13 +528,22 @@ prepare_isolates = |entries| {
 			match top {
 				None => {}
 				Some(open) => if first_strongs.get(open) == Ok(None) {
-						first_strongs = first_strongs.set(open, Some(class)) ?? ...
+					first_strongs = first_strongs.set(open, Some(class)) ?? ...
 				}
 			}
 		}
 		at = at + 1
 	}
-	{ partners, fsi_directions: first_strongs.map(|strong| match strong { Some(R) => RLI Some(AL) => RLI _ => LRI }) }
+	{
+		partners,
+		fsi_directions: first_strongs.map(
+			|strong| match strong {
+				Some(R) => RLI
+				Some(AL) => RLI
+				_ => LRI
+			},
+		),
+	}
 }
 
 base_level = |entries, policy, partners| {
@@ -357,12 +558,22 @@ base_level = |entries, policy, partners| {
 				class = entry.original_class
 				if class == LRI or class == RLI or class == FSI {
 					match partners.get(at) ?? None {
-						Some(close) => { at = close + 1 }
-						None => { break }
+						Some(close) => {
+							at = close + 1
+						}
+						None => {
+							break
+						}
 					}
-				} else if class == L { return 0 }
-				else if class == R or class == AL { return 1 }
-				else { at = at + 1 }
+				} else if class == L {
+					return 0
+				}
+					else if class == R or class == AL {
+						return 1
+					}
+						else {
+							at = at + 1
+						}
 			}
 			0
 		}
@@ -390,7 +601,13 @@ resolve_explicit = |entries, base, isolates| {
 			} else {
 				candidate = next_embedding_level(current.level, class)
 				if candidate <= 125 {
-					override = if class == RLO { Some(R) } else if class == LRO { Some(L) } else { None }
+					override = if class == RLO {
+						Some(R)
+					} else if class == LRO {
+						Some(L)
+					} else {
+						None
+					}
 					stack = stack.append({ level: candidate, override, isolate: Bool.False })
 				} else {
 					overflow_embeddings = overflow_embeddings + 1
@@ -398,9 +615,13 @@ resolve_explicit = |entries, base, isolates| {
 			}
 			result = result.append({ ..entry, level: None })
 		} else if class == PDF {
-			if overflow_isolates > 0 { }
-			else if overflow_embeddings > 0 { overflow_embeddings = overflow_embeddings - 1 }
-			else if stack.len() > 1 and !current.isolate { stack = drop_last(stack) }
+			if overflow_isolates > 0 {}
+			else if overflow_embeddings > 0 {
+				overflow_embeddings = overflow_embeddings - 1
+			}
+				else if stack.len() > 1 and !current.isolate {
+					stack = drop_last(stack)
+				}
 			result = result.append({ ..entry, level: None })
 		} else if class == BN {
 			result = result.append({ ..entry, level: None })
@@ -408,7 +629,11 @@ resolve_explicit = |entries, base, isolates| {
 			if overflow_isolates > 0 or overflow_embeddings > 0 {
 				overflow_isolates = overflow_isolates + 1
 			} else {
-				isolate_type = if class == FSI { isolates.fsi_directions.get(position) ?? LRI } else { class }
+				isolate_type = if class == FSI {
+					isolates.fsi_directions.get(position) ?? LRI
+				} else {
+					class
+				}
 				candidate = next_embedding_level(current.level, isolate_type)
 				if candidate <= 125 {
 					stack = stack.append({ level: candidate, override: None, isolate: Bool.True })
@@ -439,15 +664,26 @@ resolve_explicit = |entries, base, isolates| {
 }
 
 resolved_entry = |entry, level, class, override| {
-	working = match override { Some(value) => value, None => class }
+	working = match override {
+		Some(value) => value
+		None => class
+	}
 	{ ..entry, working_class: working, level: Some(level) }
 }
 
 next_embedding_level = |level, class| {
 	if class == RLE or class == RLO or class == RLI {
-		if level % 2 == 0 { level + 1 } else { level + 2 }
+		if level % 2 == 0 {
+			level + 1
+		} else {
+			level + 2
+		}
 	} else {
-		if level % 2 == 0 { level + 2 } else { level + 1 }
+		if level % 2 == 0 {
+			level + 2
+		} else {
+			level + 1
+		}
 	}
 }
 
@@ -466,11 +702,12 @@ drop_through_isolate = |items| {
 	while output.len() > 1 {
 		top = output.last() ?? break
 		output = drop_last(output)
-		if top.isolate { return output }
+		if top.isolate {
+			return output
+		}
 	}
 	output
 }
-
 
 ## X10 produces links over the X9-filtered tape. An isolate's matching PDI is
 ## linked directly after its initiator, so W/N see an isolating run sequence,
@@ -498,24 +735,45 @@ isolating_run_sequences = |entries, paragraph_level, partners| {
 		entry = entries.get(at) ?? break
 		previous_visible = previous_visible.append(previous)
 		run_at = run_at.append(None)
-		match entry.level { Some(_) => { previous = Some(at) } None => {} }
+		match entry.level {
+			Some(_) => {
+				previous = Some(at)
+			}
+			None => {}
+		}
 		at = at + 1
 	}
-	var next_visible = []
+
+	## Build this backward, then reverse by indexed appends. `List.prepend` is
+	## linear for Roc lists, so prepending once per scalar made this O(n²).
+	var backwards_next_visible = []
 	var following = None
 	var backwards = entries.len()
 	while backwards > 0 {
 		backwards = backwards - 1
 		entry = entries.get(backwards) ?? break
-		next_visible = next_visible.prepend(following)
-		match entry.level { Some(_) => { following = Some(backwards) } None => {} }
+		backwards_next_visible = backwards_next_visible.append(following)
+		match entry.level {
+			Some(_) => {
+				following = Some(backwards)
+			}
+			None => {}
+		}
+	}
+	var next_visible = []
+	var reverse_at = backwards_next_visible.len()
+	while reverse_at > 0 {
+		reverse_at = reverse_at - 1
+		next_visible = next_visible.append(backwards_next_visible.get(reverse_at) ?? None)
 	}
 	var runs = []
 	at = 0
 	while at < entries.len() {
 		entry = entries.get(at) ?? break
 		match entry.level {
-			None => { at = at + 1 }
+			None => {
+				at = at + 1
+			}
 			Some(level) => {
 				first = at
 				var last = at
@@ -523,11 +781,15 @@ isolating_run_sequences = |entries, paragraph_level, partners| {
 				while cursor < entries.len() {
 					candidate = entries.get(cursor) ?? break
 					match candidate.level {
-						None => { cursor = cursor + 1 }
+						None => {
+							cursor = cursor + 1
+						}
 						Some(candidate_level) => if candidate_level == level {
 							last = cursor
 							cursor = cursor + 1
-						} else { break }
+						} else {
+							break
+						}
 					}
 				}
 				run_id = runs.len()
@@ -535,7 +797,12 @@ isolating_run_sequences = |entries, paragraph_level, partners| {
 				var mark = first
 				while mark <= last {
 					candidate = entries.get(mark) ?? break
-					match candidate.level { Some(_) => { run_at = run_at.set(mark, Some(run_id)) ?? ... } None => {} }
+					match candidate.level {
+						Some(_) => {
+							run_at = run_at.set(mark, Some(run_id)) ?? ...
+						}
+						None => {}
+					}
 					mark = mark + 1
 				}
 				at = cursor
@@ -561,7 +828,12 @@ isolating_run_sequences = |entries, paragraph_level, partners| {
 				var index = current_run.first
 				while index < current_run.last {
 					next = next_visible.get(index) ?? None
-						match next { Some(value) => { links = links.set(index, Some(value)) ?? ... } None => {} }
+					match next {
+						Some(value) => {
+							links = links.set(index, Some(value)) ?? ...
+						}
+						None => {}
+					}
 					index = index + 1
 				}
 				last_entry = entries.get(current_run.last) ?? break
@@ -571,28 +843,42 @@ isolating_run_sequences = |entries, paragraph_level, partners| {
 						match next_run_id {
 							Some(id) => {
 								next_run = runs.get(id) ?? break
-									links = links.set(current_run.last, Some(next_run.first)) ?? ...
+								links = links.set(current_run.last, Some(next_run.first)) ?? ...
 								current_run = next_run
 								final = next_run.last
 							}
-							None => { break }
+							None => {
+								break
+							}
 						}
 					}
-					_ => { break }
+					_ => {
+						break
+					}
 				}
 			}
 			starts = starts.append(run.first)
 			before = previous_visible.get(run.first) ?? None
-				sos_level = match before {
-					Some(index) => match (entries.get(index) ?? first).level { Some(value) => value None => paragraph_level }
+			sos_level = match before {
+				Some(index) => match (entries.get(index) ?? first).level {
+					Some(value) => value
 					None => paragraph_level
 				}
+				None => paragraph_level
+			}
 			last = entries.get(final) ?? first
-			after = if last.original_class == LRI or last.original_class == RLI or last.original_class == FSI { None } else { next_visible.get(final) ?? None }
-				eos_level = match after {
-					Some(index) => match (entries.get(index) ?? last).level { Some(value) => value None => paragraph_level }
+			after = if last.original_class == LRI or last.original_class == RLI or last.original_class == FSI {
+				None
+			} else {
+				next_visible.get(final) ?? None
+			}
+			eos_level = match after {
+				Some(index) => match (entries.get(index) ?? last).level {
+					Some(value) => value
 					None => paragraph_level
 				}
+				None => paragraph_level
+			}
 			sos = sos.append(direction_class(max_level(run.level, sos_level)))
 			eos = eos.append(direction_class(max_level(run.level, eos_level)))
 		}
@@ -600,11 +886,25 @@ isolating_run_sequences = |entries, paragraph_level, partners| {
 	{ links, starts, sos, eos }
 }
 
-max_level = |left, right| if left > right { left } else { right }
-direction_class = |level| if level % 2 == 0 { L } else { R }
+max_level = |left, right| if left > right {
+	left
+} else {
+	right
+}
+
+direction_class = |level| if level % 2 == 0 {
+	L
+} else {
+	R
+}
+
 next_in = |links, index| links.get(index) ?? None
+
 class_at = |entries, index, fallback| match index {
-	Some(value) => match entries.get(value) { Ok(entry) => entry.working_class Err(_) => fallback }
+	Some(value) => match entries.get(value) {
+		Ok(entry) => entry.working_class
+		Err(_) => fallback
+	}
 	None => fallback
 }
 
@@ -615,11 +915,26 @@ w1 = |entries, irs| {
 		var previous = irs.sos.get(sequence) ?? L
 		var at = irs.starts.get(sequence) ?? break
 		while Bool.True {
-				entry = current.get(at) ?? break
-			class = if entry.working_class == NSM { if isolate_control(previous) { ON } else { previous } } else { entry.working_class }
-				current = current.set(at, { ..entry, working_class: class }) ?? ...
+			entry = current.get(at) ?? break
+			class = if entry.working_class == NSM {
+				if isolate_control(previous) {
+					ON
+				} else {
+					previous
+				}
+			} else {
+				entry.working_class
+			}
+			current = current.set(at, { ..entry, working_class: class }) ?? ...
 			previous = class
-			match next_in(irs.links, at) { Some(next) => { at = next } None => { break } }
+			match next_in(irs.links, at) {
+				Some(next) => {
+					at = next
+				}
+				None => {
+					break
+				}
+			}
 		}
 		sequence = sequence + 1
 	}
@@ -633,19 +948,41 @@ w2 = |entries, irs| {
 		var strong = irs.sos.get(sequence) ?? L
 		var at = irs.starts.get(sequence) ?? break
 		while Bool.True {
-				entry = current.get(at) ?? break
+			entry = current.get(at) ?? break
 			class = entry.working_class
-			resolved = if class == EN and strong == AL { AN } else { class }
-				current = current.set(at, { ..entry, working_class: resolved }) ?? ...
-			if class == L or class == R or class == AL { strong = class }
-			match next_in(irs.links, at) { Some(next) => { at = next } None => { break } }
+			resolved = if class == EN and strong == AL {
+				AN
+			} else {
+				class
+			}
+			current = current.set(at, { ..entry, working_class: resolved }) ?? ...
+			if class == L or class == R or class == AL {
+				strong = class
+			}
+			match next_in(irs.links, at) {
+				Some(next) => {
+					at = next
+				}
+				None => {
+					break
+				}
+			}
 		}
 		sequence = sequence + 1
 	}
 	current
 }
 
-w3 = |entries| entries.map(|entry| { ..entry, working_class: if entry.working_class == AL { R } else { entry.working_class } })
+w3 = |entries| entries.map(
+	|entry| {
+		..entry,
+		working_class: if entry.working_class == AL {
+			R
+		} else {
+			entry.working_class
+		},
+	},
+)
 
 w4 = |entries, irs| {
 	var current = entries
@@ -655,13 +992,28 @@ w4 = |entries, irs| {
 		var before = irs.sos.get(sequence) ?? L
 		eos = irs.eos.get(sequence) ?? L
 		while Bool.True {
-				entry = current.get(at) ?? break
-				after = class_at(current, next_in(irs.links, at), eos)
+			entry = current.get(at) ?? break
+			after = class_at(current, next_in(irs.links, at), eos)
 			class = entry.working_class
-			resolved = if class == ES and before == EN and after == EN { EN } else if class == CS and before == EN and after == EN { EN } else if class == CS and before == AN and after == AN { AN } else { class }
-				current = current.set(at, { ..entry, working_class: resolved }) ?? ...
+			resolved = if class == ES and before == EN and after == EN {
+				EN
+			} else if class == CS and before == EN and after == EN {
+				EN
+			} else if class == CS and before == AN and after == AN {
+				AN
+			} else {
+				class
+			}
+			current = current.set(at, { ..entry, working_class: resolved }) ?? ...
 			before = resolved
-			match next_in(irs.links, at) { Some(next) => { at = next } None => { break } }
+			match next_in(irs.links, at) {
+				Some(next) => {
+					at = next
+				}
+				None => {
+					break
+				}
+			}
 		}
 		sequence = sequence + 1
 	}
@@ -676,30 +1028,59 @@ w5 = |entries, irs| {
 		var at = irs.starts.get(sequence) ?? break
 		eos = irs.eos.get(sequence) ?? L
 		while Bool.True {
-				entry = current.get(at) ?? break
+			entry = current.get(at) ?? break
 			if entry.working_class == ET {
 				var last = at
 				var after = next_in(irs.links, at)
-					while class_at(current, after, eos) == ET {
-						match after { Some(next) => { last = next
-							after = next_in(irs.links, next) } None => { break } }
+				while class_at(current, after, eos) == ET {
+					match after {
+						Some(next) => {
+							last = next
+							after = next_in(irs.links, next)
+						}
+						None => {
+							break
+						}
+					}
 				}
-					resolved = if previous == EN or class_at(current, after, eos) == EN { EN } else { ET }
+				resolved = if previous == EN or class_at(current, after, eos) == EN {
+					EN
+				} else {
+					ET
+				}
 				var replace = at
 				while Bool.True {
-						item = current.get(replace) ?? break
-						current = current.set(replace, { ..item, working_class: resolved }) ?? ...
-					if replace == last { break }
-						match next_in(irs.links, replace) {
-							Some(next) => { replace = next }
-							None => break
+					item = current.get(replace) ?? break
+					current = current.set(replace, { ..item, working_class: resolved }) ?? ...
+					if replace == last {
+						break
+					}
+					match next_in(irs.links, replace) {
+						Some(next) => {
+							replace = next
 						}
+						None => break
+					}
 				}
 				previous = resolved
-				match after { Some(next) => { at = next } None => { break } }
+				match after {
+					Some(next) => {
+						at = next
+					}
+					None => {
+						break
+					}
+				}
 			} else {
 				previous = entry.working_class
-				match next_in(irs.links, at) { Some(next) => { at = next } None => { break } }
+				match next_in(irs.links, at) {
+					Some(next) => {
+						at = next
+					}
+					None => {
+						break
+					}
+				}
 			}
 		}
 		sequence = sequence + 1
@@ -707,10 +1088,19 @@ w5 = |entries, irs| {
 	current
 }
 
-w6 = |entries| entries.map(|entry| {
-	class = entry.working_class
-	{ ..entry, working_class: if class == ES or class == ET or class == CS { ON } else { class } }
-})
+w6 = |entries| entries.map(
+	|entry| {
+		class = entry.working_class
+		{
+			..entry,
+			working_class: if class == ES or class == ET or class == CS {
+				ON
+			} else {
+				class
+			},
+		}
+	},
+)
 
 w7 = |entries, irs| {
 	var current = entries
@@ -719,12 +1109,25 @@ w7 = |entries, irs| {
 		var strong = irs.sos.get(sequence) ?? L
 		var at = irs.starts.get(sequence) ?? break
 		while Bool.True {
-				entry = current.get(at) ?? break
+			entry = current.get(at) ?? break
 			class = entry.working_class
-			resolved = if class == EN and strong == L { L } else { class }
-				current = current.set(at, { ..entry, working_class: resolved }) ?? ...
-			if class == L or class == R { strong = class }
-			match next_in(irs.links, at) { Some(next) => { at = next } None => { break } }
+			resolved = if class == EN and strong == L {
+				L
+			} else {
+				class
+			}
+			current = current.set(at, { ..entry, working_class: resolved }) ?? ...
+			if class == L or class == R {
+				strong = class
+			}
+			match next_in(irs.links, at) {
+				Some(next) => {
+					at = next
+				}
+				None => {
+					break
+				}
+			}
 		}
 		sequence = sequence + 1
 	}
@@ -753,10 +1156,19 @@ n0 = |entries, irs| {
 			}
 			entry = current.get(at) ?? break
 			match strong_direction(entry.working_class) {
-				Some(value) => { preceding = value }
+				Some(value) => {
+					preceding = value
+				}
 				None => {}
 			}
-			match next_in(irs.links, at) { Some(next) => { at = next } None => { break } }
+			match next_in(irs.links, at) {
+				Some(next) => {
+					at = next
+				}
+				None => {
+					break
+				}
+			}
 		}
 		sequence = sequence + 1
 	}
@@ -780,7 +1192,11 @@ bracket_matches = |entries, irs| {
 			if entry.working_class == ON {
 				match BidiProperties.paired_bracket(entry.scalar) {
 					Some(pair) => match pair.kind {
-						Open => if stack.len() == 63 { overflowed = Bool.True } else { stack = stack.append({ target: Scalar.to_u32(pair.scalar), at }) }
+						Open => if stack.len() == 63 {
+							overflowed = Bool.True
+						} else {
+							stack = stack.append({ target: Scalar.to_u32(pair.scalar), at })
+						}
 						Close => {
 							var cursor = stack.len()
 							var match_at = None
@@ -805,7 +1221,14 @@ bracket_matches = |entries, irs| {
 					None => {}
 				}
 			}
-			match next_in(irs.links, at) { Some(next) => { at = next } None => { break } }
+			match next_in(irs.links, at) {
+				Some(next) => {
+					at = next
+				}
+				None => {
+					break
+				}
+			}
 		}
 		if !overflowed {
 			for pair in found {
@@ -828,41 +1251,67 @@ resolve_bracket_pair = |entries, irs, sequence, pair, preceding| {
 	while at != Some(pair.close) {
 		class = class_at(entries, at, irs.eos.get(sequence) ?? L)
 		strong = strong_direction(class)
-		if strong == Some(embedding) { saw_embedding = Bool.True }
-		else if strong != None { saw_opposite = Bool.True }
-		at = match at { Some(index) => next_in(irs.links, index) None => Some(pair.close) }
+		if strong == Some(embedding) {
+			saw_embedding = Bool.True
+		}
+			else if strong != None {
+				saw_opposite = Bool.True
+			}
+		at = match at {
+			Some(index) => next_in(irs.links, index)
+			None => Some(pair.close)
+		}
 	}
-	resolved = if saw_embedding { Some(embedding) } else if saw_opposite {
-		if preceding == embedding { Some(embedding) } else { Some(preceding) }
-	} else { None }
+	resolved = if saw_embedding {
+		Some(embedding)
+	} else if saw_opposite {
+		if preceding == embedding {
+			Some(embedding)
+		} else {
+			Some(preceding)
+		}
+	} else {
+		None
+	}
 	match resolved {
 		None => entries
 		Some(class) => {
 			opening = entries.get(pair.open) ?? return entries
 			closing = entries.get(pair.close) ?? return entries
-				var current = entries
-				current = current.set(pair.open, { ..opening, working_class: class }) ?? ...
-				current = current.set(pair.close, { ..closing, working_class: class }) ?? ...
-				# W1 has already converted NSMs to their preceding type. N0 must
-				# therefore carry a bracket resolution through the NSMs that
-				# immediately follow the closing bracket.
-				propagate_bracket_nsm(current, irs.links, pair.close, class)
+			var current = entries
+			current = current.set(pair.open, { ..opening, working_class: class }) ?? ...
+			current = current.set(pair.close, { ..closing, working_class: class }) ?? ...
+			# W1 has already converted NSMs to their preceding type. N0 must
+			# carry a changed bracket class through original NSMs immediately
+			# after *both* endpoints (UAX #9 rev. 51 N0).
+			after_open = propagate_bracket_nsm(current, irs.links, pair.open, class)
+			propagate_bracket_nsm(after_open, irs.links, pair.close, class)
 		}
 	}
 }
 
-strong_direction = |class| if class == L { Some(L) } else if class == R or class == EN or class == AN { Some(R) } else { None }
+strong_direction = |class| if class == L {
+	Some(L)
+} else if class == R or class == EN or class == AN {
+	Some(R)
+} else {
+	None
+}
 
 propagate_bracket_nsm = |entries, links, bracket, class| {
 	var current = entries
 	var at = next_in(links, bracket)
 	while Bool.True {
 		match at {
-			None => { break }
+			None => {
+				break
+			}
 			Some(index) => {
-					entry = current.get(index) ?? break
-				if entry.original_class != NSM { break }
-					current = current.set(index, { ..entry, working_class: class }) ?? ...
+				entry = current.get(index) ?? break
+				if entry.original_class != NSM {
+					break
+				}
+				current = current.set(index, { ..entry, working_class: class }) ?? ...
 				at = next_in(links, index)
 			}
 		}
@@ -878,33 +1327,62 @@ n1_n2 = |entries, irs| {
 		var at = irs.starts.get(sequence) ?? break
 		eos = irs.eos.get(sequence) ?? L
 		while Bool.True {
-				entry = current.get(at) ?? break
+			entry = current.get(at) ?? break
 			if neutral(entry.working_class) {
 				first = at
 				var last = at
 				var after = next_in(irs.links, at)
-					while neutral(class_at(current, after, eos)) {
-						match after { Some(next) => { last = next
-							after = next_in(irs.links, next) } None => { break } }
+				while neutral(class_at(current, after, eos)) {
+					match after {
+						Some(next) => {
+							last = next
+							after = next_in(irs.links, next)
+						}
+						None => {
+							break
+						}
+					}
 				}
 				left = strong_for_neutral(previous, entry.level)
-					right = strong_for_neutral(class_at(current, after, eos), entry.level)
-				resolved = if left == right { left } else { embedding_direction(entry.level) }
+				right = strong_for_neutral(class_at(current, after, eos), entry.level)
+				resolved = if left == right {
+					left
+				} else {
+					embedding_direction(entry.level)
+				}
 				var replace = first
 				while Bool.True {
-						item = current.get(replace) ?? break
-						current = current.set(replace, { ..item, working_class: resolved }) ?? ...
-					if replace == last { break }
-						match next_in(irs.links, replace) {
-							Some(next) => { replace = next }
-							None => break
+					item = current.get(replace) ?? break
+					current = current.set(replace, { ..item, working_class: resolved }) ?? ...
+					if replace == last {
+						break
+					}
+					match next_in(irs.links, replace) {
+						Some(next) => {
+							replace = next
 						}
+						None => break
+					}
 				}
 				previous = resolved
-				match after { Some(next) => { at = next } None => { break } }
+				match after {
+					Some(next) => {
+						at = next
+					}
+					None => {
+						break
+					}
+				}
 			} else {
 				previous = entry.working_class
-				match next_in(irs.links, at) { Some(next) => { at = next } None => { break } }
+				match next_in(irs.links, at) {
+					Some(next) => {
+						at = next
+					}
+					None => {
+						break
+					}
+				}
 			}
 		}
 		sequence = sequence + 1
@@ -913,29 +1391,51 @@ n1_n2 = |entries, irs| {
 }
 
 isolate_control = |class| class == LRI or class == RLI or class == FSI or class == PDI
-neutral = |class| class == ON or class == WS or class == S or class == B or isolate_control(class)
-embedding_direction = |level| match level { Some(value) => direction_class(value) None => L }
-strong_for_neutral = |class, level| match strong_direction(class) { Some(value) => value None => embedding_direction(level) }
 
-implicit = |entries| entries.map(|entry| {
-	match entry.level {
-		None => entry
-		Some(level) => {
-			resolved = implicit_level(level, entry.working_class)
-			{ ..entry, level: Some(resolved), needs_mirrored_glyph: BidiProperties.is_mirrored(entry.scalar) and resolved % 2 == 1, mirroring_glyph: BidiProperties.mirroring_glyph(entry.scalar) }
+neutral = |class| class == ON or class == WS or class == S or class == B or isolate_control(class)
+
+embedding_direction = |level| match level {
+	Some(value) => direction_class(value)
+	None => L
+}
+
+strong_for_neutral = |class, level| match strong_direction(class) {
+	Some(value) => value
+	None => embedding_direction(level)
+}
+
+implicit = |entries| entries.map(
+	|entry| {
+		match entry.level {
+			None => entry
+			Some(level) => {
+				resolved = implicit_level(level, entry.working_class)
+				{ ..entry, level: Some(resolved), needs_mirrored_glyph: BidiProperties.is_mirrored(entry.scalar) and resolved % 2 == 1, mirroring_glyph: BidiProperties.mirroring_glyph(entry.scalar) }
+			}
 		}
-	}
-})
+	},
+)
 
 implicit_level = |base, class| {
 	if base % 2 == 0 {
-		if class == R or class == AL { base + 1 } else if class == EN or class == AN { base + 2 } else { base }
+		if class == R or class == AL {
+			base + 1
+		} else if class == EN or class == AN {
+			base + 2
+		} else {
+			base
+		}
 	} else {
-		if class == L or class == EN or class == AN { base + 1 } else { base }
+		if class == L or class == EN or class == AN {
+			base + 1
+		} else {
+			base
+		}
 	}
 }
 
 x9_removed = |class| class == RLE or class == LRE or class == RLO or class == LRO or class == PDF or class == BN
+
 non_rendering = |class| x9_removed(class) or class == LRI or class == RLI or class == FSI or class == PDI
 
 copy_slice = |items, start, end| {
@@ -953,20 +1453,33 @@ l1 = |line, paragraph_level| {
 	while reset_at > 0 {
 		entry = line.get(reset_at - 1) ?? break
 		match entry.level {
-			None => { reset_at = reset_at - 1 }
-			Some(_) => if l1_reset(entry.original_class) { reset_at = reset_at - 1 } else { break }
+			None => {
+				reset_at = reset_at - 1
+			}
+			Some(_) => if l1_reset(entry.original_class) {
+				reset_at = reset_at - 1
+			} else {
+				break
+			}
 		}
 	}
 	var output = []
 	var at = 0.U64
 	while at < line.len() {
 		entry = line.get(at) ?? break
-		output = output.append(match entry.level {
-			None => None
-			Some(level) => if at >= reset_at { Some(paragraph_level) } else { Some(level) }
-		})
+		output = output.append(
+			match entry.level {
+				None => None
+				Some(level) => if at >= reset_at {
+					Some(paragraph_level)
+				} else {
+					Some(level)
+				}
+			},
+		)
 		at = at + 1
 	}
+
 	## L1 additionally resets each segment/paragraph separator and the
 	## immediately preceding whitespace or isolate-control sequence, not merely
 	## the trailing sequence at the actual line end.
@@ -984,7 +1497,9 @@ l1 = |line, paragraph_level| {
 					# X9 formatting controls are absent for L1 adjacency.
 				} else if previous.original_class == WS or isolate_control(previous.original_class) {
 					result = result.set(before, Some(paragraph_level)) ?? ...
-				} else { break }
+				} else {
+					break
+				}
 			}
 		}
 		separator = separator + 1
@@ -1000,7 +1515,9 @@ eligible = |line, levels, start| {
 	while at < line.len() {
 		match levels.get(at) {
 			Ok(None) => {}
-			Ok(Some(_)) => { output = output.append(start + at) }
+			Ok(Some(_)) => {
+				output = output.append(start + at)
+			}
 			Err(_) => {}
 		}
 		at = at + 1
@@ -1012,7 +1529,9 @@ l2 = |indices, levels, start, paragraph_level| {
 	var maximum = paragraph_level
 	for absolute in indices {
 		match levels.get(absolute - start) {
-			Ok(Some(value)) => if value > maximum { maximum = value }
+			Ok(Some(value)) => if value > maximum {
+				maximum = value
+			}
 			_ => {}
 		}
 	}
@@ -1021,10 +1540,16 @@ l2 = |indices, levels, start, paragraph_level| {
 	# L2 runs down through the lowest odd level, including an RTL paragraph's
 	# base level. Stopping at the paragraph level would incorrectly leave a
 	# simple RTL paragraph in logical order.
-	minimum = if paragraph_level % 2 == 1 { paragraph_level } else { paragraph_level + 1 }
+	minimum = if paragraph_level % 2 == 1 {
+		paragraph_level
+	} else {
+		paragraph_level + 1
+	}
 	while threshold >= minimum {
 		output = reverse_level(output, levels, start, threshold)
-		if threshold == 0 { break }
+		if threshold == 0 {
+			break
+		}
 		threshold = threshold - 1
 	}
 	output
@@ -1041,7 +1566,11 @@ reverse_level = |indices, levels, start, threshold| {
 				while end < indices.len() {
 					candidate = indices.get(end) ?? break
 					match levels.get(candidate - start) {
-						Ok(Some(candidate_level)) => if candidate_level >= threshold { end = end + 1 } else { break }
+						Ok(Some(candidate_level)) => if candidate_level >= threshold {
+							end = end + 1
+						} else {
+							break
+						}
 						_ => break
 					}
 				}
@@ -1088,20 +1617,36 @@ make_visual_runs = |visual, levels, start| {
 	var at = 0.U64
 	while at < visual.len() {
 		first = visual.get(at) ?? break
-		level = match levels.get(first - start) { Ok(Some(value)) => value, _ => 0 }
+		level = match levels.get(first - start) {
+			Ok(Some(value)) => value
+			_ => 0
+		}
 		var end = at + 1
 		var previous = first
 		while end < visual.len() {
 			candidate = visual.get(end) ?? break
-			candidate_level = match levels.get(candidate - start) { Ok(Some(value)) => value, _ => 0 }
+			candidate_level = match levels.get(candidate - start) {
+				Ok(Some(value)) => value
+				_ => 0
+			}
 			adjacent = candidate + 1 == previous or previous + 1 == candidate
 			if candidate_level == level and adjacent {
 				previous = candidate
 				end = end + 1
-			} else { break }
+			} else {
+				break
+			}
 		}
-		low = if first < previous { first } else { previous }
-		high = if first > previous { first } else { previous }
+		low = if first < previous {
+			first
+		} else {
+			previous
+		}
+		high = if first > previous {
+			first
+		} else {
+			previous
+		}
 		range = ScalarRange.from_bounds(low, high + 1) ?? ...
 		output = output.append({ logical_range: range, level, direction: Bidi.direction(level) })
 		at = end

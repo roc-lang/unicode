@@ -3,7 +3,8 @@
   "kind": "bidi",
   "suites": [
     "bidi-test",
-    "bidi-character-test"
+    "bidi-character-test",
+    "bidi-metamorphic"
   ],
   "timeout_seconds": 600,
   "unicode_manifest_files": [
@@ -11,5 +12,7 @@
     "bidi_character_test"
   ],
   "bidi_test_executions": 770241,
-  "bidi_character_test_executions": 91707
+  "bidi_character_test_executions": 91707,
+  "metamorphic_seed": 1511506142,
+  "metamorphic_cases": 1024
 }

@@ -1,0 +1,38 @@
+name: Bidi reference differential gate
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 12 * * 1"
+
+permissions: {}
+
+env:
+  ZIG_VERSION: "0.16.0"
+
+jobs:
+  differential:
+    name: Unicode Code9 differential
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Zig
+        uses: mlugg/setup-zig@d1434d08867e3ee9daa34448df10607b98908d29 # 2.2.1
+        with:
+          version: ${{ env.ZIG_VERSION }}
+          use-cache: false
+
+      - name: Read pinned Roc version
+        run: printf 'ROC_NIGHTLY_TAG=%s\n' "$(sed -n '1p' .roc-version)" >> "$GITHUB_ENV"
+
+      - uses: roc-lang/setup-roc@cbe782d6f165b89c87d99f50a59ac4f5f73b4427
+        with:
+          version: nightly-new-compiler
+          nightly-tag: ${{ env.ROC_NIGHTLY_TAG }}
+
+      - name: Build and run normal Bidi conformance
+        run: ROC=roc python3 scripts/test.py bidi --jobs 8
+
+      - name: Differentially query pinned Unicode Code9 source
+        run: python3 scripts/bidi_reference_differential.py --roc roc --candidate .roc-unicode-tmp/tests/bidi

@@ -156,12 +156,22 @@ For a paragraph selected from a larger `Str`, use
 `Bidi.analyze_range(source, paragraph_range, direction, limits)`. It validates
 that the supplied `TextRange` is one of the P1 ranges and retains absolute byte
 and scalar coordinates from the full source; line ranges, visual-to-logical
-mappings, and visual runs use those same coordinates. `Bidi.reorder_line`
+mappings, and visual runs use those same coordinates. This range API validates
+through the selected P1 boundary and replays the selected paragraph for
+analysis; `Bidi.analyze_paragraph` decodes its single paragraph once.
+`Bidi.reorder_line`
 then applies L1/L2 to an actual, paragraph-contained logical line. It does not
 shape Arabic or replace source scalars: L4 is returned as a mirrored-glyph
 requirement and optional best-fit mapping for renderers. Paragraph limits are
 checked before retained analysis is committed, with typed errors identifying
 the ingestion stage and source range.
+
+For a requested line whose scalar range starts at `line_start`,
+`visual_to_logical[visual_position]` is an absolute source scalar index, while
+`logical_to_visual[absolute_scalar_index - line_start]` is the matching visual
+position (or absent for X9-removed controls). This intentionally makes the
+forward mapping directly usable against retained source coordinates while the
+inverse stays compact for the requested line.
 
 ## Scripts and shaping-oriented itemization
 
