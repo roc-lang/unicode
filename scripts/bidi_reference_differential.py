@@ -13,7 +13,10 @@ import tempfile
 import urllib.request
 from pathlib import Path
 
-from bidi_reduce import capture, minimize
+try:
+    from bidi_reduce import capture, minimize
+except ModuleNotFoundError:
+    from scripts.bidi_reduce import capture, minimize
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -135,6 +138,24 @@ def candidate_error(candidate: Path, row: tuple[str, str, int], oracle: tuple[in
     return f"roc_stdout={completed.stdout.strip()!r}, roc_stderr={completed.stderr.strip()!r}"
 
 
+def candidate_failure_signature(error: str) -> str:
+    """Classify a candidate failure without retaining input-dependent values."""
+    for category in (
+        "paragraph level expected",
+        "levels expected",
+        "reorder expected",
+        "analysis failed",
+        "line reordering failed",
+        "malformed",
+        "invalid",
+    ):
+        if category in error:
+            return category
+    if "roc_stdout=''" in error:
+        return "candidate process failure"
+    return "candidate protocol failure"
+
+
 def run_candidate(candidate: Path, rows: list[tuple[str, str, int]], expected: list[tuple[int, str, str]], reference: Path, data_directory: Path) -> None:
     # Code9's direction encoding is already BidiCharacterTest's LTR/RTL/Auto order.
     protocol_rows = [f"{case_id}\t{codepoints}\t{mode}\t{level}\t{levels}\t{order}" for (case_id, codepoints, mode), (level, levels, order) in zip(rows, expected, strict=True)]
@@ -150,10 +171,12 @@ def run_candidate(candidate: Path, rows: list[tuple[str, str, int]], expected: l
             actual = candidate_error(candidate, row, oracle)
             if actual is not None:
                 values = codepoints.split(",")
+                signature = candidate_failure_signature(actual)
                 def reproduces(parts: list[str]) -> bool:
                     candidate_row = (case_id, ",".join(parts), mode)
                     candidate_oracle = code9_results(reference, data_directory, [candidate_row])[0]
-                    return candidate_error(candidate, candidate_row, candidate_oracle) is not None
+                    candidate_failure = candidate_error(candidate, candidate_row, candidate_oracle)
+                    return candidate_failure is not None and candidate_failure_signature(candidate_failure) == signature
                 reduced = minimize(values, reproduces)
                 reduced_row = (case_id, ",".join(reduced), mode)
                 reduced_oracle = code9_results(reference, data_directory, [reduced_row])[0]

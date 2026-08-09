@@ -853,7 +853,13 @@ def verify_pinned_roc(roc: str) -> None:
 def run_data_checks() -> None:
     validate_all(load_manifest())
     command([sys.executable, "scripts/unicode_data.py", "generate", "--check"])
-    command([sys.executable, "-m", "unittest", "scripts/test_unicode_data.py"])
+    command([
+        sys.executable,
+        "-m",
+        "unittest",
+        "scripts/test_unicode_data.py",
+        "scripts/test_bidi_reduce.py",
+    ])
 
 
 def main(argv: list[str] | None = None) -> int:
