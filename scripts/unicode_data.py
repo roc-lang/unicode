@@ -64,6 +64,27 @@ EMOJI_PROPERTIES = (
     "Extended_Pictographic",
 )
 INCB_PROPERTIES = ("Consonant", "Extend", "Linker")
+WORD_BREAK_PROPERTIES = (
+    "Other",
+    "CR",
+    "LF",
+    "Newline",
+    "Extend",
+    "Format",
+    "Katakana",
+    "Hebrew_Letter",
+    "ALetter",
+    "Single_Quote",
+    "Double_Quote",
+    "MidNumLet",
+    "MidLetter",
+    "MidNum",
+    "Numeric",
+    "ExtendNumLet",
+    "Regional_Indicator",
+    "WSegSpace",
+    "ZWJ",
+)
 LINE_BREAK_PROPERTIES = (
     "AI", "AK", "AL", "AP", "AS", "B2", "BA", "BB", "BK", "CB", "CJ",
     "CL", "CM", "CP", "CR", "EB", "EM", "EX", "GL", "H2", "H3", "HH",
@@ -169,6 +190,15 @@ class GraphemeCase:
 
 
 @dataclass(frozen=True)
+class WordBreakCase:
+    case_id: str
+    line: int
+    code_points: tuple[int, ...]
+    break_offsets: tuple[int, ...]
+    rules: frozenset[str]
+
+
+@dataclass(frozen=True)
 class LineBreakCase:
     line: int
     code_points: tuple[int, ...]
@@ -246,6 +276,7 @@ class ScriptProperties:
 @dataclass(frozen=True)
 class AlgorithmProperties:
     grapheme: PropertySource
+    word_break: PropertySource
     east_asian_width: PropertySource
     emoji: PropertySource
     indic_conjunct_break: PropertySource
@@ -355,6 +386,9 @@ SOURCE_PROJECTION_CONTRACTS = {
     ("ucd-property-ranges", ("Grapheme_Cluster_Break",)): SourceProjectionContract(
         "ucd/auxiliary/GraphemeBreakProperty.txt", "production-and-conformance"
     ),
+    ("ucd-property-ranges", ("Word_Break",)): SourceProjectionContract(
+        "ucd/auxiliary/WordBreakProperty.txt", "production-and-conformance"
+    ),
     ("ucd-property-ranges", ("Line_Break",)): SourceProjectionContract(
         "ucd/LineBreak.txt", "production-and-conformance"
     ),
@@ -372,6 +406,9 @@ SOURCE_PROJECTION_CONTRACTS = {
     ),
     ("uax-9-bidi-character-test", ()): SourceProjectionContract(
         "ucd/BidiCharacterTest.txt", "conformance", has_cases=True
+    ),
+    ("uax-29-word-test", ()): SourceProjectionContract(
+        "ucd/auxiliary/WordBreakTest.txt", "conformance", has_cases=True
     ),
     ("ucd-binary-property-ranges", EMOJI_PROPERTIES): SourceProjectionContract(
         "ucd/emoji/emoji-data.txt",
@@ -470,6 +507,17 @@ GENERATOR_CONTRACTS = {
         ("uax_29",),
         (),
         "package/InternalGBP.roc",
+    ),
+    "word-data": GeneratorContract(
+        (
+            ("ucd-property-ranges", ("Word_Break",)),
+            ("ucd-binary-property-ranges", EMOJI_PROPERTIES),
+        ),
+        ("uax_29", "uts_51"),
+        (),
+        "package/InternalWordData.roc",
+        True,
+        "computed",
     ),
     "east-asian-width": GeneratorContract(
         (("ucd-property-ranges", ("East_Asian_Width",)),),
@@ -1729,6 +1777,24 @@ def load_property_data(
             value="Other",
         ),
     )
+    word_name = _source_for(manifest, "ucd-property-ranges", ("Word_Break",))
+    word_text = verify_source(manifest, word_name)
+    word_source = str(data_path(manifest, word_name))
+    word_break = parse_ranges(
+        word_text,
+        source=word_source,
+        allowed_properties=WORD_BREAK_PROPERTIES[1:],
+        default_marker=None,
+    )
+    word_defaults = (
+        _required_formal_default(
+            word_text,
+            source=word_source,
+            property_name="Word_Break",
+            declared_property=None,
+            value="Other",
+        ),
+    )
     eaw_name = _source_for(manifest, "ucd-property-ranges", ("East_Asian_Width",))
     eaw_text = verify_source(manifest, eaw_name)
     eaw_source = str(data_path(manifest, eaw_name))
@@ -1776,6 +1842,9 @@ def load_property_data(
         gcb, gcb_defaults, source=gcb_source, properties=("Grapheme_Cluster_Break",)
     )
     _validate_default_precedence(
+        word_break, word_defaults, source=word_source, properties=("Word_Break",)
+    )
+    _validate_default_precedence(
         eaw, eaw_defaults, source=eaw_source, properties=("East_Asian_Width",)
     )
     _validate_default_precedence(
@@ -1786,12 +1855,15 @@ def load_property_data(
     )
     if {record.property for record in gcb} != set(GCB_PROPERTIES):
         raise DataError(f"{gcb_source}: Grapheme_Cluster_Break values/sections drifted")
+    if {record.property for record in word_break} != set(WORD_BREAK_PROPERTIES[1:]):
+        raise DataError(f"{word_source}: Word_Break values/sections drifted")
     if {record.property for record in eaw} != set(EAW_PROPERTIES):
         raise DataError(f"{eaw_source}: East_Asian_Width values drifted")
     if {record.property for record in incb} != set(INCB_PROPERTIES):
         raise DataError(f"{incb_source}: Indic_Conjunct_Break values drifted")
     return AlgorithmProperties(
         PropertySource(tuple(gcb), gcb_defaults),
+        PropertySource(tuple(word_break), word_defaults),
         PropertySource(tuple(eaw), eaw_defaults),
         PropertySource(tuple(emoji), emoji_defaults),
         PropertySource(tuple(incb), incb_defaults),
@@ -2578,6 +2650,74 @@ def parse_grapheme_tests(
     return cases
 
 
+def parse_word_break_tests(
+    manifest: dict[str, object], text: str | None = None
+) -> list[WordBreakCase]:
+    version = release_version(manifest, "unicode")
+    source_key = _source_for(manifest, "uax-29-word-test", ())
+    source_name = Path(str(_entry(manifest, source_key)["path"])).name
+    if text is None:
+        text = verify_source(manifest, source_key)
+    cases: list[WordBreakCase] = []
+    for line_number, raw_line in enumerate(text.splitlines(), 1):
+        stripped = raw_line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        fields = raw_line.split("#", 1)
+        if len(fields) != 2:
+            raise DataError(f"{source_name}:{line_number}: test is missing its rule comment")
+        body, comment = fields
+        tokens = body.split()
+        if len(tokens) < 3 or len(tokens) % 2 == 0:
+            raise DataError(f"{source_name}:{line_number}: malformed test token sequence")
+        if tokens[0] != "÷" or tokens[-1] != "÷":
+            raise DataError(f"{source_name}:{line_number}: tests must break at both ends")
+        code_points: list[int] = []
+        break_offsets: list[int] = []
+        utf8_offset = 0
+        for index, token in enumerate(tokens):
+            if index % 2 == 0:
+                if token not in ("÷", "×"):
+                    raise DataError(
+                        f"{source_name}:{line_number}: expected boundary marker, got {token!r}"
+                    )
+                if token == "÷":
+                    break_offsets.append(utf8_offset)
+            else:
+                if HEX_RE.fullmatch(token) is None:
+                    raise DataError(
+                        f"{source_name}:{line_number}: invalid code point {token!r}"
+                    )
+                code_point = int(token, 16)
+                if code_point > MAX_CODE_POINT or 0xD800 <= code_point <= 0xDFFF:
+                    raise DataError(
+                        f"{source_name}:{line_number}: invalid scalar U+{code_point:04X}"
+                    )
+                code_points.append(code_point)
+                utf8_offset += len(chr(code_point).encode("utf-8"))
+        rule_tokens = re.findall(r"\[([0-9]+(?:\.[0-9]+)?)\]", comment)
+        rules = frozenset(rule_tokens)
+        boundary_count = (len(tokens) + 1) // 2
+        if len(rule_tokens) != boundary_count:
+            raise DataError(
+                f"{source_name}:{line_number}: expected {boundary_count} boundary rules, "
+                f"got {len(rule_tokens)}"
+            )
+        cases.append(
+            WordBreakCase(
+                case_id=f"{version}:{source_name}:{line_number}",
+                line=line_number,
+                code_points=tuple(code_points),
+                break_offsets=tuple(break_offsets),
+                rules=rules,
+            )
+        )
+    expected = _entry(manifest, source_key).get("cases")
+    if expected != len(cases):
+        raise DataError(f"word-break case-count drift: expected {expected}, got {len(cases)}")
+    return cases
+
+
 def parse_line_break_tests(
     manifest: dict[str, object], text: str | None = None
 ) -> list[LineBreakCase]:
@@ -3198,6 +3338,76 @@ def render_grapheme_data(
         "        2 => Extend\n"
         "        3 => Linker\n"
         "        _ => ...\n"
+        "    }\n"
+        "}\n\n"
+        f"page_index : List({paged.index_type})\n"
+        f"page_index = {_roc_list(paged.page_index)}\n\n"
+        "pages : List(U8)\n"
+        f"pages = {_roc_list(paged.flat_pages)}\n"
+    )
+
+
+def render_word_data(
+    manifest: dict[str, object],
+    version: str,
+    word_records: list[RangeRecord],
+    emoji_records: list[RangeRecord],
+) -> str:
+    if len(WORD_BREAK_PROPERTIES) > 0x20:
+        raise DataError(
+            "Word_Break private IDs no longer fit in the reserved five-bit field"
+        )
+    private_ids = {value: index for index, value in enumerate(WORD_BREAK_PROPERTIES)}
+    encoded = bytearray((private_ids["Other"],)) * (MAX_CODE_POINT + 1)
+    for record in word_records:
+        value = private_ids[record.property]
+        encoded[record.start : record.end + 1] = bytes((value,)) * (
+            record.end - record.start + 1
+        )
+    for record in _ranges_for(emoji_records, "Extended_Pictographic"):
+        for code_point in range(record.start, record.end + 1):
+            encoded[code_point] |= 0x20
+
+    paged = _selected_paged_bytes(encoded, manifest=manifest, generator="word-data")
+    page_size = 1 << paged.page_bits
+    ascii_expression = _ascii_value_expression(encoded, default=private_ids["Other"])
+    matches = "\n".join(
+        f"        {private_id} => {value}"
+        for value, private_id in private_ids.items()
+    )
+    return (
+        f"## GENERATED from Unicode {version} Word_Break and Extended_Pictographic. "
+        "Run `python3 scripts/unicode_data.py generate`. ##\n"
+        "## Word-break IDs and the extended-pictographic flag bit are private storage identities. ##\n"
+        f"## layout: {len(paged.page_index)} {paged.index_type} page ids + {len(paged.pages)} x {page_size} U8 values;"
+        f" logical payload {paged.storage_bytes} bytes. ##\n\n"
+        "InternalWordData :: [].{\n"
+        f"    WordBreak : [{', '.join(WORD_BREAK_PROPERTIES)}]\n"
+        "    Props : { word_break : WordBreak, extended_pictographic : Bool }\n\n"
+        "    lookup : U32 -> Props\n"
+        "    lookup = |scalar| {\n"
+        "        value = if scalar < 128 {\n"
+        "            ascii_value(scalar)\n"
+        "        } else if scalar > 0x10FFFF {\n"
+        f"            {private_ids['Other']}\n"
+        "        } else {\n"
+        f"            page_id = page_index.get(scalar.shr_wrap({paged.page_bits}).to_u64()) ?? 0\n"
+        f"            offset = page_id.to_u64() * {page_size} + scalar.bitwise_and({page_size - 1}).to_u64()\n"
+        f"            pages.get(offset) ?? {private_ids['Other']}\n"
+        "        }\n\n"
+        "        {\n"
+        "            word_break: word_break_from_u8(value.bitwise_and(0x1F)),\n"
+        "            extended_pictographic: value.bitwise_and(0x20) != 0,\n"
+        "        }\n"
+        "    }\n"
+        "}\n\n"
+        "ascii_value : U32 -> U8\n"
+        f"ascii_value = |u32| {ascii_expression}\n\n"
+        "word_break_from_u8 : U8 -> InternalWordData.WordBreak\n"
+        "word_break_from_u8 = |value| {\n"
+        "    match value {\n"
+        f"{matches}\n"
+        "        _ => Other\n"
         "    }\n"
         "}\n\n"
         f"page_index : List({paged.index_type})\n"
@@ -4871,6 +5081,7 @@ def render_unicode_version(version: str) -> str:
 def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
     properties = load_property_data(manifest)
     gcb = list(properties.grapheme.records)
+    word_break = list(properties.word_break.records)
     eaw = list(properties.east_asian_width.records)
     emoji = list(properties.emoji.records)
     incb = list(properties.indic_conjunct_break.records)
@@ -4893,6 +5104,7 @@ def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
         "unicode-version": lambda: render_unicode_version(version),
         "grapheme-data": lambda: render_grapheme_data(manifest, version, gcb, incb, emoji),
         "legacy-grapheme-break": lambda: render_gcb(version, gcb),
+        "word-data": lambda: render_word_data(manifest, version, word_break, emoji),
         "east-asian-width": lambda: render_eaw(
             version, eaw, properties.east_asian_width.defaults
         ),
@@ -5041,6 +5253,7 @@ def validate_all(manifest: dict[str, object]) -> None:
     load_public_properties(manifest, canonical)
     load_script_properties(manifest)
     parse_grapheme_tests(manifest)
+    parse_word_break_tests(manifest)
     parse_line_break_tests(manifest)
     sum(1 for _ in parse_bidi_tests(manifest))
     sum(1 for _ in parse_bidi_character_tests(manifest))

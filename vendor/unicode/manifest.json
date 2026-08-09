@@ -148,6 +148,33 @@
       "format": "uax-29-test",
       "properties": []
     },
+    "word_break_property": {
+      "path": "vendor/unicode/17.0.0/WordBreakProperty.txt",
+      "url": "https://www.unicode.org/Public/17.0.0/ucd/auxiliary/WordBreakProperty.txt",
+      "sha256": "72274cac1e6b919507db35655c3e175aa27274668a1ece95c28d2069f2ad9852",
+      "header": "# WordBreakProperty-17.0.0.txt",
+      "records": 1432,
+      "role": "production-and-conformance",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "ucd-property-ranges",
+      "properties": ["Word_Break"]
+    },
+    "word_break_test": {
+      "path": "vendor/unicode/17.0.0/WordBreakTest.txt",
+      "url": "https://www.unicode.org/Public/17.0.0/ucd/auxiliary/WordBreakTest.txt",
+      "sha256": "1de23a75f37904abc7d206239ee8d34f8fdf0fb4ab32a7174dfbabbde25419b2",
+      "header": "# WordBreakTest-17.0.0.txt",
+      "records": 1944,
+      "cases": 1944,
+      "role": "conformance",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "uax-29-word-test",
+      "properties": []
+    },
     "emoji_data": {
       "path": "vendor/unicode/17.0.0/emoji-data.txt",
       "url": "https://www.unicode.org/Public/17.0.0/ucd/emoji/emoji-data.txt",
@@ -520,6 +547,25 @@
         "expected_distinct_pages": 164,
         "expected_logical_bytes": 29696,
         "max_logical_bytes": 29696,
+        "ascii": "computed"
+      }
+    },
+    "word_data": {
+      "generator": "word-data",
+      "output": "package/InternalWordData.roc",
+      "sources": ["word_break_property", "emoji_data"],
+      "specifications": ["uax_29", "uts_51"],
+      "artifacts": [],
+      "layout": {
+        "kind": "deduplicated-pages",
+        "candidate_page_bits": [6, 7, 8, 9, 10],
+        "page_bits": 7,
+        "index_type": "U8",
+        "value_type": "U8",
+        "expected_index_entries": 8704,
+        "expected_distinct_pages": 225,
+        "expected_logical_bytes": 37504,
+        "max_logical_bytes": 37504,
         "ascii": "computed"
       }
     },
