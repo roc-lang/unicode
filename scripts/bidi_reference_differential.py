@@ -13,6 +13,8 @@ import tempfile
 import urllib.request
 from pathlib import Path
 
+from bidi_reduce import capture, minimize
+
 
 ROOT = Path(__file__).resolve().parents[1]
 CODE9_ROOT = "https://www.unicode.org/Public/PROGRAMS/BidiReferenceC/17.0.0/"
@@ -124,7 +126,16 @@ def code9_results(binary: Path, data_directory: Path, rows: list[tuple[str, str,
     return output
 
 
-def run_candidate(candidate: Path, rows: list[tuple[str, str, int]], expected: list[tuple[int, str, str]]) -> None:
+def candidate_error(candidate: Path, row: tuple[str, str, int], oracle: tuple[int, str, str]) -> str | None:
+    case_id, codepoints, mode = row
+    one = f"{case_id}\t{codepoints}\t{mode}\t{oracle[0]}\t{oracle[1]}\t{oracle[2]}"
+    completed = subprocess.run([str(candidate)], cwd=ROOT, input=f"ROC_UNICODE_TEST_V1\tbidi-character-test\t1\n{one}\n", text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if completed.returncode == 0 and completed.stdout.strip() == "PASS\tbidi-character-test\t1":
+        return None
+    return f"roc_stdout={completed.stdout.strip()!r}, roc_stderr={completed.stderr.strip()!r}"
+
+
+def run_candidate(candidate: Path, rows: list[tuple[str, str, int]], expected: list[tuple[int, str, str]], reference: Path, data_directory: Path) -> None:
     # Code9's direction encoding is already BidiCharacterTest's LTR/RTL/Auto order.
     protocol_rows = [f"{case_id}\t{codepoints}\t{mode}\t{level}\t{levels}\t{order}" for (case_id, codepoints, mode), (level, levels, order) in zip(rows, expected, strict=True)]
     payload = "ROC_UNICODE_TEST_V1\tbidi-character-test\t{}\n{}\n".format(len(protocol_rows), "\n".join(protocol_rows))
@@ -136,14 +147,21 @@ def run_candidate(candidate: Path, rows: list[tuple[str, str, int]], expected: l
         # and Roc app's exact expected/actual diagnostic.
         for row, oracle in zip(rows, expected, strict=True):
             case_id, codepoints, mode = row
-            one = f"{case_id}\t{codepoints}\t{mode}\t{oracle[0]}\t{oracle[1]}\t{oracle[2]}"
-            one_payload = f"ROC_UNICODE_TEST_V1\tbidi-character-test\t1\n{one}\n"
-            isolated = subprocess.run([str(candidate)], cwd=ROOT, input=one_payload, text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            if isolated.returncode != 0 or isolated.stdout.strip() != "PASS\tbidi-character-test\t1":
+            actual = candidate_error(candidate, row, oracle)
+            if actual is not None:
+                values = codepoints.split(",")
+                def reproduces(parts: list[str]) -> bool:
+                    candidate_row = (case_id, ",".join(parts), mode)
+                    candidate_oracle = code9_results(reference, data_directory, [candidate_row])[0]
+                    return candidate_error(candidate, candidate_row, candidate_oracle) is not None
+                reduced = minimize(values, reproduces)
+                reduced_row = (case_id, ",".join(reduced), mode)
+                reduced_oracle = code9_results(reference, data_directory, [reduced_row])[0]
+                path = capture(f"code9-{case_id.rsplit('-', 1)[-1]}.tsv", f"# import with suite bidi-character-test; seed case {case_id}\n{case_id}\t{reduced_row[1]}\t{mode}\t{reduced_oracle[0]}\t{reduced_oracle[1]}\t{reduced_oracle[2]}\n")
                 raise RuntimeError(
                     "Roc/Code9 differential mismatch: "
-                    f"case={case_id}, mode={mode}, scalars={codepoints}, code9={oracle}, "
-                    f"roc_stdout={isolated.stdout.strip()!r}, roc_stderr={isolated.stderr.strip()!r}"
+                    f"case={case_id}, mode={mode}, scalars={codepoints}, code9={oracle}, {actual}; "
+                    f"minimized={reduced_row}, minimized-code9={reduced_oracle}, regression-artifact={path.relative_to(ROOT)}"
                 )
         raise RuntimeError(f"Roc/Code9 differential batch protocol failure: stdout={completed.stdout.strip()!r}, stderr={completed.stderr.strip()!r}")
 
@@ -165,7 +183,8 @@ def main() -> int:
             directory = Path(temporary)
             reference = build_code9(directory)
             generated = cases(args.seed, args.cases)
-            run_candidate(args.candidate, generated, code9_results(reference, directory / "data", generated))
+            data_directory = directory / "data"
+            run_candidate(args.candidate, generated, code9_results(reference, data_directory, generated), reference, data_directory)
     except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
         print(f"error: {error}", file=__import__("sys").stderr)
         return 1

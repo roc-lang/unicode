@@ -36,6 +36,7 @@ from unicode_data import (
     release_version,
     validate_all,
 )
+from bidi_reduce import capture, minimize
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -362,7 +363,19 @@ def isolate_failure(binary: Path, suite: str, rows: Sequence[str], timeout: int)
     if len(rows) == 1:
         case_id = rows[0].split("\t", 1)[0]
         if suite == "bidi-metamorphic":
-            return f"{case_id}: {error}; deterministic input={rows[0]!r}"
+            fields = rows[0].split("\t")
+            values = fields[1].split(",")
+            signature = error.split(";", 1)[0]
+
+            def reproduces(candidate: list[str]) -> bool:
+                candidate_row = "\t".join([fields[0], ",".join(candidate), fields[2]])
+                retry = invoke_app(binary, suite, [candidate_row], timeout)
+                return retry is not None and retry.split(";", 1)[0] == signature
+
+            reduced = minimize(values, reproduces)
+            reduced_row = "\t".join([fields[0], ",".join(reduced), fields[2]])
+            path = capture(f"bidi-metamorphic-{case_id.rsplit(':', 1)[-1]}.tsv", f"# import with suite bidi-metamorphic\n{reduced_row}\n")
+            return f"{case_id}: {error}; minimized={reduced_row!r}; regression-artifact={path.relative_to(ROOT)}"
         return f"{case_id}: {error}"
     midpoint = len(rows) // 2
     left = rows[:midpoint]

@@ -28,3 +28,7 @@ The script verifies the Roc compiler against `.roc-version`; a failed download,
 checksum, compile, or mismatch fails the job. The source is not vendored, so
 the scheduled run remains auditable against Unicode's published release while
 keeping the repository's canonical UCD data as its local source of truth.
+On a seeded or differential failure, CI uploads a `bidi-regressions` artifact
+containing the minimized tab-separated row. Re-run it by placing that row after
+a `ROC_UNICODE_TEST_V1` header for its documented suite, or promote the row to
+the adjacent Bidi test fixture after review.
