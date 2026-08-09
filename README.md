@@ -173,6 +173,25 @@ position (or absent for X9-removed controls). This intentionally makes the
 forward mapping directly usable against retained source coordinates while the
 inverse stays compact for the requested line.
 
+## Word segmentation and case mapping
+
+Word segmentation implements the un-tailored Unicode 17.0.0 UAX #29 word
+boundary rules. `Word.iter_ranges` and `Word.ranges` return every nonempty
+UTF-8 range between boundaries (including whitespace and punctuation), while
+`Word.Cursor` carries the same bounded transition across scalar-aligned `Str`
+chunks and must be explicitly finished. Ranges partition the original source;
+`slices` retains seamless views and `owned` copies selected text.
+
+`Case` implements Unicode 17.0.0 full lowercase, uppercase, and technical R3
+titlecase mappings. The default profile is locale-independent; `Turkic` and
+`Lithuanian` are explicit profiles, never ambient locale choices. Folding has
+explicit full, simple, Turkic-full, and Turkic-simple profiles. Every
+successful Case result owns its transformed `Str` and one source-mapping fact
+per input scalar, with byte/scalar ranges, shape, and contextual provenance.
+Case mapping never normalizes before or after conversion. Callers provide
+explicit input, output, scalar, and fact limits; a limit error is typed and
+atomic rather than a partial result.
+
 ## Scripts and shaping-oriented itemization
 
 `Script` exposes Unicode 17's normative `Script` and `Script_Extensions`
@@ -250,14 +269,22 @@ unrecognized fails the suite.
 ROC=roc scripts/all_tests.sh
 python3 scripts/test.py grapheme
 python3 scripts/test.py line-break --jobs 8
+python3 scripts/test.py word --jobs 8
+python3 scripts/test.py case --jobs 8
+python3 scripts/test_case_icu.py --download
 python3 scripts/test.py properties --jobs 8
 python3 scripts/test.py allocations
 python3 scripts/test_bundle_examples.py
 ```
 
-The grapheme suite covers all 766 official Unicode 17 conformance cases, and
-the line-break suite covers all 19,338 official Unicode 17 cases through both
-complete-string and one-scalar-per-chunk paths. The property suite covers every
+The grapheme suite covers all 766 official Unicode 17 conformance cases, the
+line-break suite covers all 19,338 official Unicode 17 cases through both
+complete-string and one-scalar-per-chunk paths, and the word suite covers all
+1,944 official Unicode 17 cases through complete and scalar-aligned chunked
+paths. The Case suite covers 11,416 deterministic Unicode 17 oracle cases:
+all simple mappings, all SpecialCasing witnesses and controls, all CaseFolding
+records under every public fold profile, and focused source-fact, R3,
+no-normalization, context, supplementary, and exact-limit checks. The property suite covers every
 valid Unicode scalar for grapheme-break, East-Asian-width, and emoji
 properties. A separate allocation harness records the package's allocation
 behavior. Its Linux x64 counts are exact measurements
@@ -265,6 +292,18 @@ for the compiler in `.roc-version`: when an intentional implementation change
 alters them, rerun `scripts/test.py allocations` with that pinned compiler and
 review the measured fixture counts before updating the adjacent baseline file.
 The runner never updates or silently accepts a new allocation baseline.
+`scripts/test_case_icu.py` is an opt-in differential gate against ICU4J 78.3
+(Unicode 17). It is deliberately outside the offline default suite: provide a
+verified `ICU4J_JAR`, or pass `--download` to cache the pinned Maven artifact
+under `.roc-unicode-tmp/case-icu`. It compares lower/upper/title under root,
+Turkic, and Lithuanian locales plus default full folding over every pinned case
+mapping source and focused context strings. ICU4J exposes an exact full-fold
+oracle here; it does not provide this package's C+S simple-fold contract, so
+simple profiles remain covered by the independent pinned-data oracle. ICU title uses its word-break
+iterator rather than Core R3: the gate explicitly reports its known isolated
+U+0345 and leading-number word-title non-comparisons, then treats every other
+observed result mismatch as a failure rather than silently accepting a locale
+or boundary difference.
 Hand-authored package modules and all examples are gated by `roc fmt --check`.
 Compact generated Unicode modules remain byte-for-byte governed by
 `python3 scripts/unicode_data.py generate --check`; running the formatter over

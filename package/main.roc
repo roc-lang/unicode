@@ -5,6 +5,7 @@ package
 		BidiClass,
 		BidiProperties,
 		CanonicalCombiningClass,
+		Case,
 		CodePoint,
 		EastAsianWidth,
 		Emoji,
@@ -25,5 +26,6 @@ package
 		UnicodeVersion,
 		Utf8,
 		VerticalOrientation,
+		Word,
 	]
 	{}

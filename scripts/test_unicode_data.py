@@ -192,6 +192,208 @@ class UnicodeDataTests(unittest.TestCase):
                 properties=unicode_data.EMOJI_PROPERTIES,
             )
 
+    def test_word_break_data_and_generated_view_are_pinned(self) -> None:
+        manifest = unicode_data.load_manifest()
+        properties = unicode_data.load_property_data(manifest)
+        self.assertEqual(len(properties.word_break.defaults), 1)
+        default = properties.word_break.defaults[0]
+        self.assertEqual(
+            (default.start, default.end, default.property, default.value),
+            (0, unicode_data.MAX_CODE_POINT, "Word_Break", "Other"),
+        )
+        self.assertEqual(
+            {record.property for record in properties.word_break.records},
+            set(unicode_data.WORD_BREAK_PROPERTIES[1:]),
+        )
+        self.assertEqual(len(properties.word_break.records), 1432)
+        cases = unicode_data.parse_word_break_tests(manifest)
+        self.assertEqual(len(cases), 1944)
+        self.assertEqual(cases[0].break_offsets, (0, 1, 2))
+        self.assertIn("3.0", cases[2].rules)
+        generated = unicode_data.rendered_modules(manifest)[
+            unicode_data.ROOT / "package" / "InternalWordData.roc"
+        ]
+        self.assertIn("InternalWordData :: [].{", generated)
+        self.assertIn("extended_pictographic : Bool", generated)
+        self.assertIn("WordBreak : [Other, CR, LF, Newline", generated)
+
+    def test_word_break_renderer_rejects_private_id_overflow(self) -> None:
+        manifest = unicode_data.load_manifest()
+        properties = unicode_data.load_property_data(manifest)
+        overflowed_properties = unicode_data.WORD_BREAK_PROPERTIES + tuple(
+            f"Synthetic_{index}" for index in range(14)
+        )
+        with (
+            mock.patch.object(
+                unicode_data, "WORD_BREAK_PROPERTIES", overflowed_properties
+            ),
+            self.assertRaisesRegex(
+                unicode_data.DataError, "reserved five-bit field"
+            ),
+        ):
+            unicode_data.render_word_data(
+                manifest,
+                unicode_data.release_version(manifest, "unicode"),
+                list(properties.word_break.records),
+                list(properties.emoji.records),
+            )
+
+    def test_case_data_parsers_and_generated_view_are_pinned(self) -> None:
+        manifest = unicode_data.load_manifest()
+        canonical = unicode_data.load_canonical_properties(manifest)
+        case = unicode_data.load_case_data(manifest, canonical)
+        self.assertEqual(len(case.special), 119)
+        self.assertEqual(len(case.folding), 1618)
+        self.assertTrue(case.simple_upper and case.simple_lower and case.simple_title)
+        generated = unicode_data.rendered_modules(manifest)[
+            unicode_data.ROOT / "package" / "InternalCaseData.roc"
+        ]
+        self.assertIn("InternalCaseData :: [].{", generated)
+        self.assertIn("case_ignorable : Bool", generated)
+        self.assertIn("FoldStatus : [Common, Full, Simple, Turkic]", generated)
+        self.assertIn("lower: []", generated)
+        self.assertIn("logical non-page payload 72774 bytes", generated)
+
+        equivalent_turkic = unicode_data.parse_special_casing(
+            "0049; 0131; 0049; 0049; tr lt Not_Before_Dot;\n"
+            "0049; 0131; 0049; 0049; az lt Not_Before_Dot;\n",
+            source="case-test",
+        )
+        self.assertEqual(len(equivalent_turkic), 2)
+        for divergent in (
+            "0049; 0131; 0049; 0049; tr lt Not_Before_Dot;\n"
+            "0049; 0069; 0049; 0049; az lt Not_Before_Dot;\n",
+        ):
+            with self.assertRaisesRegex(unicode_data.DataError, "equal-specificity"):
+                unicode_data.parse_special_casing(divergent, source="case-test")
+
+        # The runtime specificity is the number of language and context
+        # predicates, so a `tr` row with one context (2) wins deterministically
+        # over a `tr az` row with one context (3).
+        self.assertEqual(
+            len(unicode_data.parse_special_casing(
+                "0049; 0131; 0049; 0049; tr Not_Before_Dot;\n"
+                "0049; 0069; 0049; 0049; tr az Not_Before_Dot;\n",
+                source="case-test",
+            )),
+            2,
+        )
+
+        # A language-free row is a fallback for Turkic too. At equal
+        # specificity its potentially overlapping mapping must agree.
+        with self.assertRaisesRegex(unicode_data.DataError, "equal-specificity"):
+            unicode_data.parse_special_casing(
+                "0049; 0131; 0049; 0049; After_I More_Above;\n"
+                "0049; 0069; 0049; 0049; tr Not_Before_Dot;\n",
+                source="case-test",
+            )
+
+        self.assertEqual(
+            len(unicode_data.parse_special_casing(
+                "0049; 0131; 0049; 0049; tr Before_Dot;\n"
+                "0049; 0131; 0049; 0049; az After_I;\n",
+                source="case-test",
+            )),
+            2,
+        )
+        for divergent_contexts in (
+            "0049; 0131; 0049; 0049; tr Before_Dot;\n"
+            "0049; 0069; 0049; 0049; az After_I;\n",
+        ):
+            with self.assertRaisesRegex(unicode_data.DataError, "equal-specificity"):
+                unicode_data.parse_special_casing(divergent_contexts, source="case-test")
+        self.assertEqual(
+            len(unicode_data.parse_special_casing(
+                "0049; 0131; 0049; 0049; tr Before_Dot;\n"
+                "0049; 0069; 0049; 0049; az Not_Before_Dot;\n",
+                source="case-test",
+            )),
+            2,
+        )
+        self.assertEqual(
+            len(unicode_data.parse_special_casing(
+                "0049; 0069; 0049; 0049;\n"
+                "0049; 0131; 0049; 0049; tr;\n",
+                source="case-test",
+            )),
+            2,
+        )
+        self.assertEqual(
+            len(unicode_data.parse_special_casing(
+                "0049; 0131; 0049; 0049; tr Before_Dot;\n"
+                "0049; 0069; 0049; 0049; az Before_Dot More_Above;\n",
+                source="case-test",
+            )),
+            2,
+        )
+
+        constrained = json.loads(json.dumps(manifest))
+        constrained["artifacts"]["case_data"]["layout"]["max_total_bytes"] -= 1
+        with self.assertRaisesRegex(unicode_data.DataError, "total byte budget"):
+            unicode_data.render_case_data(
+                constrained,
+                unicode_data.release_version(manifest, "unicode"),
+                canonical,
+                case,
+            )
+
+        for parser, text, message in (
+            (unicode_data.parse_special_casing, "0041; 0061; 0041; 0041; xx;\n", "unknown SpecialCasing condition"),
+            (unicode_data.parse_special_casing, "D800; 0061; 0041; 0041;\n", "non-scalar SpecialCasing source"),
+            (unicode_data.parse_case_folding, "0041; X; 0061;\n", "malformed CaseFolding"),
+            (unicode_data.parse_case_folding, "0041; C; D800;\n", "non-scalar case mapping endpoint"),
+            (unicode_data.parse_case_folding, "0041; C; 0061;\n0041; C; 0061;\n", "duplicate or conflicting"),
+        ):
+            with self.subTest(text=text):
+                with self.assertRaisesRegex(unicode_data.DataError, message):
+                    parser(text, source="case-test")
+
+    def test_word_break_loaders_reject_default_property_and_test_drift(self) -> None:
+        manifest = unicode_data.load_manifest()
+        verified_source = unicode_data.verify_source
+        original = verified_source(manifest, "word_break_property")
+        mutations = (
+            original.replace(
+                "# @missing: 0000..10FFFF; Other",
+                "# @missing: 0000..10FFFF; Extend",
+            ),
+            original.replace(
+                "0022          ; Double_Quote",
+                "0022          ; Unknown_Word_Break",
+            ),
+            original + "\n0041; ALetter\n",
+        )
+        for mutated in mutations:
+            with self.subTest(mutation=mutated[-80:]):
+                def verify_with_mutation(
+                    loaded_manifest: dict[str, object], loaded_source: str
+                ) -> str:
+                    if loaded_source == "word_break_property":
+                        return mutated
+                    return verified_source(loaded_manifest, loaded_source)
+
+                with (
+                    mock.patch.object(
+                        unicode_data, "verify_source", side_effect=verify_with_mutation
+                    ),
+                    self.assertRaisesRegex(
+                        unicode_data.DataError,
+                        "formal full-domain default|unknown property|range overlaps",
+                    ),
+                ):
+                    unicode_data.load_property_data(manifest)
+
+        with self.assertRaisesRegex(
+            unicode_data.DataError, "expected 3 boundary rules, got 2"
+        ):
+            unicode_data.parse_word_break_tests(
+                manifest, "÷ 0041 × 0042 ÷ # [0.2] [999.0]\n"
+            )
+        with self.assertRaisesRegex(unicode_data.DataError, "invalid scalar"):
+            unicode_data.parse_word_break_tests(
+                manifest, "÷ 110000 ÷ # [0.2] [0.3]\n"
+            )
+
     def test_bidi_default_cascade_rejects_value_drift_and_duplicates(self) -> None:
         manifest = unicode_data.load_manifest()
         canonical = unicode_data.load_canonical_properties(manifest)
