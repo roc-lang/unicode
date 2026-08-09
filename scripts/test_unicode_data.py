@@ -254,6 +254,79 @@ class UnicodeDataTests(unittest.TestCase):
         self.assertIn("lower: []", generated)
         self.assertIn("logical non-page payload 72774 bytes", generated)
 
+        equivalent_turkic = unicode_data.parse_special_casing(
+            "0049; 0131; 0049; 0049; tr lt Not_Before_Dot;\n"
+            "0049; 0131; 0049; 0049; az lt Not_Before_Dot;\n",
+            source="case-test",
+        )
+        self.assertEqual(len(equivalent_turkic), 2)
+        for divergent in (
+            "0049; 0131; 0049; 0049; tr lt Not_Before_Dot;\n"
+            "0049; 0069; 0049; 0049; az lt Not_Before_Dot;\n",
+        ):
+            with self.assertRaisesRegex(unicode_data.DataError, "equal-specificity"):
+                unicode_data.parse_special_casing(divergent, source="case-test")
+
+        # The runtime specificity is the number of language and context
+        # predicates, so a `tr` row with one context (2) wins deterministically
+        # over a `tr az` row with one context (3).
+        self.assertEqual(
+            len(unicode_data.parse_special_casing(
+                "0049; 0131; 0049; 0049; tr Not_Before_Dot;\n"
+                "0049; 0069; 0049; 0049; tr az Not_Before_Dot;\n",
+                source="case-test",
+            )),
+            2,
+        )
+
+        # A language-free row is a fallback for Turkic too. At equal
+        # specificity its potentially overlapping mapping must agree.
+        with self.assertRaisesRegex(unicode_data.DataError, "equal-specificity"):
+            unicode_data.parse_special_casing(
+                "0049; 0131; 0049; 0049; After_I More_Above;\n"
+                "0049; 0069; 0049; 0049; tr Not_Before_Dot;\n",
+                source="case-test",
+            )
+
+        self.assertEqual(
+            len(unicode_data.parse_special_casing(
+                "0049; 0131; 0049; 0049; tr Before_Dot;\n"
+                "0049; 0131; 0049; 0049; az After_I;\n",
+                source="case-test",
+            )),
+            2,
+        )
+        for divergent_contexts in (
+            "0049; 0131; 0049; 0049; tr Before_Dot;\n"
+            "0049; 0069; 0049; 0049; az After_I;\n",
+        ):
+            with self.assertRaisesRegex(unicode_data.DataError, "equal-specificity"):
+                unicode_data.parse_special_casing(divergent_contexts, source="case-test")
+        self.assertEqual(
+            len(unicode_data.parse_special_casing(
+                "0049; 0131; 0049; 0049; tr Before_Dot;\n"
+                "0049; 0069; 0049; 0049; az Not_Before_Dot;\n",
+                source="case-test",
+            )),
+            2,
+        )
+        self.assertEqual(
+            len(unicode_data.parse_special_casing(
+                "0049; 0069; 0049; 0049;\n"
+                "0049; 0131; 0049; 0049; tr;\n",
+                source="case-test",
+            )),
+            2,
+        )
+        self.assertEqual(
+            len(unicode_data.parse_special_casing(
+                "0049; 0131; 0049; 0049; tr Before_Dot;\n"
+                "0049; 0069; 0049; 0049; az Before_Dot More_Above;\n",
+                source="case-test",
+            )),
+            2,
+        )
+
         constrained = json.loads(json.dumps(manifest))
         constrained["artifacts"]["case_data"]["layout"]["max_total_bytes"] -= 1
         with self.assertRaisesRegex(unicode_data.DataError, "total byte budget"):

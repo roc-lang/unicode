@@ -2333,6 +2333,56 @@ def parse_special_casing(text: str, *, source: str) -> tuple[SpecialCaseMapping,
         )
     if not records:
         raise DataError(f"{source}: no SpecialCasing records")
+    def matched_profiles(languages: tuple[str, ...]) -> frozenset[str]:
+        if not languages:
+            # The default language-free row is the fallback for every
+            # exposed runtime profile, rather than a separate profile.
+            return frozenset(("UnicodeDefault", "Turkic", "Lithuanian"))
+        profiles = set()
+        if any(language in ("az", "tr") for language in languages):
+            profiles.add("Turkic")
+        if "lt" in languages:
+            profiles.add("Lithuanian")
+        return frozenset(profiles)
+
+    def contexts_are_provably_disjoint(
+        left: tuple[str, ...], right: tuple[str, ...]
+    ) -> bool:
+        # Conditions are conjunctions. This is the sole contradiction the
+        # runtime's named condition vocabulary can establish without solving
+        # the remaining context predicates: a position cannot be both before
+        # and not before a dot. Every other unequal pair is conservatively
+        # treated as potentially applicable together.
+        return (
+            ("Before_Dot" in left and "Not_Before_Dot" in right)
+            or ("Not_Before_Dot" in left and "Before_Dot" in right)
+        )
+
+    by_source: dict[int, list[SpecialCaseMapping]] = {}
+    for record in records:
+        mappings = (record.lower, record.title, record.upper)
+        peers = by_source.setdefault(record.source, [])
+        for previous in peers:
+            # Do not attempt predicate satisfiability here. Apart from the
+            # one explicit contradiction above, equal-specificity rules for
+            # one exposed profile must be equivalent; a future UCD change
+            # that needs a finer distinction must add explicit policy.
+            # This is the runtime precedence metric, not merely a category
+            # for language qualification: every language and every context
+            # condition contributes one unit.
+            previous_specificity = len(previous.languages) + len(previous.contexts)
+            specificity = len(record.languages) + len(record.contexts)
+            if previous_specificity != specificity:
+                continue
+            if (
+                matched_profiles(previous.languages) & matched_profiles(record.languages)
+                and not contexts_are_provably_disjoint(previous.contexts, record.contexts)
+            ):
+                if (previous.lower, previous.title, previous.upper) != mappings:
+                    raise DataError(
+                        f"{source}:{record.line}: conflicting equal-specificity SpecialCasing mappings overlap one exposed profile"
+                    )
+        peers.append(record)
     return tuple(records)
 
 
