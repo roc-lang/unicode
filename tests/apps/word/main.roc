@@ -47,6 +47,17 @@ run_focused = |_runtime_seed| {
 	verify_complete("WB3d WSegSpace", "  ", [0, 2])?
 	verify_cursor_chunks("WB3d empty and multi chunk cursor", ["", " ", "", " ", ""], [0, 2])?
 
+	# Exercise the complete and chunked block-fed paths at deterministic
+	# boundaries. The expected one-range shape makes dropped or duplicated
+	# per-lane emissions immediately visible as the work scales by blocks.
+	ascii_block = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+	ascii_two_blocks = Str.join_with([ascii_block, ascii_block], "")
+	verify_complete("ASCII block work 64", ascii_block, [0, 64])?
+	verify_complete("ASCII block work 128", ascii_two_blocks, [0, 128])?
+	verify_cursor_chunks("ASCII block cursor scaling", [ascii_block, ascii_block], [0, 128])?
+	context_block = Str.join_with(["aaaaaaaaaaaaaaa:", ascii_block], "")
+	verify_complete("ASCII block pending context", context_block, [0, 80])?
+
 	ri = source_from_code_points([0x1F1E6, 0x1F1E7, 0x1F1E8])?
 	verify_complete("WB15/WB16 regional indicators", ri, [0, 8, 12])?
 

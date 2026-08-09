@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "platform": "roc-platform-template-zig-1.1.0+alloc-count",
   "target": "x64musl",
   "optimize": "speed",
@@ -10,5 +10,52 @@
     "regional-indicator": 1,
     "emoji-zwj": 1,
     "long": 193
+  },
+  "word": {
+    "iterator": {
+      "empty": 1,
+      "ascii": 1,
+      "combining": 1,
+      "regional-indicator": 1,
+      "emoji-zwj": 1,
+      "long": 1,
+      "segmented": 1
+    },
+    "cursor": {
+      "empty": 1,
+      "ascii": 1,
+      "combining": 1,
+      "regional-indicator": 1,
+      "emoji-zwj": 1,
+      "long": 1,
+      "segmented": 1
+    },
+    "ranges": {
+      "empty": 1,
+      "ascii": 2,
+      "combining": 2,
+      "regional-indicator": 2,
+      "emoji-zwj": 2,
+      "long": 2,
+      "segmented": 2
+    },
+    "slices": {
+      "empty": 1,
+      "ascii": 3,
+      "combining": 3,
+      "regional-indicator": 3,
+      "emoji-zwj": 3,
+      "long": 3,
+      "segmented": 3
+    },
+    "owned": {
+      "empty": 1,
+      "ascii": 4,
+      "combining": 4,
+      "regional-indicator": 4,
+      "emoji-zwj": 4,
+      "long": 4,
+      "segmented": 6
+    }
   }
 }

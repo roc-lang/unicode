@@ -255,9 +255,11 @@ python3 scripts/test.py allocations
 python3 scripts/test_bundle_examples.py
 ```
 
-The grapheme suite covers all 766 official Unicode 17 conformance cases, and
-the line-break suite covers all 19,338 official Unicode 17 cases through both
-complete-string and one-scalar-per-chunk paths. The property suite covers every
+The grapheme suite covers all 766 official Unicode 17 conformance cases, the
+line-break suite covers all 19,338 official Unicode 17 cases through both
+complete-string and one-scalar-per-chunk paths, and the word suite covers all
+1,944 official Unicode 17 cases through complete and scalar-aligned chunked
+paths. The property suite covers every
 valid Unicode scalar for grapheme-break, East-Asian-width, and emoji
 properties. A separate allocation harness records the package's allocation
 behavior. Its Linux x64 counts are exact measurements

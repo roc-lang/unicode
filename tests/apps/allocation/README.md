@@ -23,3 +23,8 @@ numeric signature without collecting them. Its required allocation count is
 zero across the shared empty, ASCII, combining, regional-indicator, emoji-ZWJ,
 and long fixtures. This verifies the streaming core independently of the
 materializing convenience APIs.
+
+The `allocation-word-*` suites record exact Linux x64 counts for lazy
+iteration, cursor folding, range collection, seamless slices, and owned text.
+They share the Unicode-shaped fixtures above and add a multi-segment input, so
+the baseline observes both bounded streaming state and materializer growth.

@@ -7,10 +7,12 @@ app [run!] {
 import pf.Host
 import test_unicode.TestPropertyAliases
 import unicode.Bidi
+import unicode.ByteRange
 import unicode.Grapheme
 import unicode.LineBreak
 import unicode.TextPosition
 import unicode.TextRange
+import unicode.Word
 
 run! : Str => Str
 run! = |input| {
@@ -105,6 +107,20 @@ run_case! = |suite, line| {
 								Ok({})
 							} else {
 								Err({ case_id, message: "expected ${expectation} allocations, got ${allocations.to_str()}" })
+							}
+						} else if suite.starts_with("allocation-word-") {
+							before = Host.alloc_count!({})
+							signature = word_signature(suite, str)
+							after = Host.alloc_count!({})
+							allocations = after - before
+							expected = U64.from_str(expectation) ?? 18446744073709551615
+
+							if signature == 0 {
+								Err({ case_id, message: "word probe failed or was optimized away" })
+							} else if allocations == expected {
+								Ok({})
+							} else {
+								Err({ case_id, message: "expected ${expected.to_str()}, got ${allocations.to_str()} allocations" })
 							}
 						} else {
 							before = Host.alloc_count!({})
@@ -214,6 +230,48 @@ line_break_signature = |source| {
 		End(value) => value
 	}
 	finished.state.count + finished.state.weighted_offsets + 1
+}
+
+word_signature : Str, Str -> U64
+word_signature = |suite, source| {
+	if suite == "allocation-word-iterator" {
+		Word.iter_ranges(source).fold(1, add_range_signature)
+	} else if suite == "allocation-word-cursor" {
+		word_cursor_signature(source)
+	} else if suite == "allocation-word-ranges" {
+		Word.ranges(source).fold(1, add_range_signature)
+	} else if suite == "allocation-word-slices" {
+		Word.slices(source).fold(1, |sum, item| sum + item.count_utf8_bytes() + 1)
+	} else if suite == "allocation-word-owned" {
+		Word.owned(source).fold(1, |sum, item| sum + item.count_utf8_bytes() + 1)
+	} else {
+		0
+	}
+}
+
+add_range_signature : U64, ByteRange -> U64
+add_range_signature = |sum, range| sum + ByteRange.start(range) + ByteRange.end(range) + 1
+
+word_cursor_signature : Str -> U64
+word_cursor_signature = |source| {
+	pushed = match Word.Cursor.push(
+		Word.Cursor.init({}),
+		source,
+		1,
+		add_range_signature,
+	) {
+		Failed(_) => return 0
+		Pushed(value) => value
+	}
+	finished = match Word.Cursor.finish(
+		pushed.cursor,
+		pushed.state,
+		add_range_signature,
+	) {
+		Failed(_) => return 0
+		End(value) => value
+	}
+	finished.state
 }
 
 decode_hex = |hex| {

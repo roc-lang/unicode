@@ -51,6 +51,27 @@ InternalWord :: [].{
 	push : Machine, U32, U64 -> { machine : Machine, emissions : Emission }
 	push = |machine, scalar, byte_start| push_props(machine, InternalWordData.lookup(scalar), byte_start)
 
+	## Fold one proven all-ASCII vector through the same scalar transition core.
+	## This is only a decoding/looping fast path: every lane still enters `push`,
+	## preserving its exact state and per-boundary emissions.
+	fold_ascii_block : Machine, U8x16, U64, state, (state, ByteRange -> state) -> { machine : Machine, state : state }
+	fold_ascii_block = |initial_machine, vector, byte_start, initial, emit| {
+		var machine = initial_machine
+		var state = initial
+		var lane = 0.U64
+		while lane < 16 {
+			transition = InternalWord.push(
+				machine,
+				vector.get_lane(lane).to_u32(),
+				byte_start + lane,
+			)
+			machine = transition.machine
+			state = fold_emission(state, transition.emissions, emit)
+			lane = lane + 1
+		}
+		{ machine, state }
+	}
+
 	finish : Machine, U64 -> Emission
 	finish = |machine, byte_end| {
 		if !machine.started {
@@ -79,7 +100,7 @@ InternalWord :: [].{
 
 	fold_chunk : Machine, U64, Str, state, (state, ByteRange -> state) -> { machine : Machine, state : state }
 	fold_chunk = |machine, absolute_start, chunk, initial, emit| {
-		InternalUtf8.fold_scalars(
+		InternalUtf8.fold_with_ascii_blocks(
 			chunk,
 			{ machine, state: initial },
 			|fold, scalar, local_start, _local_end, _scalar_index| {
@@ -88,6 +109,15 @@ InternalWord :: [].{
 					machine: transition.machine,
 					state: fold_emission(fold.state, transition.emissions, emit),
 				}
+			},
+			|fold, vector, local_start, _local_scalar_index| {
+				InternalWord.fold_ascii_block(
+					fold.machine,
+					vector,
+					absolute_start + local_start,
+					fold.state,
+					emit,
+				)
 			},
 		)
 	}

@@ -7,6 +7,11 @@
     "allocation-line-break-cursor",
     "allocation-bidi-analysis",
     "allocation-bidi-scaling",
+    "allocation-word-iterator",
+    "allocation-word-cursor",
+    "allocation-word-ranges",
+    "allocation-word-slices",
+    "allocation-word-owned",
     "allocation-baselines"
   ],
   "timeout_seconds": 120,

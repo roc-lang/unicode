@@ -792,6 +792,19 @@ ALLOCATION_FIXTURES = {
     "emoji-zwj": "👩‍🚀",
     "long": "abc" * 512,
 }
+
+WORD_ALLOCATION_MODES = (
+    "iterator",
+    "cursor",
+    "ranges",
+    "slices",
+    "owned",
+)
+
+WORD_ALLOCATION_FIXTURES = {
+    **ALLOCATION_FIXTURES,
+    "segmented": "a a",
+}
 ALLOCATION_BIDI_FIXTURES = {
     "ltr": "The quick brown fox has 123 words.",
     "mixed": "abc אבג 123 العربية",
@@ -826,6 +839,11 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
         "allocation-line-break-cursor",
         "allocation-bidi-analysis",
         "allocation-bidi-scaling",
+        "allocation-word-iterator",
+        "allocation-word-cursor",
+        "allocation-word-ranges",
+        "allocation-word-slices",
+        "allocation-word-owned",
         "allocation-baselines",
     ]:
         raise TestFailure("allocation spec suites have drifted")
@@ -857,7 +875,7 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
     except (OSError, json.JSONDecodeError) as err:
         raise TestFailure(f"unable to read allocation baselines: {err}") from err
     if (
-        baseline.get("schema_version") != 2
+        baseline.get("schema_version") != 3
         or baseline.get("platform") != "roc-platform-template-zig-1.1.0+alloc-count"
         or baseline.get("target") != "x64musl"
         or baseline.get("optimize") != "speed"
@@ -866,11 +884,25 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
     expected = baseline.get("fixtures")
     if not isinstance(expected, dict) or set(expected) != set(ALLOCATION_FIXTURES):
         raise TestFailure("allocation baseline fixture set has drifted")
+    word = baseline.get("word")
+    if not isinstance(word, dict) or set(word) != set(WORD_ALLOCATION_MODES):
+        raise TestFailure("word allocation baseline modes have drifted")
+    for mode in WORD_ALLOCATION_MODES:
+        expected_word = word[mode]
+        if not isinstance(expected_word, dict) or set(expected_word) != set(WORD_ALLOCATION_FIXTURES):
+            raise TestFailure(f"word allocation baseline fixture set has drifted for {mode}")
     rows = [
         f"{name}\t{utf8_hex(value)}\t{expected[name]}"
         for name, value in ALLOCATION_FIXTURES.items()
     ]
-    run_serial_suite(binary, suites[5], rows, timeout=timeout)
+    for offset, mode in enumerate(WORD_ALLOCATION_MODES, start=5):
+        word_rows = [
+            f"{name}\t{utf8_hex(value)}\t{word[mode][name]}"
+            for name, value in WORD_ALLOCATION_FIXTURES.items()
+        ]
+        run_serial_suite(binary, suites[offset], word_rows, timeout=timeout)
+
+    run_serial_suite(binary, suites[-1], rows, timeout=timeout)
 
 
 def verify_pinned_roc(roc: str) -> None:
