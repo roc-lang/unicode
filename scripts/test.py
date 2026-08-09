@@ -15,6 +15,8 @@ from pathlib import Path
 from typing import Callable, Iterable, Sequence
 
 from unicode_data import (
+    BidiCharacterCase,
+    BidiTestCase,
     DataError,
     GraphemeCase,
     LineBreakCase,
@@ -24,6 +26,8 @@ from unicode_data import (
     load_manifest,
     load_property_data,
     parse_grapheme_tests,
+    parse_bidi_character_tests,
+    parse_bidi_tests,
     parse_line_break_tests,
     release_version,
     validate_all,
@@ -34,6 +38,7 @@ ROOT = Path(__file__).resolve().parents[1]
 TEST_TMP = ROOT / ".roc-unicode-tmp" / "tests"
 APP_ROOT = ROOT / "tests" / "apps"
 APP_NAMES = {
+    "bidi": "bidi",
     "grapheme": "grapheme",
     "line-break": "line-break",
     "properties": "properties",
@@ -161,6 +166,15 @@ def load_app_specs() -> dict[str, dict[str, object]]:
             "baseline_file",
             "exact_baseline_target",
         },
+        "bidi": {
+            "schema_version",
+            "kind",
+            "suites",
+            "timeout_seconds",
+            "unicode_manifest_files",
+            "bidi_test_executions",
+            "bidi_character_test_executions",
+        },
     }
     for name, directory in sorted(directories.items()):
         source = directory / "main.roc"
@@ -187,6 +201,14 @@ def load_app_specs() -> dict[str, dict[str, object]]:
         raise TestFailure("line-break spec suite has drifted")
     if specs["line-break"]["unicode_manifest_file"] != "line_break_test":
         raise TestFailure("line-break spec references an unknown manifest file")
+    bidi_sources = set(specs["bidi"]["unicode_manifest_files"])
+    if bidi_sources != {"bidi_test", "bidi_character_test"} or not bidi_sources <= manifest_files:
+        raise TestFailure("bidi spec must cover both official Unicode bidi conformance files")
+    if specs["bidi"]["suites"] != ["bidi-test", "bidi-character-test"]:
+        raise TestFailure("bidi spec suites have drifted")
+    for field in ("bidi_test_executions", "bidi_character_test_executions"):
+        if not isinstance(specs["bidi"][field], int) or specs["bidi"][field] < 1:
+            raise TestFailure(f"bidi spec {field} must be positive")
     property_sources = set(specs["properties"]["unicode_manifest_files"])
     if property_sources != {
         "grapheme_break_property",
@@ -348,6 +370,80 @@ def run_parallel_suite(
     print(f"PASS {suite}: {count} cases")
 
 
+def run_parallel_stream(
+    binary: Path,
+    suite: str,
+    rows: Iterable[str],
+    expected_count: int,
+    *,
+    jobs: int,
+    timeout: int = 120,
+    batch_size: int = 8192,
+) -> None:
+    """Run a large protocol suite without retaining every serialized row."""
+    if expected_count < 1 or batch_size < 1:
+        raise TestFailure("parallel stream count and batch size must be positive")
+
+    def run(index: int, batch: list[str]) -> tuple[int, int, str | None]:
+        error = invoke_app(binary, suite, batch, timeout)
+        if error is not None:
+            error = isolate_failure(binary, suite, batch, timeout)
+        return index, len(batch), error
+
+    submitted = 0
+    results: list[tuple[int, int, str | None]] = []
+    in_flight: set[concurrent.futures.Future[tuple[int, int, str | None]]] = set()
+    batch_count = 0
+
+    def collect_completed(wait_for_all: bool) -> None:
+        if not in_flight:
+            return
+        done, _ = concurrent.futures.wait(
+            in_flight,
+            return_when=(
+                concurrent.futures.ALL_COMPLETED
+                if wait_for_all
+                else concurrent.futures.FIRST_COMPLETED
+            ),
+        )
+        for future in done:
+            in_flight.remove(future)
+            results.append(future.result())
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as executor:
+        batch: list[str] = []
+        batch_index = 0
+        for row in rows:
+            batch.append(row)
+            if len(batch) == batch_size:
+                in_flight.add(executor.submit(run, batch_index, batch))
+                submitted += len(batch)
+                batch = []
+                batch_index += 1
+                batch_count += 1
+                if len(in_flight) >= jobs * 2:
+                    collect_completed(False)
+        if batch:
+            in_flight.add(executor.submit(run, batch_index, batch))
+            submitted += len(batch)
+            batch_count += 1
+        if submitted != expected_count:
+            raise TestFailure(
+                f"{suite} parser execution-count drift: expected {expected_count}, got {submitted}"
+            )
+        collect_completed(True)
+
+    failures = []
+    for index, size, error in sorted(results):
+        if error is None:
+            print(f"PASS {suite} batch {index + 1}/{batch_count} ({size} cases)")
+        else:
+            failures.append(f"batch {index + 1}/{batch_count}: {error}")
+    if failures:
+        raise TestFailure(f"{suite} failed:\n" + "\n".join(failures))
+    print(f"PASS {suite}: {submitted} cases")
+
+
 def grapheme_row(case: GraphemeCase) -> str:
     code_points = ",".join(f"{code_point:04X}" for code_point in case.code_points)
     offsets = ",".join(str(offset) for offset in case.break_offsets)
@@ -383,6 +479,55 @@ def run_line_break(binary: Path, jobs: int, spec: dict[str, object]) -> None:
         lambda index: line_break_row(cases[index]),
         jobs=jobs,
         timeout=int(spec["timeout_seconds"]),
+    )
+
+
+def bidi_levels(levels: tuple[int | None, ...]) -> str:
+    return ",".join("x" if level is None else str(level) for level in levels)
+
+
+def bidi_reorder(reorder: tuple[int, ...]) -> str:
+    return ",".join(str(index) for index in reorder) if reorder else "-"
+
+
+def bidi_test_rows(cases: Iterable[BidiTestCase], version: str) -> Iterable[str]:
+    for case in cases:
+        classes = ",".join(case.classes)
+        levels = bidi_levels(case.levels)
+        reorder = bidi_reorder(case.reorder)
+        for mode in case.paragraph_modes:
+            yield f"{version}:BidiTest.txt:{case.line}:mode-{mode}\t{classes}\t{mode}\t{levels}\t{reorder}"
+
+
+def bidi_character_rows(cases: Iterable[BidiCharacterCase], version: str) -> Iterable[str]:
+    for case in cases:
+        code_points = ",".join(f"{code_point:04X}" for code_point in case.code_points)
+        yield (
+            f"{version}:BidiCharacterTest.txt:{case.line}\t{code_points}\t"
+            f"{case.paragraph_mode}\t{case.paragraph_level}\t"
+            f"{bidi_levels(case.levels)}\t{bidi_reorder(case.reorder)}"
+        )
+
+
+def run_bidi(binary: Path, jobs: int, spec: dict[str, object]) -> None:
+    manifest = load_manifest()
+    version = release_version(manifest, "unicode")
+    timeout = int(spec["timeout_seconds"])
+    run_parallel_stream(
+        binary,
+        "bidi-test",
+        bidi_test_rows(parse_bidi_tests(manifest), version),
+        int(spec["bidi_test_executions"]),
+        jobs=jobs,
+        timeout=timeout,
+    )
+    run_parallel_stream(
+        binary,
+        "bidi-character-test",
+        bidi_character_rows(parse_bidi_character_tests(manifest), version),
+        int(spec["bidi_character_test_executions"]),
+        jobs=jobs,
+        timeout=timeout,
     )
 
 
@@ -541,7 +686,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "suite",
         nargs="?",
-        choices=("all", "data", "grapheme", "line-break", "properties", "allocations"),
+        choices=("all", "data", "bidi", "grapheme", "line-break", "properties", "allocations"),
         default="all",
     )
     parser.add_argument("--roc", default=os.environ.get("ROC", "roc"))
@@ -558,6 +703,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.suite in ("all", "data"):
             run_data_checks()
         requested_apps = []
+        if args.suite in ("all", "bidi"):
+            requested_apps.append("bidi")
         if args.suite in ("all", "grapheme"):
             requested_apps.append("grapheme")
         if args.suite in ("all", "line-break"):
@@ -572,6 +719,8 @@ def main(argv: list[str] | None = None) -> int:
             )
             if "grapheme" in requested_apps:
                 run_grapheme(binaries["grapheme"], args.jobs, app_specs["grapheme"])
+            if "bidi" in requested_apps:
+                run_bidi(binaries["bidi"], args.jobs, app_specs["bidi"])
             if "line-break" in requested_apps:
                 run_line_break(binaries["line-break"], args.jobs, app_specs["line-break"])
             if "properties" in requested_apps:

@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "kind": "bidi",
+  "suites": [
+    "bidi-test",
+    "bidi-character-test"
+  ],
+  "timeout_seconds": 600,
+  "unicode_manifest_files": [
+    "bidi_test",
+    "bidi_character_test"
+  ],
+  "bidi_test_executions": 770241,
+  "bidi_character_test_executions": 91707
+}
