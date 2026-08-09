@@ -4,8 +4,8 @@
 
 This document defines the enduring architecture of the Roc Unicode package. It
 describes the contracts that implementations and public APIs must preserve as
-the package grows to cover text segmentation, line breaking, bidirectional
-text, script itemization, and Unicode properties.
+the package grows to cover text segmentation, case mapping and folding, line
+breaking, bidirectional text, script itemization, and Unicode properties.
 
 The design is organized around two requirements that are equally important:
 
@@ -35,6 +35,10 @@ The terms in this document have precise meanings:
   scalar boundary.
 - A **text range** carries both byte and scalar coordinates when both are
   required.
+- A **source-mapping fact** relates exactly one input scalar range to the
+  corresponding range in a transformed output. Its output range may be empty.
+  It carries a stable `shape` of `Unchanged`, `Simple`, `Expanded`, or
+  `Removed`, and an independent `contextual` flag.
 - A **complete source** is a `Str` whose end is known.
 - A **chunk** is one part of a source whose end does not imply the end of the
   logical text.
@@ -267,8 +271,16 @@ Scalar.iter : Str -> Iter(LocatedScalar)
 Grapheme.iter_ranges : Str -> Iter(ByteRange)
 Grapheme.ranges : Str -> List(ByteRange)
 
+Word.iter_ranges : Str -> Iter(ByteRange)
+Word.ranges : Str -> List(ByteRange)
+
 LineBreak.iter_boundaries : Str, LineBreakProfile -> Iter(BreakBoundary)
 LineBreak.iter_opportunities : Str, LineBreakProfile -> Iter(BreakOpportunity)
+
+Case.to_lower : Str, CaseMappingProfile, CaseLimits -> Try(CaseResult, CaseError)
+Case.to_upper : Str, CaseMappingProfile, CaseLimits -> Try(CaseResult, CaseError)
+Case.to_title : Str, CaseMappingProfile, CaseLimits -> Try(CaseResult, CaseError)
+Case.fold : Str, CaseFoldProfile, CaseLimits -> Try(CaseResult, CaseError)
 
 Property.of_scalar : Scalar -> PropertyRow
 Property.iter_runs : Str, projection -> Iter(PropertyRun)
@@ -305,6 +317,20 @@ iterator, but individual range results do not. Chunk cursors do not retain
 previous chunks. Collectors allocate in proportion to the values they return,
 not the number of intermediate decoding or property steps.
 
+A source-mapped transformation is distinct from a segmentation materializer.
+Its result owns the transformed `Str` and its mapping facts; it does not retain
+the input merely to recover ranges. Each fact names one scalar-aligned input
+`TextRange` and its scalar-aligned output `TextRange`. Facts are ordered by
+input, input ranges partition the original text, and output ranges are
+monotonic and concatenate to the transformed text. An empty output range is a
+mapping fact, not a missing source identity. This source-oriented direction
+preserves deletions as well as one-to-many mappings without inventing an
+ambiguous inverse relationship. `Unchanged` denotes the same scalar, `Simple`
+one different scalar, `Expanded` multiple output scalars, and `Removed` no
+output scalars. The independent `contextual` flag records that surrounding
+source selected the mapping; it is not an implementation or generated-table
+identity.
+
 Bidi analysis is a special case because it intrinsically retains a paragraph.
 Its opaque analysis stores compact scalar identities, coordinates, working
 classes, levels, and algorithm flags; it does not retain the source `Str` merely
@@ -333,6 +359,8 @@ The generator first builds a canonical logical model. It preserves:
 - independent and overlapping binary properties;
 - exact numeric canonical combining classes;
 - optional mappings whose absence is semantically meaningful;
+- full scalar mapping sequences and their explicit context or language
+  conditions;
 - official property and value aliases; and
 - `Script_Extensions` as nonempty sets rather than one selected script.
 
@@ -354,8 +382,11 @@ It does not force all properties into one universal scalar row.
 Typical fused views include:
 
 - grapheme cluster break, Indic conjunct break, and extended pictographic;
+- word-break class and extended pictographic facts;
 - effective line-break class plus only the general-category, width, and emoji
   bits required by line breaking;
+- simple and full case mappings plus the contextual facts required to select
+  them;
 - bidi class plus bracket and mirroring facts; and
 - script, script-extensions identity, combining class, joining properties,
   Indic properties, vertical orientation, ignorables, variation selectors,
@@ -440,6 +471,83 @@ observer and never part of the production token stream.
 
 The lossless partition invariant is especially strong here: concatenating all
 grapheme ranges always selects exactly the original bytes.
+
+### Word boundaries
+
+The default word algorithm implements the un-tailored UAX #29 C2-1 word
+boundary rules for the selected Unicode version. It reports ranges between all
+word boundaries, not a filtered list of dictionary or natural-language words.
+Consequently punctuation and whitespace ranges are ordinary output, and the
+nonempty ranges partition the original bytes exactly. Ranges are the primitive
+output; seamless-slice and owned-string materializers make their retention and
+copying behavior explicit.
+
+The word transition consumes the narrow Word_Break and extended-pictographic
+view required by the rules. It carries only a current range start and finite
+rule context: the significant word-break state, the coordinate of a pending
+mid-character decision, regional-indicator parity, and the facts needed to
+handle CR/LF, ZWJ, and ignored Extend and Format characters. It neither
+reimplements grapheme segmentation nor materializes grapheme clusters. The
+default UAX #29 rules apply directly to non-NFD text; word segmentation never
+normalizes or otherwise changes its source.
+
+Some word-boundary decisions use right context, so a range is emitted only
+after its trailing boundary is irrevocable. This remains a bounded
+scalar-aligned chunk cursor: the machine retains the one pending decision and
+its coordinates, not an intervening chunk or queue of ranges. An explicit
+`finish` resolves the pending decision and emits the final nonempty range.
+Complete-string iteration, folds, collection, and the cursor drive this same
+transition core. Tailoring, including locale or dictionary segmentation, is a
+separate named and revisioned profile; it never changes the identity of this
+un-tailored default.
+
+### Case mapping and folding
+
+Default lowercase, uppercase, titlecase, and case folding implement the pinned
+Unicode case data exactly. Case mapping is a transformation, not segmentation:
+it returns an owned transformed string together with source-mapping facts
+rather than replacing source ranges or hiding expansions and deletions. There
+is exactly one fact for each input scalar. Its input range contains that scalar
+in the original `Str`; its output range identifies the zero or more output
+scalars produced for it. Context inspected to select a mapping does not absorb
+or transfer the identities of neighboring scalars.
+
+The default mapping profile is locale-independent. Turkic and Lithuanian
+behavior are explicit named profiles. Full folding uses `C` and `F`
+CaseFolding statuses, while simple folding uses `C` and `S`; under an explicit
+Turkic fold, a `T` status overrides the otherwise selected normal mapping.
+Casing and folding profiles have revisions independent of the Unicode data and
+package versions. A result records the Unicode version and selected profile
+necessary to reproduce it. No operation reads ambient locale or falls back
+silently from a requested policy.
+
+Case mapping does not normalize before or after applying its mappings. A
+caller that needs normalization composes a separately named normalization
+operation and is responsible for the resulting source relationship.
+
+Special casing can depend on unbounded right context. The complete-`Str` case
+core therefore uses declared interval-local replay: it probes only the needed
+context, then replays that interval through the same case transition to append
+the transformed bytes and facts in source order. Total decoding and
+classification work remains linear, and the core retains neither a copy of the
+input nor an unresolved scalar tape. Case results have explicit input, output,
+and mapping-fact limits; failure is typed and atomic, never a transformed
+prefix that looks complete.
+
+Titlecase drives the same default word-boundary transition core, not a
+materialized list of word ranges or a second approximation of word rules. For
+each completed word-boundary segment, scalars before its first cased scalar
+remain unchanged, that first cased scalar uses `Titlecase_Mapping`, and every
+following scalar through the boundary uses `Lowercase_Mapping`. Thus an
+uncased scalar after the first cased scalar is still eligible for a conditional
+lowercase mapping; an uncased scalar does not itself consume the first-cased
+position. The case core may replay completed segment coordinates through that
+same word transition to preserve this order without retaining a range list.
+This is technical default titlecasing, not language-specific editorial
+capitalization. The composed title and case core uses the same declared replay
+rule for any simultaneous case context. A non-replayable chunk case API is not
+exposed: it could not both preserve ordered source-mapping facts and avoid
+retaining arbitrary unresolved chunk content.
 
 ### Line breaking
 
@@ -605,7 +713,9 @@ There is no universal `Options` or `Limits` record. Each feature exposes only
 limits that have clear semantic meaning for its intrinsic storage:
 
 - raw UTF-8 decoding has a fixed trailing-byte bound;
-- grapheme and line cursors have fixed algorithmic state;
+- grapheme, word, and line cursors have fixed algorithmic state;
+- complete-string case mapping has explicit input, output, and mapping-fact
+  limits for its owned result;
 - bidi exposes paragraph size limits;
 - exact streaming script itemization exposes a pending-unit limit; and
 - collectors may expose an output-item limit when the caller cannot accept an
@@ -669,6 +779,9 @@ lookup.
 | Use one transition core behind complete, chunked, and collecting APIs | Semantics cannot drift between convenience and high-performance paths. |
 | Expose `Iter` for total pull APIs but fuse the internal hot loop | Callers get ergonomic laziness without mandatory iterator pipelines between bytes and state. |
 | Keep algorithm cursors distinct | Grapheme, line, bidi, and script have irreducibly different latency and memory behavior. |
+| Implement word ranges with a finite UAX #29 transition core | Complete and chunked traversal share exact boundary semantics while ranges remain lossless and bounded-state. |
+| Return source-mapping facts from case conversion | Expansions, deletions, and context-selected mappings remain attributable to every original scalar. |
+| Drive titlecase from the word transition core | Technical titlecasing uses the exact selected word boundaries without materializing ranges or duplicating rules. |
 | Use one canonical Unicode source graph and several narrow runtime views | Provenance stays coherent while hot paths avoid decoding irrelevant properties. |
 | Keep physical table encodings private | Layout can evolve with Unicode data, compiler behavior, and target platforms. |
 | Make Unicode versions and tailoring profiles explicit | Results remain reproducible and defaults cannot change through ambient policy. |
@@ -684,6 +797,7 @@ The package manifest, rather than this document, pins the exact release and
 revision of each source.
 
 - [The Unicode Standard](https://www.unicode.org/standard/standard.html)
+- [Unicode Core Default Case Algorithms](https://www.unicode.org/versions/Unicode17.0.0/core-spec/chapter-3/#Default_Case_Algorithms)
 - [UAX #9: Unicode Bidirectional Algorithm](https://www.unicode.org/reports/tr9/)
 - [UAX #14: Unicode Line Breaking Algorithm](https://www.unicode.org/reports/tr14/)
 - [UAX #24: Unicode Script Property](https://www.unicode.org/reports/tr24/)
