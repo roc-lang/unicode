@@ -22,6 +22,7 @@ tests/platform/targets/arm64v1musl/libc.a
 dist/
 __pycache__/
 .roc-unicode-tmp/
+.roc-fuzz/
 
 # Ignore local benchmark build output
 benchmarks/grapheme/rust/target/
