@@ -6,6 +6,12 @@ optimization mode, and integrated adaptive scanner. `.roc-version` is the sole
 compiler-version source of truth; the baseline does not duplicate it. This is
 not a cross-compiler performance threshold.
 
+The compiler pin required by the initial `roc-fuzz` integration changed the
+five-byte ASCII grapheme fixture from two allocation events to five. The other
+grapheme fixtures and every Word and Case exact baseline remained unchanged;
+the fixture records that measured compiler behavior rather than relaxing the
+allocation gate.
+
 The pinned compiler currently has a known ARC regression for the long SIMD
 grapheme collector, tracked in
 [roc-lang/roc#10635](https://github.com/roc-lang/roc/issues/10635). The baseline

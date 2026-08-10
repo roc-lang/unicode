@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "utf8": [
+    { "name": "empty", "bytes_hex": "" },
+    { "name": "ascii", "bytes_hex": "00417F" },
+    { "name": "two-byte-boundaries", "bytes_hex": "C280DFBF" },
+    { "name": "three-byte-boundaries", "bytes_hex": "E0A080EFBFBF" },
+    { "name": "four-byte-boundaries", "bytes_hex": "F0908080F48FBFBF" },
+    { "name": "unexpected-continuation", "bytes_hex": "80" },
+    { "name": "invalid-start", "bytes_hex": "FF" },
+    { "name": "expected-continuation", "bytes_hex": "E228A1" },
+    { "name": "overlong-two", "bytes_hex": "C080" },
+    { "name": "overlong-three", "bytes_hex": "E08080" },
+    { "name": "surrogate", "bytes_hex": "EDA080" },
+    { "name": "code-point-too-large", "bytes_hex": "F4908080" },
+    { "name": "truncated-two", "bytes_hex": "C2" },
+    { "name": "truncated-three", "bytes_hex": "E282" },
+    { "name": "truncated-four", "bytes_hex": "F09F92" }
+  ],
+  "grapheme": [
+    { "name": "scalar-width-boundaries", "bytes_hex": "007FC280DFBFE0A080ED9FBFEE8080EFBFBFF0908080F48FBFBF" },
+    { "name": "issue-19-01", "bytes_hex": "0DCC88E186A8E2808DEAB081" },
+    { "name": "issue-19-02", "bytes_hex": "E0B98301E185A0E2808DE0A480" },
+    { "name": "issue-19-03", "bytes_hex": "E18480E2808DCC88E0A58D" },
+    { "name": "issue-19-04", "bytes_hex": "E18480E2808DCC881F" },
+    { "name": "issue-19-05", "bytes_hex": "E185A0E2808DCC88CDB8" },
+    { "name": "issue-19-06", "bytes_hex": "E185A0E2808DE0A495" },
+    { "name": "issue-19-07", "bytes_hex": "E186A8E2808D0A" },
+    { "name": "issue-19-08", "bytes_hex": "E186A8E2808DE18581" },
+    { "name": "issue-19-09", "bytes_hex": "EAB080E2808DE0A58D" },
+    { "name": "issue-19-10", "bytes_hex": "EAB080E2808DE0B58E" },
+    { "name": "issue-19-11", "bytes_hex": "EAB081E2808DCC88F09F87A6" },
+    { "name": "issue-19-12", "bytes_hex": "EAB081E2808DE186A8" },
+    { "name": "issue-19-13", "bytes_hex": "EAB081E2808D24" },
+    { "name": "issue-19-14", "bytes_hex": "F3A081AEEAB080E2808DE0A4BC" },
+    { "name": "issue-22-pirate-flags", "bytes_hex": "F09F8FB4E2808DE298A0EFB88FF09F8F81F09F8E8CF09F9AA9F09F8FB3EFB88FE2808DF09F8C88" }
+  ]
+}

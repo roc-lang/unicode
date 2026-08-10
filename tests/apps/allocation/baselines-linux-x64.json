@@ -5,7 +5,7 @@
   "optimize": "speed",
   "fixtures": {
     "empty": 0,
-    "ascii": 2,
+    "ascii": 5,
     "combining": 1,
     "regional-indicator": 1,
     "emoji-zwj": 1,
