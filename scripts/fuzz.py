@@ -86,7 +86,7 @@ def verify_host() -> None:
     )
     if not supported:
         raise FuzzFailure(
-            "roc-fuzz 0.2.0 supports Linux x86-64 and Apple Silicon macOS; "
+            "roc-fuzz 0.2.1 supports Linux x86-64 and Apple Silicon macOS; "
             f"this host reports {system} {machine}"
         )
 

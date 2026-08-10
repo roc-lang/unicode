@@ -3,7 +3,7 @@
 This directory is the initial coverage-guided fuzzing layer for the Unicode
 package. It uses the compiler-native sanitizer coverage enabled by
 `roc build --fuzz` and the self-contained libFuzzer runner from
-[`roc-fuzz` 0.2.0](https://github.com/lukewilliamboswell/roc-fuzz/releases/tag/0.2.0).
+[`roc-fuzz` 0.2.1](https://github.com/lukewilliamboswell/roc-fuzz/releases/tag/0.2.1).
 The compiler therefore instruments the compiled Roc application and Unicode
 algorithm code, rather than observing only a platform host.
 
