@@ -26,6 +26,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Read pinned Roc version
+        if: github.event_name != 'schedule'
         run: printf 'ROC_NIGHTLY_TAG=%s\n' "$(sed -n '1p' .roc-version)" >> "$GITHUB_ENV"
 
       - uses: roc-lang/setup-roc@cbe782d6f165b89c87d99f50a59ac4f5f73b4427
@@ -60,8 +61,9 @@ jobs:
           use-cache: false
 
       - name: Read pinned Roc version
+        if: github.event_name != 'schedule'
         run: printf 'ROC_NIGHTLY_TAG=%s\n' "$(sed -n '1p' .roc-version)" >> "$GITHUB_ENV"
-    
+
       - uses: roc-lang/setup-roc@cbe782d6f165b89c87d99f50a59ac4f5f73b4427
         with:
           version: nightly-new-compiler
