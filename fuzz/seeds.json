@@ -34,5 +34,14 @@
     { "name": "issue-19-13", "bytes_hex": "EAB081E2808D24" },
     { "name": "issue-19-14", "bytes_hex": "F3A081AEEAB080E2808DE0A4BC" },
     { "name": "issue-22-pirate-flags", "bytes_hex": "F09F8FB4E2808DE298A0EFB88FF09F8F81F09F8E8CF09F9AA9F09F8FB3EFB88FE2808DF09F8C88" }
+  ],
+  "word": [
+    { "name": "ascii-sentence", "bytes_hex": "54686520717569636B20666F782072756E732E" },
+    { "name": "apostrophe-contraction", "bytes_hex": "646F6E2774" },
+    { "name": "numeric-punctuation", "bytes_hex": "332C3435362E3738" },
+    { "name": "katakana-run", "bytes_hex": "E382ABE382BFE382ABE3838A" },
+    { "name": "emoji-zwj-sequence", "bytes_hex": "F09F91A9E2808DF09F91A9E2808DF09F91A7" },
+    { "name": "regional-indicator-pair", "bytes_hex": "F09F87BAF09F87B8" },
+    { "name": "extend-zwj", "bytes_hex": "65CC81E2808D78" }
   ]
 }
