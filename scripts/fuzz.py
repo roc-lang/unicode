@@ -48,6 +48,7 @@ class Target:
 TARGETS = {
     "utf8": Target("utf8", FUZZ_ROOT / "utf8.roc", 512),
     "grapheme": Target("grapheme", FUZZ_ROOT / "grapheme.roc", 384),
+    "word": Target("word", FUZZ_ROOT / "word.roc", 384),
 }
 
 
@@ -134,8 +135,8 @@ def load_seeds() -> dict[str, list[tuple[str, bytes]]]:
         data = json.loads(SEED_PATH.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as error:
         raise FuzzFailure(f"unable to load {SEED_PATH}: {error}") from error
-    if not isinstance(data, dict) or set(data) != {"schema_version", "utf8", "grapheme"}:
-        raise FuzzFailure("fuzz seed manifest fields must be schema_version, utf8, grapheme")
+    if not isinstance(data, dict) or set(data) != {"schema_version", "utf8", "grapheme", "word"}:
+        raise FuzzFailure("fuzz seed manifest fields must be schema_version, utf8, grapheme, word")
     if data["schema_version"] != 1:
         raise FuzzFailure("unsupported fuzz seed manifest schema")
 
@@ -150,12 +151,12 @@ def load_seeds() -> dict[str, list[tuple[str, bytes]]]:
         names = [name for name, _payload in parsed]
         if len(names) != len(set(names)):
             raise FuzzFailure(f"{target_name} seed names must be unique")
-        if target_name == "grapheme":
+        if target_name in ("grapheme", "word"):
             for name, payload in parsed:
                 try:
                     payload.decode("utf-8")
                 except UnicodeDecodeError as error:
-                    raise FuzzFailure(f"grapheme/{name} must be valid UTF-8") from error
+                    raise FuzzFailure(f"{target_name}/{name} must be valid UTF-8") from error
         result[target_name] = parsed
     return result
 
@@ -177,11 +178,15 @@ def target_seed_payloads(target: Target) -> list[tuple[str, bytes]]:
 
     seeds = [
         (name, scalar_entropy([ord(character) for character in payload.decode("utf-8")]))
-        for name, payload in manifest["grapheme"]
+        for name, payload in manifest[target.name]
     ]
     unicode_manifest = unicode_data.load_manifest()
-    for case in unicode_data.parse_grapheme_tests(unicode_manifest):
-        seeds.append((f"unicode17-{case.line}", scalar_entropy(case.code_points)))
+    if target.name == "grapheme":
+        for case in unicode_data.parse_grapheme_tests(unicode_manifest):
+            seeds.append((f"unicode17-{case.line}", scalar_entropy(case.code_points)))
+    elif target.name == "word":
+        for case in unicode_data.parse_word_break_tests(unicode_manifest):
+            seeds.append((f"unicode17-{case.line}", scalar_entropy(case.code_points)))
     return seeds
 
 

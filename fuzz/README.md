@@ -26,9 +26,16 @@ scalar-chunk cursor results. Ranges must form a lossless scalar-aligned
 partition, and every materialized cluster must be idempotent under
 segmentation.
 
-The smoke runner limits UTF-8 artifacts to 512 bytes and grapheme artifacts to
-384 entropy bytes (at most 128 scalars). Each target is pure, bounded, and
-designed for libFuzzer's in-process execution model.
+`word` shares grapheme's valid-text domain and scalar generator. It compares
+`Word.ranges`, `Word.iter_ranges`, a whole-chunk `Word.Cursor`, and a
+scalar-chunk `Word.Cursor` against each other. Ranges must form a lossless
+scalar-aligned partition, `Word.slices` and `Word.owned` must agree with the
+materialized ranges, and every materialized word range must be idempotent
+under re-segmentation.
+
+The smoke runner limits UTF-8 artifacts to 512 bytes and grapheme and word
+artifacts to 384 entropy bytes each (at most 128 scalars). Each target is
+pure, bounded, and designed for libFuzzer's in-process execution model.
 
 ## Commands
 
@@ -55,10 +62,11 @@ the target's `show` function, and replays it in a fresh process.
 ## Seeds and regressions
 
 `seeds.json` stores reviewable hexadecimal sources. UTF-8 entries are copied
-unchanged. Grapheme entries must be valid UTF-8 and are converted to the
-target's stable three-byte scalar encoding. The runner also imports every
-sequence from the pinned Unicode 17 `GraphemeBreakTest.txt`, plus the historical
-crash inputs from issue #19 and the pirate-flag data-loss input from issue #22.
+unchanged. Grapheme and word entries must be valid UTF-8 and are converted to
+the shared stable three-byte scalar encoding. The runner also imports every
+sequence from the pinned Unicode 17 `GraphemeBreakTest.txt` and
+`WordBreakTest.txt`, plus the historical crash inputs from issue #19 and the
+pirate-flag data-loss input from issue #22.
 
 After finding a failure:
 
