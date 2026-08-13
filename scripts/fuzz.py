@@ -51,6 +51,7 @@ TARGETS = {
     "word": Target("word", FUZZ_ROOT / "word.roc", 384),
     "line-break": Target("line-break", FUZZ_ROOT / "line-break.roc", 384),
     "case": Target("case", FUZZ_ROOT / "case.roc", 384),
+    "property": Target("property", FUZZ_ROOT / "property.roc", 384),
 }
 
 
@@ -144,10 +145,11 @@ def load_seeds() -> dict[str, list[tuple[str, bytes]]]:
         "word",
         "line-break",
         "case",
+        "property",
     }:
         raise FuzzFailure(
             "fuzz seed manifest fields must be schema_version, utf8, grapheme, word, "
-            "line-break, case"
+            "line-break, case, property"
         )
     if data["schema_version"] != 1:
         raise FuzzFailure("unsupported fuzz seed manifest schema")
@@ -163,7 +165,7 @@ def load_seeds() -> dict[str, list[tuple[str, bytes]]]:
         names = [name for name, _payload in parsed]
         if len(names) != len(set(names)):
             raise FuzzFailure(f"{target_name} seed names must be unique")
-        if target_name in ("grapheme", "word", "line-break", "case"):
+        if target_name in ("grapheme", "word", "line-break", "case", "property"):
             for name, payload in parsed:
                 try:
                     payload.decode("utf-8")
