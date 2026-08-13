@@ -43,5 +43,14 @@
     { "name": "emoji-zwj-sequence", "bytes_hex": "F09F91A9E2808DF09F91A9E2808DF09F91A7" },
     { "name": "regional-indicator-pair", "bytes_hex": "F09F87BAF09F87B8" },
     { "name": "extend-zwj", "bytes_hex": "65CC81E2808D78" }
+  ],
+  "line-break": [
+    { "name": "cjk-ideograph-run", "bytes_hex": "E4B8ADE69687E5AD97E7ACA6E4B8B2" },
+    { "name": "hyphenated-compound", "bytes_hex": "77656C6C2D6B6E6F776E" },
+    { "name": "non-breaking-space-glue", "bytes_hex": "313030C2A06B6D" },
+    { "name": "mandatory-newline", "bytes_hex": "6C696E65206F6E650A6C696E652074776F" },
+    { "name": "parenthetical-quote", "bytes_hex": "222868656C6C6F2922" },
+    { "name": "emoji-zwj-sequence", "bytes_hex": "F09F91A9E2808DF09F91A9E2808DF09F91A7" },
+    { "name": "numeric-grouping", "bytes_hex": "312C3233342C353637" }
   ]
 }
