@@ -44,10 +44,22 @@ ordered, scalar-aligned, start with the LB2 prohibited start-of-text marker,
 end with the LB3 mandatory end-of-text break, and tile the source into a
 lossless partition.
 
-The smoke runner limits UTF-8 artifacts to 512 bytes and grapheme, word, and
-line-break artifacts to 384 entropy bytes each (at most 128 scalars). Each
-target is pure, bounded, and designed for libFuzzer's in-process execution
-model.
+`case` shares the valid-text domain and scalar generator too, exercising
+`Case.roc` under its default mapping profile (`to_lower`/`to_upper`/`to_title`)
+and its full fold profile (`fold`), all under `Case.unlimited_limits`
+(explicit profile/limit variation remains follow-up work, matching
+`line-break`'s default-profile-only scope). Each result's input facts must
+form a nonempty, scalar-aligned, contiguous partition of the source; its
+output facts must tile the result text contiguously (an empty output span is
+allowed only for a `Removed` fact); an `Unchanged` fact's input and output
+slices must match exactly. `fold` and `to_lower` must be idempotent on their
+own output, and a zero input-byte budget must atomically reject any nonempty
+source with `LimitExceeded`.
+
+The smoke runner limits UTF-8 artifacts to 512 bytes and grapheme, word,
+line-break, and case artifacts to 384 entropy bytes each (at most 128
+scalars). Each target is pure, bounded, and designed for libFuzzer's
+in-process execution model.
 
 ## Commands
 
@@ -74,11 +86,12 @@ the target's `show` function, and replays it in a fresh process.
 ## Seeds and regressions
 
 `seeds.json` stores reviewable hexadecimal sources. UTF-8 entries are copied
-unchanged. Grapheme, word, and line-break entries must be valid UTF-8 and are
-converted to the shared stable three-byte scalar encoding. The runner also
-imports every sequence from the pinned Unicode 17 `GraphemeBreakTest.txt`,
-`WordBreakTest.txt`, and `LineBreakTest.txt`, plus the historical crash inputs
-from issue #19 and the pirate-flag data-loss input from issue #22.
+unchanged. Grapheme, word, line-break, and case entries must be valid UTF-8
+and are converted to the shared stable three-byte scalar encoding. The runner
+also imports every sequence from the pinned Unicode 17 `GraphemeBreakTest.txt`,
+`WordBreakTest.txt`, and `LineBreakTest.txt`, every `SpecialCasing.txt` and
+`CaseFolding.txt` source scalar, plus the historical crash inputs from issue
+#19 and the pirate-flag data-loss input from issue #22.
 
 After finding a failure:
 
@@ -95,7 +108,8 @@ legitimately change those measurements.
 
 ## Deferred work
 
-Line-break tailoring profiles, property scans, Script itemization, bidi,
+Line-break tailoring profiles, case-mapping Turkic/Lithuanian profiles and
+explicit resource limits, property scans, Script itemization, bidi,
 structured chunk plans and limits, Unicode-version-matched differential
 oracles, corpus reduction automation, artifact upload, and resource-guarded
 long scheduled campaigns remain follow-up work under issue #50.

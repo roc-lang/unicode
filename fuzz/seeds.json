@@ -52,5 +52,13 @@
     { "name": "parenthetical-quote", "bytes_hex": "222868656C6C6F2922" },
     { "name": "emoji-zwj-sequence", "bytes_hex": "F09F91A9E2808DF09F91A9E2808DF09F91A7" },
     { "name": "numeric-grouping", "bytes_hex": "312C3233342C353637" }
+  ],
+  "case": [
+    { "name": "german-sharp-s", "bytes_hex": "73747261C39F65" },
+    { "name": "turkish-dotted-capital-i", "bytes_hex": "C4B07374616E62756C" },
+    { "name": "greek-final-sigma-word", "bytes_hex": "CE9FCEA3" },
+    { "name": "kelvin-sign", "bytes_hex": "E284AA" },
+    { "name": "ligature-ffi", "bytes_hex": "EFAC83" },
+    { "name": "combining-dot-above", "bytes_hex": "69CC87" }
   ]
 }
