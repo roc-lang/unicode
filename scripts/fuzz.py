@@ -50,6 +50,7 @@ TARGETS = {
     "grapheme": Target("grapheme", FUZZ_ROOT / "grapheme.roc", 384),
     "word": Target("word", FUZZ_ROOT / "word.roc", 384),
     "line-break": Target("line-break", FUZZ_ROOT / "line-break.roc", 384),
+    "case": Target("case", FUZZ_ROOT / "case.roc", 384),
 }
 
 
@@ -142,9 +143,11 @@ def load_seeds() -> dict[str, list[tuple[str, bytes]]]:
         "grapheme",
         "word",
         "line-break",
+        "case",
     }:
         raise FuzzFailure(
-            "fuzz seed manifest fields must be schema_version, utf8, grapheme, word, line-break"
+            "fuzz seed manifest fields must be schema_version, utf8, grapheme, word, "
+            "line-break, case"
         )
     if data["schema_version"] != 1:
         raise FuzzFailure("unsupported fuzz seed manifest schema")
@@ -160,7 +163,7 @@ def load_seeds() -> dict[str, list[tuple[str, bytes]]]:
         names = [name for name, _payload in parsed]
         if len(names) != len(set(names)):
             raise FuzzFailure(f"{target_name} seed names must be unique")
-        if target_name in ("grapheme", "word", "line-break"):
+        if target_name in ("grapheme", "word", "line-break", "case"):
             for name, payload in parsed:
                 try:
                     payload.decode("utf-8")
@@ -199,6 +202,13 @@ def target_seed_payloads(target: Target) -> list[tuple[str, bytes]]:
     elif target.name == "line-break":
         for case in unicode_data.parse_line_break_tests(unicode_manifest):
             seeds.append((f"unicode17-{case.line}", scalar_entropy(case.code_points)))
+    elif target.name == "case":
+        canonical = unicode_data.load_canonical_properties(unicode_manifest)
+        case_data = unicode_data.load_case_data(unicode_manifest, canonical)
+        for entry in case_data.special:
+            seeds.append((f"special-casing-{entry.line}", scalar_entropy([entry.source])))
+        for entry in case_data.folding:
+            seeds.append((f"case-folding-{entry.line}", scalar_entropy([entry.source])))
     return seeds
 
 
