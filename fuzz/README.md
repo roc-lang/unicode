@@ -33,9 +33,21 @@ scalar-aligned partition, `Word.slices` and `Word.owned` must agree with the
 materialized ranges, and every materialized word range must be idempotent
 under re-segmentation.
 
-The smoke runner limits UTF-8 artifacts to 512 bytes and grapheme and word
-artifacts to 384 entropy bytes each (at most 128 scalars). Each target is
-pure, bounded, and designed for libFuzzer's in-process execution model.
+`line-break` also shares the valid-text domain and scalar generator, exercised
+under the exact Unicode-default profile only (tailored-profile campaigns
+remain follow-up work). It compares the exhaustive boundary stream
+(`LineBreak.boundaries` / `iter_boundaries`), the opportunity stream
+(`LineBreak.opportunities` / `iter_opportunities`), and a chunked
+`LineBreak.Cursor` drive (whole-input and one-scalar-at-a-time). Opportunities
+must equal the non-Prohibited subset of boundaries; boundary positions must be
+ordered, scalar-aligned, start with the LB2 prohibited start-of-text marker,
+end with the LB3 mandatory end-of-text break, and tile the source into a
+lossless partition.
+
+The smoke runner limits UTF-8 artifacts to 512 bytes and grapheme, word, and
+line-break artifacts to 384 entropy bytes each (at most 128 scalars). Each
+target is pure, bounded, and designed for libFuzzer's in-process execution
+model.
 
 ## Commands
 
@@ -62,11 +74,11 @@ the target's `show` function, and replays it in a fresh process.
 ## Seeds and regressions
 
 `seeds.json` stores reviewable hexadecimal sources. UTF-8 entries are copied
-unchanged. Grapheme and word entries must be valid UTF-8 and are converted to
-the shared stable three-byte scalar encoding. The runner also imports every
-sequence from the pinned Unicode 17 `GraphemeBreakTest.txt` and
-`WordBreakTest.txt`, plus the historical crash inputs from issue #19 and the
-pirate-flag data-loss input from issue #22.
+unchanged. Grapheme, word, and line-break entries must be valid UTF-8 and are
+converted to the shared stable three-byte scalar encoding. The runner also
+imports every sequence from the pinned Unicode 17 `GraphemeBreakTest.txt`,
+`WordBreakTest.txt`, and `LineBreakTest.txt`, plus the historical crash inputs
+from issue #19 and the pirate-flag data-loss input from issue #22.
 
 After finding a failure:
 
@@ -83,7 +95,7 @@ legitimately change those measurements.
 
 ## Deferred work
 
-Line breaking, property scans, Script itemization, bidi, structured chunk
-plans and limits, Unicode-version-matched differential oracles, corpus
-reduction automation, artifact upload, and resource-guarded long scheduled
-campaigns remain follow-up work under issue #50.
+Line-break tailoring profiles, property scans, Script itemization, bidi,
+structured chunk plans and limits, Unicode-version-matched differential
+oracles, corpus reduction automation, artifact upload, and resource-guarded
+long scheduled campaigns remain follow-up work under issue #50.
