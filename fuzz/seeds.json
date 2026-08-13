@@ -60,5 +60,14 @@
     { "name": "kelvin-sign", "bytes_hex": "E284AA" },
     { "name": "ligature-ffi", "bytes_hex": "EFAC83" },
     { "name": "combining-dot-above", "bytes_hex": "69CC87" }
+  ],
+  "property": [
+    { "name": "ascii-boundary", "bytes_hex": "415A617A3039" },
+    { "name": "unassigned-scalar", "bytes_hex": "CDB8" },
+    { "name": "private-use-scalar", "bytes_hex": "EE8080" },
+    { "name": "combining-marks", "bytes_hex": "65CC80CCA7" },
+    { "name": "bmp-page-boundary", "bytes_hex": "C3BFC480EFBFBF" },
+    { "name": "supplementary-plane-boundary", "bytes_hex": "EFBFBFF0908080" },
+    { "name": "noncharacter", "bytes_hex": "EFB790" }
   ]
 }

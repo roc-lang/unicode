@@ -56,9 +56,33 @@ slices must match exactly. `fold` and `to_lower` must be idempotent on their
 own output, and a zero input-byte budget must atomically reject any nonempty
 source with `LimitExceeded`.
 
+`property` shares the valid-text domain and scalar generator too, exercising
+`GeneralCategory` and `CanonicalCombiningClass` (`EastAsianWidth` is excluded;
+see below). `Property.iter` must agree with `Property.fold` on the decoded
+scalar sequence; each scalar's direct query must agree with the composite
+`Property.Row` view; `fold_runs` must agree with `iter_runs`; runs must form a
+lossless, scalar-aligned, contiguous partition where adjacent runs never
+share a value (maximality) and every scalar inside a run carries that run's
+directly-queried value; and every short/long/generated alias must round-trip
+through `parse` back to the same value. The scalar generator's full-range
+coverage exercises table boundaries and unassigned/private-use scalars
+without any special-casing.
+
+`EastAsianWidth` is deliberately excluded from `property`: its generated
+lookup (`InternalEAW.roc`) is a single very large if/else boolean-OR chain
+(unlike `GeneralCategory`/`CanonicalCombiningClass`, which use compact
+page-table lookups), and compiling any call into it reproducibly overflows the
+compiler's stack under both `roc check` and an ordinary basic-cli `roc build`.
+This is tracked upstream in [roc-lang/roc#10755][roc-10755]. It is a
+compiler/data-representation limitation, not a target design choice;
+regenerating `InternalEAW.roc` with a page-table representation (as issue #50
+or a follow-up) would remove the blocker.
+
+[roc-10755]: https://github.com/roc-lang/roc/issues/10755
+
 The smoke runner limits UTF-8 artifacts to 512 bytes and grapheme, word,
-line-break, and case artifacts to 384 entropy bytes each (at most 128
-scalars). Each target is pure, bounded, and designed for libFuzzer's
+line-break, case, and property artifacts to 384 entropy bytes each (at most
+128 scalars). Each target is pure, bounded, and designed for libFuzzer's
 in-process execution model.
 
 ## Commands
@@ -86,12 +110,15 @@ the target's `show` function, and replays it in a fresh process.
 ## Seeds and regressions
 
 `seeds.json` stores reviewable hexadecimal sources. UTF-8 entries are copied
-unchanged. Grapheme, word, line-break, and case entries must be valid UTF-8
-and are converted to the shared stable three-byte scalar encoding. The runner
-also imports every sequence from the pinned Unicode 17 `GraphemeBreakTest.txt`,
-`WordBreakTest.txt`, and `LineBreakTest.txt`, every `SpecialCasing.txt` and
-`CaseFolding.txt` source scalar, plus the historical crash inputs from issue
-#19 and the pirate-flag data-loss input from issue #22.
+unchanged. Grapheme, word, line-break, case, and property entries must be
+valid UTF-8 and are converted to the shared stable three-byte scalar
+encoding. The runner also imports every sequence from the pinned Unicode 17
+`GraphemeBreakTest.txt`, `WordBreakTest.txt`, and `LineBreakTest.txt`, every
+`SpecialCasing.txt` and `CaseFolding.txt` source scalar, plus the historical
+crash inputs from issue #19 and the pirate-flag data-loss input from issue
+#22. `property` has no conformance test file to import from, so it relies
+solely on its curated named seeds (table boundaries, unassigned/private-use
+scalars, combining marks, noncharacters).
 
 After finding a failure:
 
@@ -109,7 +136,11 @@ legitimately change those measurements.
 ## Deferred work
 
 Line-break tailoring profiles, case-mapping Turkic/Lithuanian profiles and
-explicit resource limits, property scans, Script itemization, bidi,
-structured chunk plans and limits, Unicode-version-matched differential
-oracles, corpus reduction automation, artifact upload, and resource-guarded
-long scheduled campaigns remain follow-up work under issue #50.
+explicit resource limits, `EastAsianWidth` fuzzing (blocked on the
+`InternalEAW.roc` compiler-stack-overflow issue above), the remaining
+`Property.Row` properties (`BidiClass`, `JoiningType`/`JoiningGroup`,
+`IndicSyllabicCategory`/`IndicPositionalCategory`, `VerticalOrientation`,
+`Emoji`), Script itemization, bidi, structured chunk plans and limits,
+Unicode-version-matched differential oracles, corpus reduction automation,
+artifact upload, and resource-guarded long scheduled campaigns remain
+follow-up work under issue #50.
