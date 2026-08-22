@@ -543,15 +543,18 @@ for_mapping = |mapping, initial, emit| match mapping {
 	}
 }
 
+# Plain appends only: `List.reserve` is sized exactly, so reserving the width
+# of each scalar here would relocate the result buffer on every multi-byte
+# scalar instead of letting append's geometric growth amortize it.
 append_utf8 = |bytes, scalar| {
 	if scalar < 0x80 {
 		bytes.append(scalar.to_u8_wrap())
 	} else if scalar < 0x800 {
-		bytes.reserve(2).append(scalar.shr_wrap(6).bitwise_or(0xC0).to_u8_wrap()).append(scalar.bitwise_and(0x3F).bitwise_or(0x80).to_u8_wrap())
+		bytes.append(scalar.shr_wrap(6).bitwise_or(0xC0).to_u8_wrap()).append(scalar.bitwise_and(0x3F).bitwise_or(0x80).to_u8_wrap())
 	} else if scalar < 0x10000 {
-		bytes.reserve(3).append(scalar.shr_wrap(12).bitwise_or(0xE0).to_u8_wrap()).append(scalar.shr_wrap(6).bitwise_and(0x3F).bitwise_or(0x80).to_u8_wrap()).append(scalar.bitwise_and(0x3F).bitwise_or(0x80).to_u8_wrap())
+		bytes.append(scalar.shr_wrap(12).bitwise_or(0xE0).to_u8_wrap()).append(scalar.shr_wrap(6).bitwise_and(0x3F).bitwise_or(0x80).to_u8_wrap()).append(scalar.bitwise_and(0x3F).bitwise_or(0x80).to_u8_wrap())
 	} else {
-		bytes.reserve(4).append(scalar.shr_wrap(18).bitwise_or(0xF0).to_u8_wrap()).append(scalar.shr_wrap(12).bitwise_and(0x3F).bitwise_or(0x80).to_u8_wrap()).append(scalar.shr_wrap(6).bitwise_and(0x3F).bitwise_or(0x80).to_u8_wrap()).append(scalar.bitwise_and(0x3F).bitwise_or(0x80).to_u8_wrap())
+		bytes.append(scalar.shr_wrap(18).bitwise_or(0xF0).to_u8_wrap()).append(scalar.shr_wrap(12).bitwise_and(0x3F).bitwise_or(0x80).to_u8_wrap()).append(scalar.shr_wrap(6).bitwise_and(0x3F).bitwise_or(0x80).to_u8_wrap()).append(scalar.bitwise_and(0x3F).bitwise_or(0x80).to_u8_wrap())
 	}
 }
 
