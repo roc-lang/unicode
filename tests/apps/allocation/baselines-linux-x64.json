@@ -1,15 +1,15 @@
 {
-  "schema_version": 4,
+  "schema_version": 5,
   "platform": "roc-platform-template-zig-1.1.0+alloc-count",
   "target": "x64musl",
   "optimize": "speed",
   "fixtures": {
     "empty": 0,
-    "ascii": 5,
+    "ascii": 2,
     "combining": 1,
     "regional-indicator": 1,
     "emoji-zwj": 1,
-    "long": 193
+    "long": 12
   },
   "word": {
     "iterator": {
@@ -60,104 +60,104 @@
   },
   "case": {
     "lower-default": {
-      "ascii-half": 641,
-      "ascii": 1281,
-      "expansion-heavy": 513,
-      "long-case-ignorable": 2053,
-      "alternating-sigma": 2049,
-      "turkic": 1537,
-      "lithuanian": 1537,
-      "many-title-words": 6657
+      "ascii-half": 16,
+      "ascii": 19,
+      "expansion-heavy": 268,
+      "long-case-ignorable": 1041,
+      "alternating-sigma": 1039,
+      "turkic": 24,
+      "lithuanian": 24,
+      "many-title-words": 25
     },
     "lower-turkic": {
-      "ascii-half": 642,
-      "ascii": 1282,
-      "expansion-heavy": 514,
-      "long-case-ignorable": 2054,
-      "alternating-sigma": 2050,
-      "turkic": 1282,
-      "lithuanian": 1538,
-      "many-title-words": 6658
+      "ascii-half": 17,
+      "ascii": 20,
+      "expansion-heavy": 269,
+      "long-case-ignorable": 1042,
+      "alternating-sigma": 1040,
+      "turkic": 22,
+      "lithuanian": 41,
+      "many-title-words": 26
     },
     "upper-default": {
-      "ascii-half": 643,
-      "ascii": 1283,
-      "expansion-heavy": 1027,
-      "long-case-ignorable": 2055,
-      "alternating-sigma": 2051,
-      "turkic": 1539,
-      "lithuanian": 1539,
-      "many-title-words": 6659
+      "ascii-half": 18,
+      "ascii": 21,
+      "expansion-heavy": 782,
+      "long-case-ignorable": 1043,
+      "alternating-sigma": 1041,
+      "turkic": 26,
+      "lithuanian": 26,
+      "many-title-words": 27
     },
     "upper-lithuanian": {
-      "ascii-half": 644,
-      "ascii": 1284,
-      "expansion-heavy": 1028,
-      "long-case-ignorable": 2056,
-      "alternating-sigma": 2052,
-      "turkic": 1540,
-      "lithuanian": 1540,
-      "many-title-words": 6660
+      "ascii-half": 19,
+      "ascii": 22,
+      "expansion-heavy": 783,
+      "long-case-ignorable": 1044,
+      "alternating-sigma": 1042,
+      "turkic": 27,
+      "lithuanian": 27,
+      "many-title-words": 28
     },
     "title-default": {
-      "ascii-half": 645,
-      "ascii": 1285,
-      "expansion-heavy": 519,
-      "long-case-ignorable": 2057,
-      "alternating-sigma": 2053,
-      "turkic": 1541,
-      "lithuanian": 1541,
-      "many-title-words": 6661
+      "ascii-half": 20,
+      "ascii": 23,
+      "expansion-heavy": 274,
+      "long-case-ignorable": 1045,
+      "alternating-sigma": 1043,
+      "turkic": 28,
+      "lithuanian": 28,
+      "many-title-words": 29
     },
     "title-turkic": {
-      "ascii-half": 646,
-      "ascii": 1286,
-      "expansion-heavy": 520,
-      "long-case-ignorable": 2058,
-      "alternating-sigma": 2054,
-      "turkic": 1286,
-      "lithuanian": 1542,
-      "many-title-words": 6662
+      "ascii-half": 21,
+      "ascii": 24,
+      "expansion-heavy": 275,
+      "long-case-ignorable": 1046,
+      "alternating-sigma": 1044,
+      "turkic": 26,
+      "lithuanian": 34,
+      "many-title-words": 30
     },
     "fold-full": {
-      "ascii-half": 647,
-      "ascii": 1287,
-      "expansion-heavy": 1031,
-      "long-case-ignorable": 2059,
-      "alternating-sigma": 2055,
-      "turkic": 1543,
-      "lithuanian": 1543,
-      "many-title-words": 6663
+      "ascii-half": 22,
+      "ascii": 25,
+      "expansion-heavy": 786,
+      "long-case-ignorable": 1047,
+      "alternating-sigma": 1045,
+      "turkic": 30,
+      "lithuanian": 30,
+      "many-title-words": 31
     },
     "fold-simple": {
-      "ascii-half": 648,
-      "ascii": 1288,
-      "expansion-heavy": 520,
-      "long-case-ignorable": 2060,
-      "alternating-sigma": 2056,
-      "turkic": 1544,
-      "lithuanian": 1544,
-      "many-title-words": 6664
+      "ascii-half": 23,
+      "ascii": 26,
+      "expansion-heavy": 275,
+      "long-case-ignorable": 1048,
+      "alternating-sigma": 1046,
+      "turkic": 31,
+      "lithuanian": 31,
+      "many-title-words": 32
     },
     "fold-turkic-full": {
-      "ascii-half": 649,
-      "ascii": 1289,
-      "expansion-heavy": 1033,
-      "long-case-ignorable": 2061,
-      "alternating-sigma": 2057,
-      "turkic": 1545,
-      "lithuanian": 1545,
-      "many-title-words": 6665
+      "ascii-half": 24,
+      "ascii": 27,
+      "expansion-heavy": 788,
+      "long-case-ignorable": 1049,
+      "alternating-sigma": 1047,
+      "turkic": 38,
+      "lithuanian": 48,
+      "many-title-words": 33
     },
     "fold-turkic-simple": {
-      "ascii-half": 650,
-      "ascii": 1290,
-      "expansion-heavy": 522,
-      "long-case-ignorable": 2062,
-      "alternating-sigma": 2058,
-      "turkic": 1546,
-      "lithuanian": 1546,
-      "many-title-words": 6666
+      "ascii-half": 25,
+      "ascii": 28,
+      "expansion-heavy": 277,
+      "long-case-ignorable": 1050,
+      "alternating-sigma": 1048,
+      "turkic": 39,
+      "lithuanian": 49,
+      "many-title-words": 34
     },
     "limits": {
       "input-bytes": 10,
@@ -167,16 +167,16 @@
       "facts": 10
     }
   },
-  "case_ascii_linear_deltas": {
-    "lower-default": 640,
-    "lower-turkic": 640,
-    "upper-default": 640,
-    "upper-lithuanian": 640,
-    "title-default": 640,
-    "title-turkic": 640,
-    "fold-full": 640,
-    "fold-simple": 640,
-    "fold-turkic-full": 640,
-    "fold-turkic-simple": 640
+  "case_ascii_doubling_deltas": {
+    "lower-default": 3,
+    "lower-turkic": 3,
+    "upper-default": 3,
+    "upper-lithuanian": 3,
+    "title-default": 3,
+    "title-turkic": 3,
+    "fold-full": 3,
+    "fold-simple": 3,
+    "fold-turkic-full": 3,
+    "fold-turkic-simple": 3
   }
 }

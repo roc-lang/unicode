@@ -1261,7 +1261,11 @@ CASE_ALLOCATION_MODES = (
 CASE_ALLOCATION_SUCCESS_MODES = CASE_ALLOCATION_MODES[:-1]
 CASE_ALLOCATION_ASCII_HALF_SCALARS = 320
 CASE_ALLOCATION_ASCII_SCALARS = 640
-CASE_ALLOCATION_ASCII_DELTA = 2 * (CASE_ALLOCATION_ASCII_SCALARS - CASE_ALLOCATION_ASCII_HALF_SCALARS)
+# Doubling the ASCII input must not double the allocation count: the result
+# buffer and the fact list both grow geometrically, so the extra 320 scalars
+# may only add the few reallocations that growth schedule needs. A slope
+# anywhere near the added scalar count means per-scalar copying is back.
+CASE_ALLOCATION_ASCII_MAX_DELTA = 8
 
 # These sources make result ownership and the Case-specific context paths
 # visible to exact allocation baselines across distinct scalar and byte-count
@@ -1355,7 +1359,7 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
     except (OSError, json.JSONDecodeError) as err:
         raise TestFailure(f"unable to read allocation baselines: {err}") from err
     if (
-        baseline.get("schema_version") != 4
+        baseline.get("schema_version") != 5
         or baseline.get("platform") != "roc-platform-template-zig-1.1.0+alloc-count"
         or baseline.get("target") != "x64musl"
         or baseline.get("optimize") != "speed"
@@ -1374,18 +1378,27 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
     case = baseline.get("case")
     if not isinstance(case, dict) or set(case) != set(CASE_ALLOCATION_MODES):
         raise TestFailure("case allocation baseline modes have drifted")
-    case_ascii_linear_deltas = baseline.get("case_ascii_linear_deltas")
-    if not isinstance(case_ascii_linear_deltas, dict) or set(case_ascii_linear_deltas) != set(CASE_ALLOCATION_SUCCESS_MODES):
-        raise TestFailure("case ASCII linear allocation baseline modes have drifted")
+    case_ascii_doubling_deltas = baseline.get("case_ascii_doubling_deltas")
+    if not isinstance(case_ascii_doubling_deltas, dict) or set(case_ascii_doubling_deltas) != set(CASE_ALLOCATION_SUCCESS_MODES):
+        raise TestFailure("case ASCII doubling allocation baseline modes have drifted")
+    if (
+        len(CASE_ALLOCATION_FIXTURES["ascii-half"]) != CASE_ALLOCATION_ASCII_HALF_SCALARS
+        or len(CASE_ALLOCATION_FIXTURES["ascii"]) != CASE_ALLOCATION_ASCII_SCALARS
+    ):
+        raise TestFailure("case ASCII doubling fixtures have drifted")
     for mode in CASE_ALLOCATION_MODES:
         expected_case = case[mode]
         fixtures = CASE_LIMIT_FIXTURES if mode == "limits" else CASE_ALLOCATION_FIXTURES
         if not isinstance(expected_case, dict) or set(expected_case) != set(fixtures):
             raise TestFailure(f"case allocation baseline fixture set has drifted for {mode}")
         if mode in CASE_ALLOCATION_SUCCESS_MODES:
-            documented_delta = case_ascii_linear_deltas[mode]
+            documented_delta = case_ascii_doubling_deltas[mode]
             actual_delta = expected_case["ascii"] - expected_case["ascii-half"]
-            if not isinstance(documented_delta, int) or documented_delta != CASE_ALLOCATION_ASCII_DELTA or actual_delta != documented_delta:
+            if (
+                not isinstance(documented_delta, int)
+                or not 0 <= documented_delta <= CASE_ALLOCATION_ASCII_MAX_DELTA
+                or actual_delta != documented_delta
+            ):
                 raise TestFailure(f"case ASCII allocation scaling has drifted for {mode}")
         rows = [
             f"{name}\t{utf8_hex(value)}\t{expected_case[name]}"

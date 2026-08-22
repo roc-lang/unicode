@@ -7,16 +7,15 @@ compiler-version source of truth; the baseline does not duplicate it. This is
 not a cross-compiler performance threshold.
 
 The compiler pin required by the initial `roc-fuzz` integration changed the
-five-byte ASCII grapheme fixture from two allocation events to five. The other
-grapheme fixtures and every Word and Case exact baseline remained unchanged;
-the fixture records that measured compiler behavior rather than relaxing the
-allocation gate.
-
-The pinned compiler currently has a known ARC regression for the long SIMD
-grapheme collector, tracked in
-[roc-lang/roc#10635](https://github.com/roc-lang/roc/issues/10635). The baseline
-records the exact observed count rather than waiving it; a compiler upgrade
-that fixes the regression must remeasure this fixture and update this note.
+five-byte ASCII grapheme fixture from two allocation events to five, and the
+long SIMD grapheme collector recorded 193 instead of 12 under the ARC
+regression tracked in
+[roc-lang/roc#10635](https://github.com/roc-lang/roc/issues/10635).
+[roc-lang/roc#10873](https://github.com/roc-lang/roc/pull/10873) closed that
+ownership gap: a collection nested in an accumulator record now stays unique
+across the loop that rebuilds the record, so both fixtures are back to two and
+12 with the pinned compiler. The baseline records the exact measured counts
+rather than waiving them.
 
 The `allocation-aliases` suite separately exercises property-name access,
 General_Category short/long/count/index access, and exact CCC
@@ -39,12 +38,20 @@ The `allocation-case-*` suites measure complete-string lower, upper, R3 title,
 and fold operations under default, Turkic, Lithuanian, full, and simple
 profiles. Their fixtures cover 320- and 640-scalar ASCII scaling, mapping
 expansion, long case-ignorable right context, alternating sigma, Turkic and
-Lithuanian conditions, and many Word-driven title segments. The pinned baseline
-records the exact 640-allocation delta for every successful Case mode across
-that doubling, rejecting a changed or superlinear slope. It attributes the
-observed linear result-buffer allocations to the pinned Roc compiler's current
-COW behavior: flat Fact coordinates, eager buffer reservation, and a
-specialized scalar-driver A/B did not reduce it. A separate limits mode measures
-each typed, atomic Case limit failure. Case owns its transformed bytes and one
-mapping fact per source scalar, so these are result-allocation baselines rather
-than a claim of allocation-free transformation.
+Lithuanian conditions, and many Word-driven title segments. Under the
+previously pinned compiler every successful Case mode allocated exactly two
+buffers per source scalar, because the compiler copied both accumulator
+collections on each record update;
+[roc-lang/roc#10873](https://github.com/roc-lang/roc/pull/10873) removed those
+copies. The pinned baseline now records a three-allocation delta across the
+320-to-640-scalar doubling for every successful mode, and the harness rejects a
+delta that grows with the added scalar count.
+
+The fixtures whose output scalars are outside ASCII still record roughly one
+allocation per emitted scalar. That is this package's own
+`List.reserve(width)` ahead of each multi-byte encode: an explicit reserve is
+sized exactly, so the result buffer reallocates on every scalar instead of
+following the geometric growth that a plain append uses. A separate limits
+mode measures each typed, atomic Case limit failure. Case owns its transformed
+bytes and one mapping fact per source scalar, so these are result-allocation
+baselines rather than a claim of allocation-free transformation.
