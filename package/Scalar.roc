@@ -131,8 +131,8 @@ Scalar :: { code_point : CodePoint }.{
 	##
 	## This is O(1) excluding a possible reallocation/copy of `bytes`. It never
 	## emits a surrogate encoding. The caller-supplied, operation-specific
-	## limit and all length arithmetic are checked before reserve or append;
-	## failure leaves the caller's original list available.
+	## limit and all length arithmetic are checked before appending; failure
+	## leaves the caller's original list available.
 	append_utf8 : List(U8), Scalar, U64 -> Try(List(U8), [OutputLimitExceeded({ limit : U64, required : U64 })])
 	append_utf8 = |bytes, scalar, max_output_bytes| {
 		width = Scalar.utf8_len(scalar).to_u64()
@@ -168,6 +168,9 @@ Scalar :: { code_point : CodePoint }.{
 	is_eq = |left, right| Scalar.to_u32(left) == Scalar.to_u32(right)
 }
 
+# Plain appends only: `List.reserve` is sized exactly, so reserving the width
+# of each scalar here would relocate `bytes` on every multi-byte scalar instead
+# of letting append's geometric growth amortize it over a run of scalars.
 encode_append : List(U8), Scalar -> List(U8)
 encode_append = |bytes, scalar| {
 	value = Scalar.to_u32(scalar)
@@ -178,19 +181,19 @@ encode_append = |bytes, scalar| {
 		byte1 = value.shr_wrap(6).bitwise_or(0b11000000).to_u8_wrap()
 		byte2 = value.bitwise_and(0b00111111).bitwise_or(0b10000000).to_u8_wrap()
 
-		bytes.reserve(2).append(byte1).append(byte2)
+		bytes.append(byte1).append(byte2)
 	} else if value < 0x10000 {
 		byte1 = value.shr_wrap(12).bitwise_or(0b11100000).to_u8_wrap()
 		byte2 = value.shr_wrap(6).bitwise_and(0b00111111).bitwise_or(0b10000000).to_u8_wrap()
 		byte3 = value.bitwise_and(0b00111111).bitwise_or(0b10000000).to_u8_wrap()
 
-		bytes.reserve(3).append(byte1).append(byte2).append(byte3)
+		bytes.append(byte1).append(byte2).append(byte3)
 	} else {
 		byte1 = value.shr_wrap(18).bitwise_or(0b11110000).to_u8_wrap()
 		byte2 = value.shr_wrap(12).bitwise_and(0b00111111).bitwise_or(0b10000000).to_u8_wrap()
 		byte3 = value.shr_wrap(6).bitwise_and(0b00111111).bitwise_or(0b10000000).to_u8_wrap()
 		byte4 = value.bitwise_and(0b00111111).bitwise_or(0b10000000).to_u8_wrap()
 
-		bytes.reserve(4).append(byte1).append(byte2).append(byte3).append(byte4)
+		bytes.append(byte1).append(byte2).append(byte3).append(byte4)
 	}
 }

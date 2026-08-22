@@ -47,11 +47,13 @@ copies. The pinned baseline now records a three-allocation delta across the
 320-to-640-scalar doubling for every successful mode, and the harness rejects a
 delta that grows with the added scalar count.
 
-The fixtures whose output scalars are outside ASCII still record roughly one
-allocation per emitted scalar. That is this package's own
-`List.reserve(width)` ahead of each multi-byte encode: an explicit reserve is
-sized exactly, so the result buffer reallocates on every scalar instead of
-following the geometric growth that a plain append uses. A separate limits
-mode measures each typed, atomic Case limit failure. Case owns its transformed
+Every fixture now grows geometrically, including those whose output scalars
+are outside ASCII. Those recorded roughly one allocation per emitted scalar
+while the UTF-8 encoders reserved each scalar's width ahead of appending it:
+an explicit `List.reserve` is sized exactly, so that reserve relocated the
+buffer on every multi-byte scalar rather than amortizing over a run of them.
+Removing it took the expansion-heavy fixture from 268 allocations to 16 and
+the long case-ignorable fixture from 1041 to 22. A separate limits mode
+measures each typed, atomic Case limit failure. Case owns its transformed
 bytes and one mapping fact per source scalar, so these are result-allocation
 baselines rather than a claim of allocation-free transformation.
