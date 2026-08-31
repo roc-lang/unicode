@@ -546,6 +546,7 @@ for_mapping = |mapping, initial, emit| match mapping {
 # Plain appends only: `List.reserve` is sized exactly, so reserving the width
 # of each scalar here would relocate the result buffer on every multi-byte
 # scalar instead of letting append's geometric growth amortize it.
+append_utf8 : List(U8), U32 -> List(U8)
 append_utf8 = |bytes, scalar| {
 	if scalar < 0x80 {
 		bytes.append(scalar.to_u8_wrap())
