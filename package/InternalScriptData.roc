@@ -1745,6 +1745,7 @@ compare_target = |state, scalar, word0, word1, word2, target_length| {
     { ..state, matches, index: state.index + 1 }
 }
 
+hash_scalar : U32, U32 -> U32
 hash_scalar = |hash, scalar| {
     if scalar < 0x80 {
         hash_byte(hash, scalar)
@@ -1766,6 +1767,7 @@ hash_scalar = |hash, scalar| {
     }
 }
 
+hash_byte : U32, U32 -> U32
 hash_byte = |hash, byte| hash.bitwise_xor(byte).times_wrap(16777619)
 
 is_loose_ignored = |scalar| {
