@@ -121,7 +121,7 @@ Grapheme segmentation follows the default, un-tailored Unicode 17 extended
 grapheme cluster algorithm. Its primary output is half-open UTF-8 byte ranges;
 callers can consume them lazily with `Grapheme.iter_ranges`, collect them with
 `Grapheme.ranges`, retain seamless source slices with `Grapheme.slices`, or
-request independent copies with `Grapheme.owned`. `Grapheme.Cursor` carries the
+request independent copies with `Grapheme.split`. `Grapheme.Cursor` carries the
 same algorithm across scalar-aligned streaming chunks without treating a chunk
 edge as end-of-text.
 

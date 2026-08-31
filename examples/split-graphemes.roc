@@ -15,7 +15,7 @@ default_text = "🇦🇺🦘🪃"
 
 ## Return zero-copy extended grapheme cluster slices with byte coordinates.
 ## The slices retain the source backing storage, which is appropriate while
-## producing this report; use Grapheme.owned only when independent copies are
+## producing this report; use Grapheme.split only when independent copies are
 ## required. Deriving offsets from each slice avoids segmenting the text twice.
 segment : Str -> List({ end : U64, start : U64, text : Str })
 segment = |source| {

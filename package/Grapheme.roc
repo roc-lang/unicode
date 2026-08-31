@@ -101,9 +101,9 @@ Grapheme :: [].{
 		)
 	}
 
-	## Return independently materialized cluster strings.
-	owned : Str -> List(Str)
-	owned = |source| {
+	## Split the source into independently materialized cluster strings.
+	split : Str -> List(Str)
+	split = |source| {
 		InternalGrapheme.ranges(source).map(
 			|range| {
 				slice = ByteRange.slice(range, source) ?? ...
