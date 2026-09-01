@@ -32,8 +32,8 @@ test = |code_points| {
 	if Grapheme.slices(source) != expected_materialized {
 		crash "Grapheme.slices disagreed with range materialization"
 	}
-	if Grapheme.owned(source) != expected_materialized {
-		crash "Grapheme.owned disagreed with range materialization"
+	if Grapheme.split(source) != expected_materialized {
+		crash "Grapheme.split disagreed with range materialization"
 	}
 	if Str.join_with(expected_materialized, "") != source {
 		crash "grapheme materialization lost or changed source text"
