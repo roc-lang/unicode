@@ -1657,6 +1657,7 @@ make_visual_runs = |visual, levels, start| {
 ## L4 is applied after the line-specific L1 reset. This records rendering
 ## facts without replacing the source scalar; missing best-fit mappings remain
 ## meaningful when a mirrored glyph is still required.
+calculate_line_mirroring : List(Bidi.ScalarInfo), List([Some(U8), None]) -> List(Bidi.MirrorInfo)
 calculate_line_mirroring = |entries, levels| {
 	var output = []
 	var at = 0.U64
