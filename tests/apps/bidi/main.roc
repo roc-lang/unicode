@@ -138,18 +138,18 @@ verify_metamorphic_invariants = |protocol_input| {
 
 verify_entry_partition : List(Bidi.ScalarInfo), U64, U64 -> Try({}, Str)
 verify_entry_partition = |entries, byte_end, scalar_end| {
-	var next_byte = 0.U64
-	var next_scalar = 0.U64
+	var $next_byte = 0.U64
+	var $next_scalar = 0.U64
 	for entry in entries {
 		bytes = TextRange.byte_range(entry.range)
 		scalars = TextRange.scalar_range(entry.range)
-		if ByteRange.start(bytes) != next_byte or ScalarRange.start(scalars) != next_scalar {
+		if ByteRange.start(bytes) != $next_byte or ScalarRange.start(scalars) != $next_scalar {
 			return Err("retained entries do not partition original coordinates")
 		}
-		next_byte = ByteRange.end(bytes)
-		next_scalar = ScalarRange.end(scalars)
+		$next_byte = ByteRange.end(bytes)
+		$next_scalar = ScalarRange.end(scalars)
 	}
-	if next_byte != byte_end or next_scalar != scalar_end {
+	if $next_byte != byte_end or $next_scalar != scalar_end {
 		Err("retained entries do not cover the original paragraph")
 	} else {
 		Ok({})
@@ -181,26 +181,26 @@ verify_level_parity = |levels| {
 ## `logical_to_visual` is compacted to the requested line's start.
 verify_mapping_inverse : List(U64), List([Some(U64), None]), U64 -> Try({}, Str)
 verify_mapping_inverse = |visual_to_logical, logical_to_visual, line_start| {
-	var visual = 0.U64
+	var $visual = 0.U64
 	for logical in visual_to_logical {
 		position = logical_to_visual.get(logical - line_start) ?? return Err("visual mapping refers outside logical line")
-		if position != Some(visual) {
+		if position != Some($visual) {
 			return Err("logical/visual mappings are not inverses")
 		}
-		visual = visual + 1
+		$visual = $visual + 1
 	}
-	var logical_index = 0.U64
+	var $logical_index = 0.U64
 	for position in logical_to_visual {
 		match position {
 			None => {}
 			Some(visual_index) => {
 				logical = visual_to_logical.get(visual_index) ?? return Err("logical mapping refers outside visual line")
-				if logical != logical_index + line_start {
+				if logical != $logical_index + line_start {
 					return Err("visual/logical mappings are not inverses")
 				}
 			}
 		}
-		logical_index = logical_index + 1
+		$logical_index = $logical_index + 1
 	}
 	Ok({})
 }
@@ -273,14 +273,14 @@ verify_x9_logical_runs : Str -> Try({}, Str)
 verify_x9_logical_runs = |protocol_input| {
 	empty_input = protocol_input.drop_last_bytes(protocol_input.count_utf8_bytes()) ?? return Err("could not derive empty protocol input")
 	analysis = bidi_result(Bidi.analyze_paragraph("א​ב${empty_input}", Auto, Bidi.default_limits))?
-	var runs = []
+	var $runs = []
 	for run in Bidi.logical_runs(analysis) {
-		runs = runs.append(run)
+		$runs = $runs.append(run)
 	}
-	if runs.len() != 1 {
+	if $runs.len() != 1 {
 		return Err("X9 controls split a logical level run")
 	}
-	run = runs.get(0) ?? return Err("missing X9-filtered logical run")
+	run = $runs.get(0) ?? return Err("missing X9-filtered logical run")
 	if ScalarRange.start(TextRange.scalar_range(run.range)) != 0 or ScalarRange.end(TextRange.scalar_range(run.range)) != 3 {
 		return Err("X9-filtered logical run does not span both visible scalars")
 	}
@@ -359,13 +359,13 @@ verify_limits_and_bracket_cap = |protocol_input| {
 
 repeat_text : Str, U64 -> Str
 repeat_text = |piece, count| {
-	var output = ""
-	var at = 0.U64
-	while at < count {
-		output = "${output}${piece}"
-		at = at + 1
+	var $output = ""
+	var $at = 0.U64
+	while $at < count {
+		$output = "${$output}${piece}"
+		$at = $at + 1
 	}
-	output
+	$output
 }
 
 bidi_result : Try(value, Bidi.Error) -> Try(value, Str)

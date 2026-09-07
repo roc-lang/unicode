@@ -28,12 +28,12 @@ gc_runs = |input| {
     ]
     source = runtime_str("AAαά(", input)
     folded = GeneralCategory.fold_runs(source, [], |runs, run| runs.append(run_shape(run.range, GeneralCategory.short(run.value))))
-    var iterated = []
+    var $iterated = []
     for run in GeneralCategory.iter_runs(source) {
-        iterated = iterated.append(run_shape(run.range, GeneralCategory.short(run.value)))
+        $iterated = $iterated.append(run_shape(run.range, GeneralCategory.short(run.value)))
     }
     empty = GeneralCategory.fold_runs("", 0.U64, |count, _| count + 1)
-    folded == expected and iterated == expected and empty == 0
+    folded == expected and $iterated == expected and empty == 0
 }
 
 ccc_runs = |input| {
@@ -50,10 +50,10 @@ emoji_runs = |input| {
 
 property_iteration = |input| {
     source = runtime_str("Aé𐀀", input)
-    var entries = []
+    var $entries = []
     for entry in Property.iter(source) {
         range = entry.located.byte_range
-        entries = entries.append({ scalar: Scalar.to_u32(entry.located.scalar), byte_start: ByteRange.start(range), byte_end: ByteRange.end(range), scalar_index: entry.located.scalar_index })
+        $entries = $entries.append({ scalar: Scalar.to_u32(entry.located.scalar), byte_start: ByteRange.start(range), byte_end: ByteRange.end(range), scalar_index: entry.located.scalar_index })
     }
     expected = [
         { scalar: 0x41, byte_start: 0, byte_end: 1, scalar_index: 0 },
@@ -65,7 +65,7 @@ property_iteration = |input| {
         One({ item, .. }) => run_shape(item.range, GeneralCategory.short(item.value))
         _ => shape_values(99, 99, 99, 99, "bad")
     }
-    entries == expected and folded == 3 and first == shape_values(0, 1, 0, 1, "Lu")
+    $entries == expected and folded == 3 and first == shape_values(0, 1, 0, 1, "Lu")
 }
 
 runtime_str = |value, input| value.concat(input).drop_last_bytes(input.count_utf8_bytes()) ?? value

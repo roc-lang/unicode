@@ -19,14 +19,14 @@ InternalLooseAlias :: [].{
 		if left_length != right_length {
 			Bool.False
 		} else {
-			var index = 0.U64
-			while index < left_length {
-				left_scalar = normalized_at(left, index + left_skip)
-				right_scalar = normalized_at(right, index + right_skip)
+			var $index = 0.U64
+			while $index < left_length {
+				left_scalar = normalized_at(left, $index + left_skip)
+				right_scalar = normalized_at(right, $index + right_skip)
 				if left_scalar != right_scalar {
 					return Bool.False
 				}
-				index = index + 1
+				$index = $index + 1
 			}
 			Bool.True
 		}

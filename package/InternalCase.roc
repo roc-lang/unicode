@@ -222,31 +222,31 @@ SelectedMapping : { value : Mapping, contextual : Bool }
 
 select_case_mapping = |source, profile, operation, scalar, byte_end, props, left| {
 	base = simple_mapping(operation, scalar, props)
-	var selected = { value: base, contextual: Bool.False }
+	var $selected = { value: base, contextual: Bool.False }
 	# SpecialCasing's unconditional row is the normal full mapping. An
 	# applicable language and/or source-context row overrides it. The generator
 	# guarantees that equal-specificity rows which can overlap an exposed
 	# profile have identical mappings, so retaining the first is semantically
 	# equivalent and needs no runtime tie-break rule.
-	var selected_specificity = 0.U64
-	var selected_special = Bool.False
-	var index = 0.U64
-	while index < props.special_count.to_u64() {
-		special_index = props.special_start.to_u64() + index
+	var $selected_specificity = 0.U64
+	var $selected_special = Bool.False
+	var $index = 0.U64
+	while $index < props.special_count.to_u64() {
+		special_index = props.special_start.to_u64() + $index
 		match InternalCaseData.special_entries.get(special_index) {
 			Err(_) => {}
 			Ok(entry) => {
 				specificity = entry.languages.len() + entry.contexts.len()
-				if (!selected_special or specificity > selected_specificity) and languages_match(entry.languages, profile) and contexts_match(entry.contexts, source, byte_end, left) {
-					selected = { value: special_mapping(entry, operation), contextual: entry.contexts.len() != 0 }
-					selected_specificity = specificity
-					selected_special = Bool.True
+				if (!$selected_special or specificity > $selected_specificity) and languages_match(entry.languages, profile) and contexts_match(entry.contexts, source, byte_end, left) {
+					$selected = { value: special_mapping(entry, operation), contextual: entry.contexts.len() != 0 }
+					$selected_specificity = specificity
+					$selected_special = Bool.True
 				}
 			}
 		}
-		index = index + 1
+		$index = $index + 1
 	}
-	selected
+	$selected
 }
 
 simple_mapping = |operation, scalar, props| {
@@ -269,70 +269,70 @@ special_mapping = |entry, operation| match operation {
 }
 
 select_fold = |profile, scalar, props| {
-	var common = Identity(scalar)
-	var full = Identity(scalar)
-	var simple = Identity(scalar)
-	var turkic = Identity(scalar)
-	var has_common = Bool.False
-	var has_full = Bool.False
-	var has_simple = Bool.False
-	var has_turkic = Bool.False
-	var index = 0.U64
-	while index < props.fold_count.to_u64() {
-		fold_index = props.fold_start.to_u64() + index
+	var $common = Identity(scalar)
+	var $full = Identity(scalar)
+	var $simple = Identity(scalar)
+	var $turkic = Identity(scalar)
+	var $has_common = Bool.False
+	var $has_full = Bool.False
+	var $has_simple = Bool.False
+	var $has_turkic = Bool.False
+	var $index = 0.U64
+	while $index < props.fold_count.to_u64() {
+		fold_index = props.fold_start.to_u64() + $index
 		match InternalCaseData.fold_entries.get(fold_index) {
 			Err(_) => {}
 			Ok(entry) => match entry.status {
 				Common => {
-					common = Sequence(entry.mapping)
-					has_common = Bool.True
+					$common = Sequence(entry.mapping)
+					$has_common = Bool.True
 				}
 				Full => {
-					full = Sequence(entry.mapping)
-					has_full = Bool.True
+					$full = Sequence(entry.mapping)
+					$has_full = Bool.True
 				}
 				Simple => {
-					simple = Sequence(entry.mapping)
-					has_simple = Bool.True
+					$simple = Sequence(entry.mapping)
+					$has_simple = Bool.True
 				}
 				Turkic => {
-					turkic = Sequence(entry.mapping)
-					has_turkic = Bool.True
+					$turkic = Sequence(entry.mapping)
+					$has_turkic = Bool.True
 				}
 			}
 		}
-		index = index + 1
+		$index = $index + 1
 	}
 	if profile == TurkicFull or profile == TurkicSimple {
-		if has_turkic {
-			turkic
+		if $has_turkic {
+			$turkic
 		} else if profile == TurkicFull {
-			if has_full {
-				full
-			} else if has_common {
-				common
+			if $has_full {
+				$full
+			} else if $has_common {
+				$common
 			} else {
 				Identity(scalar)
 			}
-		} else if has_simple {
-			simple
-		} else if has_common {
-			common
+		} else if $has_simple {
+			$simple
+		} else if $has_common {
+			$common
 		} else {
 			Identity(scalar)
 		}
 	} else if profile == Full {
-		if has_full {
-			full
-		} else if has_common {
-			common
+		if $has_full {
+			$full
+		} else if $has_common {
+			$common
 		} else {
 			Identity(scalar)
 		}
-	} else if has_simple {
-		simple
-	} else if has_common {
-		common
+	} else if $has_simple {
+		$simple
+	} else if $has_common {
+		$common
 	} else {
 		Identity(scalar)
 	}
@@ -342,20 +342,20 @@ languages_match = |languages, profile| {
 	if languages.len() == 0 {
 		Bool.True
 	} else {
-		var matched = Bool.False
+		var $matched = Bool.False
 		for language in languages {
 			if profile == Turkic and (language == Turkish or language == Azeri) {
-				matched = Bool.True
+				$matched = Bool.True
 			} else if profile == Lithuanian and language == Lithuanian {
-				matched = Bool.True
+				$matched = Bool.True
 			}
 		}
-		matched
+		$matched
 	}
 }
 
 contexts_match = |contexts, source, byte_end, left| {
-	var matched = Bool.True
+	var $matched = Bool.True
 	for context in contexts {
 		condition = match context {
 			Final_Sigma => left.before_final_sigma and !following_cased(source, byte_end)
@@ -365,22 +365,22 @@ contexts_match = |contexts, source, byte_end, left| {
 			After_I => left.after_i
 			Not_Before_Dot => !before_dot(source, byte_end)
 		}
-		matched = matched and condition
+		$matched = $matched and condition
 	}
-	matched
+	$matched
 }
 
 following_cased = |source, byte_start| {
-	var cursor = { ..InternalUtf8.init(source), byte_offset: byte_start }
+	var $cursor = { ..InternalUtf8.init(source), byte_offset: byte_start }
 	while Bool.True {
-		match InternalUtf8.next(cursor) {
+		match InternalUtf8.next($cursor) {
 			Done => return Bool.False
 			One({ item, rest }) => {
 				props = InternalCaseData.lookup(item.scalar)
 				if !props.case_ignorable {
 					return props.cased
 				}
-				cursor = rest
+				$cursor = rest
 			}
 		}
 	}
@@ -388,9 +388,9 @@ following_cased = |source, byte_start| {
 }
 
 more_above = |source, byte_start| {
-	var cursor = { ..InternalUtf8.init(source), byte_offset: byte_start }
+	var $cursor = { ..InternalUtf8.init(source), byte_offset: byte_start }
 	while Bool.True {
-		match InternalUtf8.next(cursor) {
+		match InternalUtf8.next($cursor) {
 			Done => return Bool.False
 			One({ item, rest }) => {
 				ccc = InternalCaseData.lookup(item.scalar).ccc
@@ -400,7 +400,7 @@ more_above = |source, byte_start| {
 				if ccc == 0 {
 					return Bool.False
 				}
-				cursor = rest
+				$cursor = rest
 			}
 		}
 	}
@@ -408,9 +408,9 @@ more_above = |source, byte_start| {
 }
 
 before_dot = |source, byte_start| {
-	var cursor = { ..InternalUtf8.init(source), byte_offset: byte_start }
+	var $cursor = { ..InternalUtf8.init(source), byte_offset: byte_start }
 	while Bool.True {
-		match InternalUtf8.next(cursor) {
+		match InternalUtf8.next($cursor) {
 			Done => return Bool.False
 			One({ item, rest }) => {
 				if item.scalar == 0x307 {
@@ -420,7 +420,7 @@ before_dot = |source, byte_start| {
 				if ccc == 0 or ccc == 230 {
 					return Bool.False
 				}
-				cursor = rest
+				$cursor = rest
 			}
 		}
 	}
@@ -535,11 +535,11 @@ for_mapping = |mapping, initial, emit| match mapping {
 	Identity(scalar) => emit(initial, scalar)
 	One(scalar) => emit(initial, scalar)
 	Sequence(items) => {
-		var state = initial
+		var $state = initial
 		for scalar in items {
-			state = emit(state, scalar)
+			$state = emit($state, scalar)
 		}
-		state
+		$state
 	}
 }
 

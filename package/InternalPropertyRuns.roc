@@ -61,26 +61,26 @@ InternalPropertyRuns :: [].{
 				Done => Err(NoMore)
 				One({ item, rest }) => {
 					value = lookup(item.scalar)
-					var cursor = rest
-					var byte_end = item.byte_end
-					var scalar_end = item.scalar_index + 1
+					var $cursor = rest
+					var $byte_end = item.byte_end
+					var $scalar_end = item.scalar_index + 1
 
 					while Bool.True {
-						match InternalUtf8.next(cursor) {
+						match InternalUtf8.next($cursor) {
 							Done => {
-								match make_run(item.byte_start, byte_end, item.scalar_index, scalar_end, value) {
+								match make_run(item.byte_start, $byte_end, item.scalar_index, $scalar_end, value) {
 									Err(_) => return Err(NoMore)
-									Ok(run) => return Ok((run, { utf8: cursor, pending: NoPending }))
+									Ok(run) => return Ok((run, { utf8: $cursor, pending: NoPending }))
 								}
 							}
 							One({ item: candidate, rest: after_candidate }) => {
 								candidate_value = lookup(candidate.scalar)
 								if is_eq(value, candidate_value) {
-									byte_end = candidate.byte_end
-									scalar_end = candidate.scalar_index + 1
-									cursor = after_candidate
+									$byte_end = candidate.byte_end
+									$scalar_end = candidate.scalar_index + 1
+									$cursor = after_candidate
 								} else {
-									match make_run(item.byte_start, byte_end, item.scalar_index, scalar_end, value) {
+									match make_run(item.byte_start, $byte_end, item.scalar_index, $scalar_end, value) {
 										Err(_) => return Err(NoMore)
 										Ok(run) => return Ok((run, { utf8: after_candidate, pending: Pending(candidate) }))
 									}

@@ -33,10 +33,10 @@ run! = |input| {
         return "${signature.count.to_str()} ${signature.sum_ends.to_str()} ${signature.weighted_ends.to_str()}"
     }
 
-    var remaining = repeats
-    var total = 0.U64
+    var $remaining = repeats
+    var $total = 0.U64
 
-    while remaining > 0 {
+    while $remaining > 0 {
         pushed = Grapheme.Cursor.push(
             Grapheme.Cursor.init({}),
             source,
@@ -48,11 +48,11 @@ run! = |input| {
             pushed.state,
             |count, _range| count + 1,
         ) ?? ...
-        total = total + finished.state
-        remaining = remaining - 1
+        $total = $total + finished.state
+        $remaining = $remaining - 1
     }
 
-    total.to_str()
+    $total.to_str()
 }
 
 append_signature = |state, range| {

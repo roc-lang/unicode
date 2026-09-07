@@ -372,36 +372,36 @@ next_boundary = |state| {
 		))
 	}
 
-	var cursor = state.cursor
-	var machine = state.machine
+	var $cursor = state.cursor
+	var $machine = state.machine
 	while Bool.True {
-		match InternalUtf8.next(cursor) {
+		match InternalUtf8.next($cursor) {
 			Done => {
 				event = {
-					at: TextPosition.from_offsets(cursor.byte_offset, cursor.scalar_index),
+					at: TextPosition.from_offsets($cursor.byte_offset, $cursor.scalar_index),
 					decision: Mandatory,
 					authority: NonTailorable,
 				}
 				return Ok((
 					event,
 					{
-						cursor,
-						machine,
+						cursor: $cursor,
+						machine: $machine,
 						emit_start: Bool.False,
 						finished: Bool.True,
 					},
 				))
 			}
 			One({ item, rest }) => {
-				prepared = InternalLineBreak.prepare(machine, item.scalar, item.byte_start)
-				advanced = InternalLineBreak.advance(machine, prepared)
-				cursor = rest
-				if !machine.started {
-					machine = advanced
+				prepared = InternalLineBreak.prepare($machine, item.scalar, item.byte_start)
+				advanced = InternalLineBreak.advance($machine, prepared)
+				$cursor = rest
+				if !$machine.started {
+					$machine = advanced
 				} else {
-					outcome = match InternalLineBreak.classify(machine, prepared) {
+					outcome = match InternalLineBreak.classify($machine, prepared) {
 						Resolved(value) => value
-						NeedsFirst(need) => resolve_with_lookahead(machine, prepared, need, rest)
+						NeedsFirst(need) => resolve_with_lookahead($machine, prepared, need, rest)
 					}
 					return Ok((
 						{
@@ -410,7 +410,7 @@ next_boundary = |state| {
 							authority: outcome.authority,
 						},
 						{
-							cursor,
+							cursor: $cursor,
 							machine: advanced,
 							emit_start: Bool.False,
 							finished: Bool.False,
@@ -453,12 +453,12 @@ SignificantAhead : [NoSignificant, SignificantAhead({ token : InternalLineBreak.
 
 next_significant : InternalUtf8.Cursor, InternalLineBreak.Token -> SignificantAhead
 next_significant = |initial, preceding| {
-	var cursor = initial
+	var $cursor = initial
 	while Bool.True {
-		match InternalUtf8.next(cursor) {
+		match InternalUtf8.next($cursor) {
 			Done => return NoSignificant
 			One({ item, rest }) => {
-				cursor = rest
+				$cursor = rest
 				match InternalLineBreak.token_for_lookahead(preceding, item.scalar) {
 					Attached => {}
 					Significant(token) => return SignificantAhead({ token, rest })
@@ -487,19 +487,19 @@ next_opportunity = |state| {
 		return Err(NoMore)
 	}
 
-	var cursor = state.cursor
-	var stream = state.stream
+	var $cursor = state.cursor
+	var $stream = state.stream
 	while Bool.True {
-		match InternalUtf8.next(cursor) {
+		match InternalUtf8.next($cursor) {
 			Done => {
 				transition = InternalLineBreak.stream_finish(
-					stream,
-					TextPosition.from_offsets(cursor.byte_offset, cursor.scalar_index),
+					$stream,
+					TextPosition.from_offsets($cursor.byte_offset, $cursor.scalar_index),
 				)
 				return opportunity_from_emissions(
 					transition.emissions,
 					{
-						cursor,
+						cursor: $cursor,
 						stream: transition.stream,
 						queued: NoQueued,
 						finished: Bool.True,
@@ -508,19 +508,19 @@ next_opportunity = |state| {
 			}
 			One({ item, rest }) => {
 				transition = InternalLineBreak.stream_push(
-					stream,
+					$stream,
 					item.scalar,
 					TextPosition.from_offsets(item.byte_start, item.scalar_index),
 				)
-				cursor = rest
-				stream = transition.stream
+				$cursor = rest
+				$stream = transition.stream
 				match transition.emissions {
 					NoEvents => {}
 					_ => return opportunity_from_emissions(
 						transition.emissions,
 						{
-							cursor,
-							stream,
+							cursor: $cursor,
+							stream: $stream,
 							queued: NoQueued,
 							finished: Bool.False,
 						},
@@ -559,43 +559,43 @@ fold_emissions = |initial, emissions, emit| {
 }
 
 fold_ascii_overflow = |initial, vector, local_start, absolute_byte_base, emit| {
-	var fold = initial
-	var lane = 0.U64
-	while lane < 16 {
-		match fold.problem {
+	var $fold = initial
+	var $lane = 0.U64
+	while $lane < 16 {
+		match $fold.problem {
 			ScalarProblem(_) => {}
-			NoProblem => match fold.scalar_offset.plus_try(1) {
+			NoProblem => match $fold.scalar_offset.plus_try(1) {
 				Err(Overflow) => {
-					fold = {
-						stream: fold.stream,
-						state: fold.state,
-						byte_offset: fold.byte_offset,
-						scalar_offset: fold.scalar_offset,
-						consumed: fold.consumed,
-						problem: ScalarProblem(fold.scalar_offset),
+					$fold = {
+						stream: $fold.stream,
+						state: $fold.state,
+						byte_offset: $fold.byte_offset,
+						scalar_offset: $fold.scalar_offset,
+						consumed: $fold.consumed,
+						problem: ScalarProblem($fold.scalar_offset),
 					}
 				}
 				Ok(next_scalar) => {
 					transition = InternalLineBreak.stream_push(
-						fold.stream,
-						vector.get_lane(lane).to_u32(),
+						$fold.stream,
+						vector.get_lane($lane).to_u32(),
 						TextPosition.from_offsets(
-							absolute_byte_base + local_start + lane,
-							fold.scalar_offset,
+							absolute_byte_base + local_start + $lane,
+							$fold.scalar_offset,
 						),
 					)
-					fold = {
+					$fold = {
 						stream: transition.stream,
-						state: fold_emissions(fold.state, transition.emissions, emit),
-						byte_offset: absolute_byte_base + local_start + lane + 1,
+						state: fold_emissions($fold.state, transition.emissions, emit),
+						byte_offset: absolute_byte_base + local_start + $lane + 1,
 						scalar_offset: next_scalar,
-						consumed: local_start + lane + 1,
+						consumed: local_start + $lane + 1,
 						problem: NoProblem,
 					}
 				}
 			}
 		}
-		lane = lane + 1
+		$lane = $lane + 1
 	}
-	fold
+	$fold
 }

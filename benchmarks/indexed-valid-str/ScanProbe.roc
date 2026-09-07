@@ -13,42 +13,42 @@ ScanProbe :: [].{
 
     scan : Str, U64 -> Signature
     scan = |source, limit| {
-        var iterator = Scalar.iter(source)
-        var count = 0.U64
-        var scalar_sum = 0.U64
-        var indexed_scalar_sum = 0.U64
-        var byte_start_sum = 0.U64
-        var byte_end_sum = 0.U64
-        var scalar_index_sum = 0.U64
+        var $iterator = Scalar.iter(source)
+        var $count = 0.U64
+        var $scalar_sum = 0.U64
+        var $indexed_scalar_sum = 0.U64
+        var $byte_start_sum = 0.U64
+        var $byte_end_sum = 0.U64
+        var $scalar_index_sum = 0.U64
 
-        while count < limit {
-            match Iter.next(iterator) {
+        while $count < limit {
+            match Iter.next($iterator) {
                 Done => break
                 Skip({ rest }) => {
-                    iterator = rest
+                    $iterator = rest
                 }
                 One({ item, rest }) => {
                     scalar = Scalar.to_u32(item.scalar).to_u64()
                     start = ByteRange.start(item.byte_range)
                     end = ByteRange.end(item.byte_range)
-                    scalar_sum = scalar_sum + scalar
-                    indexed_scalar_sum = indexed_scalar_sum + scalar * (count + 1)
-                    byte_start_sum = byte_start_sum + start
-                    byte_end_sum = byte_end_sum + end
-                    scalar_index_sum = scalar_index_sum + item.scalar_index
-                    count = count + 1
-                    iterator = rest
+                    $scalar_sum = $scalar_sum + scalar
+                    $indexed_scalar_sum = $indexed_scalar_sum + scalar * ($count + 1)
+                    $byte_start_sum = $byte_start_sum + start
+                    $byte_end_sum = $byte_end_sum + end
+                    $scalar_index_sum = $scalar_index_sum + item.scalar_index
+                    $count = $count + 1
+                    $iterator = rest
                 }
             }
         }
 
         {
-            count,
-            scalar_sum,
-            indexed_scalar_sum,
-            byte_start_sum,
-            byte_end_sum,
-            scalar_index_sum,
+            count: $count,
+            scalar_sum: $scalar_sum,
+            indexed_scalar_sum: $indexed_scalar_sum,
+            byte_start_sum: $byte_start_sum,
+            byte_end_sum: $byte_end_sum,
+            scalar_index_sum: $scalar_index_sum,
         }
     }
 

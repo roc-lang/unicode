@@ -101,11 +101,11 @@ Bidi :: [].{
 	## run at once. `logical_runs` is the primary, early-stoppable traversal.
 	collect_logical_runs : Analysis -> List(LevelRun)
 	collect_logical_runs = |analysis| {
-		var output = []
+		var $output = []
 		for run in Bidi.logical_runs(analysis) {
-			output = output.append(run)
+			$output = $output.append(run)
 		}
-		output
+		$output
 	}
 
 	## L1/L2 for a scalar-aligned, paragraph-local logical line. The display
@@ -161,47 +161,47 @@ Bidi :: [].{
 
 next_logical_run = |state| {
 	analysis = state.analysis
-	var at = state.at
-	while at < analysis.scalar_len {
-		entry = analysis.entries.get(at) ?? return Err(NoMore)
+	var $at = state.at
+	while $at < analysis.scalar_len {
+		entry = analysis.entries.get($at) ?? return Err(NoMore)
 		match entry.level {
 			None => {
-				at = match at.plus_try(1) {
+				$at = match $at.plus_try(1) {
 					Ok(next) => next
 					Err(Overflow) => return Err(NoMore)
 				}
 			}
 			Some(level) => {
-				first = at
-				var last = at
-				var cursor = match at.plus_try(1) {
+				first = $at
+				var $last = $at
+				var $cursor = match $at.plus_try(1) {
 					Ok(next) => next
 					Err(Overflow) => return Err(NoMore)
 				}
-				while cursor < analysis.scalar_len {
-					candidate = analysis.entries.get(cursor) ?? break
+				while $cursor < analysis.scalar_len {
+					candidate = analysis.entries.get($cursor) ?? break
 					match candidate.level {
 						None => {
-							next_cursor = match cursor.plus_try(1) {
+							next_cursor = match $cursor.plus_try(1) {
 								Ok(next) => next
 								Err(Overflow) => break
 							}
-							cursor = next_cursor
+							$cursor = next_cursor
 						}
 						Some(candidate_level) => if candidate_level == level {
-							last = cursor
-							next_cursor = match cursor.plus_try(1) {
+							$last = $cursor
+							next_cursor = match $cursor.plus_try(1) {
 								Ok(next) => next
 								Err(Overflow) => break
 							}
-							cursor = next_cursor
+							$cursor = next_cursor
 						} else {
 							break
 						}
 					}
 				}
 				first_entry = analysis.entries.get(first) ?? return Err(NoMore)
-				last_entry = analysis.entries.get(last) ?? return Err(NoMore)
+				last_entry = analysis.entries.get($last) ?? return Err(NoMore)
 				first_bytes = TextRange.byte_range(first_entry.range)
 				last_bytes = TextRange.byte_range(last_entry.range)
 				bytes = ByteRange.from_bounds(ByteRange.start(first_bytes), ByteRange.end(last_bytes)) ?? return Err(NoMore)
@@ -209,7 +209,7 @@ next_logical_run = |state| {
 				last_scalars = TextRange.scalar_range(last_entry.range)
 				scalars = ScalarRange.from_bounds(ScalarRange.start(first_scalars), ScalarRange.end(last_scalars)) ?? return Err(NoMore)
 				run = { range: TextRange.from_ranges(bytes, scalars), level, direction: Bidi.direction(level) }
-				return Ok((run, { analysis, at: cursor }))
+				return Ok((run, { analysis, at: $cursor }))
 			}
 		}
 	}
@@ -217,65 +217,65 @@ next_logical_run = |state| {
 }
 
 p1_ranges = |source| {
-	var ranges = []
-	var byte_start = 0.U64
-	var scalar_start = 0.U64
-	var final_byte = 0.U64
-	var final_scalar = 0.U64
-	var pending_cr = None
+	var $ranges = []
+	var $byte_start = 0.U64
+	var $scalar_start = 0.U64
+	var $final_byte = 0.U64
+	var $final_scalar = 0.U64
+	var $pending_cr = None
 	for located in Scalar.iter(source) {
-		final_byte = ByteRange.end(located.byte_range)
-		final_scalar = match located.scalar_index.plus_try(1) {
+		$final_byte = ByteRange.end(located.byte_range)
+		$final_scalar = match located.scalar_index.plus_try(1) {
 			Ok(next) => next
 			Err(Overflow) => U64.highest
 		}
 		value = Scalar.to_u32(located.scalar)
-		match pending_cr {
+		match $pending_cr {
 			Some(cr) => {
 				if value == 0x000A {
-					ranges = ranges.append(range_from_offsets(byte_start, final_byte, scalar_start, final_scalar))
-					byte_start = final_byte
-					scalar_start = final_scalar
-					pending_cr = None
+					$ranges = $ranges.append(range_from_offsets($byte_start, $final_byte, $scalar_start, $final_scalar))
+					$byte_start = $final_byte
+					$scalar_start = $final_scalar
+					$pending_cr = None
 				} else {
-					ranges = ranges.append(range_from_offsets(byte_start, cr.byte_end, scalar_start, cr.scalar_end))
-					byte_start = cr.byte_end
-					scalar_start = cr.scalar_end
-					pending_cr = None
+					$ranges = $ranges.append(range_from_offsets($byte_start, cr.byte_end, $scalar_start, cr.scalar_end))
+					$byte_start = cr.byte_end
+					$scalar_start = cr.scalar_end
+					$pending_cr = None
 					if value == 0x000D {
-						pending_cr = Some({ byte_end: final_byte, scalar_end: final_scalar })
+						$pending_cr = Some({ byte_end: $final_byte, scalar_end: $final_scalar })
 					} else if is_p1_separator(value) {
-						ranges = ranges.append(range_from_offsets(byte_start, final_byte, scalar_start, final_scalar))
-						byte_start = final_byte
-						scalar_start = final_scalar
+						$ranges = $ranges.append(range_from_offsets($byte_start, $final_byte, $scalar_start, $final_scalar))
+						$byte_start = $final_byte
+						$scalar_start = $final_scalar
 					}
 				}
 			}
 			None => {
 				if value == 0x000D {
-					pending_cr = Some({ byte_end: final_byte, scalar_end: final_scalar })
+					$pending_cr = Some({ byte_end: $final_byte, scalar_end: $final_scalar })
 				} else if is_p1_separator(value) {
-					ranges = ranges.append(range_from_offsets(byte_start, final_byte, scalar_start, final_scalar))
-					byte_start = final_byte
-					scalar_start = final_scalar
+					$ranges = $ranges.append(range_from_offsets($byte_start, $final_byte, $scalar_start, $final_scalar))
+					$byte_start = $final_byte
+					$scalar_start = $final_scalar
 				}
 			}
 		}
 	}
-	match pending_cr {
+	match $pending_cr {
 		Some(cr) => {
-			ranges = ranges.append(range_from_offsets(byte_start, cr.byte_end, scalar_start, cr.scalar_end))
-			byte_start = cr.byte_end
-			scalar_start = cr.scalar_end
+			$ranges = $ranges.append(range_from_offsets($byte_start, cr.byte_end, $scalar_start, cr.scalar_end))
+			$byte_start = cr.byte_end
+			$scalar_start = cr.scalar_end
 		}
 		None => {}
 	}
-	if final_scalar == 0 {
+	if $final_scalar == 0 {
 		[range_from_offsets(0, 0, 0, 0)]
-	} else if scalar_start < final_scalar {
-		ranges.append(range_from_offsets(byte_start, final_byte, scalar_start, final_scalar))
+	} else if $scalar_start < $final_scalar {
+		$ranges.append(range_from_offsets($byte_start, $final_byte, $scalar_start, $final_scalar))
 	} else {
-		ranges
+		$ranges
 	}
 }
 
@@ -293,80 +293,80 @@ is_p1_range = |source, selected| {
 	## allocate one result per preceding paragraph just to validate `selected`.
 	## A pending CR delays commitment until the next scalar determines whether
 	## it is the CR half of CR LF.
-	var byte_start = 0.U64
-	var scalar_start = 0.U64
-	var final_byte = 0.U64
-	var final_scalar = 0.U64
-	var pending_cr = None
+	var $byte_start = 0.U64
+	var $scalar_start = 0.U64
+	var $final_byte = 0.U64
+	var $final_scalar = 0.U64
+	var $pending_cr = None
 	for located in Scalar.iter(source) {
-		final_byte = ByteRange.end(located.byte_range)
-		final_scalar = match located.scalar_index.plus_try(1) {
+		$final_byte = ByteRange.end(located.byte_range)
+		$final_scalar = match located.scalar_index.plus_try(1) {
 			Ok(next) => next
 			Err(Overflow) => return Bool.False
 		}
 		value = Scalar.to_u32(located.scalar)
-		match pending_cr {
+		match $pending_cr {
 			Some(cr) => {
 				if value == 0x000A {
-					status = p1_candidate(selected, byte_start, final_byte, scalar_start, final_scalar)
+					status = p1_candidate(selected, $byte_start, $final_byte, $scalar_start, $final_scalar)
 					if status.matches {
 						return Bool.True
 					}
 					if status.passed {
 						return Bool.False
 					}
-					byte_start = final_byte
-					scalar_start = final_scalar
-					pending_cr = None
+					$byte_start = $final_byte
+					$scalar_start = $final_scalar
+					$pending_cr = None
 				} else {
-					status = p1_candidate(selected, byte_start, cr.byte_end, scalar_start, cr.scalar_end)
+					status = p1_candidate(selected, $byte_start, cr.byte_end, $scalar_start, cr.scalar_end)
 					if status.matches {
 						return Bool.True
 					}
 					if status.passed {
 						return Bool.False
 					}
-					byte_start = cr.byte_end
-					scalar_start = cr.scalar_end
-					pending_cr = None
+					$byte_start = cr.byte_end
+					$scalar_start = cr.scalar_end
+					$pending_cr = None
 					if value == 0x000D {
-						pending_cr = Some({ byte_end: final_byte, scalar_end: final_scalar })
+						$pending_cr = Some({ byte_end: $final_byte, scalar_end: $final_scalar })
 					} else if is_p1_separator(value) {
-						separator_status = p1_candidate(selected, byte_start, final_byte, scalar_start, final_scalar)
+						separator_status = p1_candidate(selected, $byte_start, $final_byte, $scalar_start, $final_scalar)
 						if separator_status.matches {
 							return Bool.True
 						}
 						if separator_status.passed {
 							return Bool.False
 						}
-						byte_start = final_byte
-						scalar_start = final_scalar
+						$byte_start = $final_byte
+						$scalar_start = $final_scalar
 					}
 				}
 			}
 			None => {
 				if value == 0x000D {
-					pending_cr = Some({ byte_end: final_byte, scalar_end: final_scalar })
+					$pending_cr = Some({ byte_end: $final_byte, scalar_end: $final_scalar })
 				} else if is_p1_separator(value) {
-					status = p1_candidate(selected, byte_start, final_byte, scalar_start, final_scalar)
+					status = p1_candidate(selected, $byte_start, $final_byte, $scalar_start, $final_scalar)
 					if status.matches {
 						return Bool.True
 					}
 					if status.passed {
 						return Bool.False
 					}
-					byte_start = final_byte
-					scalar_start = final_scalar
+					$byte_start = $final_byte
+					$scalar_start = $final_scalar
 				}
 			}
 		}
 	}
-	match pending_cr {
-		Some(cr) => p1_candidate(selected, byte_start, cr.byte_end, scalar_start, cr.scalar_end).matches
-		None => if final_scalar == 0 {
+	match $pending_cr {
+		Some(cr) => p1_candidate(selected, $byte_start, cr.byte_end, $scalar_start, cr.scalar_end).matches
+		None => if $final_scalar == 0 {
 			TextRange.is_eq(selected, range_from_offsets(0, 0, 0, 0))
-		} else if scalar_start < final_scalar {
-			p1_candidate(selected, byte_start, final_byte, scalar_start, final_scalar).matches
+		} else if $scalar_start < $final_scalar {
+			p1_candidate(selected, $byte_start, $final_byte, $scalar_start, $final_scalar).matches
 		} else {
 			Bool.False
 		}
@@ -436,25 +436,25 @@ rebase_matched_brackets = |entries, scalar_origin| entries.map(
 )
 
 collect_entries = |source, limit, origin| {
-	var entries = []
-	var count = 0.U64
-	var saw_separator = Bool.False
-	var pending_cr = Bool.False
+	var $entries = []
+	var $count = 0.U64
+	var $saw_separator = Bool.False
+	var $pending_cr = Bool.False
 	origin_range = range_from_offsets(TextPosition.byte_offset(origin), TextPosition.byte_offset(origin), TextPosition.scalar_offset(origin), TextPosition.scalar_offset(origin))
 	for located in Scalar.iter(source) {
 		p1_value = Scalar.to_u32(located.scalar)
-		if saw_separator {
-			if pending_cr and p1_value == 0x000A {
+		if $saw_separator {
+			if $pending_cr and p1_value == 0x000A {
 				# P1 treats CR LF as one separator, not an empty paragraph.
-				pending_cr = Bool.False
+				$pending_cr = Bool.False
 			} else {
 				return Multiple
 			}
 		} else if p1_value == 0x000D {
-			saw_separator = Bool.True
-			pending_cr = Bool.True
+			$saw_separator = Bool.True
+			$pending_cr = Bool.True
 		} else if is_p1_separator(p1_value) {
-			saw_separator = Bool.True
+			$saw_separator = Bool.True
 		}
 		byte_start = match TextPosition.byte_offset(origin).plus_try(ByteRange.start(located.byte_range)) {
 			Ok(value) => value
@@ -474,15 +474,15 @@ collect_entries = |source, limit, origin| {
 		}
 		bytes = ByteRange.from_bounds(byte_start, byte_end) ?? return Limit({ required: U64.highest, range: origin_range })
 		scalars = ScalarRange.from_bounds(scalar_start, scalar_end) ?? return Limit({ required: U64.highest, range: origin_range })
-		count = match count.plus_try(1) {
+		$count = match $count.plus_try(1) {
 			Ok(next) => next
 			Err(Overflow) => return Limit({ required: U64.highest, range: TextRange.from_ranges(bytes, scalars) })
 		}
-		if count > limit {
-			return Limit({ required: count, range: TextRange.from_ranges(bytes, scalars) })
+		if $count > limit {
+			return Limit({ required: $count, range: TextRange.from_ranges(bytes, scalars) })
 		}
 		class = BidiClass.of_scalar(located.scalar)
-		entries = entries.append({
+		$entries = $entries.append({
 			range: TextRange.from_ranges(bytes, scalars),
 			scalar: located.scalar,
 			original_class: class,
@@ -494,49 +494,49 @@ collect_entries = |source, limit, origin| {
 			mirroring_glyph: None,
 		})
 	}
-	Entries(entries)
+	Entries($entries)
 }
 
 ## Pair isolates once, using links stored alongside the retained tape instead
 ## of an input-proportional temporary stack. Besides making BD9 available to
 ## X10, the direct-content strong fact lets X5c resolve every FSI in one pass.
 prepare_isolates = |entries| {
-	var partners = []
-	var parents = []
-	var first_strongs = []
-	var top = None
-	var at = 0.U64
-	while at < entries.len() {
-		entry = entries.get(at) ?? break
+	var $partners = []
+	var $parents = []
+	var $first_strongs = []
+	var $top = None
+	var $at = 0.U64
+	while $at < entries.len() {
+		entry = entries.get($at) ?? break
 		class = entry.original_class
-		partners = partners.append(None)
-		parents = parents.append(None)
-		first_strongs = first_strongs.append(None)
+		$partners = $partners.append(None)
+		$parents = $parents.append(None)
+		$first_strongs = $first_strongs.append(None)
 		if class == LRI or class == RLI or class == FSI {
-			parents = parents.set(at, top) ?? ...
-			top = Some(at)
+			$parents = $parents.set($at, $top) ?? ...
+			$top = Some($at)
 		} else if class == PDI {
-			match top {
+			match $top {
 				None => {}
 				Some(open) => {
-					partners = partners.set(open, Some(at)) ?? ...
-					partners = partners.set(at, Some(open)) ?? ...
-					top = parents.get(open) ?? None
+					$partners = $partners.set(open, Some($at)) ?? ...
+					$partners = $partners.set($at, Some(open)) ?? ...
+					$top = $parents.get(open) ?? None
 				}
 			}
 		} else if class == L or class == R or class == AL {
-			match top {
+			match $top {
 				None => {}
-				Some(open) => if first_strongs.get(open) == Ok(None) {
-					first_strongs = first_strongs.set(open, Some(class)) ?? ...
+				Some(open) => if $first_strongs.get(open) == Ok(None) {
+					$first_strongs = $first_strongs.set(open, Some(class)) ?? ...
 				}
 			}
 		}
-		at = at + 1
+		$at = $at + 1
 	}
 	{
-		partners,
-		fsi_directions: first_strongs.map(
+		partners: $partners,
+		fsi_directions: $first_strongs.map(
 			|strong| match strong {
 				Some(R) => RLI
 				Some(AL) => RLI
@@ -552,14 +552,14 @@ base_level = |entries, policy, partners| {
 		RightToLeft => 1
 		Auto => {
 			# P2/P3: skip the complete matching isolate, even an overflow isolate.
-			var at = 0.U64
-			while at < entries.len() {
-				entry = entries.get(at) ?? break
+			var $at = 0.U64
+			while $at < entries.len() {
+				entry = entries.get($at) ?? break
 				class = entry.original_class
 				if class == LRI or class == RLI or class == FSI {
-					match partners.get(at) ?? None {
+					match partners.get($at) ?? None {
 						Some(close) => {
-							at = close + 1
+							$at = close + 1
 						}
 						None => {
 							break
@@ -572,7 +572,7 @@ base_level = |entries, policy, partners| {
 						return 1
 					}
 						else {
-							at = at + 1
+							$at = $at + 1
 						}
 			}
 			0
@@ -583,21 +583,21 @@ base_level = |entries, policy, partners| {
 ## X1-X9. The fixed semantic depth is 125; overflow formatting controls are
 ## ignored according to the UAX counters rather than becoming a caller limit.
 resolve_explicit = |entries, base, isolates| {
-	var stack = [{ level: base, override: None, isolate: Bool.False }]
-	var overflow_isolates = 0.U64
-	var overflow_embeddings = 0.U64
-	var valid_isolates = 0.U64
-	var result = []
+	var $stack = [{ level: base, override: None, isolate: Bool.False }]
+	var $overflow_isolates = 0.U64
+	var $overflow_embeddings = 0.U64
+	var $valid_isolates = 0.U64
+	var $result = []
 	for entry in entries {
-		position = result.len()
-		current = stack.last() ?? { level: base, override: None, isolate: Bool.False }
+		position = $result.len()
+		current = $stack.last() ?? { level: base, override: None, isolate: Bool.False }
 		class = entry.original_class
 		if class == RLE or class == LRE or class == RLO or class == LRO {
-			if overflow_isolates > 0 {
+			if $overflow_isolates > 0 {
 				# X2-X5: formatting inside an overflow isolate is ignored and
 				# does not participate in the embedding-overflow counter.
-			} else if overflow_embeddings > 0 {
-				overflow_embeddings = overflow_embeddings + 1
+			} else if $overflow_embeddings > 0 {
+				$overflow_embeddings = $overflow_embeddings + 1
 			} else {
 				candidate = next_embedding_level(current.level, class)
 				if candidate <= 125 {
@@ -608,26 +608,26 @@ resolve_explicit = |entries, base, isolates| {
 					} else {
 						None
 					}
-					stack = stack.append({ level: candidate, override, isolate: Bool.False })
+					$stack = $stack.append({ level: candidate, override, isolate: Bool.False })
 				} else {
-					overflow_embeddings = overflow_embeddings + 1
+					$overflow_embeddings = $overflow_embeddings + 1
 				}
 			}
-			result = result.append({ ..entry, level: None })
+			$result = $result.append({ ..entry, level: None })
 		} else if class == PDF {
-			if overflow_isolates > 0 {}
-			else if overflow_embeddings > 0 {
-				overflow_embeddings = overflow_embeddings - 1
+			if $overflow_isolates > 0 {}
+			else if $overflow_embeddings > 0 {
+				$overflow_embeddings = $overflow_embeddings - 1
 			}
-				else if stack.len() > 1 and !current.isolate {
-					stack = drop_last(stack)
+				else if $stack.len() > 1 and !current.isolate {
+					$stack = drop_last($stack)
 				}
-			result = result.append({ ..entry, level: None })
+			$result = $result.append({ ..entry, level: None })
 		} else if class == BN {
-			result = result.append({ ..entry, level: None })
+			$result = $result.append({ ..entry, level: None })
 		} else if class == LRI or class == RLI or class == FSI {
-			if overflow_isolates > 0 or overflow_embeddings > 0 {
-				overflow_isolates = overflow_isolates + 1
+			if $overflow_isolates > 0 or $overflow_embeddings > 0 {
+				$overflow_isolates = $overflow_isolates + 1
 			} else {
 				isolate_type = if class == FSI {
 					isolates.fsi_directions.get(position) ?? LRI
@@ -636,31 +636,31 @@ resolve_explicit = |entries, base, isolates| {
 				}
 				candidate = next_embedding_level(current.level, isolate_type)
 				if candidate <= 125 {
-					stack = stack.append({ level: candidate, override: None, isolate: Bool.True })
-					valid_isolates = valid_isolates + 1
+					$stack = $stack.append({ level: candidate, override: None, isolate: Bool.True })
+					$valid_isolates = $valid_isolates + 1
 				} else {
-					overflow_isolates = overflow_isolates + 1
+					$overflow_isolates = $overflow_isolates + 1
 				}
 			}
-			result = result.append(resolved_entry(entry, current.level, class, current.override))
+			$result = $result.append(resolved_entry(entry, current.level, class, current.override))
 		} else if class == PDI {
-			if overflow_isolates > 0 {
-				overflow_isolates = overflow_isolates - 1
-			} else if valid_isolates > 0 {
-				overflow_embeddings = 0
-				stack = drop_through_isolate(stack)
-				valid_isolates = valid_isolates - 1
+			if $overflow_isolates > 0 {
+				$overflow_isolates = $overflow_isolates - 1
+			} else if $valid_isolates > 0 {
+				$overflow_embeddings = 0
+				$stack = drop_through_isolate($stack)
+				$valid_isolates = $valid_isolates - 1
 			}
-			after = stack.last() ?? { level: base, override: None, isolate: Bool.False }
-			result = result.append(resolved_entry(entry, after.level, class, after.override))
+			after = $stack.last() ?? { level: base, override: None, isolate: Bool.False }
+			$result = $result.append(resolved_entry(entry, after.level, class, after.override))
 		} else if class == B {
 			# X8: B terminates all scopes and is always at paragraph level.
-			result = result.append(resolved_entry(entry, base, class, None))
+			$result = $result.append(resolved_entry(entry, base, class, None))
 		} else {
-			result = result.append(resolved_entry(entry, current.level, class, current.override))
+			$result = $result.append(resolved_entry(entry, current.level, class, current.override))
 		}
 	}
-	weak_and_implicit(result, base, isolates.partners)
+	weak_and_implicit($result, base, isolates.partners)
 }
 
 resolved_entry = |entry, level, class, override| {
@@ -688,25 +688,25 @@ next_embedding_level = |level, class| {
 }
 
 drop_last = |items| {
-	var output = []
-	var at = 0.U64
-	while at + 1 < items.len() {
-		output = output.append(items.get(at) ?? break)
-		at = at + 1
+	var $output = []
+	var $at = 0.U64
+	while $at + 1 < items.len() {
+		$output = $output.append(items.get($at) ?? break)
+		$at = $at + 1
 	}
-	output
+	$output
 }
 
 drop_through_isolate = |items| {
-	var output = items
-	while output.len() > 1 {
-		top = output.last() ?? break
-		output = drop_last(output)
+	var $output = items
+	while $output.len() > 1 {
+		top = $output.last() ?? break
+		$output = drop_last($output)
 		if top.isolate {
-			return output
+			return $output
 		}
 	}
-	output
+	$output
 }
 
 ## X10 produces links over the X9-filtered tape. An isolate's matching PDI is
@@ -727,125 +727,125 @@ weak_and_implicit = |entries, paragraph_level, partners| {
 }
 
 isolating_run_sequences = |entries, paragraph_level, partners| {
-	var run_at = []
-	var previous_visible = []
-	var previous = None
-	var at = 0.U64
-	while at < entries.len() {
-		entry = entries.get(at) ?? break
-		previous_visible = previous_visible.append(previous)
-		run_at = run_at.append(None)
+	var $run_at = []
+	var $previous_visible = []
+	var $previous = None
+	var $at = 0.U64
+	while $at < entries.len() {
+		entry = entries.get($at) ?? break
+		$previous_visible = $previous_visible.append($previous)
+		$run_at = $run_at.append(None)
 		match entry.level {
 			Some(_) => {
-				previous = Some(at)
+				$previous = Some($at)
 			}
 			None => {}
 		}
-		at = at + 1
+		$at = $at + 1
 	}
 
 	## Build this backward, then reverse by indexed appends. `List.prepend` is
 	## linear for Roc lists, so prepending once per scalar made this O(n²).
-	var backwards_next_visible = []
-	var following = None
-	var backwards = entries.len()
-	while backwards > 0 {
-		backwards = backwards - 1
-		entry = entries.get(backwards) ?? break
-		backwards_next_visible = backwards_next_visible.append(following)
+	var $backwards_next_visible = []
+	var $following = None
+	var $backwards = entries.len()
+	while $backwards > 0 {
+		$backwards = $backwards - 1
+		entry = entries.get($backwards) ?? break
+		$backwards_next_visible = $backwards_next_visible.append($following)
 		match entry.level {
 			Some(_) => {
-				following = Some(backwards)
+				$following = Some($backwards)
 			}
 			None => {}
 		}
 	}
-	var next_visible = []
-	var reverse_at = backwards_next_visible.len()
-	while reverse_at > 0 {
-		reverse_at = reverse_at - 1
-		next_visible = next_visible.append(backwards_next_visible.get(reverse_at) ?? None)
+	var $next_visible = []
+	var $reverse_at = $backwards_next_visible.len()
+	while $reverse_at > 0 {
+		$reverse_at = $reverse_at - 1
+		$next_visible = $next_visible.append($backwards_next_visible.get($reverse_at) ?? None)
 	}
-	var runs = []
-	at = 0
-	while at < entries.len() {
-		entry = entries.get(at) ?? break
+	var $runs = []
+	$at = 0
+	while $at < entries.len() {
+		entry = entries.get($at) ?? break
 		match entry.level {
 			None => {
-				at = at + 1
+				$at = $at + 1
 			}
 			Some(level) => {
-				first = at
-				var last = at
-				var cursor = at + 1
-				while cursor < entries.len() {
-					candidate = entries.get(cursor) ?? break
+				first = $at
+				var $last = $at
+				var $cursor = $at + 1
+				while $cursor < entries.len() {
+					candidate = entries.get($cursor) ?? break
 					match candidate.level {
 						None => {
-							cursor = cursor + 1
+							$cursor = $cursor + 1
 						}
 						Some(candidate_level) => if candidate_level == level {
-							last = cursor
-							cursor = cursor + 1
+							$last = $cursor
+							$cursor = $cursor + 1
 						} else {
 							break
 						}
 					}
 				}
-				run_id = runs.len()
-				runs = runs.append({ first, last, level })
-				var mark = first
-				while mark <= last {
-					candidate = entries.get(mark) ?? break
+				run_id = $runs.len()
+				$runs = $runs.append({ first, last: $last, level })
+				var $mark = first
+				while $mark <= $last {
+					candidate = entries.get($mark) ?? break
 					match candidate.level {
 						Some(_) => {
-							run_at = run_at.set(mark, Some(run_id)) ?? ...
+							$run_at = $run_at.set($mark, Some(run_id)) ?? ...
 						}
 						None => {}
 					}
-					mark = mark + 1
+					$mark = $mark + 1
 				}
-				at = cursor
+				$at = $cursor
 			}
 		}
 	}
-	var links = []
-	at = 0
-	while at < entries.len() {
-		links = links.append(None)
-		at = at + 1
+	var $links = []
+	$at = 0
+	while $at < entries.len() {
+		$links = $links.append(None)
+		$at = $at + 1
 	}
-	var starts = []
-	var sos = []
-	var eos = []
-	for run in runs {
+	var $starts = []
+	var $sos = []
+	var $eos = []
+	for run in $runs {
 		first = entries.get(run.first) ?? break
 		is_continuation = first.original_class == PDI and partners.get(run.first) != Ok(None)
 		if !is_continuation {
-			var current_run = run
-			var final = run.last
+			var $current_run = run
+			var $final = run.last
 			while Bool.True {
-				var index = current_run.first
-				while index < current_run.last {
-					next = next_visible.get(index) ?? None
+				var $index = $current_run.first
+				while $index < $current_run.last {
+					next = $next_visible.get($index) ?? None
 					match next {
 						Some(value) => {
-							links = links.set(index, Some(value)) ?? ...
+							$links = $links.set($index, Some(value)) ?? ...
 						}
 						None => {}
 					}
-					index = index + 1
+					$index = $index + 1
 				}
-				last_entry = entries.get(current_run.last) ?? break
-				match partners.get(current_run.last) ?? None {
+				last_entry = entries.get($current_run.last) ?? break
+				match partners.get($current_run.last) ?? None {
 					Some(close) if last_entry.original_class == LRI or last_entry.original_class == RLI or last_entry.original_class == FSI => {
-						next_run_id = run_at.get(close) ?? None
+						next_run_id = $run_at.get(close) ?? None
 						match next_run_id {
 							Some(id) => {
-								next_run = runs.get(id) ?? break
-								links = links.set(current_run.last, Some(next_run.first)) ?? ...
-								current_run = next_run
-								final = next_run.last
+								next_run = $runs.get(id) ?? break
+								$links = $links.set($current_run.last, Some(next_run.first)) ?? ...
+								$current_run = next_run
+								$final = next_run.last
 							}
 							None => {
 								break
@@ -857,8 +857,8 @@ isolating_run_sequences = |entries, paragraph_level, partners| {
 					}
 				}
 			}
-			starts = starts.append(run.first)
-			before = previous_visible.get(run.first) ?? None
+			$starts = $starts.append(run.first)
+			before = $previous_visible.get(run.first) ?? None
 			sos_level = match before {
 				Some(index) => match (entries.get(index) ?? first).level {
 					Some(value) => value
@@ -866,11 +866,11 @@ isolating_run_sequences = |entries, paragraph_level, partners| {
 				}
 				None => paragraph_level
 			}
-			last = entries.get(final) ?? first
+			last = entries.get($final) ?? first
 			after = if last.original_class == LRI or last.original_class == RLI or last.original_class == FSI {
 				None
 			} else {
-				next_visible.get(final) ?? None
+				$next_visible.get($final) ?? None
 			}
 			eos_level = match after {
 				Some(index) => match (entries.get(index) ?? last).level {
@@ -879,11 +879,11 @@ isolating_run_sequences = |entries, paragraph_level, partners| {
 				}
 				None => paragraph_level
 			}
-			sos = sos.append(direction_class(max_level(run.level, sos_level)))
-			eos = eos.append(direction_class(max_level(run.level, eos_level)))
+			$sos = $sos.append(direction_class(max_level(run.level, sos_level)))
+			$eos = $eos.append(direction_class(max_level(run.level, eos_level)))
 		}
 	}
-	{ links, starts, sos, eos }
+	{ links: $links, starts: $starts, sos: $sos, eos: $eos }
 }
 
 max_level = |left, right| if left > right {
@@ -909,68 +909,68 @@ class_at = |entries, index, fallback| match index {
 }
 
 w1 = |entries, irs| {
-	var current = entries
-	var sequence = 0.U64
-	while sequence < irs.starts.len() {
-		var previous = irs.sos.get(sequence) ?? L
-		var at = irs.starts.get(sequence) ?? break
+	var $current = entries
+	var $sequence = 0.U64
+	while $sequence < irs.starts.len() {
+		var $previous = irs.sos.get($sequence) ?? L
+		var $at = irs.starts.get($sequence) ?? break
 		while Bool.True {
-			entry = current.get(at) ?? break
+			entry = $current.get($at) ?? break
 			class = if entry.working_class == NSM {
-				if isolate_control(previous) {
+				if isolate_control($previous) {
 					ON
 				} else {
-					previous
+					$previous
 				}
 			} else {
 				entry.working_class
 			}
-			current = current.set(at, { ..entry, working_class: class }) ?? ...
-			previous = class
-			match next_in(irs.links, at) {
+			$current = $current.set($at, { ..entry, working_class: class }) ?? ...
+			$previous = class
+			match next_in(irs.links, $at) {
 				Some(next) => {
-					at = next
+					$at = next
 				}
 				None => {
 					break
 				}
 			}
 		}
-		sequence = sequence + 1
+		$sequence = $sequence + 1
 	}
-	current
+	$current
 }
 
 w2 = |entries, irs| {
-	var current = entries
-	var sequence = 0.U64
-	while sequence < irs.starts.len() {
-		var strong = irs.sos.get(sequence) ?? L
-		var at = irs.starts.get(sequence) ?? break
+	var $current = entries
+	var $sequence = 0.U64
+	while $sequence < irs.starts.len() {
+		var $strong = irs.sos.get($sequence) ?? L
+		var $at = irs.starts.get($sequence) ?? break
 		while Bool.True {
-			entry = current.get(at) ?? break
+			entry = $current.get($at) ?? break
 			class = entry.working_class
-			resolved = if class == EN and strong == AL {
+			resolved = if class == EN and $strong == AL {
 				AN
 			} else {
 				class
 			}
-			current = current.set(at, { ..entry, working_class: resolved }) ?? ...
+			$current = $current.set($at, { ..entry, working_class: resolved }) ?? ...
 			if class == L or class == R or class == AL {
-				strong = class
+				$strong = class
 			}
-			match next_in(irs.links, at) {
+			match next_in(irs.links, $at) {
 				Some(next) => {
-					at = next
+					$at = next
 				}
 				None => {
 					break
 				}
 			}
 		}
-		sequence = sequence + 1
+		$sequence = $sequence + 1
 	}
-	current
+	$current
 }
 
 w3 = |entries| entries.map(
@@ -985,97 +985,97 @@ w3 = |entries| entries.map(
 )
 
 w4 = |entries, irs| {
-	var current = entries
-	var sequence = 0.U64
-	while sequence < irs.starts.len() {
-		var at = irs.starts.get(sequence) ?? break
-		var before = irs.sos.get(sequence) ?? L
-		eos = irs.eos.get(sequence) ?? L
+	var $current = entries
+	var $sequence = 0.U64
+	while $sequence < irs.starts.len() {
+		var $at = irs.starts.get($sequence) ?? break
+		var $before = irs.sos.get($sequence) ?? L
+		eos = irs.eos.get($sequence) ?? L
 		while Bool.True {
-			entry = current.get(at) ?? break
-			after = class_at(current, next_in(irs.links, at), eos)
+			entry = $current.get($at) ?? break
+			after = class_at($current, next_in(irs.links, $at), eos)
 			class = entry.working_class
-			resolved = if class == ES and before == EN and after == EN {
+			resolved = if class == ES and $before == EN and after == EN {
 				EN
-			} else if class == CS and before == EN and after == EN {
+			} else if class == CS and $before == EN and after == EN {
 				EN
-			} else if class == CS and before == AN and after == AN {
+			} else if class == CS and $before == AN and after == AN {
 				AN
 			} else {
 				class
 			}
-			current = current.set(at, { ..entry, working_class: resolved }) ?? ...
-			before = resolved
-			match next_in(irs.links, at) {
+			$current = $current.set($at, { ..entry, working_class: resolved }) ?? ...
+			$before = resolved
+			match next_in(irs.links, $at) {
 				Some(next) => {
-					at = next
+					$at = next
 				}
 				None => {
 					break
 				}
 			}
 		}
-		sequence = sequence + 1
+		$sequence = $sequence + 1
 	}
-	current
+	$current
 }
 
 w5 = |entries, irs| {
-	var current = entries
-	var sequence = 0.U64
-	while sequence < irs.starts.len() {
-		var previous = irs.sos.get(sequence) ?? L
-		var at = irs.starts.get(sequence) ?? break
-		eos = irs.eos.get(sequence) ?? L
+	var $current = entries
+	var $sequence = 0.U64
+	while $sequence < irs.starts.len() {
+		var $previous = irs.sos.get($sequence) ?? L
+		var $at = irs.starts.get($sequence) ?? break
+		eos = irs.eos.get($sequence) ?? L
 		while Bool.True {
-			entry = current.get(at) ?? break
+			entry = $current.get($at) ?? break
 			if entry.working_class == ET {
-				var last = at
-				var after = next_in(irs.links, at)
-				while class_at(current, after, eos) == ET {
-					match after {
+				var $last = $at
+				var $after = next_in(irs.links, $at)
+				while class_at($current, $after, eos) == ET {
+					match $after {
 						Some(next) => {
-							last = next
-							after = next_in(irs.links, next)
+							$last = next
+							$after = next_in(irs.links, next)
 						}
 						None => {
 							break
 						}
 					}
 				}
-				resolved = if previous == EN or class_at(current, after, eos) == EN {
+				resolved = if $previous == EN or class_at($current, $after, eos) == EN {
 					EN
 				} else {
 					ET
 				}
-				var replace = at
+				var $replace = $at
 				while Bool.True {
-					item = current.get(replace) ?? break
-					current = current.set(replace, { ..item, working_class: resolved }) ?? ...
-					if replace == last {
+					item = $current.get($replace) ?? break
+					$current = $current.set($replace, { ..item, working_class: resolved }) ?? ...
+					if $replace == $last {
 						break
 					}
-					match next_in(irs.links, replace) {
+					match next_in(irs.links, $replace) {
 						Some(next) => {
-							replace = next
+							$replace = next
 						}
 						None => break
 					}
 				}
-				previous = resolved
-				match after {
+				$previous = resolved
+				match $after {
 					Some(next) => {
-						at = next
+						$at = next
 					}
 					None => {
 						break
 					}
 				}
 			} else {
-				previous = entry.working_class
-				match next_in(irs.links, at) {
+				$previous = entry.working_class
+				match next_in(irs.links, $at) {
 					Some(next) => {
-						at = next
+						$at = next
 					}
 					None => {
 						break
@@ -1083,9 +1083,9 @@ w5 = |entries, irs| {
 				}
 			}
 		}
-		sequence = sequence + 1
+		$sequence = $sequence + 1
 	}
-	current
+	$current
 }
 
 w6 = |entries| entries.map(
@@ -1103,76 +1103,76 @@ w6 = |entries| entries.map(
 )
 
 w7 = |entries, irs| {
-	var current = entries
-	var sequence = 0.U64
-	while sequence < irs.starts.len() {
-		var strong = irs.sos.get(sequence) ?? L
-		var at = irs.starts.get(sequence) ?? break
+	var $current = entries
+	var $sequence = 0.U64
+	while $sequence < irs.starts.len() {
+		var $strong = irs.sos.get($sequence) ?? L
+		var $at = irs.starts.get($sequence) ?? break
 		while Bool.True {
-			entry = current.get(at) ?? break
+			entry = $current.get($at) ?? break
 			class = entry.working_class
-			resolved = if class == EN and strong == L {
+			resolved = if class == EN and $strong == L {
 				L
 			} else {
 				class
 			}
-			current = current.set(at, { ..entry, working_class: resolved }) ?? ...
+			$current = $current.set($at, { ..entry, working_class: resolved }) ?? ...
 			if class == L or class == R {
-				strong = class
+				$strong = class
 			}
-			match next_in(irs.links, at) {
+			match next_in(irs.links, $at) {
 				Some(next) => {
-					at = next
+					$at = next
 				}
 				None => {
 					break
 				}
 			}
 		}
-		sequence = sequence + 1
+		$sequence = $sequence + 1
 	}
-	current
+	$current
 }
 
 ## BD16 and N0 are deliberately performed one isolating run sequence at a
 ## time. A bracket-stack overflow invalidates *all* pairs for that sequence.
 n0 = |entries, irs| {
-	var current = entries
+	var $current = entries
 	matches = bracket_matches(entries, irs)
-	var sequence = 0.U64
-	while sequence < irs.starts.len() {
-		var preceding = irs.sos.get(sequence) ?? L
-		var at = irs.starts.get(sequence) ?? break
+	var $sequence = 0.U64
+	while $sequence < irs.starts.len() {
+		var $preceding = irs.sos.get($sequence) ?? L
+		var $at = irs.starts.get($sequence) ?? break
 		while Bool.True {
-			match matches.get(at) ?? None {
+			match matches.get($at) ?? None {
 				Some(close) => {
-					open_entry = current.get(at) ?? break
-					close_entry = current.get(close) ?? break
-					current = current.set(at, { ..open_entry, matched_bracket: Some(close) }) ?? ...
-					current = current.set(close, { ..close_entry, matched_bracket: Some(at) }) ?? ...
-					current = resolve_bracket_pair(current, irs, sequence, { open: at, close }, preceding)
+					open_entry = $current.get($at) ?? break
+					close_entry = $current.get(close) ?? break
+					$current = $current.set($at, { ..open_entry, matched_bracket: Some(close) }) ?? ...
+					$current = $current.set(close, { ..close_entry, matched_bracket: Some($at) }) ?? ...
+					$current = resolve_bracket_pair($current, irs, $sequence, { open: $at, close }, $preceding)
 				}
 				None => {}
 			}
-			entry = current.get(at) ?? break
+			entry = $current.get($at) ?? break
 			match strong_direction(entry.working_class) {
 				Some(value) => {
-					preceding = value
+					$preceding = value
 				}
 				None => {}
 			}
-			match next_in(irs.links, at) {
+			match next_in(irs.links, $at) {
 				Some(next) => {
-					at = next
+					$at = next
 				}
 				None => {
 					break
 				}
 			}
 		}
-		sequence = sequence + 1
+		$sequence = $sequence + 1
 	}
-	current
+	$current
 }
 
 ## BD16 pairing is linear: create partner links once and then let N0 walk
@@ -1180,39 +1180,39 @@ n0 = |entries, irs| {
 ## O(pairs * sequence-length) rescan for each opening bracket.
 bracket_matches : List(Bidi.ScalarInfo), Bidi.RunSequences -> List([Some(U64), None])
 bracket_matches = |entries, irs| {
-	var matches = entries.map(|_| None)
-	var sequence = 0.U64
-	while sequence < irs.starts.len() {
-		var stack = []
-		var found = []
-		var overflowed = Bool.False
-		var at = irs.starts.get(sequence) ?? break
+	var $matches = entries.map(|_| None)
+	var $sequence = 0.U64
+	while $sequence < irs.starts.len() {
+		var $stack = []
+		var $found = []
+		var $overflowed = Bool.False
+		var $at = irs.starts.get($sequence) ?? break
 		while Bool.True {
-			entry = entries.get(at) ?? break
+			entry = entries.get($at) ?? break
 			if entry.working_class == ON {
 				match BidiProperties.paired_bracket(entry.scalar) {
 					Some(pair) => match pair.kind {
-						Open => if stack.len() == 63 {
-							overflowed = Bool.True
+						Open => if $stack.len() == 63 {
+							$overflowed = Bool.True
 						} else {
-							stack = stack.append({ target: Scalar.to_u32(pair.scalar), at })
+							$stack = $stack.append({ target: Scalar.to_u32(pair.scalar), at: $at })
 						}
 						Close => {
-							var cursor = stack.len()
-							var match_at = None
-							while cursor > 0 {
-								cursor = cursor - 1
-								opening = stack.get(cursor) ?? break
+							var $cursor = $stack.len()
+							var $match_at = None
+							while $cursor > 0 {
+								$cursor = $cursor - 1
+								opening = $stack.get($cursor) ?? break
 								if paired_equal(opening.target, Scalar.to_u32(entry.scalar)) {
-									match_at = Some(cursor)
+									$match_at = Some($cursor)
 									break
 								}
 							}
-							match match_at {
+							match $match_at {
 								Some(index) => {
-									opening = stack.get(index) ?? break
-									found = found.append({ open: opening.at, close: at })
-									stack = copy_slice(stack, 0, index)
+									opening = $stack.get(index) ?? break
+									$found = $found.append({ open: opening.at, close: $at })
+									$stack = copy_slice($stack, 0, index)
 								}
 								None => {}
 							}
@@ -1221,23 +1221,23 @@ bracket_matches = |entries, irs| {
 					None => {}
 				}
 			}
-			match next_in(irs.links, at) {
+			match next_in(irs.links, $at) {
 				Some(next) => {
-					at = next
+					$at = next
 				}
 				None => {
 					break
 				}
 			}
 		}
-		if !overflowed {
-			for pair in found {
-				matches = matches.set(pair.open, Some(pair.close)) ?? ...
+		if !$overflowed {
+			for pair in $found {
+				$matches = $matches.set(pair.open, Some(pair.close)) ?? ...
 			}
 		}
-		sequence = sequence + 1
+		$sequence = $sequence + 1
 	}
-	matches
+	$matches
 }
 
 paired_equal = |target, close| target == close or ((target == 0x3009 and close == 0x232A) or (target == 0x232A and close == 0x3009))
@@ -1245,26 +1245,26 @@ paired_equal = |target, close| target == close or ((target == 0x3009 and close =
 resolve_bracket_pair = |entries, irs, sequence, pair, preceding| {
 	open = entries.get(pair.open) ?? return entries
 	embedding = embedding_direction(open.level)
-	var saw_embedding = Bool.False
-	var saw_opposite = Bool.False
-	var at = next_in(irs.links, pair.open)
-	while at != Some(pair.close) {
-		class = class_at(entries, at, irs.eos.get(sequence) ?? L)
+	var $saw_embedding = Bool.False
+	var $saw_opposite = Bool.False
+	var $at = next_in(irs.links, pair.open)
+	while $at != Some(pair.close) {
+		class = class_at(entries, $at, irs.eos.get(sequence) ?? L)
 		strong = strong_direction(class)
 		if strong == Some(embedding) {
-			saw_embedding = Bool.True
+			$saw_embedding = Bool.True
 		}
 			else if strong != None {
-				saw_opposite = Bool.True
+				$saw_opposite = Bool.True
 			}
-		at = match at {
+		$at = match $at {
 			Some(index) => next_in(irs.links, index)
 			None => Some(pair.close)
 		}
 	}
-	resolved = if saw_embedding {
+	resolved = if $saw_embedding {
 		Some(embedding)
-	} else if saw_opposite {
+	} else if $saw_opposite {
 		if preceding == embedding {
 			Some(embedding)
 		} else {
@@ -1278,13 +1278,13 @@ resolve_bracket_pair = |entries, irs, sequence, pair, preceding| {
 		Some(class) => {
 			opening = entries.get(pair.open) ?? return entries
 			closing = entries.get(pair.close) ?? return entries
-			var current = entries
-			current = current.set(pair.open, { ..opening, working_class: class }) ?? ...
-			current = current.set(pair.close, { ..closing, working_class: class }) ?? ...
+			var $current = entries
+			$current = $current.set(pair.open, { ..opening, working_class: class }) ?? ...
+			$current = $current.set(pair.close, { ..closing, working_class: class }) ?? ...
 			# W1 has already converted NSMs to their preceding type. N0 must
 			# carry a changed bracket class through original NSMs immediately
 			# after *both* endpoints (UAX #9 rev. 51 N0).
-			after_open = propagate_bracket_nsm(current, irs.links, pair.open, class)
+			after_open = propagate_bracket_nsm($current, irs.links, pair.open, class)
 			propagate_bracket_nsm(after_open, irs.links, pair.close, class)
 		}
 	}
@@ -1299,85 +1299,85 @@ strong_direction = |class| if class == L {
 }
 
 propagate_bracket_nsm = |entries, links, bracket, class| {
-	var current = entries
-	var at = next_in(links, bracket)
+	var $current = entries
+	var $at = next_in(links, bracket)
 	while Bool.True {
-		match at {
+		match $at {
 			None => {
 				break
 			}
 			Some(index) => {
-				entry = current.get(index) ?? break
+				entry = $current.get(index) ?? break
 				if entry.original_class != NSM {
 					break
 				}
-				current = current.set(index, { ..entry, working_class: class }) ?? ...
-				at = next_in(links, index)
+				$current = $current.set(index, { ..entry, working_class: class }) ?? ...
+				$at = next_in(links, index)
 			}
 		}
 	}
-	current
+	$current
 }
 
 n1_n2 = |entries, irs| {
-	var current = entries
-	var sequence = 0.U64
-	while sequence < irs.starts.len() {
-		var previous = irs.sos.get(sequence) ?? L
-		var at = irs.starts.get(sequence) ?? break
-		eos = irs.eos.get(sequence) ?? L
+	var $current = entries
+	var $sequence = 0.U64
+	while $sequence < irs.starts.len() {
+		var $previous = irs.sos.get($sequence) ?? L
+		var $at = irs.starts.get($sequence) ?? break
+		eos = irs.eos.get($sequence) ?? L
 		while Bool.True {
-			entry = current.get(at) ?? break
+			entry = $current.get($at) ?? break
 			if neutral(entry.working_class) {
-				first = at
-				var last = at
-				var after = next_in(irs.links, at)
-				while neutral(class_at(current, after, eos)) {
-					match after {
+				first = $at
+				var $last = $at
+				var $after = next_in(irs.links, $at)
+				while neutral(class_at($current, $after, eos)) {
+					match $after {
 						Some(next) => {
-							last = next
-							after = next_in(irs.links, next)
+							$last = next
+							$after = next_in(irs.links, next)
 						}
 						None => {
 							break
 						}
 					}
 				}
-				left = strong_for_neutral(previous, entry.level)
-				right = strong_for_neutral(class_at(current, after, eos), entry.level)
+				left = strong_for_neutral($previous, entry.level)
+				right = strong_for_neutral(class_at($current, $after, eos), entry.level)
 				resolved = if left == right {
 					left
 				} else {
 					embedding_direction(entry.level)
 				}
-				var replace = first
+				var $replace = first
 				while Bool.True {
-					item = current.get(replace) ?? break
-					current = current.set(replace, { ..item, working_class: resolved }) ?? ...
-					if replace == last {
+					item = $current.get($replace) ?? break
+					$current = $current.set($replace, { ..item, working_class: resolved }) ?? ...
+					if $replace == $last {
 						break
 					}
-					match next_in(irs.links, replace) {
+					match next_in(irs.links, $replace) {
 						Some(next) => {
-							replace = next
+							$replace = next
 						}
 						None => break
 					}
 				}
-				previous = resolved
-				match after {
+				$previous = resolved
+				match $after {
 					Some(next) => {
-						at = next
+						$at = next
 					}
 					None => {
 						break
 					}
 				}
 			} else {
-				previous = entry.working_class
-				match next_in(irs.links, at) {
+				$previous = entry.working_class
+				match next_in(irs.links, $at) {
 					Some(next) => {
-						at = next
+						$at = next
 					}
 					None => {
 						break
@@ -1385,9 +1385,9 @@ n1_n2 = |entries, irs| {
 				}
 			}
 		}
-		sequence = sequence + 1
+		$sequence = $sequence + 1
 	}
-	current
+	$current
 }
 
 isolate_control = |class| class == LRI or class == RLI or class == FSI or class == PDI
@@ -1439,104 +1439,104 @@ x9_removed = |class| class == RLE or class == LRE or class == RLO or class == LR
 non_rendering = |class| x9_removed(class) or class == LRI or class == RLI or class == FSI or class == PDI
 
 copy_slice = |items, start, end| {
-	var copied = []
-	var at = start
-	while at < end {
-		copied = copied.append(items.get(at) ?? break)
-		at = at + 1
+	var $copied = []
+	var $at = start
+	while $at < end {
+		$copied = $copied.append(items.get($at) ?? break)
+		$at = $at + 1
 	}
-	copied
+	$copied
 }
 
 l1 = |line, paragraph_level| {
-	var reset_at = line.len()
-	while reset_at > 0 {
-		entry = line.get(reset_at - 1) ?? break
+	var $reset_at = line.len()
+	while $reset_at > 0 {
+		entry = line.get($reset_at - 1) ?? break
 		match entry.level {
 			None => {
-				reset_at = reset_at - 1
+				$reset_at = $reset_at - 1
 			}
 			Some(_) => if l1_reset(entry.original_class) {
-				reset_at = reset_at - 1
+				$reset_at = $reset_at - 1
 			} else {
 				break
 			}
 		}
 	}
-	var output = []
-	var at = 0.U64
-	while at < line.len() {
-		entry = line.get(at) ?? break
-		output = output.append(
+	var $output = []
+	var $at = 0.U64
+	while $at < line.len() {
+		entry = line.get($at) ?? break
+		$output = $output.append(
 			match entry.level {
 				None => None
-				Some(level) => if at >= reset_at {
+				Some(level) => if $at >= $reset_at {
 					Some(paragraph_level)
 				} else {
 					Some(level)
 				}
 			},
 		)
-		at = at + 1
+		$at = $at + 1
 	}
 
 	## L1 additionally resets each segment/paragraph separator and the
 	## immediately preceding whitespace or isolate-control sequence, not merely
 	## the trailing sequence at the actual line end.
-	var result = output
-	var separator = 0.U64
-	while separator < line.len() {
-		entry = line.get(separator) ?? break
+	var $result = $output
+	var $separator = 0.U64
+	while $separator < line.len() {
+		entry = line.get($separator) ?? break
 		if entry.original_class == S or entry.original_class == B {
-			result = result.set(separator, Some(paragraph_level)) ?? ...
-			var before = separator
-			while before > 0 {
-				before = before - 1
-				previous = line.get(before) ?? break
+			$result = $result.set($separator, Some(paragraph_level)) ?? ...
+			var $before = $separator
+			while $before > 0 {
+				$before = $before - 1
+				previous = line.get($before) ?? break
 				if previous.level == None {
 					# X9 formatting controls are absent for L1 adjacency.
 				} else if previous.original_class == WS or isolate_control(previous.original_class) {
-					result = result.set(before, Some(paragraph_level)) ?? ...
+					$result = $result.set($before, Some(paragraph_level)) ?? ...
 				} else {
 					break
 				}
 			}
 		}
-		separator = separator + 1
+		$separator = $separator + 1
 	}
-	result
+	$result
 }
 
 l1_reset = |class| class == WS or class == S or class == B or class == LRI or class == RLI or class == FSI or class == PDI
 
 eligible = |line, levels, start| {
-	var output = []
-	var at = 0.U64
-	while at < line.len() {
-		match levels.get(at) {
+	var $output = []
+	var $at = 0.U64
+	while $at < line.len() {
+		match levels.get($at) {
 			Ok(None) => {}
 			Ok(Some(_)) => {
-				output = output.append(start + at)
+				$output = $output.append(start + $at)
 			}
 			Err(_) => {}
 		}
-		at = at + 1
+		$at = $at + 1
 	}
-	output
+	$output
 }
 
 l2 = |indices, levels, start, paragraph_level| {
-	var maximum = paragraph_level
+	var $maximum = paragraph_level
 	for absolute in indices {
 		match levels.get(absolute - start) {
-			Ok(Some(value)) => if value > maximum {
-				maximum = value
+			Ok(Some(value)) => if value > $maximum {
+				$maximum = value
 			}
 			_ => {}
 		}
 	}
-	var output = indices
-	var threshold = maximum
+	var $output = indices
+	var $threshold = $maximum
 	# L2 runs down through the lowest odd level, including an RTL paragraph's
 	# base level. Stopping at the paragraph level would incorrectly leave a
 	# simple RTL paragraph in logical order.
@@ -1545,113 +1545,113 @@ l2 = |indices, levels, start, paragraph_level| {
 	} else {
 		paragraph_level + 1
 	}
-	while threshold >= minimum {
-		output = reverse_level(output, levels, start, threshold)
-		if threshold == 0 {
+	while $threshold >= minimum {
+		$output = reverse_level($output, levels, start, $threshold)
+		if $threshold == 0 {
 			break
 		}
-		threshold = threshold - 1
+		$threshold = $threshold - 1
 	}
-	output
+	$output
 }
 
 reverse_level = |indices, levels, start, threshold| {
-	var output = []
-	var at = 0.U64
-	while at < indices.len() {
-		absolute = indices.get(at) ?? break
+	var $output = []
+	var $at = 0.U64
+	while $at < indices.len() {
+		absolute = indices.get($at) ?? break
 		match levels.get(absolute - start) {
 			Ok(Some(value)) => if value >= threshold {
-				var end = at + 1
-				while end < indices.len() {
-					candidate = indices.get(end) ?? break
+				var $end = $at + 1
+				while $end < indices.len() {
+					candidate = indices.get($end) ?? break
 					match levels.get(candidate - start) {
 						Ok(Some(candidate_level)) => if candidate_level >= threshold {
-							end = end + 1
+							$end = $end + 1
 						} else {
 							break
 						}
 						_ => break
 					}
 				}
-				var cursor = end
-				while cursor > at {
-					cursor = cursor - 1
-					output = output.append(indices.get(cursor) ?? break)
+				var $cursor = $end
+				while $cursor > $at {
+					$cursor = $cursor - 1
+					$output = $output.append(indices.get($cursor) ?? break)
 				}
-				at = end
+				$at = $end
 			} else {
-				output = output.append(absolute)
-				at = at + 1
+				$output = $output.append(absolute)
+				$at = $at + 1
 			}
 			_ => {
-				output = output.append(absolute)
-				at = at + 1
+				$output = $output.append(absolute)
+				$at = $at + 1
 			}
 		}
 	}
-	output
+	$output
 }
 
 inverse = |length, visual, start| {
-	var output = []
-	var local = 0.U64
-	while local < length {
-		output = output.append(None)
-		local = local + 1
+	var $output = []
+	var $local = 0.U64
+	while $local < length {
+		$output = $output.append(None)
+		$local = $local + 1
 	}
-	var visual_index = 0.U64
-	while visual_index < visual.len() {
-		absolute = visual.get(visual_index) ?? break
-		output = output.set(absolute - start, Some(visual_index)) ?? ...
-		visual_index = visual_index + 1
+	var $visual_index = 0.U64
+	while $visual_index < visual.len() {
+		absolute = visual.get($visual_index) ?? break
+		$output = $output.set(absolute - start, Some($visual_index)) ?? ...
+		$visual_index = $visual_index + 1
 	}
-	output
+	$output
 }
 
 ## Maximal runs in visual order. A run is extended only while its embedding
 ## level is equal and its logical indices remain adjacent (in either direction),
 ## so its reported logical range is always an honest contiguous half-open span.
 make_visual_runs = |visual, levels, start| {
-	var output = []
-	var at = 0.U64
-	while at < visual.len() {
-		first = visual.get(at) ?? break
+	var $output = []
+	var $at = 0.U64
+	while $at < visual.len() {
+		first = visual.get($at) ?? break
 		level = match levels.get(first - start) {
 			Ok(Some(value)) => value
 			_ => 0
 		}
-		var end = at + 1
-		var previous = first
-		while end < visual.len() {
-			candidate = visual.get(end) ?? break
+		var $end = $at + 1
+		var $previous = first
+		while $end < visual.len() {
+			candidate = visual.get($end) ?? break
 			candidate_level = match levels.get(candidate - start) {
 				Ok(Some(value)) => value
 				_ => 0
 			}
-			adjacent = candidate + 1 == previous or previous + 1 == candidate
+			adjacent = candidate + 1 == $previous or $previous + 1 == candidate
 			if candidate_level == level and adjacent {
-				previous = candidate
-				end = end + 1
+				$previous = candidate
+				$end = $end + 1
 			} else {
 				break
 			}
 		}
-		low = if first < previous {
+		low = if first < $previous {
 			first
 		} else {
-			previous
+			$previous
 		}
-		high = if first > previous {
+		high = if first > $previous {
 			first
 		} else {
-			previous
+			$previous
 		}
 		range = ScalarRange.from_bounds(low, high + 1) ?? ...
-		output = output.append({ logical_range: range, level, direction: Bidi.direction(level) })
-		at = end
+		$output = $output.append({ logical_range: range, level, direction: Bidi.direction(level) })
+		$at = $end
 	}
-	output
+	$output
 }
 
 ## L4 is applied after the line-specific L1 reset. This records rendering
@@ -1659,16 +1659,16 @@ make_visual_runs = |visual, levels, start| {
 ## meaningful when a mirrored glyph is still required.
 calculate_line_mirroring : List(Bidi.ScalarInfo), List([Some(U8), None]) -> List(Bidi.MirrorInfo)
 calculate_line_mirroring = |entries, levels| {
-	var output = []
-	var at = 0.U64
-	while at < entries.len() {
-		entry = entries.get(at) ?? break
-		needs = match levels.get(at) {
+	var $output = []
+	var $at = 0.U64
+	while $at < entries.len() {
+		entry = entries.get($at) ?? break
+		needs = match levels.get($at) {
 			Ok(Some(level)) => BidiProperties.is_mirrored(entry.scalar) and level % 2 == 1
 			_ => Bool.False
 		}
-		output = output.append({ needs_glyph: needs, glyph: BidiProperties.mirroring_glyph(entry.scalar) })
-		at = at + 1
+		$output = $output.append({ needs_glyph: needs, glyph: BidiProperties.mirroring_glyph(entry.scalar) })
+		$at = $at + 1
 	}
-	output
+	$output
 }

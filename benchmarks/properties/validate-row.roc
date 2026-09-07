@@ -19,21 +19,21 @@ import unicode.VerticalOrientation
 
 run! : Str => Str
 run! = |_| {
-    var code_point = 0.U64
-    var scalar_count = 0.U64
-    while code_point <= 0x10FFFF {
-        match Scalar.from_u32(code_point.to_u32_wrap()) {
+    var $code_point = 0.U64
+    var $scalar_count = 0.U64
+    while $code_point <= 0x10FFFF {
+        match Scalar.from_u32($code_point.to_u32_wrap()) {
             Err(_) => {}
             Ok(scalar) => {
                 if Bool.not(direct_row_match(scalar)) {
-                    return "FAIL\tdirect/Row mismatch at U+${code_point.to_str()}"
+                    return "FAIL\tdirect/Row mismatch at U+${$code_point.to_str()}"
                 }
-                scalar_count = scalar_count + 1
+                $scalar_count = $scalar_count + 1
             }
         }
-        code_point = code_point + 1
+        $code_point = $code_point + 1
     }
-    "PASS\tdirect-row\t${scalar_count.to_str()}"
+    "PASS\tdirect-row\t${$scalar_count.to_str()}"
 }
 
 direct_row_match = |scalar| {

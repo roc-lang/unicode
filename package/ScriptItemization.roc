@@ -200,11 +200,11 @@ ScriptItemization :: [].{
 	## decoding, grapheme transition, or replay-machine specializations.
 	fold_runs : Str, ConservativeScxV1, state, (state, Run -> state) -> state
 	fold_runs = |source, policy, initial, emit| {
-		var state = initial
+		var $state = initial
 		for run in ScriptItemization.iter_runs(source, policy) {
-			state = emit(state, run)
+			$state = emit($state, run)
 		}
-		state
+		$state
 	}
 
 	## Collect runs. Allocation is proportional to returned run count only.
@@ -350,9 +350,9 @@ ScriptItemization :: [].{
 
 next_run : IterationState -> Try((ScriptItemization.Run, IterationState), [NoMore])
 next_run = |initial| {
-	var state = initial
+	var $state = initial
 	while Bool.True {
-		match next_resolved(state) {
+		match next_resolved($state) {
 			NoMoreResolved(done) => match done.last {
 				NoRun => return Err(NoMore)
 				LastRun(run) => return Ok((run, { ..done, last: NoRun }))
@@ -361,11 +361,11 @@ next_run = |initial| {
 				next = run_from_segment(step.segment)
 				match step.state.last {
 					NoRun => {
-						state = { ..step.state, last: LastRun(next) }
+						$state = { ..step.state, last: LastRun(next) }
 					}
 					LastRun(previous) => {
 						if runs_are_adjacent_equal(previous, next) {
-							state = { ..step.state, last: LastRun(combine_runs(previous, next)) }
+							$state = { ..step.state, last: LastRun(combine_runs(previous, next)) }
 						} else {
 							return Ok((previous, { ..step.state, last: LastRun(next) }))
 						}
@@ -379,43 +379,43 @@ next_run = |initial| {
 
 next_resolved : IterationState -> ResolvedStep
 next_resolved = |initial| {
-	var state = initial
+	var $state = initial
 	while Bool.True {
-		match state.deferred {
+		match $state.deferred {
 			Deferred(segment) => return NextResolved({
 				segment,
-				state: { ..state, deferred: NoDeferredSegment },
+				state: { ..$state, deferred: NoDeferredSegment },
 			})
 			NoDeferredSegment => {}
 		}
 
-		match state.mode {
-			IterationDone => return NoMoreResolved(state)
+		match $state.mode {
+			IterationDone => return NoMoreResolved($state)
 			Replaying(replay) => {
-				match next_replay_resolved(state, replay) {
+				match next_replay_resolved($state, replay) {
 					NoMoreResolved(next) => {
-						state = next
+						$state = next
 					}
 					NextResolved(step) => return NextResolved(step)
 				}
 			}
 			ScanningOuter => {
-				match next_unit(state.outer) {
-					NoMoreUnits(cursor) => match state.pending {
-						NoPending => return NoMoreResolved({ ..state, outer: cursor, mode: IterationDone })
+				match next_unit($state.outer) {
+					NoMoreUnits(cursor) => match $state.pending {
+						NoPending => return NoMoreResolved({ ..$state, outer: cursor, mode: IterationDone })
 						Pending(start) => {
 							replay = init_lazy_replay(
-								state.source,
+								$state.source,
 								start,
 								cursor.byte_base + cursor.utf8.byte_offset,
 								cursor.scalar_base + cursor.utf8.scalar_index,
-								state.left,
+								$state.left,
 								NoExplicit,
 								NoDelimiter,
 								FinishAfterReplay,
 							)
-							state = {
-								..state,
+							$state = {
+								..$state,
 								outer: cursor,
 								pending: NoPending,
 								mode: Replaying(replay),
@@ -423,52 +423,52 @@ next_resolved = |initial| {
 						}
 					}
 					NextUnit(step) => {
-						state = { ..state, outer: step.cursor }
+						$state = { ..$state, outer: step.cursor }
 						match step.unit.kind {
 							Restricted(_) => {
-								state = { ..state, pending: pending_from_unit(state.pending, step.unit) }
+								$state = { ..$state, pending: pending_from_unit($state.pending, step.unit) }
 							}
 							BroadCommon => {
-								state = { ..state, pending: pending_from_unit(state.pending, step.unit) }
+								$state = { ..$state, pending: pending_from_unit($state.pending, step.unit) }
 							}
-							Definite(script) => match state.pending {
+							Definite(script) => match $state.pending {
 								NoPending => return NextResolved({
 									segment: { unit: step.unit, script },
-									state: { ..state, left: Explicit(script) },
+									state: { ..$state, left: Explicit(script) },
 								})
 								Pending(start) => {
 									delimiter = { unit: step.unit, script }
 									replay = init_lazy_replay(
-										state.source,
+										$state.source,
 										start,
 										step.unit.byte_start,
 										step.unit.scalar_start,
-										state.left,
+										$state.left,
 										Explicit(script),
 										Delimiter(delimiter),
 										ResumeOuter(Explicit(script)),
 									)
-									state = { ..state, pending: NoPending, mode: Replaying(replay) }
+									$state = { ..$state, pending: NoPending, mode: Replaying(replay) }
 								}
 							}
-							UnknownBarrier => match state.pending {
+							UnknownBarrier => match $state.pending {
 								NoPending => return NextResolved({
 									segment: { unit: step.unit, script: InternalScriptData.unknown_private_id },
-									state: { ..state, left: UnknownBoundary },
+									state: { ..$state, left: UnknownBoundary },
 								})
 								Pending(start) => {
 									delimiter = { unit: step.unit, script: InternalScriptData.unknown_private_id }
 									replay = init_lazy_replay(
-										state.source,
+										$state.source,
 										start,
 										step.unit.byte_start,
 										step.unit.scalar_start,
-										state.left,
+										$state.left,
 										UnknownBoundary,
 										Delimiter(delimiter),
 										ResumeOuter(UnknownBoundary),
 									)
-									state = { ..state, pending: NoPending, mode: Replaying(replay) }
+									$state = { ..$state, pending: NoPending, mode: Replaying(replay) }
 								}
 							}
 						}
@@ -477,20 +477,20 @@ next_resolved = |initial| {
 			}
 		}
 	}
-	NoMoreResolved({ ..state, mode: IterationDone })
+	NoMoreResolved({ ..$state, mode: IterationDone })
 }
 
 next_replay_resolved : IterationState, LazyReplay -> ResolvedStep
 next_replay_resolved = |state, initial_replay| {
-	var replay = initial_replay
+	var $replay = initial_replay
 	while Bool.True {
-		match next_unit(replay.units) {
-			NoMoreUnits(cursor) => match replay.common {
+		match next_unit($replay.units) {
+			NoMoreUnits(cursor) => match $replay.common {
 				CommonSpan(span) => {
-					script = resolve_common(replay.left, replay.right)
-					segment = resolved_span(span, replay.byte_end, replay.scalar_end, script)
+					script = resolve_common($replay.left, $replay.right)
+					segment = resolved_span(span, $replay.byte_end, $replay.scalar_end, script)
 					next_replay = {
-						..replay,
+						..$replay,
 						units: cursor,
 						common: NoCommon,
 						left: if is_explicit_private(script) Explicit(script) else NoExplicit,
@@ -500,13 +500,13 @@ next_replay_resolved = |state, initial_replay| {
 						state: { ..state, mode: Replaying(next_replay) },
 					})
 				}
-				NoCommon => return finish_lazy_replay({ ..state, mode: Replaying({ ..replay, units: cursor }) }, replay)
+				NoCommon => return finish_lazy_replay({ ..state, mode: Replaying({ ..$replay, units: cursor }) }, $replay)
 			}
 			NextUnit(step) => {
-				replay = { ..replay, units: step.cursor }
+				$replay = { ..$replay, units: step.cursor }
 				match step.unit.kind {
 					BroadCommon => {
-						common = match replay.common {
+						common = match $replay.common {
 							NoCommon => CommonSpan({
 								byte_start: step.unit.byte_start,
 								byte_end: step.unit.byte_end,
@@ -519,26 +519,26 @@ next_replay_resolved = |state, initial_replay| {
 								scalar_end: step.unit.scalar_end,
 							})
 						}
-						replay = { ..replay, common }
+						$replay = { ..$replay, common }
 					}
 					Restricted(details) => {
-						script = resolve_restricted(details, replay.left, replay.right, state.policy)
+						script = resolve_restricted(details, $replay.left, $replay.right, state.policy)
 						right_neighbor = if is_explicit_private(script) Explicit(script) else NoExplicit
 						current = { unit: step.unit, script }
-						match replay.common {
+						match $replay.common {
 							NoCommon => return NextResolved({
 								segment: current,
-								state: { ..state, mode: Replaying({ ..replay, left: right_neighbor }) },
+								state: { ..state, mode: Replaying({ ..$replay, left: right_neighbor }) },
 							})
 							CommonSpan(span) => {
-								common_script = resolve_common(replay.left, right_neighbor)
+								common_script = resolve_common($replay.left, right_neighbor)
 								common = resolved_span(span, step.unit.byte_start, step.unit.scalar_start, common_script)
 								return NextResolved({
 									segment: common,
 									state: {
 										..state,
 										deferred: Deferred(current),
-										mode: Replaying({ ..replay, common: NoCommon, left: right_neighbor }),
+										mode: Replaying({ ..$replay, common: NoCommon, left: right_neighbor }),
 									},
 								})
 							}
@@ -547,20 +547,20 @@ next_replay_resolved = |state, initial_replay| {
 					Definite(script) => {
 						right_neighbor = Explicit(script)
 						current = { unit: step.unit, script }
-						match replay.common {
+						match $replay.common {
 							NoCommon => return NextResolved({
 								segment: current,
-								state: { ..state, mode: Replaying({ ..replay, left: right_neighbor }) },
+								state: { ..state, mode: Replaying({ ..$replay, left: right_neighbor }) },
 							})
 							CommonSpan(span) => {
-								common_script = resolve_common(replay.left, right_neighbor)
+								common_script = resolve_common($replay.left, right_neighbor)
 								common = resolved_span(span, step.unit.byte_start, step.unit.scalar_start, common_script)
 								return NextResolved({
 									segment: common,
 									state: {
 										..state,
 										deferred: Deferred(current),
-										mode: Replaying({ ..replay, common: NoCommon, left: right_neighbor }),
+										mode: Replaying({ ..$replay, common: NoCommon, left: right_neighbor }),
 									},
 								})
 							}
@@ -568,20 +568,20 @@ next_replay_resolved = |state, initial_replay| {
 					}
 					UnknownBarrier => {
 						current = { unit: step.unit, script: InternalScriptData.unknown_private_id }
-						match replay.common {
+						match $replay.common {
 							NoCommon => return NextResolved({
 								segment: current,
-								state: { ..state, mode: Replaying({ ..replay, left: UnknownBoundary }) },
+								state: { ..state, mode: Replaying({ ..$replay, left: UnknownBoundary }) },
 							})
 							CommonSpan(span) => {
-								common_script = resolve_common(replay.left, UnknownBoundary)
+								common_script = resolve_common($replay.left, UnknownBoundary)
 								common = resolved_span(span, step.unit.byte_start, step.unit.scalar_start, common_script)
 								return NextResolved({
 									segment: common,
 									state: {
 										..state,
 										deferred: Deferred(current),
-										mode: Replaying({ ..replay, common: NoCommon, left: UnknownBoundary }),
+										mode: Replaying({ ..$replay, common: NoCommon, left: UnknownBoundary }),
 									},
 								})
 							}
@@ -650,10 +650,10 @@ unit_cursor_init = |source, byte_base, scalar_base| {
 
 next_unit : UnitCursor -> UnitStep
 next_unit = |initial| {
-	var cursor = initial
+	var $cursor = initial
 	while Bool.True {
-		if cursor.finished {
-			return NoMoreUnits(cursor)
+		if $cursor.finished {
+			return NoMoreUnits($cursor)
 		}
 
 		# The exact SIMD replacement has not landed yet; the historical
@@ -666,50 +666,50 @@ next_unit = |initial| {
 		# lookahead. Calling the normal grapheme transition for that lookahead
 		# produces the same final machine as each skipped Other transition:
 		# only the final cluster_start survives and all other state is reset.
-		offset = cursor.utf8.byte_offset
-		remaining = cursor.utf8.byte_len - offset
-		one_byte_ascii_cluster = cursor.cluster.started
-			and offset == cursor.cluster.byte_start - cursor.byte_base + 1
-				and cursor.utf8.scalar_index == cursor.cluster.scalar_start - cursor.scalar_base + 1
+		offset = $cursor.utf8.byte_offset
+		remaining = $cursor.utf8.byte_len - offset
+		one_byte_ascii_cluster = $cursor.cluster.started
+			and offset == $cursor.cluster.byte_start - $cursor.byte_base + 1
+				and $cursor.utf8.scalar_index == $cursor.cluster.scalar_start - $cursor.scalar_base + 1
 		if one_byte_ascii_cluster and remaining > 0 {
-			first = cursor.utf8.bytes.get(offset) ?? 0
+			first = $cursor.utf8.bytes.get(offset) ?? 0
 			if 0x20 <= first and first <= 0x7E {
 				current = finish_cluster(
-					cursor.cluster,
-					cursor.byte_base + offset,
-					cursor.scalar_base + cursor.utf8.scalar_index,
+					$cursor.cluster,
+					$cursor.byte_base + offset,
+					$cursor.scalar_base + $cursor.utf8.scalar_index,
 				)
 				latin = InternalScriptData.lookup_private(0x41)
 				current_is_latin = match current.kind {
 					Definite(script) => script == latin
 					_ => Bool.False
 				}
-				var lookahead_lane = 0.U64
-				var lookahead_is_latin = (0x41 <= first and first <= 0x5A)
+				var $lookahead_lane = 0.U64
+				var $lookahead_is_latin = (0x41 <= first and first <= 0x5A)
 					or (0x61 <= first and first <= 0x7A)
-				while lookahead_lane + 1 < remaining
-					and lookahead_is_latin == current_is_latin
+				while $lookahead_lane + 1 < remaining
+					and $lookahead_is_latin == current_is_latin
 					{
-						candidate = cursor.utf8.bytes.get(offset + lookahead_lane + 1) ?? 0
+						candidate = $cursor.utf8.bytes.get(offset + $lookahead_lane + 1) ?? 0
 						if candidate < 0x20 or candidate > 0x7E {
 							break
 						}
-						lookahead_lane = lookahead_lane + 1
-						lookahead_is_latin = (0x41 <= candidate and candidate <= 0x5A)
+						$lookahead_lane = $lookahead_lane + 1
+						$lookahead_is_latin = (0x41 <= candidate and candidate <= 0x5A)
 							or (0x61 <= candidate and candidate <= 0x7A)
 					}
 
-				consumed = lookahead_lane + 1
-				lookahead_byte = cursor.byte_base + offset + lookahead_lane
-				lookahead_scalar = cursor.scalar_base + cursor.utf8.scalar_index + lookahead_lane
-				representative = if lookahead_is_latin 0x41 else 0x20
-				transition = InternalGrapheme.push(cursor.machine, representative, lookahead_byte)
+				consumed = $lookahead_lane + 1
+				lookahead_byte = $cursor.byte_base + offset + $lookahead_lane
+				lookahead_scalar = $cursor.scalar_base + $cursor.utf8.scalar_index + $lookahead_lane
+				representative = if $lookahead_is_latin 0x41 else 0x20
+				transition = InternalGrapheme.push($cursor.machine, representative, lookahead_byte)
 				next_utf8 = {
-					..cursor.utf8,
+					..$cursor.utf8,
 					byte_offset: offset + consumed,
-					scalar_index: cursor.utf8.scalar_index + consumed,
+					scalar_index: $cursor.utf8.scalar_index + consumed,
 				}
-				lookahead_cluster = if lookahead_is_latin {
+				lookahead_cluster = if $lookahead_is_latin {
 					{
 						started: Bool.True,
 						byte_start: lookahead_byte,
@@ -737,7 +737,7 @@ next_unit = |initial| {
 						scalar_end: lookahead_scalar,
 					},
 					cursor: {
-						..cursor,
+						..$cursor,
 						utf8: next_utf8,
 						machine: transition.machine,
 						cluster: lookahead_cluster,
@@ -745,15 +745,15 @@ next_unit = |initial| {
 				})
 			}
 		}
-		match InternalUtf8.next(cursor.utf8) {
+		match InternalUtf8.next($cursor.utf8) {
 			Done => {
-				finished = { ..cursor, cluster: empty_cluster, finished: Bool.True }
-				if cursor.cluster.started {
+				finished = { ..$cursor, cluster: empty_cluster, finished: Bool.True }
+				if $cursor.cluster.started {
 					return NextUnit({
 						unit: finish_cluster(
-							cursor.cluster,
-							cursor.byte_base + cursor.utf8.byte_offset,
-							cursor.scalar_base + cursor.utf8.scalar_index,
+							$cursor.cluster,
+							$cursor.byte_base + $cursor.utf8.byte_offset,
+							$cursor.scalar_base + $cursor.utf8.scalar_index,
 						),
 						cursor: finished,
 					})
@@ -761,32 +761,32 @@ next_unit = |initial| {
 				return NoMoreUnits(finished)
 			}
 			One({ item, rest }) => {
-				byte_start = cursor.byte_base + item.byte_start
-				scalar_index = cursor.scalar_base + item.scalar_index
-				transition = InternalGrapheme.push(cursor.machine, item.scalar, byte_start)
+				byte_start = $cursor.byte_base + item.byte_start
+				scalar_index = $cursor.scalar_base + item.scalar_index
+				transition = InternalGrapheme.push($cursor.machine, item.scalar, byte_start)
 				fresh_cluster = match transition.boundary {
-					NoBoundary => cursor.cluster
+					NoBoundary => $cursor.cluster
 					Boundary(_) => empty_cluster
 				}
 				next = {
-					..cursor,
+					..$cursor,
 					utf8: rest,
 					machine: transition.machine,
 					cluster: add_scalar(fresh_cluster, item.scalar, byte_start, scalar_index),
 				}
 				match transition.boundary {
 					NoBoundary => {
-						cursor = next
+						$cursor = next
 					}
 					Boundary(_) => return NextUnit({
-						unit: finish_cluster(cursor.cluster, byte_start, scalar_index),
+						unit: finish_cluster($cursor.cluster, byte_start, scalar_index),
 						cursor: next,
 					})
 				}
 			}
 		}
 	}
-	NoMoreUnits(cursor)
+	NoMoreUnits($cursor)
 }
 
 resolved_span = |span, byte_end, scalar_end, script| {

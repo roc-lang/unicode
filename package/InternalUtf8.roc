@@ -162,75 +162,75 @@ InternalUtf8 :: [].{
 			InternalUtf8.fold_scalars(source, initial, step_scalar)
 		} else {
 			bytes = source.to_utf8()
-			var state = initial
-			var byte_offset = 0.U64
-			var scalar_index = 0.U64
+			var $state = initial
+			var $byte_offset = 0.U64
+			var $scalar_index = 0.U64
 
-			while byte_offset < byte_len {
-				remaining = byte_len - byte_offset
+			while $byte_offset < byte_len {
+				remaining = byte_len - $byte_offset
 
 				if remaining >= vector_bytes {
-					match U8x16.load(bytes, byte_offset) {
+					match U8x16.load(bytes, $byte_offset) {
 						Err(_) => {
 							# The bounds proof above should make this branch
 							# unreachable. Scalar completion preserves total
 							# behavior if a backend fails to eliminate it.
 							folded = fold_byte_range(
 								bytes,
-								byte_offset,
+								$byte_offset,
 								byte_len,
-								scalar_index,
-								state,
+								$scalar_index,
+								$state,
 								step_scalar,
 							)
-							state = folded.state
-							byte_offset = folded.byte_offset
-							scalar_index = folded.scalar_index
+							$state = folded.state
+							$byte_offset = folded.byte_offset
+							$scalar_index = folded.scalar_index
 						}
 						Ok(vector) => {
 							if vector.to_bitmask() == 0 {
-								state = step_ascii(
-									state,
+								$state = step_ascii(
+									$state,
 									vector,
-									byte_offset,
-									scalar_index,
+									$byte_offset,
+									$scalar_index,
 								)
-								byte_offset = byte_offset + vector_bytes
-								scalar_index = scalar_index + vector_bytes
+								$byte_offset = $byte_offset + vector_bytes
+								$scalar_index = $scalar_index + vector_bytes
 							} else {
 								# Decode through the probed window. The last
 								# scalar may end up to three bytes beyond it;
 								# the next probe starts at that scalar boundary.
 								folded = fold_byte_range(
 									bytes,
-									byte_offset,
-									byte_offset + vector_bytes,
-									scalar_index,
-									state,
+									$byte_offset,
+									$byte_offset + vector_bytes,
+									$scalar_index,
+									$state,
 									step_scalar,
 								)
-								state = folded.state
-								byte_offset = folded.byte_offset
-								scalar_index = folded.scalar_index
+								$state = folded.state
+								$byte_offset = folded.byte_offset
+								$scalar_index = folded.scalar_index
 							}
 						}
 					}
 				} else {
 					folded = fold_byte_range(
 						bytes,
-						byte_offset,
+						$byte_offset,
 						byte_len,
-						scalar_index,
-						state,
+						$scalar_index,
+						$state,
 						step_scalar,
 					)
-					state = folded.state
-					byte_offset = folded.byte_offset
-					scalar_index = folded.scalar_index
+					$state = folded.state
+					$byte_offset = folded.byte_offset
+					$scalar_index = folded.scalar_index
 				}
 			}
 
-			state
+			$state
 		}
 	}
 }
@@ -246,25 +246,25 @@ vector_bytes = 16
 
 fold_byte_range : List(U8), U64, U64, U64, state, (state, U32, U64, U64, U64 -> state) -> { state : state, byte_offset : U64, scalar_index : U64 }
 fold_byte_range = |bytes, start, end, initial_index, initial, step| {
-	var state = initial
-	var byte_offset = start
-	var scalar_index = initial_index
+	var $state = initial
+	var $byte_offset = start
+	var $scalar_index = initial_index
 
-	while byte_offset < end {
-		decoded = decode_valid_at(bytes, byte_offset)
-		byte_end = byte_offset + decoded.width
-		state = step(
-			state,
+	while $byte_offset < end {
+		decoded = decode_valid_at(bytes, $byte_offset)
+		byte_end = $byte_offset + decoded.width
+		$state = step(
+			$state,
 			decoded.scalar,
-			byte_offset,
+			$byte_offset,
 			byte_end,
-			scalar_index,
+			$scalar_index,
 		)
-		byte_offset = byte_end
-		scalar_index = scalar_index + 1
+		$byte_offset = byte_end
+		$scalar_index = $scalar_index + 1
 	}
 
-	{ state, byte_offset, scalar_index }
+	{ state: $state, byte_offset: $byte_offset, scalar_index: $scalar_index }
 }
 
 # Preconditions are established by `InternalUtf8.init/next` or

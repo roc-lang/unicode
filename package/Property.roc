@@ -153,11 +153,11 @@ Property :: [].{
 	## order. No per-scalar string, list, or retained analysis is created.
 	fold : Str, state, (state, Entry -> state) -> state
 	fold = |source, initial, emit| {
-		var state = initial
+		var $state = initial
 		for located in Scalar.iter(source) {
-			state = emit(state, { located, row: Property.of_scalar(located.scalar) })
+			$state = emit($state, { located, row: Property.of_scalar(located.scalar) })
 		}
-		state
+		$state
 	}
 
 	## Lazily scan a complete `Str`. The iterator retains the source and may

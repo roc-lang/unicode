@@ -59,41 +59,41 @@ run! = |input| {
         return "${signature.count.to_str()}\t${signature.byte_sum.to_str()}\t${signature.scalar_sum.to_str()}\t${signature.weighted_byte_ends.to_str()}\t${signature.weighted_scalar_ends.to_str()}\t${signature.checksum.to_str()}"
     }
 
-    var remaining = repeats
-    var total = 0.U64
-    while remaining > 0 {
+    var $remaining = repeats
+    var $total = 0.U64
+    while $remaining > 0 {
         checksum = ScriptItemization.fold_runs(
             source,
             ScriptItemization.default,
             fnv_offset,
             hash_run,
         )
-        total = total.plus_wrap(checksum)
-        remaining = remaining - 1
+        $total = $total.plus_wrap(checksum)
+        $remaining = $remaining - 1
     }
-    total.to_str()
+    $total.to_str()
 }
 
 hash_run = |initial, run| {
     bytes = TextRange.byte_range(run.range)
     scalars = TextRange.scalar_range(run.range)
-    var hash = hash_u64(initial, ByteRange.start(bytes))
-    hash = hash_u64(hash, ByteRange.end(bytes))
-    hash = hash_u64(hash, ScalarRange.start(scalars))
-    hash = hash_u64(hash, ScalarRange.end(scalars))
+    var $hash = hash_u64(initial, ByteRange.start(bytes))
+    $hash = hash_u64($hash, ByteRange.end(bytes))
+    $hash = hash_u64($hash, ScalarRange.start(scalars))
+    $hash = hash_u64($hash, ScalarRange.end(scalars))
     for byte in Script.short_alias(run.script).iter_utf8() {
-        hash = hash.bitwise_xor(byte.to_u64()).times_wrap(fnv_prime)
+        $hash = $hash.bitwise_xor(byte.to_u64()).times_wrap(fnv_prime)
     }
-    hash
+    $hash
 }
 
 hash_u64 = |initial, value| {
-    var hash = initial
-    var shift = 0.U8
-    while shift < 64 {
-        byte = value.shr_wrap(shift).bitwise_and(0xFF)
-        hash = hash.bitwise_xor(byte).times_wrap(fnv_prime)
-        shift = shift + 8
+    var $hash = initial
+    var $shift = 0.U8
+    while $shift < 64 {
+        byte = value.shr_wrap($shift).bitwise_and(0xFF)
+        $hash = $hash.bitwise_xor(byte).times_wrap(fnv_prime)
+        $shift = $shift + 8
     }
-    hash
+    $hash
 }

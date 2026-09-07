@@ -37,15 +37,15 @@ scalar_option_name = |value| match value {
 }
 
 format_mirrors = |mirrors| {
-	var output = []
-	var at = 0.U64
+	var $output = []
+	var $at = 0.U64
 	for mirror in mirrors {
 		if mirror.needs_glyph {
-			output = output.append("${at.to_str()}:${scalar_option_name(mirror.glyph)}")
+			$output = $output.append("${$at.to_str()}:${scalar_option_name(mirror.glyph)}")
 		}
-		at = at + 1
+		$at = $at + 1
 	}
-	if output.is_empty() "none" else Str.join_with(output, ",")
+	if $output.is_empty() "none" else Str.join_with($output, ",")
 }
 
 render = |base, analysis, line| {

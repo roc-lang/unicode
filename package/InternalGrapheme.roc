@@ -118,7 +118,7 @@ fold_ascii_block = |fold_state, vector, absolute_start, emit| {
 			ascii_props(0x20),
 			absolute_start,
 		)
-		var state = match first.boundary {
+		var $state = match first.boundary {
 			NoBoundary => fold_state.state
 			Boundary({ start, end }) => {
 				range = ByteRange.from_bounds(start, end) ?? ...
@@ -126,14 +126,14 @@ fold_ascii_block = |fold_state, vector, absolute_start, emit| {
 			}
 		}
 
-		var lane = 1.U64
-		var range_start = first.machine.cluster_start
-		while lane < 16 {
-			range_end = absolute_start + lane
-			range = ByteRange.from_bounds(range_start, range_end) ?? ...
-			state = emit(state, range)
-			range_start = range_end
-			lane = lane + 1
+		var $lane = 1.U64
+		var $range_start = first.machine.cluster_start
+		while $lane < 16 {
+			range_end = absolute_start + $lane
+			range = ByteRange.from_bounds($range_start, range_end) ?? ...
+			$state = emit($state, range)
+			$range_start = range_end
+			$lane = $lane + 1
 		}
 
 		{
@@ -145,29 +145,29 @@ fold_ascii_block = |fold_state, vector, absolute_start, emit| {
 				emoji_context: NoEmojiContext,
 				indic_context: NoIndicContext,
 			},
-			state,
+			state: $state,
 		}
 	} else {
-		var machine = fold_state.machine
-		var state = fold_state.state
-		var lane = 0.U64
+		var $machine = fold_state.machine
+		var $state = fold_state.state
+		var $lane = 0.U64
 
-		while lane < 16 {
-			byte = vector.get_lane(lane)
-			byte_start = absolute_start + lane
-			transition = push_with_props(machine, ascii_props(byte), byte_start)
-			machine = transition.machine
+		while $lane < 16 {
+			byte = vector.get_lane($lane)
+			byte_start = absolute_start + $lane
+			transition = push_with_props($machine, ascii_props(byte), byte_start)
+			$machine = transition.machine
 			match transition.boundary {
 				NoBoundary => {}
 				Boundary({ start, end }) => {
 					range = ByteRange.from_bounds(start, end) ?? ...
-					state = emit(state, range)
+					$state = emit($state, range)
 				}
 			}
-			lane = lane + 1
+			$lane = $lane + 1
 		}
 
-		{ machine, state }
+		{ machine: $machine, state: $state }
 	}
 }
 
@@ -199,19 +199,19 @@ next_range = |state| {
 		return Err(NoMore)
 	}
 
-	var cursor = state.cursor
-	var machine = state.machine
+	var $cursor = state.cursor
+	var $machine = state.machine
 
 	while Bool.True {
-		match InternalUtf8.next(cursor) {
+		match InternalUtf8.next($cursor) {
 			Done => {
-				if machine.started {
-					range = ByteRange.from_bounds(machine.cluster_start, cursor.byte_offset) ?? ...
+				if $machine.started {
+					range = ByteRange.from_bounds($machine.cluster_start, $cursor.byte_offset) ?? ...
 					return Ok((
 						range,
 						{
-							cursor,
-							machine,
+							cursor: $cursor,
+							machine: $machine,
 							finished: Bool.True,
 						},
 					))
@@ -220,9 +220,9 @@ next_range = |state| {
 				}
 			}
 			One({ item, rest }) => {
-				transition = InternalGrapheme.push(machine, item.scalar, item.byte_start)
-				cursor = rest
-				machine = transition.machine
+				transition = InternalGrapheme.push($machine, item.scalar, item.byte_start)
+				$cursor = rest
+				$machine = transition.machine
 
 				match transition.boundary {
 					NoBoundary => {}
@@ -231,8 +231,8 @@ next_range = |state| {
 						return Ok((
 							range,
 							{
-								cursor,
-								machine,
+								cursor: $cursor,
+								machine: $machine,
 								finished: Bool.False,
 							},
 						))
