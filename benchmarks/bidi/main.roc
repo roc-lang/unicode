@@ -21,28 +21,28 @@ run! = |input| {
 					if line_reorders < 1 {
 						"FAIL\tline reorder count must be positive"
 					} else {
-						var checksum = 0.U64
-						var at = 0.U64
-						while at < repeats {
+						var $checksum = 0.U64
+						var $at = 0.U64
+						while $at < repeats {
 							analysis = Bidi.analyze_paragraph(source, Auto, Bidi.default_limits) ?? return "FAIL\tanalysis"
 							paragraph = TextRange.scalar_range(Bidi.paragraph_range(analysis))
 							whole_line = Bidi.reorder_line(analysis, paragraph) ?? return "FAIL\twhole line"
 							start = ScalarRange.start(paragraph)
 							end = ScalarRange.end(paragraph)
 							width = end - start
-							var line_index = 0.U64
-							checksum = checksum + Bidi.entries(analysis).len() + Bidi.visual_to_logical(whole_line).len()
-							while line_index < line_reorders {
-								line_start = start + width * line_index / line_reorders
-								line_end = start + width * (line_index + 1) / line_reorders
+							var $line_index = 0.U64
+							$checksum = $checksum + Bidi.entries(analysis).len() + Bidi.visual_to_logical(whole_line).len()
+							while $line_index < line_reorders {
+								line_start = start + width * $line_index / line_reorders
+								line_end = start + width * ($line_index + 1) / line_reorders
 								line_range = ScalarRange.from_bounds(line_start, line_end) ?? return "FAIL\tline range"
 								line = Bidi.reorder_line(analysis, line_range) ?? return "FAIL\tline reorder"
-								checksum = checksum + Bidi.visual_to_logical(line).len()
-								line_index = line_index + 1
+								$checksum = $checksum + Bidi.visual_to_logical(line).len()
+								$line_index = $line_index + 1
 							}
-							at = at + 1
+							$at = $at + 1
 						}
-						"${checksum.to_str()}\t${source.count_utf8_bytes().to_str()}"
+						"${$checksum.to_str()}\t${source.count_utf8_bytes().to_str()}"
 					}
 				}
 				_ => "FAIL\tmalformed benchmark header"

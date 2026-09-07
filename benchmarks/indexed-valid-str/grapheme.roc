@@ -18,26 +18,26 @@ run! = |source| {
 }
 
 signature_iter = |initial| {
-    var iterator = initial
-    var count = 0.U64
-    var end_sum = 0.U64
-    var indexed_end_sum = 0.U64
+    var $iterator = initial
+    var $count = 0.U64
+    var $end_sum = 0.U64
+    var $indexed_end_sum = 0.U64
     while Bool.True {
-        match Iter.next(iterator) {
-            Done => return { count, end_sum, indexed_end_sum }
+        match Iter.next($iterator) {
+            Done => return { count: $count, end_sum: $end_sum, indexed_end_sum: $indexed_end_sum }
             Skip({ rest }) => {
-                iterator = rest
+                $iterator = rest
             }
             One({ item, rest }) => {
                 end = ByteRange.end(item)
-                count = count + 1
-                end_sum = end_sum + end
-                indexed_end_sum = indexed_end_sum + end * count
-                iterator = rest
+                $count = $count + 1
+                $end_sum = $end_sum + end
+                $indexed_end_sum = $indexed_end_sum + end * $count
+                $iterator = rest
             }
         }
     }
-    { count, end_sum, indexed_end_sum }
+    { count: $count, end_sum: $end_sum, indexed_end_sum: $indexed_end_sum }
 }
 
 signature_list = |ranges| {

@@ -14,10 +14,10 @@ Signature :: [].{
 
     mix_str : U64, Str -> U64
     mix_str = |initial, value| {
-        var state = Signature.mix(initial, 0x535452)
+        var $state = Signature.mix(initial, 0x535452)
         for byte in value.iter_utf8() {
-            state = Signature.mix(state, byte.to_u64())
+            $state = Signature.mix($state, byte.to_u64())
         }
-        Signature.mix(state, 0x454E44)
+        Signature.mix($state, 0x454E44)
     }
 }

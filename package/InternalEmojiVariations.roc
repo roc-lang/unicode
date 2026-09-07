@@ -9,15 +9,15 @@ InternalEmojiVariations :: [].{
 
 contains : U32 -> Bool
 contains = |scalar| {
-    var low = 0.U64
-    var high = bases.len()
-    while low < high {
-        middle = low + (high - low) / 2
+    var $low = 0.U64
+    var $high = bases.len()
+    while $low < $high {
+        middle = $low + ($high - $low) / 2
         candidate = match bases.get(middle) { Ok(value) => value, Err(_) => return Bool.False }
-        if candidate < scalar { low = middle + 1 } else { high = middle }
+        if candidate < scalar { $low = middle + 1 } else { $high = middle }
     }
-    if low >= bases.len() { Bool.False } else {
-        match bases.get(low) { Ok(value) => value == scalar, Err(_) => Bool.False }
+    if $low >= bases.len() { Bool.False } else {
+        match bases.get($low) { Ok(value) => value == scalar, Err(_) => Bool.False }
     }
 }
 

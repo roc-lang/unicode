@@ -265,15 +265,15 @@ lookup_mapping = |scalar, sources, mapping_targets| {
 
 lookup_index : U32, List(U32) -> [Some(U64), None]
 lookup_index = |scalar, sources| {
-    var low = 0.U64
-    var high = sources.len()
-    while low < high {
-        middle = low + (high - low) / 2
+    var $low = 0.U64
+    var $high = sources.len()
+    while $low < $high {
+        middle = $low + ($high - $low) / 2
         candidate = match sources.get(middle) { Ok(value) => value, Err(_) => return None }
-        if candidate < scalar { low = middle + 1 } else { high = middle }
+        if candidate < scalar { $low = middle + 1 } else { $high = middle }
     }
-    if low >= sources.len() { None } else {
-        match sources.get(low) { Ok(value) if value == scalar => Some(low), _ => None }
+    if $low >= sources.len() { None } else {
+        match sources.get($low) { Ok(value) if value == scalar => Some($low), _ => None }
     }
 }
 

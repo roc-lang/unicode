@@ -105,21 +105,21 @@ Script :: [].{
     ## Lexicographic comparison in stable canonical short-alias order.
     compare : ScriptSet, ScriptSet -> [Before, Equal, After]
     compare = |left, right| {
-        var private_id = 0.U8
-        var left_seen = 0.U8
-        var right_seen = 0.U8
-        while private_id < 176 {
-            left_has = contains_private(left, private_id)
-            right_has = contains_private(right, private_id)
+        var $private_id = 0.U8
+        var $left_seen = 0.U8
+        var $right_seen = 0.U8
+        while $private_id < 176 {
+            left_has = contains_private(left, $private_id)
+            right_has = contains_private(right, $private_id)
             if left_has and right_has {
-                left_seen = left_seen + 1
-                right_seen = right_seen + 1
+                $left_seen = $left_seen + 1
+                $right_seen = $right_seen + 1
             } else if left_has {
-                return if right_seen == right.length { After } else { Before }
+                return if $right_seen == right.length { After } else { Before }
             } else if right_has {
-                return if left_seen == left.length { Before } else { After }
+                return if $left_seen == left.length { Before } else { After }
             }
-            private_id = private_id + 1
+            $private_id = $private_id + 1
         }
         Equal
     }
@@ -128,14 +128,14 @@ Script :: [].{
     at : ScriptSet, U8 -> [Some(Value), None]
     at = |set, wanted| {
         if wanted >= set.length { return None }
-        var private_id = 0.U8
-        var seen = 0.U8
-        while private_id < 176 {
-            if contains_private(set, private_id) {
-                if seen == wanted { return Some(InternalScriptData.from_private_id(private_id)) }
-                seen = seen + 1
+        var $private_id = 0.U8
+        var $seen = 0.U8
+        while $private_id < 176 {
+            if contains_private(set, $private_id) {
+                if $seen == wanted { return Some(InternalScriptData.from_private_id($private_id)) }
+                $seen = $seen + 1
             }
-            private_id = private_id + 1
+            $private_id = $private_id + 1
         }
         None
     }
@@ -143,15 +143,15 @@ Script :: [].{
     ## Visit members in stable canonical short-alias order without allocating.
     walk : ScriptSet, state, (state, Value -> state) -> state
     walk = |set, initial, visit| {
-        var state = initial
-        var private_id = 0.U8
-        while private_id < 176 {
-            if contains_private(set, private_id) {
-                state = visit(state, InternalScriptData.from_private_id(private_id))
+        var $state = initial
+        var $private_id = 0.U8
+        while $private_id < 176 {
+            if contains_private(set, $private_id) {
+                $state = visit($state, InternalScriptData.from_private_id($private_id))
             }
-            private_id = private_id + 1
+            $private_id = $private_id + 1
         }
-        state
+        $state
     }
 
     ## Materialize members in stable canonical short-alias order.

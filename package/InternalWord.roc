@@ -56,20 +56,20 @@ InternalWord :: [].{
 	## preserving its exact state and per-boundary emissions.
 	fold_ascii_block : Machine, U8x16, U64, state, (state, ByteRange -> state) -> { machine : Machine, state : state }
 	fold_ascii_block = |initial_machine, vector, byte_start, initial, emit| {
-		var machine = initial_machine
-		var state = initial
-		var lane = 0.U64
-		while lane < 16 {
+		var $machine = initial_machine
+		var $state = initial
+		var $lane = 0.U64
+		while $lane < 16 {
 			transition = InternalWord.push(
-				machine,
-				vector.get_lane(lane).to_u32(),
-				byte_start + lane,
+				$machine,
+				vector.get_lane($lane).to_u32(),
+				byte_start + $lane,
 			)
-			machine = transition.machine
-			state = fold_emission(state, transition.emissions, emit)
-			lane = lane + 1
+			$machine = transition.machine
+			$state = fold_emission($state, transition.emissions, emit)
+			$lane = $lane + 1
 		}
-		{ machine, state }
+		{ machine: $machine, state: $state }
 	}
 
 	finish : Machine, U64 -> Emission
@@ -161,26 +161,26 @@ next_range = |state| {
 		return Err(NoMore)
 	}
 
-	var cursor = state.cursor
-	var machine = state.machine
+	var $cursor = state.cursor
+	var $machine = state.machine
 
 	while Bool.True {
-		match InternalUtf8.next(cursor) {
+		match InternalUtf8.next($cursor) {
 			Done => {
-				match InternalWord.finish(machine, cursor.byte_offset) {
+				match InternalWord.finish($machine, $cursor.byte_offset) {
 					NoBoundaries => return Err(NoMore)
-					One(item) => return Ok((item, { cursor, machine, queued: NoQueued, finished: Bool.True }))
-					Two(first, second) => return Ok((first, { cursor, machine, queued: Queued(second), finished: Bool.True }))
+					One(item) => return Ok((item, { cursor: $cursor, machine: $machine, queued: NoQueued, finished: Bool.True }))
+					Two(first, second) => return Ok((first, { cursor: $cursor, machine: $machine, queued: Queued(second), finished: Bool.True }))
 				}
 			}
 			One({ item, rest }) => {
-				transition = InternalWord.push(machine, item.scalar, item.byte_start)
-				cursor = rest
-				machine = transition.machine
+				transition = InternalWord.push($machine, item.scalar, item.byte_start)
+				$cursor = rest
+				$machine = transition.machine
 				match transition.emissions {
 					NoBoundaries => {}
-					One(result) => return Ok((result, { cursor, machine, queued: NoQueued, finished: Bool.False }))
-					Two(first, second) => return Ok((first, { cursor, machine, queued: Queued(second), finished: Bool.False }))
+					One(result) => return Ok((result, { cursor: $cursor, machine: $machine, queued: NoQueued, finished: Bool.False }))
+					Two(first, second) => return Ok((first, { cursor: $cursor, machine: $machine, queued: Queued(second), finished: Bool.False }))
 				}
 			}
 		}

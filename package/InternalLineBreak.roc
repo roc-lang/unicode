@@ -200,22 +200,22 @@ InternalLineBreak :: [].{
 			}
 			{ stream: { machine: summarized, pending: NoPending }, state }
 		} else {
-			var next_stream = stream
-			var state = initial
-			var lane = 0.U64
-			while lane < 16 {
-				byte = vector.get_lane(lane)
+			var $next_stream = stream
+			var $state = initial
+			var $lane = 0.U64
+			while $lane < 16 {
+				byte = vector.get_lane($lane)
 				transition = stream_push_with_props(
-					next_stream,
+					$next_stream,
 					ascii_props(byte),
 					byte.to_u32(),
-					TextPosition.from_offsets(byte_start + lane, scalar_start + lane),
+					TextPosition.from_offsets(byte_start + $lane, scalar_start + $lane),
 				)
-				next_stream = transition.stream
-				state = fold_emitted_events(state, transition.emissions, emit)
-				lane = lane + 1
+				$next_stream = transition.stream
+				$state = fold_emitted_events($state, transition.emissions, emit)
+				$lane = $lane + 1
 			}
-			{ stream: next_stream, state }
+			{ stream: $next_stream, state: $state }
 		}
 	}
 

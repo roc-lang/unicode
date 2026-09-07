@@ -39,9 +39,9 @@ run! = |input| {
         return "${signature.count.to_str()} ${signature.sum_offsets.to_str()} ${signature.weighted_offsets.to_str()}"
     }
 
-    var remaining = repeats
-    var total = 0.U64
-    while remaining > 0 {
+    var $remaining = repeats
+    var $total = 0.U64
+    while $remaining > 0 {
         pushed = match LineBreak.Cursor.push(
             LineBreak.Cursor.init({}),
             source,
@@ -59,11 +59,11 @@ run! = |input| {
             Failed(_) => return "ERROR: line-break finish failed"
             End(value) => value
         }
-        total = total + finished.state
-        remaining = remaining - 1
+        $total = $total + finished.state
+        $remaining = $remaining - 1
     }
 
-    total.to_str()
+    $total.to_str()
 }
 
 append_signature = |state, opportunity| {
