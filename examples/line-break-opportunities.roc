@@ -1,5 +1,5 @@
 app [main!] {
-	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.21.0/4rAQg8kUYZ3Vksr4qMQHpaFYNiHSn9GgS7gVxghd1XYV.tar.zst",
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.23.0/GNN5tt2gKdX4dhawg4915C4YB193woHFdcCkz31fhGxv.tar.zst",
 	unicode: "../package/main.roc",
 }
 
@@ -108,12 +108,12 @@ expect {
 	}
 }
 
-main! : List(OsStr) => Try({}, [Exit(I32), StderrErr(IOErr), StdoutErr(IOErr), ..])
+main! : List(OsStr) => Try({}, [Exit(I32), StderrErr(IOErr), StdoutErr(IOErr)])
 main! = |os_args| {
 	args = CliArgs.to_strs!(os_args)?
 	request = match args {
-		[_app, "complete", profile_text, source] => Complete({ profile_text, source })
-		[_app, "chunks", profile_text, first, .. as rest] => Chunks({ profile_text, chunks: [first].concat(rest) })
+		["complete", profile_text, source] => Complete({ profile_text, source })
+		["chunks", profile_text, first, .. as rest] => Chunks({ profile_text, chunks: [first].concat(rest) })
 		_ => {
 			Stderr.line!("usage: line-break-opportunities complete PROFILE TEXT")?
 			Stderr.line!("       line-break-opportunities chunks PROFILE CHUNK [CHUNK ...]")?

@@ -528,7 +528,6 @@ mapping_shape = |mapping, input| match mapping {
 
 append_mapping = |initial, mapping| {
 	for_mapping(mapping, initial, |bytes, scalar| append_utf8(bytes, scalar))
-
 }
 
 for_mapping = |mapping, initial, emit| match mapping {

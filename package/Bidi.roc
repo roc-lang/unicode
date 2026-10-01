@@ -288,7 +288,6 @@ range_from_offsets = |byte_start, byte_end, scalar_start, scalar_end| {
 }
 
 is_p1_range = |source, selected| {
-
 	## This deliberately does not call `p1_ranges`: range analysis must not
 	## allocate one result per preceding paragraph just to validate `selected`.
 	## A pending CR delays commitment until the next scalar determines whether
