@@ -21,7 +21,7 @@ CliArgs := [].{
 
 	## Decode argv for an application and report malformed native text as a usage
 	## error. Applications can then keep their domain logic entirely in Str.
-	to_strs! : List(OsStr) => Try(List(Str), [Exit(I32), StderrErr(IOErr), ..])
+	to_strs! : List(OsStr) => Try(List(Str), [Exit(I32), StderrErr(IOErr)])
 	to_strs! = |os_args|
 		match decode(os_args) {
 			Ok(args) => Ok(args)

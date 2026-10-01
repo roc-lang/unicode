@@ -1,5 +1,5 @@
 app [main!] {
-	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.21.0/4rAQg8kUYZ3Vksr4qMQHpaFYNiHSn9GgS7gVxghd1XYV.tar.zst",
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.23.0/GNN5tt2gKdX4dhawg4915C4YB193woHFdcCkz31fhGxv.tar.zst",
 	unicode: "../package/main.roc",
 }
 
@@ -88,10 +88,10 @@ expect {
 	}
 }
 
-main! : List(OsStr) => Try({}, [Exit(I32), StderrErr(IOErr), StdoutErr(IOErr), ..])
+main! : List(OsStr) => Try({}, [Exit(I32), StderrErr(IOErr), StdoutErr(IOErr)])
 main! = |os_args| {
 	args = CliArgs.to_strs!(os_args)?
-	chunks = args.drop_first(1)
+	chunks = args
 	if chunks.is_empty() {
 		Stderr.line!("usage: stream-grapheme-ranges CHUNK [CHUNK ...]")?
 		Stderr.line!("       chunks must be scalar-aligned; use - for an empty chunk")?
