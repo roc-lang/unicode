@@ -1,9 +1,9 @@
 package
 	[
-		ByteRange,
 		Bidi,
 		BidiClass,
 		BidiProperties,
+		ByteRange,
 		CanonicalCombiningClass,
 		Case,
 		CodePoint,

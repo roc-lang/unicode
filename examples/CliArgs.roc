@@ -1,7 +1,7 @@
 ## Convert native command-line arguments to Unicode text without losing or
 ## silently replacing invalid operating-system data.
-import pf.OsStr exposing [OsStr]
-import pf.IOErr exposing [IOErr]
+import pf.OsStr
+import pf.IOErr
 import pf.Stderr
 
 CliArgs := [].{
