@@ -1,7 +1,7 @@
 ## Convert native command-line arguments to Unicode text without losing or
 ## silently replacing invalid operating-system data.
-import pf.OsStr exposing [OsStr]
-import pf.IOErr exposing [IOErr]
+import pf.OsStr
+import pf.IOErr
 import pf.Stderr
 
 CliArgs := [].{
@@ -21,7 +21,7 @@ CliArgs := [].{
 
 	## Decode argv for an application and report malformed native text as a usage
 	## error. Applications can then keep their domain logic entirely in Str.
-	to_strs! : List(OsStr) => Try(List(Str), [Exit(I32), StderrErr(IOErr), ..])
+	to_strs! : List(OsStr) => Try(List(Str), [Exit(I32), StderrErr(IOErr)])
 	to_strs! = |os_args|
 		match decode(os_args) {
 			Ok(args) => Ok(args)

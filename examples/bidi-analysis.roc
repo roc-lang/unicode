@@ -1,11 +1,11 @@
 app [main!] {
-	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.21.0/4rAQg8kUYZ3Vksr4qMQHpaFYNiHSn9GgS7gVxghd1XYV.tar.zst",
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.24.0/AEjfyaMFFbh8FJrkkHJy68riVNPr3Qp6c6PawWQjBwMH.tar.zst",
 	unicode: "../package/main.roc",
 }
 
 import CliArgs
-import pf.IOErr exposing [IOErr]
-import pf.OsStr exposing [OsStr]
+import pf.IOErr
+import pf.OsStr
 import pf.Stderr
 import pf.Stdout
 import unicode.Bidi
@@ -67,11 +67,11 @@ render = |base, analysis, line| {
 	\\mirrored-glyphs: ${format_mirrors(Bidi.line_mirroring(line))}
 }
 
-main! : List(OsStr) => Try({}, [Exit(I32), StderrErr(IOErr), StdoutErr(IOErr), ..])
+main! : List(OsStr) => Try({}, [Exit(I32), StderrErr(IOErr), StdoutErr(IOErr)])
 main! = |os_args| {
 	args = CliArgs.to_strs!(os_args)?
 	match args {
-		[_app, base_text, source] => {
+		[base_text, source] => {
 			base = match parse_base(base_text) {
 				Ok(value) => value
 				Err(UnknownBase(name)) => {

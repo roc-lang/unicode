@@ -1,11 +1,11 @@
 app [main!] {
-	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.21.0/4rAQg8kUYZ3Vksr4qMQHpaFYNiHSn9GgS7gVxghd1XYV.tar.zst",
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.24.0/AEjfyaMFFbh8FJrkkHJy68riVNPr3Qp6c6PawWQjBwMH.tar.zst",
 	unicode: "../package/main.roc",
 }
 
 import CliArgs
-import pf.IOErr exposing [IOErr]
-import pf.OsStr exposing [OsStr]
+import pf.IOErr
+import pf.OsStr
 import pf.Stderr
 import pf.Stdout
 import unicode.ByteRange
@@ -163,10 +163,10 @@ expect {
 	}
 }
 
-main! : List(OsStr) => Try({}, [Exit(I32), StderrErr(IOErr), StdoutErr(IOErr), ..])
+main! : List(OsStr) => Try({}, [Exit(I32), StderrErr(IOErr), StdoutErr(IOErr)])
 main! = |os_args| {
 	args = CliArgs.to_strs!(os_args)?
-	chunks = args.drop_first(1)
+	chunks = args
 	if chunks.is_empty() {
 		Stderr.line!("usage: decode-utf8-stream HEX_BYTES [HEX_BYTES ...]")?
 		Stderr.line!("       bytes are comma-separated; use - for an empty chunk")?

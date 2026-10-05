@@ -125,7 +125,7 @@ verify_metamorphic_invariants = |protocol_input| {
 	}
 
 	plain = bidi_result(Bidi.analyze_paragraph("אa${empty_input}", Auto, Bidi.default_limits))?
-	isolated = bidi_result(Bidi.analyze_paragraph("א⁨a⁩a${empty_input}", Auto, Bidi.default_limits))?
+	isolated = bidi_result(Bidi.analyze_paragraph("א\u(2068)a\u(2069)a${empty_input}", Auto, Bidi.default_limits))?
 	plain_first = Bidi.entries(plain).get(0) ?? return Err("missing plain first scalar")
 	plain_last = Bidi.entries(plain).get(1) ?? return Err("missing plain last scalar")
 	isolated_first = Bidi.entries(isolated).get(0) ?? return Err("missing isolate first scalar")
@@ -208,13 +208,13 @@ verify_mapping_inverse = |visual_to_logical, logical_to_visual, line_start| {
 verify_control_and_bracket_boundaries : Str -> Try({}, Str)
 verify_control_and_bracket_boundaries = |protocol_input| {
 	empty_input = protocol_input.drop_last_bytes(protocol_input.count_utf8_bytes()) ?? return Err("could not derive empty protocol input")
-	controls = Str.join_with([repeat_text("‫", 126), "a", repeat_text("‬", 126), empty_input], "")
+	controls = Str.join_with([repeat_text("\u(202B)", 126), "a", repeat_text("\u(202C)", 126), empty_input], "")
 	control_analysis = bidi_result(Bidi.analyze_paragraph(controls, Auto, Bidi.default_limits))?
 	verify_level_parity(Bidi.levels(control_analysis))?
 	if !contains_level(Bidi.levels(control_analysis), 126) {
 		return Err("deep explicit controls did not reach the permitted I2 level 126")
 	}
-	missing_pdi = bidi_result(Bidi.analyze_paragraph("⁨א⁨a${empty_input}", Auto, Bidi.default_limits))?
+	missing_pdi = bidi_result(Bidi.analyze_paragraph("\u(2068)א\u(2068)a${empty_input}", Auto, Bidi.default_limits))?
 	verify_level_parity(Bidi.levels(missing_pdi))?
 
 	for depth in [62, 63] {

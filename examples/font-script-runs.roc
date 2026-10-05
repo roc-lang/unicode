@@ -1,11 +1,11 @@
 app [main!] {
-	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.21.0/4rAQg8kUYZ3Vksr4qMQHpaFYNiHSn9GgS7gVxghd1XYV.tar.zst",
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.24.0/AEjfyaMFFbh8FJrkkHJy68riVNPr3Qp6c6PawWQjBwMH.tar.zst",
 	unicode: "../package/main.roc",
 }
 
 import CliArgs
-import pf.IOErr exposing [IOErr]
-import pf.OsStr exposing [OsStr]
+import pf.IOErr
+import pf.OsStr
 import pf.Stderr
 import pf.Stdout
 import unicode.ByteRange
@@ -114,12 +114,12 @@ expect {
 	}
 }
 
-main! : List(OsStr) => Try({}, [Exit(I32), StderrErr(IOErr), StdoutErr(IOErr), ..])
+main! : List(OsStr) => Try({}, [Exit(I32), StderrErr(IOErr), StdoutErr(IOErr)])
 main! = |os_args| {
 	args = CliArgs.to_strs!(os_args)?
 	request = match args {
-		[_app, "complete", preferences, source] => Complete({ preferences, source })
-		[_app, "chunks", max_pending, preferences, first, .. as rest] => {
+		["complete", preferences, source] => Complete({ preferences, source })
+		["chunks", max_pending, preferences, first, .. as rest] => {
 			Chunks({ max_pending, preferences, chunks: [first].concat(rest) })
 		}
 		_ => {
