@@ -62,10 +62,10 @@ Emoji :: [].{
 	}
 
 	binary_short : Bool -> Str
-	binary_short = |value| if value "Y" else "N"
+	binary_short = |value| if (value) "Y" else "N"
 
 	binary_long : Bool -> Str
-	binary_long = |value| if value "Yes" else "No"
+	binary_long = |value| if (value) "Yes" else "No"
 
 	binary_alias_count : Bool -> U8
 	binary_alias_count = |_| 4
@@ -96,12 +96,12 @@ Emoji :: [].{
 		if InternalLooseAlias.matches(name, "Y") or InternalLooseAlias.matches(name, "Yes") or InternalLooseAlias.matches(name, "T") or InternalLooseAlias.matches(name, "True") {
 			Ok(Bool.True)
 		}
-			else if InternalLooseAlias.matches(name, "N") or InternalLooseAlias.matches(name, "No") or InternalLooseAlias.matches(name, "F") or InternalLooseAlias.matches(name, "False") {
-				Ok(Bool.False)
-			}
-				else {
-					Err(UnknownAlias)
-				}
+		else if InternalLooseAlias.matches(name, "N") or InternalLooseAlias.matches(name, "No") or InternalLooseAlias.matches(name, "F") or InternalLooseAlias.matches(name, "False") {
+			Ok(Bool.False)
+		}
+		else {
+			Err(UnknownAlias)
+		}
 	}
 
 	fold_runs : Str, state, (state, Run -> state) -> state
@@ -124,8 +124,8 @@ Emoji :: [].{
 properties_eq = |left, right| {
 	left.emoji == right.emoji
 		and left.emoji_presentation == right.emoji_presentation
-			and left.emoji_modifier == right.emoji_modifier
-				and left.emoji_modifier_base == right.emoji_modifier_base
-					and left.emoji_component == right.emoji_component
-						and left.extended_pictographic == right.extended_pictographic
+		and left.emoji_modifier == right.emoji_modifier
+		and left.emoji_modifier_base == right.emoji_modifier_base
+		and left.emoji_component == right.emoji_component
+		and left.extended_pictographic == right.extended_pictographic
 }

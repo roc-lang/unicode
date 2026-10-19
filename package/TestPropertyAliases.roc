@@ -3,8 +3,8 @@ import InternalPropertyAliases
 TestPropertyAliases :: [].{
 	allocation_probe : U8 -> U64
 	allocation_probe = |selector| {
-		category = if selector == 0 Cc else Lu
-		combining_class = if selector == 0 230 else 0
+		category = if (selector == 0) Cc else Lu
+		combining_class = if (selector == 0) 230 else 0
 		gc_property = InternalPropertyAliases.general_category_property
 		ccc_property = InternalPropertyAliases.canonical_combining_class_property
 

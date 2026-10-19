@@ -110,16 +110,16 @@ BidiProperties :: [].{
 
 	paired_bracket_type_alias_at : PairedBracketType, U8 -> [Some(Str), None]
 	paired_bracket_type_alias_at = |kind, index| {
-		if index == 0 Some(BidiProperties.paired_bracket_type_short(kind))
-		else if index == 1 Some(BidiProperties.paired_bracket_type_long(kind))
+		if (index == 0) Some(BidiProperties.paired_bracket_type_short(kind))
+		else if (index == 1) Some(BidiProperties.paired_bracket_type_long(kind))
 		else None
 	}
 
 	mirrored_short : Bool -> Str
-	mirrored_short = |value| if value "Y" else "N"
+	mirrored_short = |value| if (value) "Y" else "N"
 
 	mirrored_long : Bool -> Str
-	mirrored_long = |value| if value "Yes" else "No"
+	mirrored_long = |value| if (value) "Yes" else "No"
 
 	mirrored_alias_count : Bool -> U8
 	mirrored_alias_count = |_| 4
@@ -150,11 +150,11 @@ BidiProperties :: [].{
 		if InternalLooseAlias.matches(name, "Y") or InternalLooseAlias.matches(name, "Yes") or InternalLooseAlias.matches(name, "T") or InternalLooseAlias.matches(name, "True") {
 			Ok(Bool.True)
 		}
-			else if InternalLooseAlias.matches(name, "N") or InternalLooseAlias.matches(name, "No") or InternalLooseAlias.matches(name, "F") or InternalLooseAlias.matches(name, "False") {
-				Ok(Bool.False)
-			}
-				else {
-					Err(UnknownAlias)
-				}
+		else if InternalLooseAlias.matches(name, "N") or InternalLooseAlias.matches(name, "No") or InternalLooseAlias.matches(name, "F") or InternalLooseAlias.matches(name, "False") {
+			Ok(Bool.False)
+		}
+		else {
+			Err(UnknownAlias)
+		}
 	}
 }

@@ -1,5 +1,5 @@
 app [main!] {
-	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.24.0/AEjfyaMFFbh8FJrkkHJy68riVNPr3Qp6c6PawWQjBwMH.tar.zst",
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.26.0-rc1/GMezHWvmUP42Leqg8YkABvEk27cMUSVM6p7oz3XPj11N.tar.zst",
 	unicode: "../package/main.roc",
 }
 
@@ -133,12 +133,10 @@ expect decode_chunks(["41", "C3,A9", "F0,9F,A6,98"]) == Ok(
 	\\scalar 1: value=233 bytes=1..3
 	\\scalar 2: value=129432 bytes=3..7
 	\\complete: 7 bytes, 3 scalars
-	,
 )
 expect decode_chunks(["F0", "9F", "A6", "98"]) == Ok(
 	\\scalar 0: value=129432 bytes=0..4
 	\\complete: 4 bytes, 1 scalars
-	,
 )
 expect decode_chunks(["E2,82"]) == Err(DecodeFailed("UnexpectedEndOfSequence at byte 2 (sequence start 0)"))
 expect decode_chunks(["FF"]) == Err(DecodeFailed("InvalidStartByte at byte 0 (sequence start 0)"))

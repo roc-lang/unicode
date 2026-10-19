@@ -41,6 +41,31 @@ verify_paragraph_api = |protocol_input| {
 		return Err("P1 did not keep CRLF in one paragraph range")
 	}
 	empty_input = protocol_input.drop_last_bytes(protocol_input.count_utf8_bytes()) ?? return Err("could not derive empty protocol input")
+	# A final lone CR after mixed separators exercises end-of-source cursor
+	# ownership as well as P1 coordinates (the pinned LLVM backend crashed here).
+	separators = "\r\u(2029)\n\n\n\u(2029)\n\u(2029)\r${empty_input}"
+	separator_ranges = Bidi.paragraph_ranges(separators)
+	coordinates = separator_ranges.map(
+		|range| (
+			ByteRange.start(TextRange.byte_range(range)),
+			ByteRange.end(TextRange.byte_range(range)),
+			ScalarRange.start(TextRange.scalar_range(range)),
+			ScalarRange.end(TextRange.scalar_range(range)),
+		),
+	)
+	if coordinates != [
+		(0, 1, 0, 1),
+		(1, 4, 1, 2),
+		(4, 5, 2, 3),
+		(5, 6, 3, 4),
+		(6, 7, 4, 5),
+		(7, 10, 5, 6),
+		(10, 11, 6, 7),
+		(11, 14, 7, 8),
+		(14, 15, 8, 9),
+	] {
+		return Err("P1 mixed separators with final CR lost paragraph coordinates")
+	}
 	if Bidi.paragraph_ranges(empty_input).len() != 1 or Bidi.paragraph_ranges("${crlf}${crlf}").len() != 2 {
 		return Err("P1 empty/final-separator ranges are not deterministic")
 	}
@@ -162,7 +187,6 @@ verify_level_parity = |levels| {
 		match resolved {
 			RemovedByX9 => {}
 			Level(level) => {
-
 				## BD2 caps explicit levels at 125; I2 may raise an L character
 				## in that odd context to its final resolved level 126.
 				if level > 126 {
@@ -379,7 +403,7 @@ parse_header = |header, actual_count| {
 	match header.split_on("\t") {
 		["ROC_UNICODE_TEST_V1", suite, count_str] if suite == "bidi-test" or suite == "bidi-character-test" or suite == "bidi-metamorphic" => {
 			expected = U64.from_str(count_str) ?? return None
-			if expected == actual_count Some(suite) else None
+			if (expected == actual_count) Some(suite) else None
 		}
 		_ => None
 	}

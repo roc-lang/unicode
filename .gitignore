@@ -26,3 +26,6 @@ __pycache__/
 
 # Ignore local benchmark build output
 benchmarks/grapheme/rust/target/
+
+tests/platform/targets/*/windows_imports.lib
+tests/platform/targets/*/windows-imports/

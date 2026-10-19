@@ -1,6 +1,7 @@
 import BidiClass
 import BidiProperties
 import ByteRange
+import InternalUtf8
 import Scalar
 import ScalarRange
 import TextPosition
@@ -90,7 +91,7 @@ Bidi :: [].{
 	)
 
 	direction : U8 -> Direction
-	direction = |level| if level % 2 == 0 LeftToRight else RightToLeft
+	direction = |level| if (level % 2 == 0) LeftToRight else RightToLeft
 
 	## Lazily walk maximal same-level spans in the X9-filtered logical sequence.
 	## Removed controls bridge equal-level runs but are not themselves yielded.
@@ -223,13 +224,20 @@ p1_ranges = |source| {
 	var $final_byte = 0.U64
 	var $final_scalar = 0.U64
 	var $pending_cr = None
-	for located in Scalar.iter(source) {
-		$final_byte = ByteRange.end(located.byte_range)
+	var $cursor = InternalUtf8.init(source)
+	while Bool.True {
+		step = match InternalUtf8.next($cursor) {
+			Done => break
+			One(value) => value
+		}
+		located = step.item
+		$cursor = step.rest
+		$final_byte = located.byte_end
 		$final_scalar = match located.scalar_index.plus_try(1) {
 			Ok(next) => next
 			Err(Overflow) => U64.highest
 		}
-		value = Scalar.to_u32(located.scalar)
+		value = located.scalar
 		match $pending_cr {
 			Some(cr) => {
 				if value == 0x000A {
@@ -567,12 +575,12 @@ base_level = |entries, policy, partners| {
 				} else if class == L {
 					return 0
 				}
-					else if class == R or class == AL {
-						return 1
-					}
-						else {
-							$at = $at + 1
-						}
+				else if class == R or class == AL {
+					return 1
+				}
+				else {
+					$at = $at + 1
+				}
 			}
 			0
 		}
@@ -592,7 +600,7 @@ resolve_explicit = |entries, base, isolates| {
 		current = $stack.last() ?? { level: base, override: None, isolate: Bool.False }
 		class = entry.original_class
 		if class == RLE or class == LRE or class == RLO or class == LRO {
-			if $overflow_isolates > 0 {
+			if ($overflow_isolates > 0) {
 				# X2-X5: formatting inside an overflow isolate is ignored and
 				# does not participate in the embedding-overflow counter.
 			} else if $overflow_embeddings > 0 {
@@ -614,13 +622,13 @@ resolve_explicit = |entries, base, isolates| {
 			}
 			$result = $result.append({ ..entry, level: None })
 		} else if class == PDF {
-			if $overflow_isolates > 0 {}
+			if ($overflow_isolates > 0) {}
 			else if $overflow_embeddings > 0 {
 				$overflow_embeddings = $overflow_embeddings - 1
 			}
-				else if $stack.len() > 1 and !current.isolate {
-					$stack = drop_last($stack)
-				}
+			else if $stack.len() > 1 and !current.isolate {
+				$stack = drop_last($stack)
+			}
 			$result = $result.append({ ..entry, level: None })
 		} else if class == BN {
 			$result = $result.append({ ..entry, level: None })
@@ -1253,9 +1261,9 @@ resolve_bracket_pair = |entries, irs, sequence, pair, preceding| {
 		if strong == Some(embedding) {
 			$saw_embedding = Bool.True
 		}
-			else if strong != None {
-				$saw_opposite = Bool.True
-			}
+		else if strong != None {
+			$saw_opposite = Bool.True
+		}
 		$at = match $at {
 			Some(index) => next_in(irs.links, index)
 			None => Some(pair.close)
@@ -1492,7 +1500,7 @@ l1 = |line, paragraph_level| {
 			while $before > 0 {
 				$before = $before - 1
 				previous = line.get($before) ?? break
-				if previous.level == None {
+				if (previous.level == None) {
 					# X9 formatting controls are absent for L1 adjacency.
 				} else if previous.original_class == WS or isolate_control(previous.original_class) {
 					$result = $result.set($before, Some(paragraph_level)) ?? ...

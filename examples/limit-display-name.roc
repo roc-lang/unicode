@@ -1,5 +1,5 @@
 app [main!] {
-	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.24.0/AEjfyaMFFbh8FJrkkHJy68riVNPr3Qp6c6PawWQjBwMH.tar.zst",
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.26.0-rc1/GMezHWvmUP42Leqg8YkABvEk27cMUSVM6p7oz3XPj11N.tar.zst",
 	unicode: "../package/main.roc",
 }
 
@@ -31,13 +31,12 @@ limit_display_name = |source, max_graphemes| {
 render : Str, U64 -> Try(Str, [UnexpectedRange])
 render = |source, limit| {
 	result = limit_display_name(source, limit)?
-	suffix = if result.truncated "…" else ""
+	suffix = if (result.truncated) "…" else ""
 	Ok(
 		\\input: ${source}
 		\\limit: ${limit.to_str()} graphemes
 		\\display: ${result.slice}${suffix}
-		\\truncated: ${if result.truncated "yes" else "no"}
-		,
+		\\truncated: ${if (result.truncated) "yes" else "no"}
 	)
 }
 

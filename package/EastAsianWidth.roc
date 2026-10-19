@@ -49,31 +49,31 @@ EastAsianWidth :: [].{
 	alias_count = |_| 2
 
 	alias_at : Value, U8 -> [Some(Str), None]
-	alias_at = |value, index| if index == 0 Some(EastAsianWidth.short(value)) else if index == 1 Some(EastAsianWidth.long(value)) else None
+	alias_at = |value, index| if (index == 0) Some(EastAsianWidth.short(value)) else if (index == 1) Some(EastAsianWidth.long(value)) else None
 
 	parse : Str -> Try(Value, AliasError)
 	parse = |name| {
 		if alias_matches(name, "A", "Ambiguous") {
 			Ok(Ambiguous)
 		}
-			else if alias_matches(name, "F", "Fullwidth") {
-				Ok(Fullwidth)
-			}
-				else if alias_matches(name, "H", "Halfwidth") {
-					Ok(Halfwidth)
-				}
-					else if alias_matches(name, "N", "Neutral") {
-						Ok(Neutral)
-					}
-						else if alias_matches(name, "Na", "Narrow") {
-							Ok(Narrow)
-						}
-							else if alias_matches(name, "W", "Wide") {
-								Ok(Wide)
-							}
-								else {
-									Err(UnknownAlias)
-								}
+		else if alias_matches(name, "F", "Fullwidth") {
+			Ok(Fullwidth)
+		}
+		else if alias_matches(name, "H", "Halfwidth") {
+			Ok(Halfwidth)
+		}
+		else if alias_matches(name, "N", "Neutral") {
+			Ok(Neutral)
+		}
+		else if alias_matches(name, "Na", "Narrow") {
+			Ok(Narrow)
+		}
+		else if alias_matches(name, "W", "Wide") {
+			Ok(Wide)
+		}
+		else {
+			Err(UnknownAlias)
+		}
 	}
 
 	fold_runs : Str, state, (state, Run -> state) -> state

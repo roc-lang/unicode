@@ -39,7 +39,7 @@ significant_count = |source| {
 		source,
 		0.U64,
 		|count, scalar, _byte_start, _byte_end, _scalar_index| {
-			if is_ignored(scalar) count else count + 1
+			if (is_ignored(scalar)) count else count + 1
 		},
 	)
 }
@@ -55,7 +55,7 @@ normalized_at = |source, target| {
 				state
 			} else if significant_index == target.to_u128() {
 				normalized = ascii_lower(scalar)
-				encoded = if normalized <= 0x7F normalized.to_u128() else 0xFF
+				encoded = if (normalized <= 0x7F) normalized.to_u128() else 0xFF
 				(significant_index + 1).bitwise_or(encoded.shl_wrap(64))
 			} else {
 				significant_index + 1
@@ -79,18 +79,18 @@ is_ignored : U32 -> Bool
 is_ignored = |scalar| {
 	scalar == 0x2D
 		or scalar == 0x5F
-			or (scalar >= 0x09 and scalar <= 0x0D)
-				or scalar == 0x20
-					or scalar == 0x85
-						or scalar == 0xA0
-							or scalar == 0x1680
-								or (scalar >= 0x2000 and scalar <= 0x200A)
-									or scalar == 0x2028
-										or scalar == 0x2029
-											or scalar == 0x202F
-												or scalar == 0x205F
-													or scalar == 0x3000
+		or (scalar >= 0x09 and scalar <= 0x0D)
+		or scalar == 0x20
+		or scalar == 0x85
+		or scalar == 0xA0
+		or scalar == 0x1680
+		or (scalar >= 0x2000 and scalar <= 0x200A)
+		or scalar == 0x2028
+		or scalar == 0x2029
+		or scalar == 0x202F
+		or scalar == 0x205F
+		or scalar == 0x3000
 }
 
 ascii_lower : U32 -> U32
-ascii_lower = |scalar| if scalar >= 0x41 and scalar <= 0x5A scalar + 0x20 else scalar
+ascii_lower = |scalar| if (scalar >= 0x41 and scalar <= 0x5A) scalar + 0x20 else scalar

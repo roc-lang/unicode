@@ -107,10 +107,10 @@ Property :: [].{
 	is_variation_selector = |scalar| InternalCharacterFlags.lookup(Scalar.to_u32(scalar)).variation_selector
 
 	binary_short : Bool -> Str
-	binary_short = |value| if value "Y" else "N"
+	binary_short = |value| if (value) "Y" else "N"
 
 	binary_long : Bool -> Str
-	binary_long = |value| if value "Yes" else "No"
+	binary_long = |value| if (value) "Yes" else "No"
 
 	binary_alias_count : Bool -> U8
 	binary_alias_count = |_| 4
@@ -141,12 +141,12 @@ Property :: [].{
 		if InternalLooseAlias.matches(name, "Y") or InternalLooseAlias.matches(name, "Yes") or InternalLooseAlias.matches(name, "T") or InternalLooseAlias.matches(name, "True") {
 			Ok(Bool.True)
 		}
-			else if InternalLooseAlias.matches(name, "N") or InternalLooseAlias.matches(name, "No") or InternalLooseAlias.matches(name, "F") or InternalLooseAlias.matches(name, "False") {
-				Ok(Bool.False)
-			}
-				else {
-					Err(UnknownAlias)
-				}
+		else if InternalLooseAlias.matches(name, "N") or InternalLooseAlias.matches(name, "No") or InternalLooseAlias.matches(name, "F") or InternalLooseAlias.matches(name, "False") {
+			Ok(Bool.False)
+		}
+		else {
+			Err(UnknownAlias)
+		}
 	}
 
 	## Decode a complete valid string once and fold scalar entries in source

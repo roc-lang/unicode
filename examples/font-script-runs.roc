@@ -1,5 +1,5 @@
 app [main!] {
-	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.24.0/AEjfyaMFFbh8FJrkkHJy68riVNPr3Qp6c6PawWQjBwMH.tar.zst",
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.26.0-rc1/GMezHWvmUP42Leqg8YkABvEk27cMUSVM6p7oz3XPj11N.tar.zst",
 	unicode: "../package/main.roc",
 }
 
@@ -52,7 +52,7 @@ stream_runs = |chunks, policy, max_pending_units| {
 	var $cursor = ScriptItemization.cursor_init(policy, max_pending_units)
 	var $runs = []
 	for raw_chunk in chunks {
-		chunk = if raw_chunk == "-" "" else raw_chunk
+		chunk = if (raw_chunk == "-") "" else raw_chunk
 		match ScriptItemization.cursor_push($cursor, chunk, $runs, |runs, run| runs.append(format_run(run))) {
 			Failed({ error, .. }) => return Err(CursorFailure(format_cursor_error(error)))
 			Pushed(next) => {
@@ -72,7 +72,7 @@ render = |mode, preferred, runs| {
 	header =
 		\\mode: ${mode}
 		\\policy: ${ScriptItemization.policy_revision}
-		\\preferred-scripts: ${if names.is_empty() "none" else Str.join_with(names, ",")}
+		\\preferred-scripts: ${if (names.is_empty()) "none" else Str.join_with(names, ",")}
 		\\runs: ${runs.len().to_str()}
 	runs.fold(
 		header,

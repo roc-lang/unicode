@@ -9,5 +9,8 @@
         "build.zig.zon",
         "targets",
         "src",
+        "windows_imports.py",
+        "LICENSE-UPL",
+        "LICENSE-ZIG",
     },
 }

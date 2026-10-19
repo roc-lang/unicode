@@ -305,15 +305,18 @@ def bundle_package(bundle_dir: Path, roc: str) -> Path:
         capture=True,
     )
     print(completed.stdout, end="" if completed.stdout.endswith("\n") else "\n")
-    match = re.search(r"^Created:\s+(.+\.(?:tar\.br|tar\.zst))\s*$", completed.stdout, re.MULTILINE)
-    if match is None:
-        raise TestFailure("could not find bundle path in roc bundle output")
-    bundle = Path(match.group(1))
-    if not bundle.is_absolute():
-        bundle = (ROOT / bundle).resolve()
-    if not bundle.is_file():
-        raise TestFailure(f"bundle was not created: {bundle}")
-    return bundle
+    # Compiler diagnostics on stderr can interleave with the archive summary on
+    # stdout. Discover the artifact in the requested directory instead of parsing
+    # that human-readable output (whose paths are relative to package/, too).
+    bundles = sorted(
+        path for path in bundle_dir.iterdir()
+        if path.is_file() and path.name.endswith((".tar.br", ".tar.zst"))
+    )
+    if len(bundles) != 1:
+        raise TestFailure(
+            f"expected exactly one package bundle in {bundle_dir}, found {len(bundles)}"
+        )
+    return bundles[0].resolve()
 
 
 def isolated_roc_environment(cache_dir: Path) -> dict[str, str]:

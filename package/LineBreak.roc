@@ -420,7 +420,6 @@ next_boundary = |state| {
 			}
 		}
 	}
-	Err(NoMore)
 }
 
 resolve_with_lookahead : InternalLineBreak.Machine, InternalLineBreak.Prepared, InternalLineBreak.FirstNeed, InternalUtf8.Cursor -> InternalLineBreak.Outcome
@@ -466,7 +465,6 @@ next_significant = |initial, preceding| {
 			}
 		}
 	}
-	NoSignificant
 }
 
 next_opportunity : OpportunityIterState -> Try((OpportunityRecord, OpportunityIterState), [NoMore])
@@ -529,7 +527,6 @@ next_opportunity = |state| {
 			}
 		}
 	}
-	Err(NoMore)
 }
 
 opportunity_from_emissions : InternalLineBreak.Emissions, OpportunityIterState -> Try((OpportunityRecord, OpportunityIterState), [NoMore])
