@@ -88,8 +88,6 @@ InternalPropertyRuns :: [].{
 							}
 						}
 					}
-
-					Err(NoMore)
 				}
 			}
 		}

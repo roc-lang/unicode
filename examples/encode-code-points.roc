@@ -1,5 +1,5 @@
 app [main!] {
-	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.24.0/AEjfyaMFFbh8FJrkkHJy68riVNPr3Qp6c6PawWQjBwMH.tar.zst",
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.25.0/CZsY7tYZwR3rj9kYbpaCfxki2yVAaRL8bBwMLvB2xkbA.tar.zst",
 	unicode: "../package/main.roc",
 }
 
@@ -81,7 +81,6 @@ main! = |os_args| {
 			\\code-points: ${Str.join_with(tokens, " ")}
 			\\utf8-bytes: ${text.count_utf8_bytes().to_str()}
 			\\text: ${text}
-			,
 		)?
 		Err(problem) => {
 			Stderr.line!("error: ${error_message(problem)}")?

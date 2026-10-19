@@ -1,5 +1,5 @@
 app [main!] {
-	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.24.0/AEjfyaMFFbh8FJrkkHJy68riVNPr3Qp6c6PawWQjBwMH.tar.zst",
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.25.0/CZsY7tYZwR3rj9kYbpaCfxki2yVAaRL8bBwMLvB2xkbA.tar.zst",
 	unicode: "../package/main.roc",
 }
 
@@ -29,7 +29,7 @@ stream_ranges = |arguments| {
 	var $ranges = []
 	var $byte_count = 0.U64
 	for argument in arguments {
-		chunk = if argument == "-" "" else argument
+		chunk = if (argument == "-") "" else argument
 		next = Grapheme.Cursor.push(
 			$cursor,
 			chunk,

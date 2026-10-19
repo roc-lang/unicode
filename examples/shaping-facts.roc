@@ -1,5 +1,5 @@
 app [main!] {
-	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.24.0/AEjfyaMFFbh8FJrkkHJy68riVNPr3Qp6c6PawWQjBwMH.tar.zst",
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.25.0/CZsY7tYZwR3rj9kYbpaCfxki2yVAaRL8bBwMLvB2xkbA.tar.zst",
 	unicode: "../package/main.roc",
 }
 
@@ -24,7 +24,7 @@ import unicode.Script
 import unicode.UnicodeVersion
 import unicode.VerticalOrientation
 
-yes_no = |value| if value "Y" else "N"
+yes_no = |value| if (value) "Y" else "N"
 
 script_set_names = |set| {
 	names = Script.walk(set, [], |items, script| items.append(Script.short_alias(script)))
@@ -137,7 +137,7 @@ expect {
 	letter = Scalar.from_u32(0x41) ?? ...
 	Emoji.variation_presentation(heart, vs15) == Some(Text)
 		and Emoji.variation_presentation(heart, vs16) == Some(Emoji)
-			and Emoji.variation_presentation(letter, vs16) == None
+		and Emoji.variation_presentation(letter, vs16) == None
 }
 
 main! : List(OsStr) => Try({}, [Exit(I32), StderrErr(IOErr), StdoutErr(IOErr)])

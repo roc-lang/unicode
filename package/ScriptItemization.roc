@@ -374,7 +374,6 @@ next_run = |initial| {
 			}
 		}
 	}
-	Err(NoMore)
 }
 
 next_resolved : IterationState -> ResolvedStep
@@ -477,7 +476,6 @@ next_resolved = |initial| {
 			}
 		}
 	}
-	NoMoreResolved({ ..$state, mode: IterationDone })
 }
 
 next_replay_resolved : IterationState, LazyReplay -> ResolvedStep
@@ -493,7 +491,7 @@ next_replay_resolved = |state, initial_replay| {
 						..$replay,
 						units: cursor,
 						common: NoCommon,
-						left: if is_explicit_private(script) Explicit(script) else NoExplicit,
+						left: if (is_explicit_private(script)) Explicit(script) else NoExplicit,
 					}
 					return NextResolved({
 						segment,
@@ -523,7 +521,7 @@ next_replay_resolved = |state, initial_replay| {
 					}
 					Restricted(details) => {
 						script = resolve_restricted(details, $replay.left, $replay.right, state.policy)
-						right_neighbor = if is_explicit_private(script) Explicit(script) else NoExplicit
+						right_neighbor = if (is_explicit_private(script)) Explicit(script) else NoExplicit
 						current = { unit: step.unit, script }
 						match $replay.common {
 							NoCommon => return NextResolved({
@@ -591,7 +589,6 @@ next_replay_resolved = |state, initial_replay| {
 			}
 		}
 	}
-	NoMoreResolved({ ..state, mode: IterationDone })
 }
 
 finish_lazy_replay = |state, replay| {
@@ -670,7 +667,7 @@ next_unit = |initial| {
 		remaining = $cursor.utf8.byte_len - offset
 		one_byte_ascii_cluster = $cursor.cluster.started
 			and offset == $cursor.cluster.byte_start - $cursor.byte_base + 1
-				and $cursor.utf8.scalar_index == $cursor.cluster.scalar_start - $cursor.scalar_base + 1
+			and $cursor.utf8.scalar_index == $cursor.cluster.scalar_start - $cursor.scalar_base + 1
 		if one_byte_ascii_cluster and remaining > 0 {
 			first = $cursor.utf8.bytes.get(offset) ?? 0
 			if 0x20 <= first and first <= 0x7E {
@@ -702,7 +699,7 @@ next_unit = |initial| {
 				consumed = $lookahead_lane + 1
 				lookahead_byte = $cursor.byte_base + offset + $lookahead_lane
 				lookahead_scalar = $cursor.scalar_base + $cursor.utf8.scalar_index + $lookahead_lane
-				representative = if $lookahead_is_latin 0x41 else 0x20
+				representative = if ($lookahead_is_latin) 0x41 else 0x20
 				transition = InternalGrapheme.push($cursor.machine, representative, lookahead_byte)
 				next_utf8 = {
 					..$cursor.utf8,
@@ -786,7 +783,6 @@ next_unit = |initial| {
 			}
 		}
 	}
-	NoMoreUnits($cursor)
 }
 
 resolved_span = |span, byte_end, scalar_end, script| {
@@ -969,7 +965,7 @@ add_scalar : ClusterState, U32, U64, U64 -> ClusterState
 add_scalar = |cluster, code_point, byte_start, scalar_index| {
 	primary = InternalScriptData.lookup_private(code_point)
 	explicit = private_explicit_members(private_extensions(code_point, primary))
-	started = if cluster.started cluster else {
+	started = if (cluster.started) cluster else {
 		started: Bool.True,
 		byte_start,
 		scalar_start: scalar_index,
@@ -1018,7 +1014,7 @@ finish_cluster = |cluster, byte_end, scalar_end| {
 				Restricted({ candidates: set, primary: cluster.primary })
 			}
 		}
-		NoCandidates => if cluster.has_unknown UnknownBarrier else BroadCommon
+		NoCandidates => if (cluster.has_unknown) UnknownBarrier else BroadCommon
 	}
 	{
 		byte_start: cluster.byte_start,
@@ -1045,7 +1041,7 @@ consume_replay = |state, unit| {
 		}
 		Restricted(details) => {
 			resolved = resolve_restricted(details, state.left, state.right, state.policy)
-			right_neighbor = if is_explicit_private(resolved) Explicit(resolved) else NoExplicit
+			right_neighbor = if (is_explicit_private(resolved)) Explicit(resolved) else NoExplicit
 			before = flush_common(state, unit.byte_start, unit.scalar_start, right_neighbor)
 			{
 				..before,
@@ -1089,7 +1085,7 @@ flush_common = |state, byte_end, scalar_end, right| {
 				..state,
 				result: append_run(state.result, unit, script),
 				common: NoCommon,
-				left: if is_explicit_private(script) Explicit(script) else NoExplicit,
+				left: if (is_explicit_private(script)) Explicit(script) else NoExplicit,
 			}
 		}
 	}
@@ -1097,12 +1093,12 @@ flush_common = |state, byte_end, scalar_end, right| {
 
 resolve_restricted = |details, left, right, policy| {
 	left_member = match left {
-		Explicit(script) => if private_contains(details.candidates, script) Some(script) else None
+		Explicit(script) => if (private_contains(details.candidates, script)) Some(script) else None
 		NoExplicit => None
 		UnknownBoundary => None
 	}
 	right_member = match right {
-		Explicit(script) => if private_contains(details.candidates, script) Some(script) else None
+		Explicit(script) => if (private_contains(details.candidates, script)) Some(script) else None
 		NoExplicit => None
 		UnknownBoundary => None
 	}
@@ -1128,7 +1124,7 @@ preference_or_primary = |details, policy| {
 		}
 	}
 	match details.primary {
-		Primary(script) => if private_contains(details.candidates, script) script else InternalScriptData.common_private_id
+		Primary(script) => if (private_contains(details.candidates, script)) script else InternalScriptData.common_private_id
 		NoPrimary => InternalScriptData.common_private_id
 	}
 }
@@ -1138,7 +1134,7 @@ resolve_common = |left, right| {
 	match (left, right) {
 		(UnknownBoundary, _) => InternalScriptData.common_private_id
 		(_, UnknownBoundary) => InternalScriptData.common_private_id
-		(Explicit(left_script), Explicit(right_script)) => if left_script == right_script left_script else InternalScriptData.common_private_id
+		(Explicit(left_script), Explicit(right_script)) => if (left_script == right_script) left_script else InternalScriptData.common_private_id
 		(Explicit(script), NoExplicit) => script
 		(NoExplicit, Explicit(script)) => script
 		(NoExplicit, NoExplicit) => InternalScriptData.common_private_id
@@ -1182,7 +1178,7 @@ private_intersection = |left, right| {
 	word1 = left.word1.bitwise_and(right.word1)
 	word2 = left.word2.bitwise_and(right.word2)
 	length = U64.count_one_bits(word0) + U64.count_one_bits(word1) + U64.count_one_bits(word2)
-	if length == 0 None else Some({ word0, word1, word2, length })
+	if (length == 0) None else Some({ word0, word1, word2, length })
 }
 
 private_explicit_members : PrivateSet -> [Some(PrivateSet), None]
@@ -1190,7 +1186,7 @@ private_explicit_members = |set| {
 	without_common = private_remove(set, InternalScriptData.common_private_id)
 	without_inherited = private_remove(without_common, InternalScriptData.inherited_private_id)
 	without_unknown = private_remove(without_inherited, InternalScriptData.unknown_private_id)
-	if without_unknown.length == 0 None else Some(without_unknown)
+	if (without_unknown.length == 0) None else Some(without_unknown)
 }
 
 private_remove : PrivateSet, PrivateScript -> PrivateSet
@@ -1224,7 +1220,7 @@ is_explicit_private : PrivateScript -> Bool
 is_explicit_private = |script| {
 	script != InternalScriptData.common_private_id
 		and script != InternalScriptData.inherited_private_id
-			and script != InternalScriptData.unknown_private_id
+		and script != InternalScriptData.unknown_private_id
 }
 
 append_run = |result, unit, script| {
@@ -1251,7 +1247,7 @@ append_run = |result, unit, script| {
 			previous_end = TextRange.end(previous.range)
 			if previous.script == public_script
 				and TextPosition.byte_offset(previous_end) == unit.byte_start
-					and TextPosition.scalar_offset(previous_end) == unit.scalar_start
+				and TextPosition.scalar_offset(previous_end) == unit.scalar_start
 				{
 					combined = {
 						..previous,
@@ -1265,9 +1261,9 @@ append_run = |result, unit, script| {
 					}
 					{ ..result, last: LastRun(combined) }
 				} else {
-					emit = result.emit
-					{ ..result, state: emit(result.state, previous), last: LastRun(next) }
-				}
+				emit = result.emit
+				{ ..result, state: emit(result.state, previous), last: LastRun(next) }
+			}
 		}
 	}
 }

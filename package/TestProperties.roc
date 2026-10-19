@@ -40,12 +40,12 @@ TestProperties :: {}.{
 
 	emoji : U32 -> U8
 	emoji = |u32| {
-		(if InternalEmoji.is_emoji(u32) 1 else 0)
-			+ (if InternalEmoji.is_presentation(u32) 2 else 0)
-			+ (if InternalEmoji.is_modifier(u32) 4 else 0)
-			+ (if InternalEmoji.is_base(u32) 8 else 0)
-			+ (if InternalEmoji.is_component(u32) 16 else 0)
-			+ (if InternalEmoji.is_pictographic(u32) 32 else 0)
+		(if (InternalEmoji.is_emoji(u32)) 1 else 0)
+			+ (if (InternalEmoji.is_presentation(u32)) 2 else 0)
+			+ (if (InternalEmoji.is_modifier(u32)) 4 else 0)
+			+ (if (InternalEmoji.is_base(u32)) 8 else 0)
+			+ (if (InternalEmoji.is_component(u32)) 16 else 0)
+			+ (if (InternalEmoji.is_pictographic(u32)) 32 else 0)
 	}
 
 	## Test-private, source-stable encodings for the four UAX #9 property
@@ -80,7 +80,7 @@ TestProperties :: {}.{
 	}
 
 	bidi_mirrored : U32 -> U8
-	bidi_mirrored = |u32| if InternalBidiProperties.is_mirrored(u32) 1 else 0
+	bidi_mirrored = |u32| if (InternalBidiProperties.is_mirrored(u32)) 1 else 0
 
 	bidi_mirroring_glyph : U32 -> U32
 	bidi_mirroring_glyph = |u32| match InternalBidiProperties.mirroring_glyph(u32) {

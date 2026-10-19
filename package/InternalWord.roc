@@ -185,8 +185,6 @@ next_range = |state| {
 			}
 		}
 	}
-
-	Err(NoMore)
 }
 
 push_props : MachineState, WordProps, U64 -> { machine : MachineState, emissions : Boundaries }
@@ -380,7 +378,7 @@ ordinary_break = |machine, current| {
 can_start_pending = |left, middle| {
 	(is_ah_letter(left) and (middle == MidLetter or middle == MidNumLet or middle == Single_Quote))
 		or (left == Hebrew_Letter and middle == Double_Quote)
-			or (left == Numeric and (middle == MidNum or middle == MidNumLet or middle == Single_Quote))
+		or (left == Numeric and (middle == MidNum or middle == MidNumLet or middle == Single_Quote))
 }
 
 pending_matches = |pending, current| {

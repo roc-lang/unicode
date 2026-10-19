@@ -1,5 +1,5 @@
 app [main!] {
-	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.24.0/AEjfyaMFFbh8FJrkkHJy68riVNPr3Qp6c6PawWQjBwMH.tar.zst",
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.25.0/CZsY7tYZwR3rj9kYbpaCfxki2yVAaRL8bBwMLvB2xkbA.tar.zst",
 	unicode: "../package/main.roc",
 }
 
@@ -51,7 +51,7 @@ chunk_opportunities = |chunks, profile| {
 	var $cursor = LineBreak.Cursor.init_with(profile)
 	var $lines = []
 	for raw_chunk in chunks {
-		chunk = if raw_chunk == "-" "" else raw_chunk
+		chunk = if (raw_chunk == "-") "" else raw_chunk
 		match LineBreak.Cursor.push($cursor, chunk, $lines, |lines, event| lines.append(format_opportunity(event))) {
 			Failed({ error, .. }) => return Err(CursorFailure(Str.inspect(error)))
 			Pushed(next) => {

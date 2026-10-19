@@ -46,13 +46,37 @@ class ExampleHarnessTests(unittest.TestCase):
                 ),
                 mock.patch("builtins.print"),
             ):
-                self.assertEqual(harness.bundle_package(bundle_dir, "roc"), bundle)
+                self.assertEqual(harness.bundle_package(bundle_dir, "roc"), bundle.resolve())
 
             command = run.call_args.args[0]
             self.assertEqual(
                 command[:2],
                 ["bash-for-test", harness.ROOT / "scripts" / "bundle.sh"],
             )
+
+    def test_bundle_discovery_ignores_interleaved_compiler_output(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            bundle_dir = Path(temporary)
+            bundle = bundle_dir / "unicode.tar.zst"
+            bundle.write_bytes(b"bundle-fixture")
+            completed = subprocess.CompletedProcess(
+                args=[], returncode=0,
+                stdout="warning: loops foreCreated: ../bundle/unicode.tar.zst\nver.\n",
+            )
+            with mock.patch.object(harness, "run", return_value=completed):
+                self.assertEqual(harness.bundle_package(bundle_dir, "roc"), bundle.resolve())
+
+    def test_bundle_discovery_requires_one_archive(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            bundle_dir = Path(temporary)
+            completed = subprocess.CompletedProcess(args=[], returncode=0, stdout="")
+            with mock.patch.object(harness, "run", return_value=completed):
+                with self.assertRaisesRegex(harness.TestFailure, "found 0"):
+                    harness.bundle_package(bundle_dir, "roc")
+                (bundle_dir / "first.tar.zst").write_bytes(b"first")
+                (bundle_dir / "second.tar.br").write_bytes(b"second")
+                with self.assertRaisesRegex(harness.TestFailure, "found 2"):
+                    harness.bundle_package(bundle_dir, "roc")
 
     def test_real_spec_is_valid(self) -> None:
         self.assertTrue(harness.load_spec())

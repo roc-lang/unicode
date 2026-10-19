@@ -384,7 +384,6 @@ following_cased = |source, byte_start| {
 			}
 		}
 	}
-	Bool.False
 }
 
 more_above = |source, byte_start| {
@@ -404,7 +403,6 @@ more_above = |source, byte_start| {
 			}
 		}
 	}
-	Bool.False
 }
 
 before_dot = |source, byte_start| {
@@ -424,7 +422,6 @@ before_dot = |source, byte_start| {
 			}
 		}
 	}
-	Bool.False
 }
 
 advance_left_context = |left, scalar, props| {

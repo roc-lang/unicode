@@ -1,5 +1,5 @@
 app [main!] {
-	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.24.0/AEjfyaMFFbh8FJrkkHJy68riVNPr3Qp6c6PawWQjBwMH.tar.zst",
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.25.0/CZsY7tYZwR3rj9kYbpaCfxki2yVAaRL8bBwMLvB2xkbA.tar.zst",
 	unicode: "../package/main.roc",
 }
 
@@ -45,7 +45,7 @@ format_mirrors = |mirrors| {
 		}
 		$at = $at + 1
 	}
-	if $output.is_empty() "none" else Str.join_with($output, ",")
+	if ($output.is_empty()) "none" else Str.join_with($output, ",")
 }
 
 render = |base, analysis, line| {

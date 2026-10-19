@@ -241,8 +241,6 @@ next_range = |state| {
 			}
 		}
 	}
-
-	Err(NoMore)
 }
 
 should_break : MachineState, InternalGraphemeData.Props -> Bool
@@ -305,8 +303,8 @@ is_control = |gcb| gcb == Control or gcb == CR or gcb == LF
 
 advance_context : MachineState, InternalGraphemeData.Props, U64, Bool -> MachineState
 advance_context = |machine, current, byte_start, broke_before| {
-	prior_emoji = if broke_before NoEmojiContext else machine.emoji_context
-	prior_indic = if broke_before NoIndicContext else machine.indic_context
+	prior_emoji = if (broke_before) NoEmojiContext else machine.emoji_context
+	prior_indic = if (broke_before) NoIndicContext else machine.indic_context
 
 	next_ri_odd = if current.gcb == RI {
 		if !broke_before and machine.previous == RI {
@@ -341,7 +339,7 @@ advance_context = |machine, current, byte_start, broke_before| {
 
 	{
 		started: Bool.True,
-		cluster_start: if broke_before byte_start else machine.cluster_start,
+		cluster_start: if (broke_before) byte_start else machine.cluster_start,
 		previous: current.gcb,
 		ri_odd: next_ri_odd,
 		emoji_context: next_emoji,

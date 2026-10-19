@@ -361,10 +361,10 @@ advance_machine = |machine, prepared| {
 			left: current,
 			left2: machine.left,
 			has_left2: machine.started,
-			space_base: if update_space_base current else machine.space_base,
-			has_space_base: if update_space_base Bool.True else machine.has_space_base,
-			space_base_predecessor: if update_space_base machine.left else machine.space_base_predecessor,
-			has_space_base_predecessor: if update_space_base machine.started else machine.has_space_base_predecessor,
+			space_base: if (update_space_base) current else machine.space_base,
+			has_space_base: if (update_space_base) Bool.True else machine.has_space_base,
+			space_base_predecessor: if (update_space_base) machine.left else machine.space_base_predecessor,
+			has_space_base_predecessor: if (update_space_base) machine.started else machine.has_space_base_predecessor,
 			numeric: next_numeric,
 			ri_odd: next_ri_odd,
 			zw_space_run: next_zw_space_run,
@@ -507,7 +507,7 @@ classify_after_quotes = |machine, prepared, _base_has_predecessor, _base_predece
 		Resolved({ decision: Allowed, authority: Tailorable })
 	} else if (left_class == HY or left_class == HH)
 		and (!machine.has_left2 or word_initial_hyphen_context(machine.left2.line_class))
-			and is_letter(current_class) {
+		and is_letter(current_class) {
 		# LB20a.
 		Resolved({ decision: Prohibited, authority: Tailorable })
 	} else if current_class == BA or current_class == HH or current_class == HY or current_class == NS or left_class == BB {
@@ -515,8 +515,8 @@ classify_after_quotes = |machine, prepared, _base_has_predecessor, _base_predece
 		Resolved({ decision: Prohibited, authority: Tailorable })
 	} else if (left_class == HY or left_class == HH)
 		and machine.has_left2
-			and machine.left2.line_class == HL
-				and current_class != HL {
+		and machine.left2.line_class == HL
+		and current_class != HL {
 		# LB21a.
 		Resolved({ decision: Prohibited, authority: Tailorable })
 	} else if left_class == SY and current_class == HL {
@@ -604,8 +604,8 @@ classify_from_lb28a = |machine, prepared| {
 		Resolved({ decision: Prohibited, authority: Tailorable })
 	} else if left.line_class == VI
 		and machine.has_left2
-			and is_brahmic_base(machine.left2)
-				and (current.line_class == AK or current.dotted_circle) {
+		and is_brahmic_base(machine.left2)
+		and (current.line_class == AK or current.dotted_circle) {
 		Resolved({ decision: Prohibited, authority: Tailorable })
 	} else if left_base and current_base {
 		# The last LB28a expression is the remaining right-context family.
@@ -654,8 +654,8 @@ profile_outcome : MachineState, PreparedRecord, OutcomeRecord -> OutcomeRecord
 profile_outcome = |machine, prepared, outcome| {
 	if machine.preserve_graphemes
 		and outcome.decision == Allowed
-			and outcome.authority == Tailorable
-				and !prepared.grapheme_break_before {
+		and outcome.authority == Tailorable
+		and !prepared.grapheme_break_before {
 		{ decision: Prohibited, authority: Tailorable }
 	} else {
 		outcome
@@ -869,19 +869,19 @@ is_stable_al_stream = |stream| {
 	machine = stream.machine
 	no_pending
 		and machine.started
-			and machine.left.line_class == AL
-				and machine.has_left2
-					and machine.left2.line_class == AL
-						and machine.has_space_base
-							and machine.space_base.line_class == AL
-								and machine.has_space_base_predecessor
-									and machine.space_base_predecessor.line_class == AL
-										and machine.numeric == NoNumeric
-											and !machine.ri_odd
-												and !machine.zw_space_run
-													and machine.raw_previous == AL
-														and !machine.raw_previous_zwj
-															and !machine.preserve_graphemes
+		and machine.left.line_class == AL
+		and machine.has_left2
+		and machine.left2.line_class == AL
+		and machine.has_space_base
+		and machine.space_base.line_class == AL
+		and machine.has_space_base_predecessor
+		and machine.space_base_predecessor.line_class == AL
+		and machine.numeric == NoNumeric
+		and !machine.ri_odd
+		and !machine.zw_space_run
+		and machine.raw_previous == AL
+		and !machine.raw_previous_zwj
+		and !machine.preserve_graphemes
 }
 
 ascii_props : U8 -> InternalLineBreakData.Props
@@ -967,33 +967,33 @@ initial_quote_context : Bool, TokenRecord -> Bool
 initial_quote_context = |has_predecessor, predecessor| {
 	!has_predecessor
 		or is_hard(predecessor.line_class)
-			or predecessor.line_class == OP
-				or predecessor.line_class == QU
-					or predecessor.line_class == GL
-						or predecessor.line_class == SP
-							or predecessor.line_class == ZW
+		or predecessor.line_class == OP
+		or predecessor.line_class == QU
+		or predecessor.line_class == GL
+		or predecessor.line_class == SP
+		or predecessor.line_class == ZW
 }
 
 final_quote_follower : InternalLineBreakData.Class -> Bool
 final_quote_follower = |line_class| {
 	line_class == SP
 		or line_class == GL
-			or line_class == WJ
-				or line_class == CL
-					or line_class == QU
-						or line_class == CP
-							or line_class == EX
-								or line_class == IS
-									or line_class == SY
-										or is_hard(line_class)
-											or line_class == ZW
+		or line_class == WJ
+		or line_class == CL
+		or line_class == QU
+		or line_class == CP
+		or line_class == EX
+		or line_class == IS
+		or line_class == SY
+		or is_hard(line_class)
+		or line_class == ZW
 }
 
 word_initial_hyphen_context : InternalLineBreakData.Class -> Bool
 word_initial_hyphen_context = |line_class| {
 	is_hard(line_class)
 		or line_class == SP
-			or line_class == ZW
-				or line_class == CB
-					or line_class == GL
+		or line_class == ZW
+		or line_class == CB
+		or line_class == GL
 }

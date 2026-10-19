@@ -24,7 +24,7 @@ FuzzSupport := [].{
 			}
 			raw = b0.to_u32().bitwise_or(b1.to_u32().shl_wrap(8)).bitwise_or(b2.to_u32().shl_wrap(16))
 			rank = raw % 0x10F800
-			code_point = if rank <= 0xD7FF rank else rank + 0x800
+			code_point = if (rank <= 0xD7FF) rank else rank + 0x800
 			$scalars = $scalars.append(code_point)
 			$remaining = rest
 		}
