@@ -23,7 +23,12 @@ var g_alloc_count: u64 = 0;
 
 comptime {
     if (!builtin.is_test) {
-        @export(&main, .{ .name = "main" });
+        if (builtin.os.tag == .windows) {
+            @export(&windowsStart, .{ .name = "mainCRTStartup" });
+            _ = @import("windows_tls.zig");
+        } else {
+            @export(&main, .{ .name = "main" });
+        }
         @export(&hostedAllocCount, .{ .name = "roc_host_alloc_count", .visibility = .hidden });
         @export(&hostAlloc, .{ .name = "roc_alloc", .visibility = .hidden });
         @export(&hostDealloc, .{ .name = "roc_dealloc", .visibility = .hidden });
@@ -31,14 +36,12 @@ comptime {
         @export(&hostDbg, .{ .name = "roc_dbg", .visibility = .hidden });
         @export(&hostExpectFailed, .{ .name = "roc_expect_failed", .visibility = .hidden });
         @export(&hostCrashed, .{ .name = "roc_crashed", .visibility = .hidden });
-
-        if (builtin.os.tag == .windows) {
-            @export(&__main, .{ .name = "__main" });
-        }
     }
 }
 
-fn __main() callconv(.c) void {}
+fn windowsStart() callconv(.winapi) noreturn {
+    std.os.windows.ntdll.RtlExitUserProcess(@intCast(runHost()));
+}
 
 fn hostedAllocCount() callconv(.c) u64 {
     return g_alloc_count;
@@ -73,6 +76,10 @@ fn hostCrashed(bytes: [*]const u8, len: usize) callconv(.c) void {
 fn main(argc: c_int, argv: [*][*:0]u8) callconv(.c) c_int {
     _ = argc;
     _ = argv;
+    return runHost();
+}
+
+fn runHost() c_int {
     platformMain() catch |err| {
         std.debug.print("HOST ERROR: {s}\n", .{@errorName(err)});
         return 1;

@@ -54,14 +54,15 @@ jobs:
       - name: Bundle package
         id: bundle
         run: |
-          bundle_output=$(scripts/bundle.sh --output-dir dist 2>&1)
-          echo "$bundle_output"
+          scripts/bundle.sh --output-dir dist
 
-          bundle_path=$(echo "$bundle_output" | awk '/^Created:/ { print $2; exit }')
-          if [[ -z "$bundle_path" || ! -f "$bundle_path" ]]; then
-            echo "Error: could not find bundle path from roc bundle output"
+          shopt -s nullglob
+          bundles=(dist/*.tar.zst dist/*.tar.br)
+          if [[ ${#bundles[@]} -ne 1 ]]; then
+            echo "Error: expected exactly one package bundle in dist"
             exit 1
           fi
+          bundle_path=${bundles[0]}
 
           bundle_filename=$(basename "$bundle_path")
           echo "bundle_filename=$bundle_filename" >> "$GITHUB_OUTPUT"

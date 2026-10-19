@@ -14,8 +14,8 @@ platform "roc-unicode-test"
         x64v1musl: { inputs: ["crt1.o", "libhost.a", app, "libc.a"] },
         arm64musl: { inputs: ["crt1.o", "libhost.a", app, "libc.a"] },
         arm64v1musl: { inputs: ["crt1.o", "libhost.a", app, "libc.a"] },
-        x64win: { inputs: ["host.lib", app] },
-        arm64win: { inputs: ["host.lib", app] },
+        x64win: { inputs: ["host.lib", app, "windows_imports.lib"] },
+        arm64win: { inputs: ["host.lib", app, "windows_imports.lib"] },
     }
 
 import Host

@@ -110,6 +110,9 @@ pub fn build(b: *std.Build) void {
     for (all_targets) |roc_target| {
         const target = b.resolveTargetQuery(roc_target.toZigTarget());
         const host_lib = buildHostLib(b, target, optimize);
+        if (target.result.os.tag == .windows) {
+            copy_all.step.dependOn(windowsImports(b, roc_target));
+        }
 
         // Copy to platform/targets/{target}/libhost.a (or host.lib for Windows)
         copy_all.addCopyFileToSource(
@@ -139,6 +142,10 @@ pub fn build(b: *std.Build) void {
         return;
     };
 
+    if (native_roc_target == .x64win or native_roc_target == .arm64win) {
+        native_step.dependOn(windowsImports(b, native_roc_target));
+    }
+
     const native_lib = buildHostLib(b, b.resolveTargetQuery(native_roc_target.toZigTarget()), optimize);
     b.installArtifact(native_lib);
 
@@ -164,7 +171,6 @@ pub fn build(b: *std.Build) void {
     }
     native_step.dependOn(&copy_native.step);
     native_step.dependOn(&native_lib.step);
-
 }
 
 /// Detect which RocTarget matches the native platform
@@ -239,4 +245,11 @@ fn buildHostLib(
     host_lib.bundle_compiler_rt = true;
 
     return host_lib;
+}
+
+/// Generate only import descriptors from the selected Zig toolchain's Win32
+/// definitions. Roc's MSVC link does not infer these from the Zig host archive.
+fn windowsImports(b: *std.Build, target: RocTarget) *std.Build.Step {
+    const command = b.addSystemCommand(&.{ "python3", b.pathFromRoot("windows_imports.py"), "--zig", b.graph.zig_exe, "--target", target.targetDir() });
+    return &command.step;
 }

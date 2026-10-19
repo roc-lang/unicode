@@ -14,3 +14,17 @@ Build the host for the native target with:
 ```sh
 zig build --build-file tests/platform/build.zig native -Doptimize=ReleaseFast
 ```
+
+Windows MSVC links supply their own process entry point, PE TLS directory, and
+Win32 import archive. The native build generates `windows_imports.lib` from the
+selected Zig toolchain's bundled mingw-w64 definitions; it does not depend on
+an installed Windows SDK. Python 3 is required for that build step. The generated
+import definitions and mingw-w64 license remain beside the generated archive.
+The TLS directory is adapted from Zig 0.16.0's `lib/std/os/windows/tls.zig` under
+`LICENSE-ZIG`.
+
+A Windows link can also be checked from another host:
+
+```sh
+zig build --build-file tests/platform/build.zig native -Dtarget=x86_64-windows-msvc -Doptimize=ReleaseFast
+```
