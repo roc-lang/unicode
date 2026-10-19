@@ -1,6 +1,7 @@
 import BidiClass
 import BidiProperties
 import ByteRange
+import InternalUtf8
 import Scalar
 import ScalarRange
 import TextPosition
@@ -223,13 +224,20 @@ p1_ranges = |source| {
 	var $final_byte = 0.U64
 	var $final_scalar = 0.U64
 	var $pending_cr = None
-	for located in Scalar.iter(source) {
-		$final_byte = ByteRange.end(located.byte_range)
+	var $cursor = InternalUtf8.init(source)
+	while Bool.True {
+		step = match InternalUtf8.next($cursor) {
+			Done => break
+			One(value) => value
+		}
+		located = step.item
+		$cursor = step.rest
+		$final_byte = located.byte_end
 		$final_scalar = match located.scalar_index.plus_try(1) {
 			Ok(next) => next
 			Err(Overflow) => U64.highest
 		}
-		value = Scalar.to_u32(located.scalar)
+		value = located.scalar
 		match $pending_cr {
 			Some(cr) => {
 				if value == 0x000A {
