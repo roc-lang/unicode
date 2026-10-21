@@ -1,5 +1,5 @@
 app [main!] {
-	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.26.0-rc1/GMezHWvmUP42Leqg8YkABvEk27cMUSVM6p7oz3XPj11N.tar.zst",
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.26.0/GddgvsGjiNXrHFW6au5i5dUDbTs8FinQdrgE2Gqmw53t.tar.zst",
 	unicode: "../package/main.roc",
 }
 
@@ -58,7 +58,7 @@ expect segment("🇦🇺🦘") == [
 ]
 expect Grapheme.slices("👩‍🚀") == ["👩‍🚀"]
 
-main! : List(OsStr) => Try({}, [Exit(I32), StderrErr(IOErr), StdoutErr(IOErr)])
+main! : List(OsStr) => Try({}, [Exit(I32), Interrupted, StderrErr(IOErr), StdoutErr(IOErr)])
 main! = |os_args| {
 	args = CliArgs.to_strs!(os_args)?
 	source = match args {
