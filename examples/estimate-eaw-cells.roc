@@ -1,5 +1,5 @@
 app [main!] {
-	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.26.0-rc1/GMezHWvmUP42Leqg8YkABvEk27cMUSVM6p7oz3XPj11N.tar.zst",
+	pf: platform "https://github.com/roc-lang/basic-cli/releases/download/0.26.0/GddgvsGjiNXrHFW6au5i5dUDbTs8FinQdrgE2Gqmw53t.tar.zst",
 	# Use a release bundle URL in applications. The end-to-end suite rewrites
 	# this local development dependency to the bundle served by the test driver.
 	unicode: "../package/main.roc",
@@ -48,7 +48,7 @@ expect measure_cells("世界") == { cells: 4, scalars: 2 }
 expect measure_cells("ＡA") == { cells: 3, scalars: 2 }
 expect measure_cells("é") == { cells: 2, scalars: 2 }
 
-main! : List(OsStr) => Try({}, [Exit(I32), StderrErr(IOErr), StdoutErr(IOErr)])
+main! : List(OsStr) => Try({}, [Exit(I32), Interrupted, StderrErr(IOErr), StdoutErr(IOErr)])
 main! = |os_args| {
 	args = CliArgs.to_strs!(os_args)?
 	text = match args {
