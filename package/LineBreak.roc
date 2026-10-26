@@ -23,13 +23,13 @@ BoundaryIterState : {
 
 OpportunityIterState : {
 	cursor : InternalUtf8.Cursor,
-	stream : InternalLineBreak.Stream,
+	stream : InternalLineBreak.LineStream,
 	queued : [NoQueued, Queued(OpportunityRecord)],
 	finished : Bool,
 }
 
 ChunkCursorState : {
-	stream : InternalLineBreak.Stream,
+	stream : InternalLineBreak.LineStream,
 	byte_offset : U64,
 	scalar_offset : U64,
 	status : [Open, Ended, Faulted],
