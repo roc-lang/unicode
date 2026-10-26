@@ -96,7 +96,7 @@ InternalLineBreak :: [].{
 	FutureToken : FutureToken
 	Classification : Classification
 	FirstResolution : FirstResolution
-	Stream : StreamState
+	LineStream : StreamState
 	Emissions : EmittedEvents
 
 	init : Bool -> Machine
@@ -121,7 +121,7 @@ InternalLineBreak :: [].{
 		}
 	}
 
-	stream_init : Bool -> Stream
+	stream_init : Bool -> LineStream
 	stream_init = |preserve_graphemes| {
 		{ machine: InternalLineBreak.init(preserve_graphemes), pending: NoPending }
 	}
@@ -156,13 +156,13 @@ InternalLineBreak :: [].{
 		}
 	}
 
-	stream_push : Stream, U32, TextPosition -> { stream : Stream, emissions : Emissions }
+	stream_push : LineStream, U32, TextPosition -> { stream : LineStream, emissions : Emissions }
 	stream_push = |stream, scalar, at| stream_push_scalar(stream, scalar, at)
 
 	## Fold one already-validated ASCII vector with line-break-owned property
 	## decoding. Homogeneous letter blocks collapse the fifteen internal LB28
 	## transitions after the first exact transition into one state update.
-	fold_ascii_block : Stream, U8x16, U64, U64, state, (state, Event -> state) -> { stream : Stream, state : state }
+	fold_ascii_block : LineStream, U8x16, U64, U64, state, (state, Event -> state) -> { stream : LineStream, state : state }
 	fold_ascii_block = |stream, vector, byte_start, scalar_start, initial, emit| {
 		if !stream.machine.preserve_graphemes and is_ascii_letter_block(vector) {
 			if is_stable_al_stream(stream) {
@@ -219,7 +219,7 @@ InternalLineBreak :: [].{
 		}
 	}
 
-	stream_finish : Stream, TextPosition -> { stream : Stream, emissions : Emissions }
+	stream_finish : LineStream, TextPosition -> { stream : LineStream, emissions : Emissions }
 	stream_finish = |stream, at| {
 		pending_event = match stream.pending {
 			NoPending => NoEvent
