@@ -38,7 +38,6 @@ jobs:
         with:
           version: nightly
           nightly-tag: ${{ env.ROC_NIGHTLY_TAG }}
-          cache: false
 
       - name: Run bounded fuzz smoke
         run: ROC=roc python3 scripts/fuzz.py smoke

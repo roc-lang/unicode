@@ -441,8 +441,8 @@ def validate_package(roc: str, docs_dir: Path, env: dict[str, str]) -> None:
         run([roc, "fmt", "--check", display_path(source)], env=env)
 
     print("\n=== PACKAGE ===")
-    run([roc, "check", "package/main.roc", "--no-cache"], env=env)
-    run([roc, "test", "package/main.roc", "--no-cache"], env=env)
+    run([roc, "check", "package/main.roc"], env=env)
+    run([roc, "test", "package/main.roc"], env=env)
     run(
         [roc, "docs", "package/main.roc", f"--output={display_path(docs_dir)}"],
         env=env,
@@ -548,8 +548,8 @@ def run_examples(
         source = sources[path]
         source_arg = display_path(source)
         run([roc, "fmt", "--check", source_arg], env=env)
-        run([roc, "check", source_arg, "--no-cache"], env=env)
-        run([roc, "test", source_arg, "--no-cache"], env=env)
+        run([roc, "check", source_arg], env=env)
+        run([roc, "test", source_arg], env=env)
         binary = build_dir / f"{source.stem}{suffix}"
         run(
             [
