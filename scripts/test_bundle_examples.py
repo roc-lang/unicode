@@ -321,9 +321,11 @@ def bundle_package(bundle_dir: Path, roc: str) -> Path:
 
 def isolated_roc_environment(cache_dir: Path) -> dict[str, str]:
     env = os.environ.copy()
-    cache = str(cache_dir.resolve())
-    env["ROC_CACHE_DIR"] = cache
-    env["XDG_CACHE_HOME"] = cache
+    # Keep a caller-provided ROC_CACHE_DIR (CI restores it between runs).
+    if "ROC_CACHE_DIR" not in env:
+        cache = str(cache_dir.resolve())
+        env["ROC_CACHE_DIR"] = cache
+        env["XDG_CACHE_HOME"] = cache
     return env
 
 
@@ -441,8 +443,8 @@ def validate_package(roc: str, docs_dir: Path, env: dict[str, str]) -> None:
         run([roc, "fmt", "--check", display_path(source)], env=env)
 
     print("\n=== PACKAGE ===")
-    run([roc, "check", "package/main.roc", "--no-cache"], env=env)
-    run([roc, "test", "package/main.roc", "--no-cache"], env=env)
+    run([roc, "check", "package/main.roc"], env=env)
+    run([roc, "test", "package/main.roc"], env=env)
     run(
         [roc, "docs", "package/main.roc", f"--output={display_path(docs_dir)}"],
         env=env,
@@ -548,8 +550,8 @@ def run_examples(
         source = sources[path]
         source_arg = display_path(source)
         run([roc, "fmt", "--check", source_arg], env=env)
-        run([roc, "check", source_arg, "--no-cache"], env=env)
-        run([roc, "test", source_arg, "--no-cache"], env=env)
+        run([roc, "check", source_arg], env=env)
+        run([roc, "test", source_arg], env=env)
         binary = build_dir / f"{source.stem}{suffix}"
         run(
             [
@@ -600,6 +602,8 @@ def main() -> int:
         temp_parent.mkdir(parents=True, exist_ok=True)
         with tempfile.TemporaryDirectory(prefix="roc-unicode-examples-", dir=temp_parent) as temp:
             temp_dir = Path(temp)
+            # A shared cache may already hold the package, so no request is expected then.
+            shared_cache = "ROC_CACHE_DIR" in os.environ
             roc_env = isolated_roc_environment(temp_dir / "roc-cache")
             if args.bundle_path is None:
                 bundle_dir = temp_dir / "bundle"
@@ -618,7 +622,7 @@ def main() -> int:
                 if not args.examples_only:
                     validate_package(args.roc, temp_dir / "docs", roc_env)
                 run_examples(apps, sources, temp_dir / "build", args.roc, roc_env)
-                if bundle_server.get_requests == 0:
+                if not shared_cache and bundle_server.get_requests == 0:
                     raise TestFailure("examples never requested the served package bundle")
     except (OSError, TestFailure) as error:
         print(f"error: {error}", file=sys.stderr)
