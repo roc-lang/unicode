@@ -82,7 +82,7 @@ jobs:
       - name: Run all tests
         run: ROC=roc ./scripts/all_tests.sh
 
-      # Also save the cache when the job fails, so tests that passed stay cached.
+      # Also save the cache when the job fails, so tests that passed are cached.
       - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         if: always() && steps.roc.outputs.cache-key != ''
         with:
