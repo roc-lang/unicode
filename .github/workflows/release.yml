@@ -43,10 +43,11 @@ jobs:
         run: printf 'ROC_NIGHTLY_TAG=%s\n' "$(sed -n '1p' .roc-version)" >> "$GITHUB_ENV"
 
       - name: Install Roc
-        uses: roc-lang/setup-roc@cbe782d6f165b89c87d99f50a59ac4f5f73b4427
+        uses: roc-lang/setup-roc@dd81390553b0a1236aedb61cdd4c0ed7cf7eaec4
         with:
-          version: nightly-new-compiler
+          version: nightly
           nightly-tag: ${{ env.ROC_NIGHTLY_TAG }}
+          cache: false
 
       - name: Run checks
         run: ROC=roc ./scripts/all_tests.sh
@@ -104,10 +105,11 @@ jobs:
         run: printf 'ROC_NIGHTLY_TAG=%s\n' "$(sed -n '1p' .roc-version)" >> "$GITHUB_ENV"
 
       - name: Install Roc
-        uses: roc-lang/setup-roc@cbe782d6f165b89c87d99f50a59ac4f5f73b4427
+        uses: roc-lang/setup-roc@dd81390553b0a1236aedb61cdd4c0ed7cf7eaec4
         with:
-          version: nightly-new-compiler
+          version: nightly
           nightly-tag: ${{ env.ROC_NIGHTLY_TAG }}
+          cache: false
 
       - name: Download package bundle artifact
         uses: actions/download-artifact@v8
@@ -145,10 +147,11 @@ jobs:
         run: printf 'ROC_NIGHTLY_TAG=%s\n' "$(sed -n '1p' .roc-version)" >> "$GITHUB_ENV"
 
       - name: Install Roc
-        uses: roc-lang/setup-roc@cbe782d6f165b89c87d99f50a59ac4f5f73b4427
+        uses: roc-lang/setup-roc@dd81390553b0a1236aedb61cdd4c0ed7cf7eaec4
         with:
-          version: nightly-new-compiler
+          version: nightly
           nightly-tag: ${{ env.ROC_NIGHTLY_TAG }}
+          cache: false
 
       - name: Create release
         env:

@@ -34,10 +34,11 @@ jobs:
       - name: Read pinned Roc version
         run: printf 'ROC_NIGHTLY_TAG=%s\n' "$(sed -n '1p' .roc-version)" >> "$GITHUB_ENV"
 
-      - uses: roc-lang/setup-roc@cbe782d6f165b89c87d99f50a59ac4f5f73b4427
+      - uses: roc-lang/setup-roc@dd81390553b0a1236aedb61cdd4c0ed7cf7eaec4
         with:
-          version: nightly-new-compiler
+          version: nightly
           nightly-tag: ${{ env.ROC_NIGHTLY_TAG }}
+          cache: false
 
       - name: Run bounded fuzz smoke
         run: ROC=roc python3 scripts/fuzz.py smoke
@@ -70,15 +71,23 @@ jobs:
       - name: Read pinned Roc version
         run: printf 'ROC_NIGHTLY_TAG=%s\n' "$(sed -n '1p' .roc-version)" >> "$GITHUB_ENV"
 
-      - uses: roc-lang/setup-roc@cbe782d6f165b89c87d99f50a59ac4f5f73b4427
+      - id: roc
+        uses: roc-lang/setup-roc@dd81390553b0a1236aedb61cdd4c0ed7cf7eaec4
         with:
-          version: nightly-new-compiler
+          version: nightly
           nightly-tag: ${{ env.ROC_NIGHTLY_TAG }}
 
       - run: roc version
 
       - name: Run all tests
         run: ROC=roc ./scripts/all_tests.sh
+
+      # Also save the cache when the job fails, so tests that passed stay cached.
+      - uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: always() && steps.roc.outputs.cache-key != ''
+        with:
+          path: ${{ steps.roc.outputs.cache-path }}
+          key: ${{ steps.roc.outputs.cache-key }}
 
       - name: Upload minimized Bidi regressions
         if: failure()
