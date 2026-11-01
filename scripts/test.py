@@ -322,7 +322,7 @@ def build_apps(roc: str, names: Sequence[str], zig: str, *, skip_build: bool) ->
     build_platform(zig)
     for name in names:
         source = APP_ROOT / name / "main.roc"
-        command([roc, "check", str(source), "--no-cache"])
+        command([roc, "check", str(source)])
         command(
             [
                 roc,
@@ -330,7 +330,6 @@ def build_apps(roc: str, names: Sequence[str], zig: str, *, skip_build: bool) ->
                 str(source),
                 "--opt=speed",
                 f"--output={paths[name]}",
-                "--no-cache",
             ]
         )
     return paths

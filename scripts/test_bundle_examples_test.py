@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 import subprocess
 import tempfile
@@ -251,10 +252,17 @@ class ExampleHarnessTests(unittest.TestCase):
     def test_roc_environment_isolates_both_compiler_and_package_caches(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             cache = Path(temporary) / "cache"
-            env = harness.isolated_roc_environment(cache)
+            with mock.patch.dict(os.environ):
+                os.environ.pop("ROC_CACHE_DIR", None)
+                env = harness.isolated_roc_environment(cache)
             expected = str(cache.resolve())
             self.assertEqual(env["ROC_CACHE_DIR"], expected)
             self.assertEqual(env["XDG_CACHE_HOME"], expected)
+
+    def test_roc_environment_keeps_provided_cache_dir(self) -> None:
+        with mock.patch.dict(os.environ, {"ROC_CACHE_DIR": "/provided"}):
+            env = harness.isolated_roc_environment(Path("/unused"))
+        self.assertEqual(env["ROC_CACHE_DIR"], "/provided")
 
     def test_dependency_pattern_only_matches_unicode_field(self) -> None:
         source = '    unicode: "../package/main.roc",\n    other: "../package/main.roc",\n'

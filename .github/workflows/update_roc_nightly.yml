@@ -65,6 +65,7 @@ jobs:
           git commit --all --message "Update Roc nightly pin to $NIGHTLY_TAG"
           git push --force origin "$BRANCH"
 
+  # Runs on main's ref, so the Roc cache saved here warms main's cache for PRs.
   test:
     needs: bump
     if: needs.bump.outputs.changed == 'true'
