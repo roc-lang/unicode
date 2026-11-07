@@ -191,6 +191,6 @@ Property :: [].{
 			}
 		}
 
-		Iter.custom(InternalUtf8.init(source), Unknown, next_entry)
+		Iter.custom(InternalUtf8.init(source), Err(Unknown), next_entry)
 	}
 }

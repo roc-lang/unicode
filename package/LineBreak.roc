@@ -290,7 +290,7 @@ LineBreak :: [].{
 				emit_start: Bool.True,
 				finished: Bool.False,
 			},
-			Unknown,
+			Err(Unknown),
 			next_boundary,
 		)
 	}
@@ -310,7 +310,7 @@ LineBreak :: [].{
 				queued: NoQueued,
 				finished: Bool.False,
 			},
-			Unknown,
+			Err(Unknown),
 			next_opportunity,
 		)
 	}

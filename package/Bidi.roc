@@ -96,7 +96,7 @@ Bidi :: [].{
 	## Lazily walk maximal same-level spans in the X9-filtered logical sequence.
 	## Removed controls bridge equal-level runs but are not themselves yielded.
 	logical_runs : Analysis -> Iter(LevelRun)
-	logical_runs = |analysis| Iter.custom({ analysis, at: 0.U64 }, Unknown, next_logical_run)
+	logical_runs = |analysis| Iter.custom({ analysis, at: 0.U64 }, Err(Unknown), next_logical_run)
 
 	## Explicit materializing convenience for clients that need every retained
 	## run at once. `logical_runs` is the primary, early-stoppable traversal.
