@@ -190,7 +190,7 @@ ScriptItemization :: [].{
 				deferred: NoDeferredSegment,
 				last: NoRun,
 			},
-			Unknown,
+			Err(Unknown),
 			next_run,
 		)
 	}

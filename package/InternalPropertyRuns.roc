@@ -94,7 +94,7 @@ InternalPropertyRuns :: [].{
 
 		Iter.custom(
 			{ utf8: InternalUtf8.init(source), pending: NoPending },
-			Unknown,
+			Err(Unknown),
 			next_run,
 		)
 	}

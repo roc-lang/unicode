@@ -99,7 +99,7 @@ Scalar :: { code_point : CodePoint }.{
 			}
 		}
 
-		Iter.custom(InternalUtf8.init(source), Unknown, next_located)
+		Iter.custom(InternalUtf8.init(source), Err(Unknown), next_located)
 	}
 
 	## Return the number of bytes in this scalar's UTF-8 encoding.

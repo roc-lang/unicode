@@ -131,7 +131,7 @@ InternalWord :: [].{
 				queued: NoQueued,
 				finished: Bool.False,
 			},
-			Unknown,
+			Err(Unknown),
 			next_range,
 		)
 	}
