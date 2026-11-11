@@ -392,6 +392,7 @@ p1_candidate = |selected, byte_start, byte_end, scalar_start, scalar_end| {
 	}
 }
 
+analyze_source : Str, Bidi.BaseDirection, Bidi.Limits, TextPosition -> Try(Bidi.Analysis, Bidi.Error)
 analyze_source = |source, base_direction, limits, origin| {
 	byte_len = source.count_utf8_bytes()
 	byte_end = match TextPosition.byte_offset(origin).plus_try(byte_len) {
@@ -890,7 +891,7 @@ isolating_run_sequences = |entries, paragraph_level, partners| {
 			$eos = $eos.append(direction_class(max_level(run.level, eos_level)))
 		}
 	}
-	{ links: $links, starts: $starts, sos: $sos, eos: $eos }
+	Bidi.RunSequences.{ links: $links, starts: $starts, sos: $sos, eos: $eos }
 }
 
 max_level = |left, right| if left > right {
