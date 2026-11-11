@@ -159,7 +159,6 @@ Script :: [].{
     to_list = |set| walk(set, [], |scripts, script| scripts.append(script))
 }
 
-remove : ScriptSet, Value -> ScriptSet
 remove = |set, script| {
     private_id = InternalScriptData.private_id(script)
     bit = 1.U64.shl_wrap(private_id % 64)

@@ -4665,7 +4665,6 @@ def render_script_api(version: str, properties: ScriptProperties) -> str:
         "    to_list : ScriptSet -> List(Value)\n"
         "    to_list = |set| walk(set, [], |scripts, script| scripts.append(script))\n"
         "}\n\n"
-        "remove : ScriptSet, Value -> ScriptSet\n"
         "remove = |set, script| {\n"
         "    private_id = InternalScriptData.private_id(script)\n"
         "    bit = 1.U64.shl_wrap(private_id % 64)\n"
