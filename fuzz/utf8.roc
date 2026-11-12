@@ -1,5 +1,5 @@
 app [target] {
-	fuzz: platform "https://github.com/lukewilliamboswell/roc-fuzz/releases/download/0.4.3/41NK5FShyGC9Z8HNpUdUeXMWwLmLNfFxsfmLvdPL4Fxb.tar.zst",
+	fuzz: platform "https://github.com/lukewilliamboswell/roc-fuzz/releases/download/0.6.1/GDoZFRDnzMRiVk9nE8wdWn52btGsM1GhcY9VDKqy9f1Y.tar.zst",
 	unicode: "../package/main.roc",
 }
 
@@ -203,6 +203,7 @@ validate_trace = |bytes, trace| {
 
 target = Fuzz.target_with({
 	name: "unicode-utf8",
+	examples: [],
 	generator: Fuzz.raw_bytes,
 	test,
 	show: FuzzSupport.show_bytes,

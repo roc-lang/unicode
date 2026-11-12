@@ -90,7 +90,7 @@ const all_targets = [_]RocTarget{
 pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
-    // Cleanup step: remove only generated host library files (preserve libc.a, crt1.o, etc.)
+    // Cleanup step: remove only generated host library files (preserve libc.a, etc.)
     const cleanup_step = b.step("clean", "Remove all built library files");
     for (all_targets) |roc_target| {
         cleanup_step.dependOn(&CleanupStep.create(b, b.path(
@@ -120,13 +120,18 @@ pub fn build(b: *std.Build) void {
             b.pathJoin(&.{ "targets", roc_target.targetDir(), roc_target.libFilename() }),
         );
 
+        if (target.result.os.tag == .linux and target.result.abi.isMusl()) {
+            copy_all.addCopyFileToSource(
+                muslStaticPieStartup(b, target),
+                b.pathJoin(&.{ "targets", roc_target.targetDir(), "rcrt1.o" }),
+            );
+        }
+
         if (roc_target.muslRuntimeSourceTarget()) |runtime_source_target| {
-            for ([2][]const u8{ "crt1.o", "libc.a" }) |filename| {
-                copy_all.addCopyFileToSource(
-                    b.path(b.pathJoin(&.{ "targets", runtime_source_target.targetDir(), filename })),
-                    b.pathJoin(&.{ "targets", roc_target.targetDir(), filename }),
-                );
-            }
+            copy_all.addCopyFileToSource(
+                b.path(b.pathJoin(&.{ "targets", runtime_source_target.targetDir(), "libc.a" })),
+                b.pathJoin(&.{ "targets", roc_target.targetDir(), "libc.a" }),
+            );
         }
     }
 
@@ -155,18 +160,29 @@ pub fn build(b: *std.Build) void {
         b.pathJoin(&.{ "targets", native_roc_target.targetDir(), native_roc_target.libFilename() }),
     );
 
+    const native_resolved = b.resolveTargetQuery(native_roc_target.toZigTarget());
+    if (native_resolved.result.os.tag == .linux and native_resolved.result.abi.isMusl()) {
+        copy_native.addCopyFileToSource(
+            muslStaticPieStartup(b, native_resolved),
+            b.pathJoin(&.{ "targets", native_roc_target.targetDir(), "rcrt1.o" }),
+        );
+    }
+
     if (native_roc_target.baselineMuslTarget()) |baseline_roc_target| {
-        const baseline_lib = buildHostLib(b, b.resolveTargetQuery(baseline_roc_target.toZigTarget()), optimize);
+        const baseline_target = b.resolveTargetQuery(baseline_roc_target.toZigTarget());
+        const baseline_lib = buildHostLib(b, baseline_target, optimize);
         copy_native.addCopyFileToSource(
             baseline_lib.getEmittedBin(),
             b.pathJoin(&.{ "targets", baseline_roc_target.targetDir(), baseline_roc_target.libFilename() }),
         );
-        for ([2][]const u8{ "crt1.o", "libc.a" }) |filename| {
-            copy_native.addCopyFileToSource(
-                b.path(b.pathJoin(&.{ "targets", native_roc_target.targetDir(), filename })),
-                b.pathJoin(&.{ "targets", baseline_roc_target.targetDir(), filename }),
-            );
-        }
+        copy_native.addCopyFileToSource(
+            muslStaticPieStartup(b, baseline_target),
+            b.pathJoin(&.{ "targets", baseline_roc_target.targetDir(), "rcrt1.o" }),
+        );
+        copy_native.addCopyFileToSource(
+            b.path(b.pathJoin(&.{ "targets", native_roc_target.targetDir(), "libc.a" })),
+            b.pathJoin(&.{ "targets", baseline_roc_target.targetDir(), "libc.a" }),
+        );
         native_step.dependOn(&baseline_lib.step);
     }
     native_step.dependOn(&copy_native.step);
@@ -224,6 +240,40 @@ const CleanupStep = struct {
         };
     }
 };
+
+/// Roc links Linux executables as static PIEs, so musl targets need musl's
+/// self-relocating entry point (`rcrt1.o`) instead of `crt1.o`. Build it from
+/// the pinned Zig toolchain's bundled musl sources rather than vendoring
+/// another architecture-specific binary.
+fn muslStaticPieStartup(b: *std.Build, target: std.Build.ResolvedTarget) std.Build.LazyPath {
+    const arch = @tagName(target.result.cpu.arch);
+    const obj = b.addObject(.{
+        .name = b.fmt("rcrt1_{s}", .{arch}),
+        .root_module = b.createModule(.{
+            .target = target,
+            .optimize = .ReleaseSmall,
+            .pic = true,
+            .link_libc = true,
+            .stack_protector = false,
+        }),
+    });
+    obj.root_module.addCSourceFile(.{
+        .file = zigLibPath(b, "libc/musl/crt/rcrt1.c"),
+        .flags = &.{ "-std=c99", "-D_GNU_SOURCE", "-ffreestanding", "-fno-builtin", "-fvisibility=hidden" },
+    });
+    for ([_][]const u8{
+        b.fmt("libc/musl/arch/{s}", .{arch}),
+        "libc/musl/arch/generic",
+        "libc/musl/src/internal",
+        "libc/musl/src/include",
+    }) |path| obj.root_module.addIncludePath(zigLibPath(b, path));
+    return obj.getEmittedBin();
+}
+
+/// A path inside the running Zig toolchain's `lib` directory.
+fn zigLibPath(b: *std.Build, sub_path: []const u8) std.Build.LazyPath {
+    return .{ .cwd_relative = b.graph.zig_lib_directory.join(b.allocator, &.{sub_path}) catch @panic("OOM") };
+}
 
 fn buildHostLib(
     b: *std.Build,
