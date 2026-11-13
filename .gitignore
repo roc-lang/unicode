@@ -13,9 +13,8 @@ tests/platform/.zig-cache/
 tests/platform/zig-out/
 tests/platform/targets/*/libhost.a
 tests/platform/targets/*/host.lib
-tests/platform/targets/x64v1musl/crt1.o
+tests/platform/targets/*/rcrt1.o
 tests/platform/targets/x64v1musl/libc.a
-tests/platform/targets/arm64v1musl/crt1.o
 tests/platform/targets/arm64v1musl/libc.a
 
 # Ignore release workflow scratch files
