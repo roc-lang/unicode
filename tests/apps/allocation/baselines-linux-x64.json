@@ -13,16 +13,25 @@
   },
   "word": {
     "iterator": {
-      "empty": 1,
-      "ascii": 1,
-      "combining": 1,
-      "regional-indicator": 1,
-      "emoji-zwj": 1,
-      "long": 1,
-      "segmented": 1
+      "empty": 0,
+      "ascii": 0,
+      "combining": 0,
+      "regional-indicator": 0,
+      "emoji-zwj": 0,
+      "long": 0,
+      "segmented": 0
     },
     "cursor": {
-      "empty": 1,
+      "empty": 0,
+      "ascii": 0,
+      "combining": 0,
+      "regional-indicator": 0,
+      "emoji-zwj": 0,
+      "long": 0,
+      "segmented": 0
+    },
+    "ranges": {
+      "empty": 0,
       "ascii": 1,
       "combining": 1,
       "regional-indicator": 1,
@@ -30,8 +39,8 @@
       "long": 1,
       "segmented": 1
     },
-    "ranges": {
-      "empty": 1,
+    "slices": {
+      "empty": 0,
       "ascii": 2,
       "combining": 2,
       "regional-indicator": 2,
@@ -39,132 +48,123 @@
       "long": 2,
       "segmented": 2
     },
-    "slices": {
-      "empty": 1,
+    "owned": {
+      "empty": 0,
       "ascii": 3,
       "combining": 3,
       "regional-indicator": 3,
       "emoji-zwj": 3,
       "long": 3,
-      "segmented": 3
-    },
-    "owned": {
-      "empty": 1,
-      "ascii": 4,
-      "combining": 4,
-      "regional-indicator": 4,
-      "emoji-zwj": 4,
-      "long": 4,
-      "segmented": 6
+      "segmented": 5
     }
   },
   "case": {
     "lower-default": {
-      "ascii-half": 16,
-      "ascii": 19,
-      "expansion-heavy": 16,
-      "long-case-ignorable": 22,
-      "alternating-sigma": 21,
-      "turkic": 21,
-      "lithuanian": 21,
-      "many-title-words": 25
+      "ascii-half": 15,
+      "ascii": 18,
+      "expansion-heavy": 15,
+      "long-case-ignorable": 21,
+      "alternating-sigma": 20,
+      "turkic": 20,
+      "lithuanian": 20,
+      "many-title-words": 24
     },
     "lower-turkic": {
-      "ascii-half": 17,
-      "ascii": 20,
-      "expansion-heavy": 17,
-      "long-case-ignorable": 23,
-      "alternating-sigma": 22,
-      "turkic": 21,
-      "lithuanian": 22,
-      "many-title-words": 26
+      "ascii-half": 15,
+      "ascii": 18,
+      "expansion-heavy": 15,
+      "long-case-ignorable": 21,
+      "alternating-sigma": 20,
+      "turkic": 19,
+      "lithuanian": 20,
+      "many-title-words": 24
     },
     "upper-default": {
-      "ascii-half": 18,
-      "ascii": 21,
-      "expansion-heavy": 20,
-      "long-case-ignorable": 24,
-      "alternating-sigma": 23,
-      "turkic": 23,
-      "lithuanian": 23,
-      "many-title-words": 27
+      "ascii-half": 15,
+      "ascii": 18,
+      "expansion-heavy": 17,
+      "long-case-ignorable": 21,
+      "alternating-sigma": 20,
+      "turkic": 20,
+      "lithuanian": 20,
+      "many-title-words": 24
     },
     "upper-lithuanian": {
-      "ascii-half": 19,
-      "ascii": 22,
-      "expansion-heavy": 21,
-      "long-case-ignorable": 25,
-      "alternating-sigma": 24,
-      "turkic": 24,
-      "lithuanian": 24,
-      "many-title-words": 28
+      "ascii-half": 15,
+      "ascii": 18,
+      "expansion-heavy": 17,
+      "long-case-ignorable": 21,
+      "alternating-sigma": 20,
+      "turkic": 20,
+      "lithuanian": 20,
+      "many-title-words": 24
     },
     "title-default": {
-      "ascii-half": 20,
-      "ascii": 23,
-      "expansion-heavy": 21,
-      "long-case-ignorable": 26,
-      "alternating-sigma": 25,
-      "turkic": 25,
-      "lithuanian": 25,
-      "many-title-words": 29
+      "ascii-half": 15,
+      "ascii": 18,
+      "expansion-heavy": 16,
+      "long-case-ignorable": 21,
+      "alternating-sigma": 20,
+      "turkic": 20,
+      "lithuanian": 20,
+      "many-title-words": 24
     },
     "title-turkic": {
-      "ascii-half": 21,
-      "ascii": 24,
-      "expansion-heavy": 22,
-      "long-case-ignorable": 27,
-      "alternating-sigma": 26,
-      "turkic": 25,
-      "lithuanian": 26,
-      "many-title-words": 30
+      "ascii-half": 15,
+      "ascii": 18,
+      "expansion-heavy": 16,
+      "long-case-ignorable": 21,
+      "alternating-sigma": 20,
+      "turkic": 19,
+      "lithuanian": 20,
+      "many-title-words": 24
     },
     "fold-full": {
-      "ascii-half": 22,
-      "ascii": 25,
-      "expansion-heavy": 24,
-      "long-case-ignorable": 28,
-      "alternating-sigma": 27,
-      "turkic": 27,
-      "lithuanian": 27,
-      "many-title-words": 31
+      "ascii-half": 15,
+      "ascii": 18,
+      "expansion-heavy": 17,
+      "long-case-ignorable": 21,
+      "alternating-sigma": 20,
+      "turkic": 20,
+      "lithuanian": 20,
+      "many-title-words": 24
     },
     "fold-simple": {
-      "ascii-half": 23,
-      "ascii": 26,
-      "expansion-heavy": 23,
-      "long-case-ignorable": 29,
-      "alternating-sigma": 28,
-      "turkic": 28,
-      "lithuanian": 28,
-      "many-title-words": 32
+      "ascii-half": 15,
+      "ascii": 18,
+      "expansion-heavy": 15,
+      "long-case-ignorable": 21,
+      "alternating-sigma": 20,
+      "turkic": 20,
+      "lithuanian": 20,
+      "many-title-words": 24
     },
     "fold-turkic-full": {
-      "ascii-half": 24,
-      "ascii": 27,
-      "expansion-heavy": 26,
-      "long-case-ignorable": 30,
-      "alternating-sigma": 29,
-      "turkic": 29,
-      "lithuanian": 29,
-      "many-title-words": 33
+      "ascii-half": 15,
+      "ascii": 18,
+      "expansion-heavy": 17,
+      "long-case-ignorable": 21,
+      "alternating-sigma": 20,
+      "turkic": 20,
+      "lithuanian": 20,
+      "many-title-words": 24
     },
     "fold-turkic-simple": {
-      "ascii-half": 25,
-      "ascii": 28,
-      "expansion-heavy": 25,
-      "long-case-ignorable": 31,
-      "alternating-sigma": 30,
-      "turkic": 30,
-      "lithuanian": 30,
-      "many-title-words": 34
+      "ascii-half": 15,
+      "ascii": 18,
+      "expansion-heavy": 15,
+      "long-case-ignorable": 21,
+      "alternating-sigma": 20,
+      "turkic": 20,
+      "lithuanian": 20,
+      "many-title-words": 24
     },
     "limits": {
-      "input-bytes": 10,
-      "input-scalars": 10,
-      "output-bytes": 10,
-      "output-scalars": 10,
-      "facts": 10
+      "input-bytes": 0,
+      "input-scalars": 0,
+      "output-bytes": 0,
+      "output-scalars": 0,
+      "facts": 0
     }
   },
   "case_ascii_doubling_deltas": {

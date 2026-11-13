@@ -57,3 +57,15 @@ the long case-ignorable fixture from 1041 to 22. A separate limits mode
 measures each typed, atomic Case limit failure. Case owns its transformed
 bytes and one mapping fact per source scalar, so these are result-allocation
 baselines rather than a claim of allocation-free transformation.
+
+The compiler upgrade for package 4.3.3 includes
+[static long string literals on LLVM backends](https://github.com/roc-lang/roc/commit/7300d32826277bfc992b5445fc46006964613059).
+The suite-name comparisons inside the measured Word and Case probes no longer
+allocate these literals. All 126 exact fixture counts were measured twice with
+the pinned compiler (`--opt=speed`) and Zig 0.16.0 test host
+(`-Doptimize=ReleaseFast`), then verified through the ordinary allocation suite.
+Word counts decrease by one; iterator and cursor probes now allocate zero.
+Case counts decrease by the number of long suite-name comparisons on their
+dispatch path, and typed limit failures now allocate zero. Grapheme counts and
+the three-allocation ASCII doubling deltas remain unchanged. These are harness
+overhead reductions; the package algorithms are unchanged.
