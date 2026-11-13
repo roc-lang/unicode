@@ -3,9 +3,9 @@ ScalarRange :: { start : U64, end : U64 }.{
 	BoundsError : [EndBeforeStart]
 
 	from_bounds : U64, U64 -> Try(ScalarRange, BoundsError)
-	from_bounds = |start, end| {
-		if start <= end {
-			Ok({ start, end })
+	from_bounds = |range_start, range_end| {
+		if range_start <= range_end {
+			Ok({ start: range_start, end: range_end })
 		} else {
 			Err(EndBeforeStart)
 		}

@@ -10,19 +10,19 @@ TextRange :: { byte_range : ByteRange, scalar_range : ScalarRange }.{
 	BoundsError : [ByteEndBeforeStart, ScalarEndBeforeStart]
 
 	from_ranges : ByteRange, ScalarRange -> TextRange
-	from_ranges = |byte_range, scalar_range| { byte_range, scalar_range }
+	from_ranges = |bytes, scalars| { byte_range: bytes, scalar_range: scalars }
 
 	from_positions : TextPosition, TextPosition -> Try(TextRange, BoundsError)
-	from_positions = |start, end| {
-		byte_range = match ByteRange.from_bounds(TextPosition.byte_offset(start), TextPosition.byte_offset(end)) {
+	from_positions = |range_start, range_end| {
+		bytes = match ByteRange.from_bounds(TextPosition.byte_offset(range_start), TextPosition.byte_offset(range_end)) {
 			Err(_) => return Err(ByteEndBeforeStart)
 			Ok(range) => range
 		}
-		scalar_range = match ScalarRange.from_bounds(TextPosition.scalar_offset(start), TextPosition.scalar_offset(end)) {
+		scalars = match ScalarRange.from_bounds(TextPosition.scalar_offset(range_start), TextPosition.scalar_offset(range_end)) {
 			Err(_) => return Err(ScalarEndBeforeStart)
 			Ok(range) => range
 		}
-		Ok({ byte_range, scalar_range })
+		Ok({ byte_range: bytes, scalar_range: scalars })
 	}
 
 	start : TextRange -> TextPosition

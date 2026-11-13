@@ -210,7 +210,7 @@ ScriptItemization :: [].{
 	## Collect runs. Allocation is proportional to returned run count only.
 	runs : Str, ConservativeScxV1 -> List(Run)
 	runs = |source, policy| {
-		ScriptItemization.fold_runs(source, policy, [], |runs, run| runs.append(run))
+		ScriptItemization.fold_runs(source, policy, [], |collected, run| collected.append(run))
 	}
 
 	## Start an exact non-replayable chunk cursor with an explicit bound on

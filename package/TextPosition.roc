@@ -4,7 +4,7 @@
 ## counts UTF-8 bytes and `scalar_offset` counts decoded Unicode scalars.
 TextPosition :: { byte_offset : U64, scalar_offset : U64 }.{
 	from_offsets : U64, U64 -> TextPosition
-	from_offsets = |byte_offset, scalar_offset| { byte_offset, scalar_offset }
+	from_offsets = |bytes, scalars| { byte_offset: bytes, scalar_offset: scalars }
 
 	byte_offset : TextPosition -> U64
 	byte_offset = |position| position.byte_offset

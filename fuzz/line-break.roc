@@ -1,5 +1,5 @@
 app [target] {
-	fuzz: platform "https://github.com/lukewilliamboswell/roc-fuzz/releases/download/0.4.3/41NK5FShyGC9Z8HNpUdUeXMWwLmLNfFxsfmLvdPL4Fxb.tar.zst",
+	fuzz: platform "https://github.com/lukewilliamboswell/roc-fuzz/releases/download/0.6.2/3kyiehxxzwAsjM23uCQGJ3Hx7dAAdzSGtK3k9Jq7Egtu.tar.zst",
 	unicode: "../package/main.roc",
 }
 
@@ -169,6 +169,7 @@ validate_partition = |source, ranges| {
 
 target = Fuzz.target_with({
 	name: "unicode-line-break",
+	examples: [],
 	generator: FuzzSupport.scalar_sequence,
 	test,
 	show: FuzzSupport.show_scalars,

@@ -96,7 +96,7 @@ InternalGrapheme :: [].{
 			0,
 			source,
 			[],
-			|ranges, range| ranges.append(range),
+			|collected, range| collected.append(range),
 		)
 
 		if folded.machine.started {
