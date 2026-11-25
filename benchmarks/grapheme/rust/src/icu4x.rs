@@ -8,7 +8,8 @@ fn main() {
     let repeats: u64 = input[..8].parse().expect("invalid repeat count");
     assert_eq!(input.as_bytes()[8], b'\n');
     let source = &input[9..];
-    let segmenter = GraphemeClusterSegmenter::new();
+    // ICU4X supplies the Unicode 18 grapheme rules through the Neo segmenter.
+    let segmenter = GraphemeClusterSegmenter::new_neo();
 
     if repeats == 0 {
         let mut count = 0u64;

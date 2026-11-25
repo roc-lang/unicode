@@ -6,7 +6,8 @@ implementations with iterator or next-boundary APIs, so the timed
 loop does not need to materialize every boundary:
 
 - Roc: `Grapheme.Cursor.push`/`finish`, using this package's Unicode 18 tables.
-- Rust/ICU4X: `icu_segmenter` 2.2.0, Unicode 17, from the Unicode Consortium.
+- Rust/ICU4X: `icu_segmenter` 2.4.0, with the Neo constructor and Unicode 18
+  compiled data from the Unicode Consortium. [ICU4X 2.4.0](https://github.com/unicode-org/icu4x/releases/tag/icu%402.4.0)
 - Go: `clipperhouse/uax29` 2.7.0, Unicode 17, with a specialized forward
   iterator.
 - C: `libgrapheme` 3.0.0, Unicode 17, with its UTF-8 next-break API.
@@ -34,8 +35,10 @@ default when `taskset` is available.
 - A C compiler supporting `-flto`, and POSIX `make`
 - Network access on the first build
 
-Rust and Go library versions are locked in `Cargo.lock` and `go.sum`. Override
-tool locations with command-line options or set `ROC` for the Roc compiler.
+Rust and Go library versions are locked in `Cargo.lock` and `go.sum`.
+ICU4X 2.4 exposes the Neo constructor through its `unstable` feature, which
+the benchmark enables on the pinned release. Override tool locations with
+command-line options or set `ROC` for the Roc compiler.
 The runner downloads the pinned `libgrapheme` 3.0.0 source archive into the
 ignored build directory and verifies its SHA-256 before building it.
 
@@ -82,8 +85,9 @@ materializing lists of ranges or strings. Input reading, process startup, and
 printing one checksum are included but amortized over repeated scans.
 
 Before timing, every implementation emits a compact signature of its boundary
-positions. The Roc signature for the official corpus must match the pinned
-Unicode conformance data. The Unicode 17 reference implementations must agree
-with each other. The report records each signature and the runner logs
-cross-version differences so performance comparisons account for the different
-boundaries the versions can emit.
+positions. Implementations with the same Unicode version must agree on each
+corpus. For `--case unicode_conformance`, implementations matching the
+package's Unicode version must also match the official conformance signature.
+The report records each implementation's Unicode version and signature.
+Differences across Unicode versions are diagnostic because benchmarks can
+perform different numbers of boundary transitions on the same bytes.

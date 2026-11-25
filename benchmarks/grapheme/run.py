@@ -36,12 +36,20 @@ LIBGRAPHEME_URL = (
     f"libgrapheme-{LIBGRAPHEME_VERSION}.tar.gz"
 )
 LIBGRAPHEME_SHA256 = "32585af73dda62fbcc0fed14f199aa1bc988ad01dad0bfbd06cf175d9cf3d68c"
+CONFORMANCE_CASE = "unicode_conformance"
+IMPLEMENTATION_UNICODE_VERSIONS = {
+    "roc": UNICODE_VERSION,
+    "rust_icu4x": "18.0.0",
+    "rust_unicode_segmentation": "17.0.0",
+    "go_clipperhouse": "17.0.0",
+    "c_libgrapheme": "17.0.0",
+}
 CASE_NAMES = (
     "ascii",
     "latin_combining",
     "multilingual",
     "emoji_sequences",
-    "unicode17_conformance",
+    CONFORMANCE_CASE,
 )
 
 
@@ -129,9 +137,9 @@ def corpora(
             "1️⃣ 👋🏿 ❤️‍🔥 🧑‍🚀 ",
             target_bytes,
         ),
-        "unicode17_conformance": conformance,
+        CONFORMANCE_CASE: conformance,
     }
-    return cases, {"unicode17_conformance": expected}
+    return cases, {CONFORMANCE_CASE: expected}
 
 
 def file_sha256(path: Path) -> str:
@@ -332,6 +340,33 @@ def calibrate(
     return repeats, checksum
 
 
+def verify_signatures(
+    case_name: str,
+    signatures: dict[str, tuple[int, int, int]],
+    conformance_signature: tuple[int, int, int] | None,
+) -> None:
+    by_version: dict[str, dict[str, tuple[int, int, int]]] = {}
+    for implementation, signature in signatures.items():
+        version = IMPLEMENTATION_UNICODE_VERSIONS[implementation]
+        by_version.setdefault(version, {})[implementation] = signature
+        if (
+            conformance_signature is not None
+            and version == UNICODE_VERSION
+            and signature != conformance_signature
+        ):
+            raise BenchmarkFailure(
+                f"{case_name}: {implementation} Unicode {version} expected boundary "
+                f"signature {conformance_signature}, got {signature}"
+            )
+    for version, group in by_version.items():
+        if len(set(group.values())) > 1:
+            raise BenchmarkFailure(
+                f"{case_name}: Unicode {version} boundary signatures differ: {group}"
+            )
+    if len(set(signatures.values())) > 1:
+        print(f"  Unicode versions yield different boundary signatures: {by_version}")
+
+
 def benchmark(
     binaries: dict[str, Path],
     cases: dict[str, bytes],
@@ -350,22 +385,7 @@ def benchmark(
             language: verify_boundaries(binary, corpus, cpu)
             for language, binary in binaries.items()
         }
-        if case_name in expected and signatures["roc"] != expected[case_name]:
-            raise BenchmarkFailure(
-                f"{case_name}: Unicode {UNICODE_VERSION} expected boundary signature "
-                f"{expected[case_name]}, got {signatures['roc']}"
-            )
-        reference_signatures = {
-            language: signature for language, signature in signatures.items()
-            if language != "roc"
-        }
-        if len(set(reference_signatures.values())) != 1:
-            raise BenchmarkFailure(
-                f"{case_name}: Unicode 17 reference boundary signatures differ: "
-                f"{reference_signatures}"
-            )
-        if len(set(signatures.values())) > 1:
-            print(f"  Unicode versions yield different boundary signatures: {signatures}")
+        verify_signatures(case_name, signatures, expected.get(case_name))
 
         for language, binary in binaries.items():
             repeats, checksum = calibrate(binary, corpus, cpu, target_seconds)
@@ -552,10 +572,11 @@ def main() -> None:
         "libraries": {
             "roc_unicode": UNICODE_VERSION,
             "unicode_segmentation": "1.13.3 (Unicode 17)",
-            "icu_segmenter": "2.2.0 (Unicode 17)",
+            "icu_segmenter": "2.4.0 (Unicode 18, Neo)",
             "clipperhouse_uax29": "2.7.0 (Unicode 17)",
             "libgrapheme": "3.0.0 (Unicode 17)",
         },
+        "unicode_versions": IMPLEMENTATION_UNICODE_VERSIONS,
         "configuration": {
             "samples": args.samples,
             "target_seconds": args.target_seconds,
