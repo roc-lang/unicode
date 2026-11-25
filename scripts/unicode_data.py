@@ -226,11 +226,6 @@ class SegmentationCase:
     rules: frozenset[str]
 
 
-# Keep the names used by the owning conformance drivers.
-WordBreakCase = SegmentationCase
-SentenceBreakCase = SegmentationCase
-
-
 @dataclass(frozen=True)
 class LineBreakCase:
     line: int
@@ -3035,13 +3030,13 @@ def parse_grapheme_tests(
 
 def parse_word_break_tests(
     manifest: dict[str, object], text: str | None = None
-) -> list[WordBreakCase]:
+) -> list[SegmentationCase]:
     return _parse_segmentation_tests(manifest, "uax-29-word-test", "word-break", text)
 
 
 def parse_sentence_break_tests(
     manifest: dict[str, object], text: str | None = None
-) -> list[SentenceBreakCase]:
+) -> list[SegmentationCase]:
     return _parse_segmentation_tests(manifest, "uax-29-sentence-test", "sentence-break", text)
 
 

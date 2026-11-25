@@ -9,7 +9,7 @@ its evidence. [Testing methodology](../docs/testing.md)
 
 | Suite | Members | Checks |
 | --- | --- | --- |
-| `source_suite.roc` | `utf8`, `utf8-model`, `grapheme`, `word`, `line-break` | Raw-byte and scalar-aligned source contracts, ordered ranges, profiles, cursor completion, and iterator pause/resume. |
+| `source_suite.roc` | `utf8`, `utf8-model`, `grapheme`, `word`, `sentence`, `line-break` | Raw-byte and scalar-aligned source contracts, ordered ranges, profiles, cursor completion, and iterator pause/resume. |
 | `scalar_suite.roc` | `case`, `property` | Mapping coordinates and shape, profiles and exact limits, scalar properties, maximal runs, and aliases. |
 | `analysis_suite.roc` | `bidi`, `script` | Retained paragraph and line analysis, L2 reordering and inverse mappings, grapheme-aligned script runs, preferences, and pending limits. |
 | `thai_suite.roc` | `thai` | Dictionary-backed line tailoring, model agreement, coordinates, and resource limits. |
@@ -22,6 +22,13 @@ copy makes this model fail at `[Lead, Finish]`. The saved goal witnesses are che
 campaign runs. The Solve check proves the checked-append capacity law for
 8-bit lengths and limits and widths 1 through 4. A concrete solver witness
 exercises both sides of the real U64-limit API.
+
+The sentence SB8 model exhausts 120 histories beginning with `A. `. These
+have up to three chunks of neutral symbols, combining marks, or empty text
+before lowercase or uppercase resolution or explicit completion. It checks
+the independently expected cut and when it can be emitted. A targeted
+mutation that ignored the lowercase resolver produced the shortest failure
+`[Append(Neutral), ResolveLower]`.
 
 ## Local checks
 
@@ -70,7 +77,7 @@ actions.
 
 `seeds.json` retains named regression and branch-driving inputs as readable
 UTF-8 hex or raw malformed bytes. The seed preparer also takes bounded,
-evenly spaced samples from the pinned grapheme, word, line, bidi, and case
+evenly spaced samples from the pinned grapheme, word, sentence, line, bidi, and case
 data. For composite property checks it groups valid scalars at and next to
 property source boundaries. The full official tests run through the owning
 feature suites.

@@ -6,7 +6,13 @@ import unicode.Sentence
 SentenceTarget :: [].{
 	target = Fuzz.target_with({
 		name: "unicode-sentence",
-		examples: [],
+		examples: [
+			Fuzz.saved({
+				name: "pending-period-with-lowercase-resolution",
+				revision: "1",
+				bytes: [1, 0x41, 0, 0, 0x2E, 0, 0, 0x20, 0, 0x20, 0x22, 0x21, 0x60, 0x61, 0, 0x80],
+			}),
+		],
 		generator: FuzzSupport.plan,
 		test,
 		show: FuzzSupport.show_plan,
@@ -43,6 +49,16 @@ test = |input| {
 	}
 	if Sentence.slices(source) != $expected or Sentence.owned(source) != $expected {
 		crash "sentence materializers did not select the ranges"
+	}
+	length = source.count_utf8_bytes()
+	limit = input.config.to_u64() % (ranges.len() + 1)
+	expected_limited = if limit == ranges.len() {
+		Ok(ranges)
+	} else {
+		Err(LimitExceeded({ resource: OutputItems, limit, required: limit + 1 }))
+	}
+	if Sentence.ranges_limited(source, { max_input_bytes: length, max_items: limit }) != expected_limited {
+		crash "sentence collector did not enforce the exact output-item limit"
 	}
 	Fuzz.keep
 }
