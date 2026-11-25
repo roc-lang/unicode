@@ -457,8 +457,15 @@ def main(argv: list[str] | None = None) -> int:
                 artifact = args.input.resolve(strict=True)
                 payload = artifact.read_bytes()
                 print(f"raw-bytes={len(payload)} hex={payload.hex().upper()}")
-                command([target.binary, f"--target={target.declared_name}", "show", artifact])
-                command([*execution_arguments(target, "replay"), artifact, "--detailed"])
+                replay_deadline = INPUT_TIMEOUT + SUPERVISOR_MARGIN_SECONDS
+                command(
+                    [target.binary, f"--target={target.declared_name}", "show", artifact],
+                    timeout=replay_deadline,
+                )
+                command(
+                    [*execution_arguments(target, "replay"), artifact, "--detailed"],
+                    timeout=replay_deadline,
+                )
             elif args.operation == "minimize":
                 command([
                     *execution_arguments(targets[0], "minimize"),

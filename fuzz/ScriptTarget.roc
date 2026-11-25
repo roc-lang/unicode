@@ -26,6 +26,8 @@ test = |input| {
 	if expected != iterated or expected != folded {
 		crash "script itemization iter, fold, and collected runs disagreed"
 	}
+	FuzzSupport.check_bounded_collection("ScriptItemization.runs_limited", source, input.config, expected, |limits| ScriptItemization.runs_limited(source, policy, limits))
+
 	clusters = Grapheme.ranges(source)
 	cluster_ends = clusters.map(ByteRange.end)
 	var $byte = 0

@@ -36,6 +36,10 @@ test = |input| {
 		crash "word materialization lost or changed source text"
 	}
 
+	FuzzSupport.check_bounded_collection("Word.ranges_limited", source, input.config, collected, |limits| Word.ranges_limited(source, limits))
+	FuzzSupport.check_bounded_collection("Word.slices_limited", source, input.config, expected_materialized, |limits| Word.slices_limited(source, limits))
+	FuzzSupport.check_bounded_collection("Word.owned_limited", source, input.config, expected_materialized, |limits| Word.owned_limited(source, limits))
+
 	for word in expected_materialized {
 		inner = Word.ranges(word)
 		if inner.len() != 1 {

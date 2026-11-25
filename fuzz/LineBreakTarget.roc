@@ -37,6 +37,9 @@ test = |input| {
 		crash "opportunities were not the non-Prohibited subset of boundaries"
 	}
 
+	FuzzSupport.check_bounded_collection("LineBreak.boundaries_limited", source, input.config, boundaries, |limits| LineBreak.boundaries_limited(source, profile, limits))
+	FuzzSupport.check_bounded_collection("LineBreak.opportunities_limited", source, input.config, opportunities, |limits| LineBreak.opportunities_limited(source, profile, limits))
+
 	validate_boundaries(source, boundaries, code_points.len())
 	if profile == PreserveGraphemes {
 		validate_tailoring(source, boundaries)
