@@ -1557,6 +1557,7 @@ def main(argv: list[str] | None = None) -> int:
             if "case" in requested_apps:
                 run_case(binaries["case"], args.jobs, app_specs["case"])
             if "properties" in requested_apps:
+                command([args.roc, "test", "tests/properties/identifier.roc", "--no-cache"])
                 run_properties(binaries["properties"], args.jobs, app_specs["properties"])
             if "allocation" in requested_apps:
                 run_allocations(binaries["allocation"], app_specs["allocation"])
