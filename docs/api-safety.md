@@ -18,6 +18,14 @@ extraction sites. Update the affected row when changing a contract or adding
 an operation. The check verifies coverage; review verifies the justification,
 including checked and range-proven arithmetic in reachable helpers.
 
+The shared safety roots run under both the pinned native development backend
+and the optimized LLVM backend. The scalar round-trip root checks all
+1,112,064 Unicode scalars through the public encoder, Roc's UTF-8 validator,
+the valid-string iterator, and the raw-byte cursor. It verifies the emitted
+scalar, exact source range, scalar index, accepted byte count, and terminal
+coordinates. The byte matrix exercises malformed forms and split boundaries,
+and the surrogate loop checks all 2,048 excluded code points.
+
 | Module | Operations | Input and errors | Work, storage and ownership | Evidence |
 | --- | --- | --- | --- | --- |
 | Bidi | `analyze_paragraph`, `analyze_range` | Valid text and explicit retained-analysis limits. P1 mismatch or invalid selected coordinates are typed. Byte and scalar exhaustion are atomic. | Bounded retained tape. P1 validation reads to the selected boundary and analysis replays that paragraph; no retained source. UAX embedding and bracket stacks are fixed by the specification. | Bidi conformance, invalid-range and resource fixtures. |

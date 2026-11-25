@@ -1544,8 +1544,13 @@ def main(argv: list[str] | None = None) -> int:
         if args.suite in ("all", "safety"):
             command([sys.executable, "scripts/check_api_safety.py"])
             command([sys.executable, "-m", "unittest", "scripts/test_api_safety.py"])
-            for test in ("collect", "traversal", "locale"):
-                command([args.roc, "test", f"tests/safety/{test}.roc", "--no-cache"])
+            safety_roots = sorted((ROOT / "tests" / "safety").glob("*.roc"))
+            for mode in ("dev", "speed"):
+                for source in safety_roots:
+                    command([
+                        args.roc, "test", source.relative_to(ROOT).as_posix(),
+                        f"--opt={mode}", "--no-cache",
+                    ])
         if args.suite in ("all", "data"):
             run_data_checks()
         requested_apps = []
@@ -1558,7 +1563,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.suite in ("all", "word", "sentence"):
             requested_apps.append("word")
         if args.suite in ("all", "collation"):
-            command([args.roc, "test", "tests/safety/collation.roc", "--no-cache"])
+            if args.suite == "collation":
+                command([args.roc, "test", "tests/safety/collation.roc", "--opt=dev", "--no-cache"])
             requested_apps.append("collation")
         if args.suite in ("all", "normalization"):
             command([args.roc, "test", "tests/apps/normalization/main.roc", "--no-cache"])
