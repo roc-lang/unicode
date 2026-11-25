@@ -59,6 +59,11 @@
       "revision": "31",
       "release": "emoji",
       "document": "https://www.unicode.org/reports/tr51/tr51-31.html"
+    },
+    "uax_31": {
+      "revision": "45",
+      "release": "unicode",
+      "document": "https://www.unicode.org/reports/tr31/tr31-45.html"
     }
   },
   "authorities": {
@@ -276,7 +281,7 @@
       "storage_release": "unicode",
       "release_axes": ["unicode"],
       "format": "ucd-derived-core-properties",
-      "properties": ["Default_Ignorable_Code_Point", "Indic_Conjunct_Break", "Cased", "Case_Ignorable"]
+      "properties": ["Default_Ignorable_Code_Point", "Indic_Conjunct_Break", "Cased", "Case_Ignorable", "Alphabetic", "XID_Start", "XID_Continue"]
     },
     "derived_general_category": {
       "path": "vendor/unicode/18.0.0/DerivedGeneralCategory.txt",
@@ -342,6 +347,7 @@
       "release_axes": ["unicode"],
       "format": "ucd-property-aliases",
       "properties": [
+        "Alphabetic",
         "Bidi_Class",
         "Bidi_Mirrored",
         "Bidi_Mirroring_Glyph",
@@ -361,9 +367,16 @@
         "Indic_Syllabic_Category",
         "Joining_Group",
         "Joining_Type",
+        "Numeric_Type",
+        "Numeric_Value",
+        "Pattern_Syntax",
+        "Pattern_White_Space",
         "Script",
         "Variation_Selector",
-        "Vertical_Orientation"
+        "Vertical_Orientation",
+        "White_Space",
+        "XID_Start",
+        "XID_Continue"
       ]
     },
     "property_value_aliases": {
@@ -378,6 +391,7 @@
       "release_axes": ["unicode"],
       "format": "ucd-property-value-aliases",
       "properties": [
+        "Alphabetic",
         "Bidi_Class",
         "Bidi_Mirrored",
         "Bidi_Mirroring_Glyph",
@@ -397,9 +411,16 @@
         "Indic_Syllabic_Category",
         "Joining_Group",
         "Joining_Type",
+        "Numeric_Type",
+        "Numeric_Value",
+        "Pattern_Syntax",
+        "Pattern_White_Space",
         "Script",
         "Variation_Selector",
-        "Vertical_Orientation"
+        "Vertical_Orientation",
+        "White_Space",
+        "XID_Start",
+        "XID_Continue"
       ]
     },
     "derived_bidi_class": {
@@ -571,7 +592,7 @@
       "storage_release": "unicode",
       "release_axes": ["unicode"],
       "format": "ucd-binary-property-ranges",
-      "properties": ["Variation_Selector", "Soft_Dotted"]
+      "properties": ["Variation_Selector", "Soft_Dotted", "White_Space", "Pattern_Syntax", "Pattern_White_Space"]
     },
     "vertical_orientation": {
       "path": "vendor/unicode/18.0.0/VerticalOrientation.txt",
@@ -598,6 +619,32 @@
       "release_axes": ["unicode", "emoji"],
       "format": "ucd-emoji-variation-sequences",
       "properties": ["Emoji_Variation_Sequence"]
+    },
+    "derived_numeric_type": {
+      "path": "vendor/unicode/18.0.0/DerivedNumericType.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/extracted/DerivedNumericType.txt",
+      "sha256": "3dade4d96bd00d71b10022bf70b370090f3ca947f977ad4dc2854e06c4d074f6",
+      "header": "# DerivedNumericType-18.0.0.txt",
+      "records": 269,
+      "role": "production-and-conformance",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "ucd-property-ranges",
+      "properties": ["Numeric_Type"]
+    },
+    "derived_numeric_values": {
+      "path": "vendor/unicode/18.0.0/DerivedNumericValues.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/extracted/DerivedNumericValues.txt",
+      "sha256": "c84f084f83ec6852e1db6e7ef15f340a3af2df8cf0c386ac0d076c2cebd189e6",
+      "header": "# DerivedNumericValues-18.0.0.txt",
+      "records": 2272,
+      "role": "production-and-conformance",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "ucd-rational-property-ranges",
+      "properties": ["Numeric_Value"]
     }
   },
   "artifacts": {
@@ -1011,6 +1058,44 @@
       "sources": ["property_value_aliases"],
       "specifications": ["uax_24", "uax_44"],
       "artifacts": ["script_data", "script_extensions_data"]
+    },
+    "identifier_properties": {
+      "generator": "identifier-properties",
+      "output": "package/InternalIdentifierData.roc",
+      "sources": ["derived_core_properties", "prop_list"],
+      "specifications": ["uax_31", "uax_44"],
+      "artifacts": [],
+      "layout": {
+        "kind": "deduplicated-pages",
+        "candidate_page_bits": [6, 7, 8, 9, 10],
+        "page_bits": 7,
+        "index_type": "U8",
+        "value_type": "U8",
+        "expected_index_entries": 8704,
+        "expected_distinct_pages": 218,
+        "expected_logical_bytes": 36608,
+        "max_logical_bytes": 36608,
+        "ascii": "computed"
+      }
+    },
+    "numeric_properties": {
+      "generator": "numeric-properties",
+      "output": "package/InternalNumericData.roc",
+      "sources": ["derived_numeric_type", "derived_numeric_values", "derived_general_category", "property_aliases", "property_value_aliases"],
+      "specifications": ["uax_44"],
+      "artifacts": [],
+      "layout": {
+        "kind": "deduplicated-pages",
+        "candidate_page_bits": [6, 7, 8, 9, 10],
+        "page_bits": 7,
+        "index_type": "U8",
+        "value_type": "U8",
+        "expected_index_entries": 8704,
+        "expected_distinct_pages": 138,
+        "expected_logical_bytes": 26368,
+        "max_logical_bytes": 29173,
+        "ascii": "computed"
+      }
     }
   }
 }

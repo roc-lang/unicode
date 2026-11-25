@@ -7,6 +7,7 @@ import json
 import sys
 import tempfile
 import unittest
+from fractions import Fraction
 from pathlib import Path
 from unittest import mock
 
@@ -256,6 +257,31 @@ class UnicodeDataTests(unittest.TestCase):
                 list(properties.word_break.records),
                 list(properties.emoji.records),
             )
+
+    def test_exact_numeric_value_parser_preserves_rationals(self) -> None:
+        manifest = unicode_data.load_manifest()
+        canonical = unicode_data.load_canonical_properties(manifest)
+        values = unicode_data.load_numeric_properties(manifest, canonical)
+        self.assertEqual(values[0x30], ("Decimal", Fraction(0)))
+        self.assertEqual(values[0xB2], ("Digit", Fraction(2)))
+        self.assertEqual(values[0x2153], ("Numeric", Fraction(1, 3)))
+        self.assertEqual(values[0xF33], ("Numeric", Fraction(-1, 2)))
+        self.assertEqual(values[0x4EAC], ("Numeric", Fraction(10 ** 16)))
+        self.assertNotIn(0x0041, values)
+
+        default = "#      Numeric_Value = NaN\n"
+        for rows, message in (
+            ("2153 ; 0.33333333 ; ; 1/0", "malformed Numeric_Value"),
+            ("2153 ; 0.33333333 ; ; 1.3", "malformed Numeric_Value"),
+            ("2153 ; 0.33333333 ; Digit ; 1/3", "malformed Numeric_Value"),
+            ("D7FF..E000 ; 1.0 ; ; 1", "invalid Numeric_Value range"),
+            ("2200 ; 9223372036854775808.0 ; ; 9223372036854775808", "exceeds rational storage"),
+            ("2153 ; 0.33333333 ; ; 1/3\n2153 ; 0.1 ; ; 1/10", "overlapping Numeric_Value"),
+        ):
+            with self.subTest(rows=rows), self.assertRaisesRegex(unicode_data.DataError, message):
+                unicode_data.parse_numeric_values(default + rows, source="numeric-test")
+        with self.assertRaisesRegex(unicode_data.DataError, "omitted value NaN"):
+            unicode_data.parse_numeric_values("2153 ; 0.33333333 ; ; 1/3", source="numeric-test")
 
     def test_case_data_parsers_and_generated_view_are_pinned(self) -> None:
         manifest = unicode_data.load_manifest()

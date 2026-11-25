@@ -66,6 +66,20 @@ retain original half-open coordinates. Property modules also expose typed
 `fold_runs` and `iter_runs` operations for maximal adjacent `TextRange` runs;
 they do not materialize per-scalar substrings or an intermediate list.
 
+`Property` also exposes the UCD's `Alphabetic`, `White_Space`,
+`XID_Start`, `XID_Continue`, `Pattern_Syntax`, and `Pattern_White_Space`
+predicates through a separate allocation-free lookup. These are scalar facts
+for language and lexer policies. In particular, `White_Space` and
+`Pattern_White_Space` identify different character sets. See the pinned UAX
+#31 revision for identifier grammar and pattern guidance.
+
+`Numeric.type_of` distinguishes `Decimal`, `Digit`, `Numeric`, and `None`.
+`Numeric.is_decimal_digit` selects positional base-ten digits.
+`Numeric.decimal_digit` returns that digit from zero through nine when present.
+`Numeric.value_of` returns an exact reduced signed fraction with a positive
+denominator, including the Unihan-derived numeric values in the extracted UCD.
+`None` represents the UCD's missing value. Numeric zero is present.
+
 Generated scalar ordinals, row IDs, and bit positions remain private.
 The direct views and the composite-only fused index have independent checked
 static-size budgets in the manifest. The Unicode 18 composite contains 627

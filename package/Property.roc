@@ -9,6 +9,7 @@ import IndicPositionalCategory
 import IndicSyllabicCategory
 import InternalCharacterFlags
 import InternalCompositeProperties
+import InternalIdentifierData
 import InternalLooseAlias
 import InternalUtf8
 import JoiningGroup
@@ -105,6 +106,32 @@ Property :: [].{
 	## narrow binary view.
 	is_variation_selector : Scalar -> Bool
 	is_variation_selector = |scalar| InternalCharacterFlags.lookup(Scalar.to_u32(scalar)).variation_selector
+
+	## Unicode Alphabetic from DerivedCoreProperties.txt, including the
+	## Other_Alphabetic characters defined outside letter categories.
+	is_alphabetic : Scalar -> Bool
+	is_alphabetic = |scalar| InternalIdentifierData.is_alphabetic(Scalar.to_u32(scalar))
+
+	## Unicode White_Space from PropList.txt.
+	is_white_space : Scalar -> Bool
+	is_white_space = |scalar| InternalIdentifierData.is_white_space(Scalar.to_u32(scalar))
+
+	## Unicode XID_Start from DerivedCoreProperties.txt. This is the scalar
+	## property a language can use when specifying identifier starts.
+	is_xid_start : Scalar -> Bool
+	is_xid_start = |scalar| InternalIdentifierData.is_xid_start(Scalar.to_u32(scalar))
+
+	## Unicode XID_Continue from DerivedCoreProperties.txt.
+	is_xid_continue : Scalar -> Bool
+	is_xid_continue = |scalar| InternalIdentifierData.is_xid_continue(Scalar.to_u32(scalar))
+
+	## UAX #31 Pattern_Syntax from PropList.txt.
+	is_pattern_syntax : Scalar -> Bool
+	is_pattern_syntax = |scalar| InternalIdentifierData.is_pattern_syntax(Scalar.to_u32(scalar))
+
+	## UAX #31 Pattern_White_Space from PropList.txt.
+	is_pattern_white_space : Scalar -> Bool
+	is_pattern_white_space = |scalar| InternalIdentifierData.is_pattern_white_space(Scalar.to_u32(scalar))
 
 	binary_short : Bool -> Str
 	binary_short = |value| if (value) "Y" else "N"
