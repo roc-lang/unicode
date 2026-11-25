@@ -1,4 +1,5 @@
 import InternalCase
+import Locale
 import TextPosition
 import TextRange
 import UnicodeVersion
@@ -54,6 +55,26 @@ Case :: [].{
 
 	lithuanian : MappingProfile
 	lithuanian = Lithuanian
+
+	## Select the UCD casing profile for a caller-supplied locale. The language
+	## determines the profile: Turkish and Azerbaijani select Turkic, and
+	## Lithuanian selects Lithuanian. With all other language subtags, the UCD
+	## default applies. Script, region, variants, and extensions carry no
+	## additional SpecialCasing conditions.
+	mapping_profile_for_locale : Locale -> MappingProfile
+	mapping_profile_for_locale = |locale| match Locale.language(locale) {
+		"tr" | "az" => Turkic
+		"lt" => Lithuanian
+		_ => UnicodeDefault
+	}
+
+	## Select the full folding profile with Turkic overrides only for the
+	## explicitly supplied Turkish and Azerbaijani language identifiers.
+	full_fold_profile_for_locale : Locale -> FoldProfile
+	full_fold_profile_for_locale = |locale| match Case.mapping_profile_for_locale(locale) {
+		Turkic => TurkicFull
+		_ => Full
+	}
 
 	default_fold_profile : FoldProfile
 	default_fold_profile = Full

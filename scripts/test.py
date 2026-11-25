@@ -1464,7 +1464,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.suite in ("all", "safety"):
             command([sys.executable, "scripts/check_api_safety.py"])
             command([sys.executable, "-m", "unittest", "scripts/test_api_safety.py"])
-            for test in ("collect", "traversal"):
+            for test in ("collect", "traversal", "locale"):
                 command([args.roc, "test", f"tests/safety/{test}.roc", "--no-cache"])
         if args.suite in ("all", "data"):
             run_data_checks()

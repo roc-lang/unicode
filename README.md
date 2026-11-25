@@ -196,6 +196,36 @@ Case mapping never normalizes before or after conversion. Callers provide
 explicit input, output, scalar, and fact limits; a limit error is typed and
 atomic rather than a partial result.
 
+## Locale identifiers
+
+`Locale.parse` validates Unicode BCP 47 locale identifier syntax. It supports
+language, script, region and variants, Unicode `u` and transformed `t`
+extensions, other singletons and trailing private use. `Locale.to_str`
+formats the identifier with consistent casing and component order, and
+`Locale.root` formats as `und`. Use `Locale.parse_limited` to enforce a byte
+budget before parsing untrusted text. A successful parse establishes syntax.
+Registered aliases, likely subtags, data availability, and locale fallback
+require a consumer with the relevant locale catalog.
+[UTS #35, Unicode Locale Identifier](https://www.unicode.org/reports/tr35/tr35-79/tr35.html#Unicode_locale_identifier)
+
+```roc
+import unicode.Case
+import unicode.Locale
+
+lower_for_locale = |text, locale| {
+    profile = Case.mapping_profile_for_locale(locale)
+    Case.to_lower(text, profile, Case.unlimited_limits)
+}
+```
+
+`Case.mapping_profile_for_locale` selects the UCD's Turkic casing for Turkish
+and Azerbaijani and Lithuanian casing for Lithuanian. Other languages use
+default casing. `Case.full_fold_profile_for_locale` selects the Turkic full
+fold for Turkish and Azerbaijani. These explicit choices use the language
+subtag. For collation or other locale data consumers,
+`Locale.unicode_keyword` can retrieve values such as `co=phonebk` from
+`de-u-co-phonebk`.
+
 ## Scripts and shaping-oriented itemization
 
 `Script` exposes Unicode 18's normative `Script` and `Script_Extensions`

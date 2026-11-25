@@ -98,16 +98,26 @@ def operations(module, text):
     pending = {}
     found = set()
     inside = False
+    awaiting_scope = False
+    scope_endings = ("}.{", "].{", ").{")
     for line in without_non_code(text).expandtabs(4).splitlines():
         stripped = line.lstrip()
         if not stripped:
             continue
         column = len(line) - len(stripped)
         if not inside:
+            if awaiting_scope:
+                if column > 0:
+                    continue
+                if stripped not in scope_endings:
+                    break
+                inside = True
+                continue
             match = MODULE.match(stripped)
             if not match or match[1] != module or column != 0:
                 continue
-            inside = True
+            inside = stripped.endswith(scope_endings)
+            awaiting_scope = not inside
             continue
         if column == 0:
             break
@@ -125,7 +135,7 @@ def operations(module, text):
         match = BINDING.match(stripped) or DERIVED.match(stripped)
         if match:
             found.add(".".join([name for _, name in scope] + [match[1]]))
-        if stripped.endswith("}.{") or stripped.endswith("].{") or stripped.endswith(").{"):
+        if stripped.endswith(scope_endings):
             if column not in pending:
                 raise ValueError(f"unrecognized associated type opener in {module}: {stripped}")
             scope.append((column, pending.pop(column)))
