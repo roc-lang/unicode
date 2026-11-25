@@ -7,6 +7,7 @@ import unicode.Bidi
 import unicode.Grapheme
 import unicode.LineBreak
 import unicode.ScriptItemization
+import unicode.Sentence
 import unicode.TextPosition
 import unicode.TextRange
 import unicode.Word
@@ -72,4 +73,16 @@ expect {
 	ends == [2, 5, 6] and
 		Bidi.paragraph_ranges_limited(source, limits) == Ok(ranges) and
 			Bidi.paragraph_ranges_limited(source, short) == Err(LimitExceeded({ resource: OutputItems, limit: 2, required: 3 }))
+}
+
+expect {
+	source = "É. Γ!"
+	exact = { max_input_bytes: 7.U64, max_items: 2.U64 }
+	one = { ..exact, max_items: 1.U64 }
+	short = { ..exact, max_input_bytes: 6.U64 }
+	Sentence.ranges_limited(source, exact) == Ok(Sentence.ranges(source)) and
+		Sentence.slices_limited(source, exact) == Ok(["É. ", "Γ!"]) and
+			Sentence.owned_limited(source, exact) == Ok(["É. ", "Γ!"]) and
+				Sentence.owned_limited(source, one) == Err(LimitExceeded({ resource: OutputItems, limit: 1, required: 2 })) and
+					Sentence.slices_limited(source, short) == Err(LimitExceeded({ resource: InputBytes, limit: 6, required: 7 }))
 }

@@ -9,6 +9,8 @@ import Utf8Model
 import Utf8LimitProof
 import GraphemeTarget
 import WordTarget
+import SentenceTarget
+import SentenceModel
 import LineBreakTarget
 
 target = Fuzz.suite([
@@ -16,5 +18,6 @@ target = Fuzz.suite([
 	Utf8Model.target,
 	GraphemeTarget.target,
 	WordTarget.target,
+	SentenceTarget.target,
 	LineBreakTarget.target,
 ])

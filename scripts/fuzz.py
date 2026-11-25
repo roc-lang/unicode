@@ -68,6 +68,7 @@ TARGETS = {
         Target("utf8-model", "source_suite", 4),
         Target("grapheme", "source_suite", 385),
         Target("word", "source_suite", 385),
+        Target("sentence", "source_suite", 385),
         Target("line-break", "source_suite", 385),
         Target("case", "scalar_suite", 385),
         Target("property", "scalar_suite", 385),
@@ -234,6 +235,7 @@ def target_seed_payloads(target: Target) -> list[tuple[str, bytes]]:
     parse_tests = {
         "grapheme": unicode_data.parse_grapheme_tests,
         "word": unicode_data.parse_word_break_tests,
+        "sentence": unicode_data.parse_sentence_break_tests,
         "line-break": unicode_data.parse_line_break_tests,
         "bidi": unicode_data.parse_bidi_character_tests,
     }

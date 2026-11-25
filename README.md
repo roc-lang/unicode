@@ -144,6 +144,21 @@ distinguishes that policy axis from the Unicode/UAX version.
 complete strings under an explicit policy with a caller-supplied dictionary
 and byte limits.
 
+## Sentence segmentation
+
+Sentence segmentation follows the Unicode default UAX #29 C3-1 rules.
+`Sentence.iter_ranges`, `Sentence.fold_ranges`, and `Sentence.ranges` report
+the same half-open UTF-8 byte ranges. `Sentence.slices` retains the source
+backing storage and `Sentence.owned` makes independent copies. The default
+can split at abbreviations such as “Mr.”. The `_limited` collectors enforce
+input-byte and output-item budgets and fail atomically.
+
+`Sentence.Cursor` accepts scalar-aligned chunks and emits the same ranges as
+the complete-source API. After an ambiguous period its one pending boundary
+can wait for arbitrarily distant lowercase right context. The cursor retains
+only state and the pending coordinate. Explicit completion emits any pending
+boundary and the final nonempty range.
+
 ## Bidirectional text
 
 `Bidi` implements Unicode 18.0.0 UAX #9 revision 52 at conformance level
@@ -312,8 +327,8 @@ bounds and invariant evidence. Run its focused checks with
 The [testing guide](docs/testing.md) describes how to build and review
 correctness oracles, conformance checks, and resource evidence.
 
-Each purpose-built test app lives in `tests/apps/<suite>/main.roc` with an
-adjacent `spec.json`. The runner builds optimized binaries once, sends cases
+Purpose-built test apps live under `tests/apps` with adjacent
+`spec.json` files. The word and sentence suites share an app. The runner builds optimized binaries once, sends cases
 over a versioned stdin protocol, and executes deterministic shards in parallel.
 The example runner independently builds the package bundle, serves only that
 archive on loopback, rewrites temporary copies of every example to use it,
@@ -329,6 +344,7 @@ ROC=roc scripts/all_tests.sh
 python3 scripts/test.py grapheme
 python3 scripts/test.py line-break --jobs 8
 python3 scripts/test.py word --jobs 8
+python3 scripts/test.py sentence --jobs 8
 python3 scripts/test.py case --jobs 8
 python3 scripts/test_case_icu.py --download
 python3 scripts/test.py properties --jobs 8
@@ -340,7 +356,9 @@ The grapheme suite covers all 853 official Unicode 18 conformance cases, the
 line-break suite covers all 19,346 official Unicode 18 cases through both
 complete-string and one-scalar-per-chunk paths, and the word suite covers all
 1,944 official Unicode 18 cases through complete and scalar-aligned chunked
-paths. The Case suite covers 11,567 deterministic Unicode 18 oracle cases:
+paths. The sentence suite covers all 512 official Unicode 18 cases through
+complete traversal and every scalar-aligned two-chunk split. The Case suite
+covers 11,567 deterministic Unicode 18 oracle cases:
 all simple mappings, all SpecialCasing witnesses and controls, all CaseFolding
 records under every public fold profile, and focused source-fact, R3,
 no-normalization, context, supplementary, and exact-limit checks. The property suite covers every

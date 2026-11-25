@@ -44,6 +44,14 @@
     { "name": "regional-indicator-pair", "bytes_hex": "F09F87BAF09F87B8" },
     { "name": "extend-zwj", "bytes_hex": "65CC81E2808D78" }
   ],
+  "sentence": [
+    { "name": "late-lowercase", "bytes_hex": "C3892E20E284A2CC81E284A2CC8161" },
+    { "name": "late-uppercase", "bytes_hex": "C3892E20E284A2CC81E284A2CC8141" },
+    { "name": "pending-at-completion", "bytes_hex": "412E20E284A2CC81" },
+    { "name": "paragraph-separator-and-mark", "bytes_hex": "410ACC8142" },
+    { "name": "initials-and-decimal", "bytes_hex": "552E532E20332E3134" },
+    { "name": "sentence-final-punctuation", "bytes_hex": "2253746F7021222020476F2E" }
+  ],
   "line-break": [
     { "name": "cjk-ideograph-run", "bytes_hex": "E4B8ADE69687E5AD97E7ACA6E4B8B2" },
     { "name": "hyphenated-compound", "bytes_hex": "77656C6C2D6B6E6F776E" },

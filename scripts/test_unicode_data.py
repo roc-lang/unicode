@@ -217,6 +217,25 @@ class UnicodeDataTests(unittest.TestCase):
         self.assertIn("extended_pictographic : Bool", generated)
         self.assertIn("WordBreak : [Other, CR, LF, Newline", generated)
 
+    def test_sentence_break_data_and_generated_view_are_pinned(self) -> None:
+        manifest = unicode_data.load_manifest()
+        source = unicode_data.load_property_data(manifest).sentence_break
+        self.assertEqual(len(source.records), 2986)
+        self.assertEqual(len(source.defaults), 1)
+        default = source.defaults[0]
+        self.assertEqual(
+            (default.start, default.end, default.property, default.value),
+            (0, unicode_data.MAX_CODE_POINT, "Sentence_Break", "Other"),
+        )
+        cases = unicode_data.parse_sentence_break_tests(manifest)
+        self.assertEqual(len(cases), 512)
+        self.assertIn("8.0", {rule for case in cases for rule in case.rules})
+        generated = unicode_data.render_sentence_data(manifest, "18.0.0", source)
+        self.assertEqual(
+            generated,
+            (unicode_data.ROOT / "package" / "InternalSentenceData.roc").read_text(encoding="utf-8"),
+        )
+
     def test_word_break_renderer_rejects_private_id_overflow(self) -> None:
         manifest = unicode_data.load_manifest()
         properties = unicode_data.load_property_data(manifest)
