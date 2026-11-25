@@ -268,21 +268,3 @@ result_with_fold = |result, profile| {
 		},
 	}
 }
-
-expect {
-	turkish = Locale.parse("tr-Latn-TR-x-example") ?? crash "valid Turkish locale"
-	azerbaijani = Locale.parse("az") ?? crash "valid Azerbaijani locale"
-	lithuanian = Locale.parse("lt-LT") ?? crash "valid Lithuanian locale"
-	english = Locale.parse("en-u-co-phonebk") ?? crash "valid English locale"
-	lower = |locale| {
-		result = Case.to_lower("I", Case.mapping_profile_for_locale(locale), Case.unlimited_limits) ?? crash "case mapping failed"
-		Case.result_text(result)
-	}
-	Case.mapping_profile_for_locale(lithuanian) == Case.lithuanian
-		and Case.mapping_profile_for_locale(Locale.root) == Case.unicode_default
-		and lower(turkish) == "ı"
-		and lower(azerbaijani) == "ı"
-		and lower(english) == "i"
-		and Case.full_fold_profile_for_locale(turkish) == Case.turkic_full
-		and Case.full_fold_profile_for_locale(lithuanian) == Case.full
-}

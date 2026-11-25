@@ -202,7 +202,8 @@ atomic rather than a partial result.
 language, script, region and variants, Unicode `u` and transformed `t`
 extensions, other singletons and trailing private use. `Locale.to_str`
 formats the identifier with consistent casing and component order, and
-`Locale.root` formats as `und`. A successful parse establishes syntax.
+`Locale.root` formats as `und`. Use `Locale.parse_limited` to enforce a byte
+budget before parsing untrusted text. A successful parse establishes syntax.
 Registered aliases, likely subtags, data availability, and locale fallback
 require a consumer with the relevant locale catalog.
 [UTS #35, Unicode Locale Identifier](https://www.unicode.org/reports/tr35/tr35-79/tr35.html#Unicode_locale_identifier)
