@@ -1,6 +1,7 @@
 import BidiClass
 import BidiProperties
 import ByteRange
+import InternalBoundedCollect
 import InternalUtf8
 import Scalar
 import ScalarRange
@@ -41,7 +42,23 @@ Bidi :: [].{
 	## terminate their preceding paragraph. No artificial empty paragraph is
 	## produced after a final separator.
 	paragraph_ranges : Str -> List(TextRange)
-	paragraph_ranges = |source| p1_ranges(source)
+	paragraph_ranges = |source| Bidi.iter_paragraph_ranges(source).fold([], |ranges, range| ranges.append(range))
+
+	## Lazily scan P1 paragraphs in source order. A pending CR may require one
+	## scalar of lookahead, kept as coordinates and a scalar identity.
+	iter_paragraph_ranges : Str -> Iter(TextRange)
+	iter_paragraph_ranges = |source| {
+		Iter.custom({ cursor: InternalUtf8.init(source), pending: None, emit_empty: Bool.True }, Err(Unknown), next_p1_range)
+	}
+
+	CollectionLimits : InternalBoundedCollect.Limits
+	CollectionError : InternalBoundedCollect.Error
+
+	## Collect P1 paragraph ranges under input-byte and output-item limits.
+	paragraph_ranges_limited : Str, CollectionLimits -> Try(List(TextRange), CollectionError)
+	paragraph_ranges_limited = |source, limits| {
+		InternalBoundedCollect.from_iter(source.count_utf8_bytes(), limits, |{}| Bidi.iter_paragraph_ranges(source), |range| range)
+	}
 
 	analyze_paragraph : Str, BaseDirection, Limits -> Try(Analysis, Error)
 	analyze_paragraph = |source, base_direction, limits| analyze_source(source, base_direction, limits, TextPosition.from_offsets(0, 0))
@@ -217,73 +234,60 @@ next_logical_run = |state| {
 	Err(NoMore)
 }
 
-p1_ranges = |source| {
-	var $ranges = []
-	var $byte_start = 0.U64
-	var $scalar_start = 0.U64
-	var $final_byte = 0.U64
-	var $final_scalar = 0.U64
-	var $pending_cr = None
-	var $cursor = InternalUtf8.init(source)
+P1State : {
+	cursor : InternalUtf8.Cursor,
+	pending : [None, Some(InternalUtf8.LocatedScalar)],
+	emit_empty : Bool,
+}
+
+next_p1_range : P1State -> Try((TextRange, P1State), [NoMore])
+next_p1_range = |state| {
+	start = match state.pending {
+		None => { byte: state.cursor.byte_offset, scalar: state.cursor.scalar_index }
+		Some(item) => { byte: item.byte_start, scalar: item.scalar_index }
+	}
+	var $current = state.cursor
+	var $pending = state.pending
 	while Bool.True {
-		step = match InternalUtf8.next($cursor) {
-			Done => break
-			One(value) => value
+		item = match $pending {
+			Some(saved) => {
+				$pending = None
+				saved
+			}
+			None => match InternalUtf8.next($current) {
+				Done => break
+				One({ item: decoded, rest }) => {
+					$current = rest
+					decoded
+				}
+			}
 		}
-		located = step.item
-		$cursor = step.rest
-		$final_byte = located.byte_end
-		$final_scalar = match located.scalar_index.plus_try(1) {
-			Ok(next) => next
-			Err(Overflow) => U64.highest
-		}
-		value = located.scalar
-		match $pending_cr {
-			Some(cr) => {
-				if value == 0x000A {
-					$ranges = $ranges.append(range_from_offsets($byte_start, $final_byte, $scalar_start, $final_scalar))
-					$byte_start = $final_byte
-					$scalar_start = $final_scalar
-					$pending_cr = None
-				} else {
-					$ranges = $ranges.append(range_from_offsets($byte_start, cr.byte_end, $scalar_start, cr.scalar_end))
-					$byte_start = cr.byte_end
-					$scalar_start = cr.scalar_end
-					$pending_cr = None
-					if value == 0x000D {
-						$pending_cr = Some({ byte_end: $final_byte, scalar_end: $final_scalar })
-					} else if is_p1_separator(value) {
-						$ranges = $ranges.append(range_from_offsets($byte_start, $final_byte, $scalar_start, $final_scalar))
-						$byte_start = $final_byte
-						$scalar_start = $final_scalar
+		if item.scalar == 0x000D {
+			# CRLF belongs to one paragraph. Preserve a non-LF lookahead for
+			# the next call so traversal decodes each scalar exactly once.
+			end_cursor = $current
+			match InternalUtf8.next(end_cursor) {
+				One({ item: after_cr, rest }) => {
+					if after_cr.scalar == 0x000A {
+						$current = rest
+					} else {
+						range = range_from_offsets(start.byte, end_cursor.byte_offset, start.scalar, end_cursor.scalar_index)
+						return Ok((range, { cursor: rest, pending: Some(after_cr), emit_empty: Bool.False }))
 					}
 				}
+				Done => {}
 			}
-			None => {
-				if value == 0x000D {
-					$pending_cr = Some({ byte_end: $final_byte, scalar_end: $final_scalar })
-				} else if is_p1_separator(value) {
-					$ranges = $ranges.append(range_from_offsets($byte_start, $final_byte, $scalar_start, $final_scalar))
-					$byte_start = $final_byte
-					$scalar_start = $final_scalar
-				}
-			}
+			break
+		}
+		if is_p1_separator(item.scalar) {
+			break
 		}
 	}
-	match $pending_cr {
-		Some(cr) => {
-			$ranges = $ranges.append(range_from_offsets($byte_start, cr.byte_end, $scalar_start, cr.scalar_end))
-			$byte_start = cr.byte_end
-			$scalar_start = cr.scalar_end
-		}
-		None => {}
-	}
-	if $final_scalar == 0 {
-		[range_from_offsets(0, 0, 0, 0)]
-	} else if $scalar_start < $final_scalar {
-		$ranges.append(range_from_offsets($byte_start, $final_byte, $scalar_start, $final_scalar))
+	if start.byte < $current.byte_offset or state.emit_empty {
+		range = range_from_offsets(start.byte, $current.byte_offset, start.scalar, $current.scalar_index)
+		Ok((range, { cursor: $current, pending: None, emit_empty: Bool.False }))
 	} else {
-		$ranges
+		Err(NoMore)
 	}
 }
 
@@ -296,100 +300,16 @@ range_from_offsets = |byte_start, byte_end, scalar_start, scalar_end| {
 }
 
 is_p1_range = |source, selected| {
-	## This deliberately does not call `p1_ranges`: range analysis must not
-	## allocate one result per preceding paragraph just to validate `selected`.
-	## A pending CR delays commitment until the next scalar determines whether
-	## it is the CR half of CR LF.
-	var $byte_start = 0.U64
-	var $scalar_start = 0.U64
-	var $final_byte = 0.U64
-	var $final_scalar = 0.U64
-	var $pending_cr = None
-	for located in Scalar.iter(source) {
-		$final_byte = ByteRange.end(located.byte_range)
-		$final_scalar = match located.scalar_index.plus_try(1) {
-			Ok(next) => next
-			Err(Overflow) => return Bool.False
+	start = ByteRange.start(TextRange.byte_range(selected))
+	for range in Bidi.iter_paragraph_ranges(source) {
+		if TextRange.is_eq(range, selected) {
+			return Bool.True
 		}
-		value = Scalar.to_u32(located.scalar)
-		match $pending_cr {
-			Some(cr) => {
-				if value == 0x000A {
-					status = p1_candidate(selected, $byte_start, $final_byte, $scalar_start, $final_scalar)
-					if status.matches {
-						return Bool.True
-					}
-					if status.passed {
-						return Bool.False
-					}
-					$byte_start = $final_byte
-					$scalar_start = $final_scalar
-					$pending_cr = None
-				} else {
-					status = p1_candidate(selected, $byte_start, cr.byte_end, $scalar_start, cr.scalar_end)
-					if status.matches {
-						return Bool.True
-					}
-					if status.passed {
-						return Bool.False
-					}
-					$byte_start = cr.byte_end
-					$scalar_start = cr.scalar_end
-					$pending_cr = None
-					if value == 0x000D {
-						$pending_cr = Some({ byte_end: $final_byte, scalar_end: $final_scalar })
-					} else if is_p1_separator(value) {
-						separator_status = p1_candidate(selected, $byte_start, $final_byte, $scalar_start, $final_scalar)
-						if separator_status.matches {
-							return Bool.True
-						}
-						if separator_status.passed {
-							return Bool.False
-						}
-						$byte_start = $final_byte
-						$scalar_start = $final_scalar
-					}
-				}
-			}
-			None => {
-				if value == 0x000D {
-					$pending_cr = Some({ byte_end: $final_byte, scalar_end: $final_scalar })
-				} else if is_p1_separator(value) {
-					status = p1_candidate(selected, $byte_start, $final_byte, $scalar_start, $final_scalar)
-					if status.matches {
-						return Bool.True
-					}
-					if status.passed {
-						return Bool.False
-					}
-					$byte_start = $final_byte
-					$scalar_start = $final_scalar
-				}
-			}
+		if start < ByteRange.end(TextRange.byte_range(range)) {
+			return Bool.False
 		}
 	}
-	match $pending_cr {
-		Some(cr) => p1_candidate(selected, $byte_start, cr.byte_end, $scalar_start, cr.scalar_end).matches
-		None => if $final_scalar == 0 {
-			TextRange.is_eq(selected, range_from_offsets(0, 0, 0, 0))
-		} else if $scalar_start < $final_scalar {
-			p1_candidate(selected, $byte_start, $final_byte, $scalar_start, $final_scalar).matches
-		} else {
-			Bool.False
-		}
-	}
-}
-
-## Exact candidate matching plus monotonic early rejection. Once a selected
-## byte start lies inside a completed P1 range, no later P1 range can match.
-p1_candidate = |selected, byte_start, byte_end, scalar_start, scalar_end| {
-	candidate = range_from_offsets(byte_start, byte_end, scalar_start, scalar_end)
-	if TextRange.is_eq(candidate, selected) {
-		{ matches: Bool.True, passed: Bool.False }
-	} else {
-		selected_bytes = TextRange.byte_range(selected)
-		{ matches: Bool.False, passed: ByteRange.start(selected_bytes) < byte_end }
-	}
+	Bool.False
 }
 
 analyze_source = |source, base_direction, limits, origin| {

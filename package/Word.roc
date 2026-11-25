@@ -1,3 +1,4 @@
+import InternalBoundedCollect
 import ByteRange
 import InternalWord
 
@@ -93,20 +94,45 @@ Word :: [].{
 
 	## Return seamless slices, retaining the source backing allocation.
 	slices : Str -> List(Str)
-	slices = |source| {
-		Word.ranges(source).map(|item| ByteRange.slice(item, source) ?? ...)
-	}
+	slices = |source| Word.ranges(source).map(|range| source_slice(source, range))
 
 	## Return independently owned strings for each word-boundary range.
 	owned : Str -> List(Str)
-	owned = |source| {
-		Word.ranges(source).map(
-			|item| {
-				slice = ByteRange.slice(item, source) ?? ...
-				Str.from_utf8(slice.to_utf8().map(|byte| byte)) ?? ...
-			},
-		)
+	owned = |source| Word.ranges(source).map(|range| owned_slice(source, range))
+
+	## Resource limits for the bounded collecting operations in this module.
+	CollectionLimits : InternalBoundedCollect.Limits
+	CollectionError : InternalBoundedCollect.Error
+
+	## Collect ranges with an input-byte and output-item limit. Fails atomically
+	## before exceeding either limit and uses the same traversal as `ranges`.
+	ranges_limited : Str, CollectionLimits -> Try(List(ByteRange), CollectionError)
+	ranges_limited = |source, limits| {
+		InternalBoundedCollect.from_iter(source.count_utf8_bytes(), limits, |{}| Word.iter_ranges(source), |range| range)
 	}
+
+	## Collect slices with an input-byte and output-item limit. Fails atomically
+	## before exceeding either limit and uses the same traversal as `slices`.
+	slices_limited : Str, CollectionLimits -> Try(List(Str), CollectionError)
+	slices_limited = |source, limits| {
+		InternalBoundedCollect.from_iter(source.count_utf8_bytes(), limits, |{}| Word.iter_ranges(source), |range| source_slice(source, range))
+	}
+
+	## Collect owned with an input-byte and output-item limit. Fails atomically
+	## before exceeding either limit and uses the same traversal as `owned`.
+	owned_limited : Str, CollectionLimits -> Try(List(Str), CollectionError)
+	owned_limited = |source, limits| {
+		InternalBoundedCollect.from_iter(source.count_utf8_bytes(), limits, |{}| Word.iter_ranges(source), |range| owned_slice(source, range))
+	}
+}
+
+# Both inputs come from the same boundary traversal. Its ranges are ordered
+# scalar boundaries within the source. Copying the slice bytes preserves UTF-8.
+source_slice = |source, range| ByteRange.slice(range, source) ?? ...
+
+owned_slice = |source, range| {
+	slice = source_slice(source, range)
+	Str.from_utf8(slice.to_utf8().map(|byte| byte)) ?? ...
 }
 
 fold_final = |state, emissions, emit| {

@@ -1447,7 +1447,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "suite",
         nargs="?",
-        choices=("all", "data", "bidi", "grapheme", "line-break", "word", "case", "properties", "allocations"),
+        choices=("all", "data", "bidi", "grapheme", "line-break", "word", "case", "properties", "allocations", "safety"),
         default="all",
     )
     parser.add_argument("--roc", default=os.environ.get("ROC", "roc"))
@@ -1461,6 +1461,11 @@ def main(argv: list[str] | None = None) -> int:
         app_specs = load_app_specs()
         if args.suite != "data":
             verify_pinned_roc(args.roc)
+        if args.suite in ("all", "safety"):
+            command([sys.executable, "scripts/check_api_safety.py"])
+            command([sys.executable, "-m", "unittest", "scripts/test_api_safety.py"])
+            for test in ("collect", "traversal"):
+                command([args.roc, "test", f"tests/safety/{test}.roc", "--no-cache"])
         if args.suite in ("all", "data"):
             run_data_checks()
         requested_apps = []

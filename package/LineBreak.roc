@@ -1,3 +1,4 @@
+import InternalBoundedCollect
 import InternalLineBreak
 import InternalUtf8
 import TextPosition
@@ -334,6 +335,25 @@ LineBreak :: [].{
 	opportunities_with = |source, profile| {
 		LineBreak.iter_opportunities_with(source, profile).fold([], |items, item| items.append(item))
 	}
+
+	## Resource limits for the bounded collecting operations in this module.
+	CollectionLimits : InternalBoundedCollect.Limits
+	CollectionError : InternalBoundedCollect.Error
+
+	## Collect boundaries with an input-byte and output-item limit. Fails atomically
+	## before exceeding either limit and uses the same traversal as `boundaries`.
+	boundaries_limited : Str, Profile, CollectionLimits -> Try(List(BreakBoundary), CollectionError)
+	boundaries_limited = |source, profile, limits| {
+		InternalBoundedCollect.from_iter(source.count_utf8_bytes(), limits, |{}| LineBreak.iter_boundaries_with(source, profile), |item| item)
+	}
+
+	## Collect opportunities with an input-byte and output-item limit. Fails atomically
+	## before exceeding either limit and uses the same traversal as `opportunities`.
+	opportunities_limited : Str, Profile, CollectionLimits -> Try(List(BreakOpportunity), CollectionError)
+	opportunities_limited = |source, profile, limits| {
+		InternalBoundedCollect.from_iter(source.count_utf8_bytes(), limits, |{}| LineBreak.iter_opportunities_with(source, profile), |item| item)
+	}
+
 }
 
 FoldProblem : [NoProblem, ScalarProblem(U64)]
