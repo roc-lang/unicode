@@ -144,6 +144,18 @@ distinguishes that policy axis from the Unicode/UAX version.
 complete strings under an explicit policy with a caller-supplied dictionary
 and byte limits.
 
+Sentence segmentation follows the Unicode default UAX #29 C3-1 rules.
+`Sentence.iter_ranges`, `Sentence.fold_ranges`, and `Sentence.ranges` report
+the same half-open UTF-8 byte ranges. `Sentence.slices` retains the source
+backing storage and `Sentence.owned` makes independent copies. The default
+can split at abbreviations such as “Mr.”.
+
+`Sentence.Cursor` accepts scalar-aligned chunks and emits the same ranges as
+the complete-source API. After an ambiguous period its one pending boundary
+can wait for arbitrarily distant lowercase right context. The cursor retains
+only state and the pending coordinate. Explicit completion emits any pending
+boundary and the final nonempty range.
+
 ## Bidirectional text
 
 `Bidi` implements Unicode 18.0.0 UAX #9 revision 52 at conformance level

@@ -21,6 +21,7 @@ package
 		ScalarRange,
 		Script,
 		ScriptItemization,
+		Sentence,
 		TextPosition,
 		TextRange,
 		ThaiLineBreak,

@@ -109,6 +109,10 @@ WORD_BREAK_PROPERTIES = (
     "WSegSpace",
     "ZWJ",
 )
+SENTENCE_BREAK_PROPERTIES = (
+    "Other", "CR", "LF", "Sep", "Extend", "Format", "Sp", "Lower", "Upper",
+    "OLetter", "Numeric", "ATerm", "SContinue", "STerm", "Close",
+)
 LINE_BREAK_PROPERTIES = (
     "AI", "AK", "AL", "AP", "AS", "B2", "BA", "BB", "BK", "CB", "CJ",
     "CL", "CM", "CP", "CR", "EB", "EM", "EX", "GL", "H2", "H3", "HH",
@@ -214,12 +218,17 @@ class GraphemeCase:
 
 
 @dataclass(frozen=True)
-class WordBreakCase:
+class SegmentationCase:
     case_id: str
     line: int
     code_points: tuple[int, ...]
     break_offsets: tuple[int, ...]
     rules: frozenset[str]
+
+
+# Keep the names used by the owning conformance drivers.
+WordBreakCase = SegmentationCase
+SentenceBreakCase = SegmentationCase
 
 
 @dataclass(frozen=True)
@@ -301,6 +310,7 @@ class ScriptProperties:
 class AlgorithmProperties:
     grapheme: PropertySource
     word_break: PropertySource
+    sentence_break: PropertySource
     east_asian_width: PropertySource
     emoji: PropertySource
     indic_conjunct_break: PropertySource
@@ -444,6 +454,9 @@ SOURCE_PROJECTION_CONTRACTS = {
     ("ucd-property-ranges", ("Word_Break",)): SourceProjectionContract(
         "ucd/auxiliary/WordBreakProperty.txt", "production-and-conformance"
     ),
+    ("ucd-property-ranges", ("Sentence_Break",)): SourceProjectionContract(
+        "ucd/auxiliary/SentenceBreakProperty.txt", "production-and-conformance"
+    ),
     ("ucd-property-ranges", ("Line_Break",)): SourceProjectionContract(
         "ucd/LineBreak.txt", "production-and-conformance"
     ),
@@ -464,6 +477,9 @@ SOURCE_PROJECTION_CONTRACTS = {
     ),
     ("uax-29-word-test", ()): SourceProjectionContract(
         "ucd/auxiliary/WordBreakTest.txt", "conformance", has_cases=True
+    ),
+    ("uax-29-sentence-test", ()): SourceProjectionContract(
+        "ucd/auxiliary/SentenceBreakTest.txt", "conformance", has_cases=True
     ),
     ("ucd-binary-property-ranges", EMOJI_PROPERTIES): SourceProjectionContract(
         "ucd/emoji/emoji-data.txt",
@@ -577,6 +593,14 @@ GENERATOR_CONTRACTS = {
         ("uax_29", "uts_51"),
         (),
         "package/InternalWordData.roc",
+        True,
+        "computed",
+    ),
+    "sentence-data": GeneratorContract(
+        (("ucd-property-ranges", ("Sentence_Break",)),),
+        ("uax_29",),
+        (),
+        "package/InternalSentenceData.roc",
         True,
         "computed",
     ),
@@ -1872,6 +1896,24 @@ def load_property_data(
             value="Other",
         ),
     )
+    sentence_name = _source_for(manifest, "ucd-property-ranges", ("Sentence_Break",))
+    sentence_text = verify_source(manifest, sentence_name)
+    sentence_source = str(data_path(manifest, sentence_name))
+    sentence_break = parse_ranges(
+        sentence_text,
+        source=sentence_source,
+        allowed_properties=SENTENCE_BREAK_PROPERTIES[1:],
+        default_marker=None,
+    )
+    sentence_defaults = (
+        _required_formal_default(
+            sentence_text,
+            source=sentence_source,
+            property_name="Sentence_Break",
+            declared_property=None,
+            value="Other",
+        ),
+    )
     eaw_name = _source_for(manifest, "ucd-property-ranges", ("East_Asian_Width",))
     eaw_text = verify_source(manifest, eaw_name)
     eaw_source = str(data_path(manifest, eaw_name))
@@ -1922,6 +1964,9 @@ def load_property_data(
         word_break, word_defaults, source=word_source, properties=("Word_Break",)
     )
     _validate_default_precedence(
+        sentence_break, sentence_defaults, source=sentence_source, properties=("Sentence_Break",)
+    )
+    _validate_default_precedence(
         eaw, eaw_defaults, source=eaw_source, properties=("East_Asian_Width",)
     )
     _validate_default_precedence(
@@ -1934,6 +1979,8 @@ def load_property_data(
         raise DataError(f"{gcb_source}: Grapheme_Cluster_Break values/sections drifted")
     if {record.property for record in word_break} != set(WORD_BREAK_PROPERTIES[1:]):
         raise DataError(f"{word_source}: Word_Break values/sections drifted")
+    if {record.property for record in sentence_break} != set(SENTENCE_BREAK_PROPERTIES[1:]):
+        raise DataError(f"{sentence_source}: Sentence_Break values/sections drifted")
     if {record.property for record in eaw} != set(EAW_PROPERTIES):
         raise DataError(f"{eaw_source}: East_Asian_Width values drifted")
     if {record.property for record in incb} != set(INCB_PROPERTIES):
@@ -1941,6 +1988,7 @@ def load_property_data(
     return AlgorithmProperties(
         PropertySource(tuple(gcb), gcb_defaults),
         PropertySource(tuple(word_break), word_defaults),
+        PropertySource(tuple(sentence_break), sentence_defaults),
         PropertySource(tuple(eaw), eaw_defaults),
         PropertySource(tuple(emoji), emoji_defaults),
         PropertySource(tuple(incb), incb_defaults),
@@ -2988,12 +3036,24 @@ def parse_grapheme_tests(
 def parse_word_break_tests(
     manifest: dict[str, object], text: str | None = None
 ) -> list[WordBreakCase]:
+    return _parse_segmentation_tests(manifest, "uax-29-word-test", "word-break", text)
+
+
+def parse_sentence_break_tests(
+    manifest: dict[str, object], text: str | None = None
+) -> list[SentenceBreakCase]:
+    return _parse_segmentation_tests(manifest, "uax-29-sentence-test", "sentence-break", text)
+
+
+def _parse_segmentation_tests(
+    manifest: dict[str, object], format_name: str, label: str, text: str | None
+) -> list[SegmentationCase]:
     version = release_version(manifest, "unicode")
-    source_key = _source_for(manifest, "uax-29-word-test", ())
+    source_key = _source_for(manifest, format_name, ())
     source_name = Path(str(_entry(manifest, source_key)["path"])).name
     if text is None:
         text = verify_source(manifest, source_key)
-    cases: list[WordBreakCase] = []
+    cases: list[SegmentationCase] = []
     for line_number, raw_line in enumerate(text.splitlines(), 1):
         stripped = raw_line.strip()
         if not stripped or stripped.startswith("#"):
@@ -3039,7 +3099,7 @@ def parse_word_break_tests(
                 f"got {len(rule_tokens)}"
             )
         cases.append(
-            WordBreakCase(
+            SegmentationCase(
                 case_id=f"{version}:{source_name}:{line_number}",
                 line=line_number,
                 code_points=tuple(code_points),
@@ -3049,7 +3109,7 @@ def parse_word_break_tests(
         )
     expected = _entry(manifest, source_key).get("cases")
     if expected != len(cases):
-        raise DataError(f"word-break case-count drift: expected {expected}, got {len(cases)}")
+        raise DataError(f"{label} case-count drift: expected {expected}, got {len(cases)}")
     return cases
 
 
@@ -3675,6 +3735,52 @@ def render_grapheme_data(
         "        _ => ...\n"
         "    }\n"
         "}\n\n"
+        f"page_index : List({paged.index_type})\n"
+        f"page_index = {_roc_list(paged.page_index)}\n\n"
+        "pages : List(U8)\n"
+        f"pages = {_roc_list(paged.flat_pages)}\n"
+    )
+
+
+def render_sentence_data(
+    manifest: dict[str, object], version: str, sentence: PropertySource
+) -> str:
+    encoded = _encoded_property(sentence, SENTENCE_BREAK_PROPERTIES)
+    paged = _selected_paged_bytes(encoded, manifest=manifest, generator="sentence-data")
+    page_size = 1 << paged.page_bits
+    matches = "\n".join(
+        f"        {index} => {value}" for index, value in enumerate(SENTENCE_BREAK_PROPERTIES)
+    )
+    return (
+        f"## GENERATED from Unicode {version} Sentence_Break. "
+        "Run `python3 scripts/unicode_data.py generate`. ##\n"
+        f"## layout: {len(paged.page_index)} {paged.index_type} page ids + "
+        f"{len(paged.pages)} x {page_size} U8 values; logical payload {paged.storage_bytes} bytes. ##\n\n"
+        "InternalSentenceData :: [].{\n"
+        f"    Class : [{', '.join(SENTENCE_BREAK_PROPERTIES)}]\n\n"
+        "    lookup : U32 -> Class\n"
+        "    lookup = |scalar| {\n"
+        "        value = if scalar < 128 {\n"
+        "            ascii_value(scalar)\n"
+        "        } else if scalar > 0x10FFFF {\n"
+        "            0\n"
+        "        } else {\n"
+        f"            page = page_index.get(scalar.shr_wrap({paged.page_bits}).to_u64()) ?? 0\n"
+        f"            offset = page.to_u64() * {page_size} + scalar.bitwise_and({page_size - 1}).to_u64()\n"
+        "            pages.get(offset) ?? 0\n"
+        "        }\n"
+        "        from_u8(value)\n"
+        "    }\n"
+        "}\n\n"
+        "from_u8 : U8 -> InternalSentenceData.Class\n"
+        "from_u8 = |value| {\n"
+        "    match value {\n"
+        f"{matches}\n"
+        "        _ => Other\n"
+        "    }\n"
+        "}\n\n"
+        "ascii_value : U32 -> U8\n"
+        f"ascii_value = |u32| {_ascii_value_expression(encoded, default=0)}\n\n"
         f"page_index : List({paged.index_type})\n"
         f"page_index = {_roc_list(paged.page_index)}\n\n"
         "pages : List(U8)\n"
@@ -5623,6 +5729,7 @@ def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
         "grapheme-data": lambda: render_grapheme_data(manifest, version, gcb, incb, emoji),
         "legacy-grapheme-break": lambda: render_gcb(version, gcb),
         "word-data": lambda: render_word_data(manifest, version, word_break, emoji),
+        "sentence-data": lambda: render_sentence_data(manifest, version, properties.sentence_break),
         "case-data": lambda: render_case_data(manifest, version, canonical, case),
         "east-asian-width": lambda: render_eaw(
             version, eaw, properties.east_asian_width.defaults
@@ -5774,6 +5881,7 @@ def validate_all(manifest: dict[str, object]) -> None:
     load_script_properties(manifest)
     parse_grapheme_tests(manifest)
     parse_word_break_tests(manifest)
+    parse_sentence_break_tests(manifest)
     parse_line_break_tests(manifest)
     sum(1 for _ in parse_bidi_tests(manifest))
     sum(1 for _ in parse_bidi_character_tests(manifest))
