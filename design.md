@@ -501,6 +501,22 @@ transition core. Tailoring, including locale or dictionary segmentation, is a
 separate named and revisioned profile; it never changes the identity of this
 un-tailored default.
 
+### Normalization
+
+Normalization implements the four standard forms for the selected Unicode
+version. A total quick check uses the pinned per-form scalar values and
+canonical combining classes. When exact comparison requires transformation,
+it calls the same engine used to normalize complete strings.
+
+Canonical ordering can require retaining an arbitrarily long run of
+nonstarters. Normalization is therefore a complete-source transformation
+with explicit input, temporary-scalar, and output byte bounds. It emits no
+partial text on failure and returns owned text. It is a separate operation
+from boundary segmentation and case mapping. Identifier case folding
+applies the versioned NFKC_CF scalar mapping, including deletions, followed
+by canonical composition. Canonical caseless matching explicitly combines
+normalization with the full default fold.
+
 ### Case mapping and folding
 
 Default lowercase, uppercase, titlecase, and case folding implement the pinned
@@ -797,9 +813,10 @@ The package manifest, rather than this document, pins the exact release and
 revision of each source.
 
 - [The Unicode Standard](https://www.unicode.org/standard/standard.html)
-- [Unicode Core Default Case Algorithms](https://www.unicode.org/versions/Unicode17.0.0/core-spec/chapter-3/#Default_Case_Algorithms)
+- [Unicode Core Default Case Algorithms](https://www.unicode.org/versions/Unicode18.0.0/core-spec/chapter-3/#Default_Case_Algorithms)
 - [UAX #9: Unicode Bidirectional Algorithm](https://www.unicode.org/reports/tr9/)
 - [UAX #14: Unicode Line Breaking Algorithm](https://www.unicode.org/reports/tr14/)
+- [UAX #15: Unicode Normalization Forms](https://www.unicode.org/reports/tr15/)
 - [UAX #24: Unicode Script Property](https://www.unicode.org/reports/tr24/)
 - [UAX #29: Unicode Text Segmentation](https://www.unicode.org/reports/tr29/)
 - [UAX #44: Unicode Character Database](https://www.unicode.org/reports/tr44/)
