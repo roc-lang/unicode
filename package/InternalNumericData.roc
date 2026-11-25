@@ -22,6 +22,19 @@ InternalNumericData :: [].{
         _ => None
     }
 
+    decimal_digit : U32 -> [None, Some(U8)]
+    decimal_digit = |scalar| {
+        row = lookup_u8(scalar).to_u64()
+        match kinds.get(row) {
+            Ok(1) => match numerators.get(row) {
+                # The generator checks Decimal numerators are integers from 0 to 9.
+                Ok(numerator) => Some(numerator.to_u8_wrap())
+                Err(_) => None
+            }
+            _ => None
+        }
+    }
+
     value_of : U32 -> [None, Some(Rational)]
     value_of = |scalar| {
         row = lookup_u8(scalar).to_u64()

@@ -27,6 +27,11 @@ Numeric :: [].{
 	is_decimal_digit : Scalar -> Bool
 	is_decimal_digit = |scalar| Numeric.type_of(scalar) == Decimal
 
+	## Return the exact value from 0 through 9 when Numeric_Type=Decimal.
+	## The type and value share a single scalar index lookup.
+	decimal_digit : Scalar -> [None, Some(U8)]
+	decimal_digit = |scalar| InternalNumericData.decimal_digit(Scalar.to_u32(scalar))
+
 	## None is the UCD default Numeric_Value=NaN. A numeric zero is Some.
 	value_of : Scalar -> [None, Some(Rational)]
 	value_of = |scalar| InternalNumericData.value_of(Scalar.to_u32(scalar))

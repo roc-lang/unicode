@@ -75,6 +75,7 @@ for language and lexer policies. In particular, `White_Space` and
 
 `Numeric.type_of` distinguishes `Decimal`, `Digit`, `Numeric`, and `None`.
 `Numeric.is_decimal_digit` selects positional base-ten digits.
+`Numeric.decimal_digit` returns that digit from zero through nine when present.
 `Numeric.value_of` returns an exact reduced signed fraction with a positive
 denominator, including the Unihan-derived numeric values in the extracted UCD.
 `None` represents the UCD's missing value. Numeric zero is present.

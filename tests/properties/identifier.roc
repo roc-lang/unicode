@@ -63,10 +63,16 @@ expect {
 	cases.all(
 		|(code_point, kind, value)| {
 			match Scalar.from_u32(code_point) {
-				Ok(scalar) =>
-					Numeric.type_of(scalar) == kind and
-						Numeric.is_decimal_digit(scalar) == (kind == Decimal) and
-							Numeric.value_of(scalar) == value
+				Ok(scalar) => {
+					digit = match (kind, value) {
+						(Decimal, Some(rational)) => Some(rational.numerator.to_u8_wrap())
+						_ => None
+					}
+					Numeric.decimal_digit(scalar) == digit and
+						Numeric.type_of(scalar) == kind and
+							Numeric.is_decimal_digit(scalar) == (kind == Decimal) and
+								Numeric.value_of(scalar) == value
+				}
 				Err(_) => Bool.False
 			}
 		},
