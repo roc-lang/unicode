@@ -14,6 +14,8 @@ Scan : { run : List(RunScalar), candidates : List(TextPosition) }
 
 Choice : { unknown : U64, tokens : U64, end : U64, known : Bool }
 
+ChoiceSlot : [Uncomputed, Computed(Choice)]
+
 ## Opt-in Thai dictionary line breaking for complete strings.
 ##
 ## Uses the Unicode line-break decisions under PreserveGraphemes, then opens
@@ -31,6 +33,7 @@ ThaiLineBreak :: [].{
 		DictionaryByteLimit({ word : U64, limit : U64 }),
 		WordByteLimit({ word : U64, limit : U64 }),
 		InvalidWord({ word : U64, byte_offset : U64 }),
+		InternalIndexFault,
 	]
 
 	Dictionary :: { revision : Str, nodes : List(TrieNode) }.{
@@ -69,7 +72,7 @@ ThaiLineBreak :: [].{
 	}
 
 	Limits : { max_input_bytes : U64, max_run_bytes : U64 }
-	Error : [InputByteLimit({ limit : U64 }), RunByteLimit({ start : TextPosition, limit : U64 })]
+	Error : [InputByteLimit({ limit : U64 }), RunByteLimit({ start : TextPosition, limit : U64 }), InternalIndexFault]
 
 	## Return ordered logical opportunities in the original byte and scalar
 	## coordinates. A resource failure is atomic.
@@ -89,7 +92,7 @@ ThaiLineBreak :: [].{
 		}
 		nodes = dictionary.nodes
 		candidates = find_candidates(source, nodes, limits.max_run_bytes)?
-		Ok(merge_candidates(source, candidates))
+		merge_candidates(source, candidates)
 	}
 }
 
@@ -111,17 +114,21 @@ spelling_head = |scalar| {
 node : U32, U64 -> TrieNode
 node = |scalar, sibling| { scalar, first_child: 0, sibling, terminal: Bool.False }
 
-trie_child : List(TrieNode), U64, U32 -> U64
+trie_child : List(TrieNode), U64, U32 -> Try(U64, [InternalIndexFault])
 trie_child = |nodes, parent, scalar| {
-	var $at = (nodes.get(parent) ?? node(0, 0)).first_child
+	parent_node = nodes.get(parent) ?? return Err(InternalIndexFault)
+	var $at = parent_node.first_child
 	while $at != 0 {
-		candidate = nodes.get($at) ?? node(0, 0)
+		candidate = nodes.get($at) ?? return Err(InternalIndexFault)
+		if $at <= parent or candidate.sibling >= $at {
+			return Err(InternalIndexFault)
+		}
 		if candidate.scalar == scalar {
-			return $at
+			return Ok($at)
 		}
 		$at = candidate.sibling
 	}
-	0
+	Ok(0)
 }
 
 insert_word : List(TrieNode), InternalUtf8.Cursor, U64 -> Try(List(TrieNode), ThaiLineBreak.DictionaryError)
@@ -135,8 +142,8 @@ insert_word = |initial_nodes, initial_cursor, word| {
 				if $parent == 0 {
 					return Err(InvalidWord({ word, byte_offset: 0 }))
 				}
-				last = $nodes.get($parent) ?? node(0, 0)
-				return Ok($nodes.set($parent, { ..last, terminal: Bool.True }) ?? [])
+				last = $nodes.get($parent) ?? return Err(InternalIndexFault)
+				return $nodes.set($parent, { ..last, terminal: Bool.True }).map_err(|_| InternalIndexFault)
 			}
 			One({ item, rest }) => {
 				valid = if $parent == 0 {
@@ -147,11 +154,11 @@ insert_word = |initial_nodes, initial_cursor, word| {
 				if !valid {
 					return Err(InvalidWord({ word, byte_offset: item.byte_start }))
 				}
-				child = trie_child($nodes, $parent, item.scalar)
+				child = trie_child($nodes, $parent, item.scalar) ?? return Err(InternalIndexFault)
 				if child == 0 {
-					parent = $nodes.get($parent) ?? node(0, 0)
+					parent = $nodes.get($parent) ?? return Err(InternalIndexFault)
 					new_id = $nodes.len()
-					$nodes = $nodes.set($parent, { ..parent, first_child: new_id }) ?? []
+					$nodes = $nodes.set($parent, { ..parent, first_child: new_id }) ?? return Err(InternalIndexFault)
 					$nodes = $nodes.append(node(item.scalar, parent.first_child))
 					$parent = new_id
 				} else {
@@ -173,7 +180,7 @@ find_candidates = |source, nodes, max_run_bytes| {
 		match InternalUtf8.next($cursor) {
 			Done => {
 				scan = finish_cluster($scan, $cluster, $cursor.byte_offset, nodes, max_run_bytes)?
-				return Ok(segment_run(scan.run, nodes, scan.candidates))
+				return segment_run(scan.run, nodes, scan.candidates)
 			}
 			One({ item, rest }) => {
 				transition = InternalGrapheme.push($grapheme, item.scalar, item.byte_start)
@@ -201,12 +208,14 @@ find_candidates = |source, nodes, max_run_bytes| {
 finish_cluster : Scan, Cluster, U64, List(TrieNode), U64 -> Try(Scan, ThaiLineBreak.Error)
 finish_cluster = |{ run, candidates }, cluster, end, nodes, max_run_bytes| {
 	if !cluster.eligible {
-		return Ok({ run: [], candidates: segment_run(run, nodes, candidates) })
+		segmented = segment_run(run, nodes, candidates)?
+		return Ok({ run: [], candidates: segmented })
 	}
 	at = TextPosition.from_offsets(cluster.start.byte_offset, cluster.start.scalar_index)
 	run_start = match run.first() {
 		Ok({ edge: Edge(start), scalar: _ }) => start
-		_ => at
+		Ok({ edge: Interior, scalar: _ }) => return Err(InternalIndexFault)
+		Err(_) => at
 	}
 	if end - run_start.byte_offset() > max_run_bytes {
 		return Err(RunByteLimit({ start: run_start, limit: max_run_bytes }))
@@ -215,7 +224,7 @@ finish_cluster = |{ run, candidates }, cluster, end, nodes, max_run_bytes| {
 	var $cursor = cluster.start
 	while $cursor.byte_offset < end {
 		match InternalUtf8.next($cursor) {
-			Done => break
+			Done => return Err(InternalIndexFault)
 			One({ item, rest }) => {
 				edge = if item.byte_start == cluster.start.byte_offset {
 					Edge(at)
@@ -233,73 +242,89 @@ finish_cluster = |{ run, candidates }, cluster, end, nodes, max_run_bytes| {
 # DP scores fit U64: both counts are at most the number of indexed scalars,
 # which is at most one third of the source byte count. Matching walks the
 # trie only until a path fails or reaches the end of the current run.
-segment_run : List(RunScalar), List(TrieNode), List(TextPosition) -> List(TextPosition)
+segment_run : List(RunScalar), List(TrieNode), List(TextPosition) -> Try(List(TextPosition), ThaiLineBreak.Error)
 segment_run = |run, nodes, candidates| {
 	if run.is_empty() {
-		return candidates
+		return Ok(candidates)
 	}
 	end = run.len()
 	empty = { unknown: 0, tokens: 0, end, known: Bool.False }
-	var $choices = List.repeat(empty, end + 1)
+	var $choices = List.repeat(Uncomputed, end).append(Computed(empty))
 	var $at = end
 	var $next_edge = end
 	while $at > 0 {
 		$at = $at - 1
-		match run.get($at) {
-			Ok({ edge: Edge(_), scalar: _ }) => {
-				fallback = $choices.get($next_edge) ?? empty
+		item = run.get($at) ?? return Err(InternalIndexFault)
+		match item.edge {
+			Edge(_) => {
+				fallback = choice_at($choices, $next_edge)?
 				unknown = { unknown: fallback.unknown + 1, tokens: fallback.tokens + 1, end: $next_edge, known: Bool.False }
-				best = choose_word(run, nodes, $choices, $at, unknown, empty)
-				$choices = $choices.set($at, best) ?? []
+				best = choose_word(run, nodes, $choices, $at, unknown)?
+				$choices = $choices.set($at, Computed(best)) ?? return Err(InternalIndexFault)
 				$next_edge = $at
 			}
-			_ => {}
+			Interior => {}
 		}
 	}
 	var $result = candidates
 	var $previously_known = Bool.False
 	while $at < end {
-		choice = $choices.get($at) ?? empty
-		if $previously_known and choice.known {
-			match run.get($at) {
-				Ok({ edge: Edge(at), scalar: _ }) => {
+		choice = choice_at($choices, $at)?
+		if choice.end <= $at or choice.end > end {
+			return Err(InternalIndexFault)
+		}
+		match run.get($at) {
+			Ok({ edge: Edge(at), scalar: _ }) => {
+				if $previously_known and choice.known {
 					$result = $result.append(at)
 				}
-				_ => {}
 			}
+			_ => return Err(InternalIndexFault)
 		}
 		$previously_known = choice.known
 		$at = choice.end
 	}
-	$result
+	Ok($result)
 }
 
-choose_word : List(RunScalar), List(TrieNode), List(Choice), U64, Choice, Choice -> Choice
-choose_word = |run, nodes, choices, start, unknown, empty| {
+choice_at : List(ChoiceSlot), U64 -> Try(Choice, ThaiLineBreak.Error)
+choice_at = |choices, index| match choices.get(index) {
+	Ok(Computed(choice)) => Ok(choice)
+	_ => Err(InternalIndexFault)
+}
+
+choose_word : List(RunScalar), List(TrieNode), List(ChoiceSlot), U64, Choice -> Try(Choice, ThaiLineBreak.Error)
+choose_word = |run, nodes, choices, start, unknown| {
 	var $best = unknown
 	var $at = start
 	var $parent = 0.U64
 	while $at < run.len() {
-		item = run.get($at) ?? { scalar: 0, edge: Interior }
-		child = trie_child(nodes, $parent, item.scalar)
+		item = run.get($at) ?? return Err(InternalIndexFault)
+		child = trie_child(nodes, $parent, item.scalar) ?? return Err(InternalIndexFault)
 		if child == 0 {
 			break
 		}
 		$at = $at + 1
 		$parent = child
-		at_edge = match run.get($at) {
-			Ok({ edge: Interior, scalar: _ }) => Bool.False
-			_ => Bool.True
+		at_edge = if $at == run.len() {
+			Bool.True
+		} else {
+			next = run.get($at) ?? return Err(InternalIndexFault)
+			match next.edge {
+				Interior => Bool.False
+				Edge(_) => Bool.True
+			}
 		}
-		if at_edge and (nodes.get(child) ?? node(0, 0)).terminal {
-			suffix = choices.get($at) ?? empty
+		child_node = nodes.get(child) ?? return Err(InternalIndexFault)
+		if at_edge and child_node.terminal {
+			suffix = choice_at(choices, $at)?
 			proposed = { unknown: suffix.unknown, tokens: suffix.tokens + 1, end: $at, known: Bool.True }
 			if better(proposed, $best) {
 				$best = proposed
 			}
 		}
 	}
-	$best
+	Ok($best)
 }
 
 better : Choice, Choice -> Bool
@@ -313,10 +338,10 @@ better = |candidate, best| {
 	}
 }
 
-merge_candidates : Str, List(TextPosition) -> List(LineBreak.BreakOpportunity)
+merge_candidates : Str, List(TextPosition) -> Try(List(LineBreak.BreakOpportunity), ThaiLineBreak.Error)
 merge_candidates = |source, candidates| {
 	if candidates.is_empty() {
-		return LineBreak.opportunities_with(source, PreserveGraphemes)
+		return Ok(LineBreak.opportunities_with(source, PreserveGraphemes))
 	}
 	var $result = []
 	var $index = 0.U64
@@ -342,5 +367,8 @@ merge_candidates = |source, candidates| {
 			}
 		}
 	}
-	$result
+	if $index != candidates.len() {
+		return Err(InternalIndexFault)
+	}
+	Ok($result)
 }
