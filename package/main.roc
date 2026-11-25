@@ -18,6 +18,7 @@ package
 		LineBreak,
 		Locale,
 		Normalization,
+		Numeric,
 		Property,
 		Scalar,
 		ScalarRange,

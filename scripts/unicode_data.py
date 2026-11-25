@@ -14,7 +14,8 @@ import hashlib
 import json
 import re
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from fractions import Fraction
 from pathlib import Path
 from typing import Callable, Iterable
 from urllib.parse import urlparse
@@ -69,13 +70,17 @@ EMOJI_PROPERTIES = (
     "Emoji_Component",
     "Extended_Pictographic",
 )
+DERIVED_IDENTIFIER_PROPERTIES = ("Alphabetic", "XID_Start", "XID_Continue")
+PATTERN_PROPERTIES = ("White_Space", "Pattern_Syntax", "Pattern_White_Space")
 DERIVED_CORE_PROPERTIES = (
     "Default_Ignorable_Code_Point",
     "Indic_Conjunct_Break",
     "Cased",
     "Case_Ignorable",
+    *DERIVED_IDENTIFIER_PROPERTIES,
 )
-PROP_LIST_PROPERTIES = ("Variation_Selector", "Soft_Dotted")
+PROP_LIST_PROPERTIES = ("Variation_Selector", "Soft_Dotted", *PATTERN_PROPERTIES)
+NUMERIC_TYPES = ("None", "Decimal", "Digit", "Numeric")
 UNICODE_DATA_PROPERTIES = (
     "Bidi_Mirrored",
     "Decomposition_Mapping",
@@ -133,6 +138,7 @@ BIDI_CLASS_VALUES = (
 )
 BIDI_TEST_MODE_BITS = ((1, 0), (2, 1), (4, 2))
 PUBLIC_ALIAS_PROPERTIES = (
+    "Alphabetic",
     "Bidi_Class",
     "Bidi_Mirrored",
     "Bidi_Mirroring_Glyph",
@@ -152,9 +158,16 @@ PUBLIC_ALIAS_PROPERTIES = (
     "Indic_Syllabic_Category",
     "Joining_Group",
     "Joining_Type",
+    "Numeric_Type",
+    "Numeric_Value",
+    "Pattern_Syntax",
+    "Pattern_White_Space",
     "Script",
     "Variation_Selector",
     "Vertical_Orientation",
+    "White_Space",
+    "XID_Start",
+    "XID_Continue",
 )
 SCRIPT_PROPERTIES = ("Script",)
 SCRIPT_EXTENSIONS_PROPERTIES = ("Script_Extensions",)
@@ -500,6 +513,12 @@ SOURCE_PROJECTION_CONTRACTS = {
     ("ucd-property-ranges", ("General_Category",)): SourceProjectionContract(
         "ucd/extracted/DerivedGeneralCategory.txt", "production"
     ),
+    ("ucd-property-ranges", ("Numeric_Type",)): SourceProjectionContract(
+        "ucd/extracted/DerivedNumericType.txt", "production-and-conformance"
+    ),
+    ("ucd-rational-property-ranges", ("Numeric_Value",)): SourceProjectionContract(
+        "ucd/extracted/DerivedNumericValues.txt", "production-and-conformance"
+    ),
     ("ucd-numeric-property-ranges", ("Canonical_Combining_Class",)): SourceProjectionContract(
         "ucd/extracted/DerivedCombiningClass.txt", "production"
     ),
@@ -568,6 +587,7 @@ SPECIFICATION_COMPATIBILITY = {
     "uax_14": ("unicode", "18.0.0", "57"),
     "uax_24": ("unicode", "18.0.0", "41"),
     "uax_29": ("unicode", "18.0.0", "49"),
+    "uax_31": ("unicode", "18.0.0", "45"),
     "uax_44": ("unicode", "18.0.0", "38"),
     "uax_50": ("unicode", "18.0.0", "35"),
     "uts_51": ("emoji", "18.0", "31"),
@@ -785,6 +805,31 @@ GENERATOR_CONTRACTS = {
         "package/InternalCharacterFlags.roc",
         True,
         "constant-zero",
+    ),
+    "identifier-properties": GeneratorContract(
+        (
+            ("ucd-derived-core-properties", DERIVED_CORE_PROPERTIES),
+            ("ucd-binary-property-ranges", PROP_LIST_PROPERTIES),
+        ),
+        ("uax_31", "uax_44"),
+        (),
+        "package/InternalIdentifierData.roc",
+        True,
+        "computed",
+    ),
+    "numeric-properties": GeneratorContract(
+        (
+            ("ucd-property-ranges", ("Numeric_Type",)),
+            ("ucd-rational-property-ranges", ("Numeric_Value",)),
+            ("ucd-property-ranges", ("General_Category",)),
+            ("ucd-property-aliases", PUBLIC_ALIAS_PROPERTIES),
+            ("ucd-property-value-aliases", PUBLIC_ALIAS_PROPERTIES),
+        ),
+        ("uax_44",),
+        (),
+        "package/InternalNumericData.roc",
+        True,
+        "computed",
     ),
     "emoji-variations": GeneratorContract(
         (("ucd-emoji-variation-sequences", ("Emoji_Variation_Sequence",)),),
@@ -2619,6 +2664,111 @@ def _parse_binary_projection(
     if not records:
         raise DataError(f"{source}: no {property_name} records")
     return tuple(records)
+
+
+def load_identifier_properties(manifest: dict[str, object]) -> dict[str, tuple[RangeRecord, ...]]:
+    properties: dict[str, tuple[RangeRecord, ...]] = {}
+    for source_format, projection, names in (
+        ("ucd-derived-core-properties", DERIVED_CORE_PROPERTIES, DERIVED_IDENTIFIER_PROPERTIES),
+        ("ucd-binary-property-ranges", PROP_LIST_PROPERTIES, PATTERN_PROPERTIES),
+    ):
+        key = _source_for(manifest, source_format, projection)
+        text = verify_source(manifest, key)
+        source = str(data_path(manifest, key))
+        # Both files supply explicit Yes ranges. A new formal default for
+        # these properties must be reviewed, since the runtime assumes No.
+        declarations = parse_missing_defaults(text, source=source)
+        aliases = {loose_alias(name) for name in (*names, "Alpha", "XIDS", "XIDC", "WSpace", "Pat_Syn", "Pat_WS")}
+        if any(
+            default.property is None or loose_alias(default.property) in aliases
+            for default in declarations
+        ):
+            raise DataError(f"{source}: identifier property default declarations drifted")
+        for name in names:
+            ranges = _parse_binary_projection(text, source=source, property_name=name)
+            if any(record.start <= 0xDFFF and record.end >= 0xD800 for record in ranges):
+                raise DataError(f"{source}: {name} range includes surrogates")
+            properties[name] = ranges
+    return properties
+
+
+def parse_numeric_values(text: str, *, source: str) -> dict[int, Fraction]:
+    if not re.search(r"^#\s+Numeric_Value = NaN$", text, re.MULTILINE):
+        raise DataError(f"{source}: Numeric_Value must declare the omitted value NaN")
+    if parse_missing_defaults(text, source=source):
+        raise DataError(f"{source}: Numeric_Value @missing declarations drifted")
+    values: dict[int, Fraction] = {}
+    for line_number, raw_line in enumerate(text.splitlines(), 1):
+        body = raw_line.split("#", 1)[0].strip()
+        if not body:
+            continue
+        fields = [field.strip() for field in body.split(";")]
+        span = fields[0].split("..")
+        if (
+            len(fields) != 4
+            or len(span) not in (1, 2)
+            or any(not HEX_RE.fullmatch(field) for field in span)
+            or not re.fullmatch(r"-?[0-9]+\.[0-9]+", fields[1])
+            or fields[2]
+            or not re.fullmatch(r"-?[0-9]+(?:/[1-9][0-9]*)?", fields[3])
+        ):
+            raise DataError(f"{source}:{line_number}: malformed Numeric_Value record")
+        start, end = int(span[0], 16), int(span[-1], 16)
+        if start > end or end > MAX_CODE_POINT or (start <= 0xDFFF and end >= 0xD800):
+            raise DataError(f"{source}:{line_number}: invalid Numeric_Value range")
+        value = Fraction(fields[3])
+        if not -(1 << 63) <= value.numerator < (1 << 63) or value.denominator >= (1 << 64):
+            raise DataError(f"{source}:{line_number}: exact Numeric_Value exceeds rational storage")
+        for code_point in range(start, end + 1):
+            if code_point in values:
+                raise DataError(f"{source}:{line_number}: overlapping Numeric_Value range")
+            values[code_point] = value
+    if not values:
+        raise DataError(f"{source}: no Numeric_Value records")
+    return values
+
+
+def _numeric_type_aliases(canonical: CanonicalProperties) -> tuple[PropertyValueAlias, ...]:
+    aliases = canonical.property_value_aliases.get("nt", ())
+    if {alias.long for alias in aliases} != set(NUMERIC_TYPES):
+        raise DataError("unexpected Numeric_Type identities")
+    return tuple(replace(alias, identity=alias.long) for alias in aliases)
+
+
+def load_numeric_properties(
+    manifest: dict[str, object], canonical: CanonicalProperties,
+) -> dict[int, tuple[str, Fraction]]:
+    type_key = _source_for(manifest, "ucd-property-ranges", ("Numeric_Type",))
+    type_path = str(data_path(manifest, type_key))
+    type_text = verify_source(manifest, type_key)
+    if {"nt", "nv"} - canonical.property_aliases.keys():
+        raise DataError("Numeric_Type or Numeric_Value is missing its property alias declaration")
+    aliases = _numeric_type_aliases(canonical)
+    types = _resolved_property_source(
+        type_text, source=type_path, property_name="Numeric_Type", aliases=aliases, expected_base="None",
+    )
+    if len(types.defaults) != 1 or {row.property for row in types.records} != set(NUMERIC_TYPES[1:]):
+        raise DataError(f"{type_path}: Numeric_Type records or defaults drifted")
+    value_key = _source_for(manifest, "ucd-rational-property-ranges", ("Numeric_Value",))
+    values = parse_numeric_values(verify_source(manifest, value_key), source=str(data_path(manifest, value_key)))
+    result: dict[int, tuple[str, Fraction]] = {}
+    for entry in types.records:
+        for code_point in range(entry.start, entry.end + 1):
+            if code_point not in values:
+                raise DataError(f"{type_path}:{entry.line}: U+{code_point:04X} has a type without a value")
+            value = values[code_point]
+            if entry.property in ("Decimal", "Digit") and (value.denominator != 1 or not 0 <= value <= 9):
+                raise DataError(f"{type_path}:{entry.line}: U+{code_point:04X} is not a base-10 digit value")
+            result[code_point] = entry.property, value
+    if result.keys() != values.keys():
+        raise DataError("Numeric_Value contains an entry without a Numeric_Type")
+    expected_decimals = {
+        cp for record in canonical.general_category if record.property == "Nd"
+        for cp in range(record.start, record.end + 1)
+    }
+    if {cp for cp, (kind, _) in result.items() if kind == "Decimal"} != expected_decimals:
+        raise DataError("Numeric_Type=Decimal disagrees with General_Category=Nd")
+    return result
 
 
 def _parse_emoji_variation_bases(text: str, *, source: str) -> tuple[int, ...]:
@@ -5161,6 +5311,124 @@ def render_character_flags(
     )
 
 
+def _render_u8_page_lookup(encoded: bytearray, paged: PagedBytes) -> tuple[str, str]:
+    page_size = 1 << paged.page_bits
+    ascii_expression = _ascii_value_expression(encoded, default=0)
+    lookup = (
+        "lookup_u8 : U32 -> U8\n"
+        "lookup_u8 = |u32| {\n"
+        f"    if u32 < 128 {{ {ascii_expression} }} else if u32 > 0x10FFFF {{ 0 }} else {{\n"
+        f"        page_id = page_index.get(u32.shr_wrap({paged.page_bits}).to_u64()) ?? 0\n"
+        f"        offset = page_id.to_u64() * {page_size} + u32.bitwise_and({page_size - 1}).to_u64()\n"
+        "        pages.get(offset) ?? 0\n"
+        "    }\n"
+        "}\n\n"
+    )
+    tables = (
+        f"page_index : List({paged.index_type})\npage_index = {_roc_list(paged.page_index)}\n\n"
+        f"pages : List(U8)\npages = {_roc_list(paged.flat_pages)}\n"
+    )
+    return lookup, tables
+
+
+def render_identifier_properties(manifest: dict[str, object], version: str) -> str:
+    properties = load_identifier_properties(manifest)
+    names = tuple(properties)
+    bits = {name: 1 << index for index, name in enumerate(names)}
+    encoded = bytearray(MAX_CODE_POINT + 1)
+    for name, records in properties.items():
+        for record in records:
+            for code_point in range(record.start, record.end + 1):
+                encoded[code_point] |= bits[name]
+    xid_start = bits["XID_Start"]
+    xid_continue = bits["XID_Continue"]
+    pattern = bits["Pattern_Syntax"] | bits["Pattern_White_Space"]
+    for flags in encoded:
+        if flags & xid_start and not flags & xid_continue:
+            raise DataError("XID_Start is not a subset of XID_Continue")
+        if flags & pattern and flags & xid_continue:
+            raise DataError("XID_Continue intersects Pattern_Syntax or Pattern_White_Space")
+    paged = _selected_paged_bytes(encoded, manifest=manifest, generator="identifier-properties")
+    lookup, tables = _render_u8_page_lookup(encoded, paged)
+    accessors = "\n\n".join(
+        f"    is_{name.lower()} : U32 -> Bool\n"
+        f"    is_{name.lower()} = |scalar| lookup_u8(scalar).bitwise_and({bits[name]}) != 0"
+        for name in names
+    )
+    return (
+        f"## GENERATED from Unicode {version} binary properties. Run `python3 scripts/unicode_data.py generate`. ##\n"
+        f"## Logical payload {paged.storage_bytes} bytes. ##\n\n"
+        "InternalIdentifierData :: [].{\n"
+        f"{accessors}\n"
+        "}\n\n"
+        + lookup + tables
+    )
+
+
+def render_numeric_properties(
+    manifest: dict[str, object], version: str, canonical: CanonicalProperties,
+) -> str:
+    properties = load_numeric_properties(manifest, canonical)
+    rows = sorted(set(properties.values()))
+    if len(rows) > 255:
+        raise DataError("Numeric_Value row identities exceed one byte")
+    ids = {value: index for index, value in enumerate(rows, 1)}
+    encoded = bytearray(MAX_CODE_POINT + 1)
+    for code_point, value in properties.items():
+        encoded[code_point] = ids[value]
+    paged = _selected_paged_bytes(encoded, manifest=manifest, generator="numeric-properties")
+    lookup, tables = _render_u8_page_lookup(encoded, paged)
+    # The generated lookup stores structure-of-arrays columns, with one
+    # byte for each type and eight each for the exact numerator/denominator.
+    layout = manifest["artifacts"][_artifact_for_generator(manifest, "numeric-properties")]["layout"]
+    total_bytes = paged.storage_bytes + (len(rows) + 1) * 17
+    if total_bytes > int(layout["max_logical_bytes"]):
+        raise DataError(f"numeric-properties logical payload {total_bytes} exceeds byte budget")
+    kind_ids = {kind: index for index, kind in enumerate(NUMERIC_TYPES)}
+    kinds = _roc_list([0, *(kind_ids[kind] for kind, _ in rows)])
+    numerators = _roc_list([0, *(value.numerator for _, value in rows)])
+    denominators = _roc_list([1, *(value.denominator for _, value in rows)])
+    aliases = _render_alias_members(NUMERIC_TYPES, _numeric_type_aliases(canonical))
+    names = canonical.property_aliases
+    type_name, value_name = names["nt"], names["nv"]
+    return (
+        f"## GENERATED from Unicode {version} Numeric_Type and Numeric_Value. Run `python3 scripts/unicode_data.py generate`. ##\n"
+        f"## Logical payload {total_bytes} bytes including {len(rows)} present rows and one absent row. ##\n\n"
+        "import InternalLooseAlias\n\n"
+        "InternalNumericData :: [].{\n"
+        f"    Value : [{', '.join(NUMERIC_TYPES)}]\n"
+        "    Rational : { numerator : I64, denominator : U64 }\n"
+        "    PropertyName : { short : Str, long : Str }\n\n"
+        "    type_property : PropertyName\n"
+        f"    type_property = {{ short: {_roc_string(type_name.short)}, long: {_roc_string(type_name.long)} }}\n\n"
+        "    value_property : PropertyName\n"
+        f"    value_property = {{ short: {_roc_string(value_name.short)}, long: {_roc_string(value_name.long)} }}\n\n"
+        "    type_of : U32 -> Value\n"
+        "    type_of = |scalar| match kinds.get(lookup_u8(scalar).to_u64()) {\n"
+        "        Ok(1) => Decimal\n"
+        "        Ok(2) => Digit\n"
+        "        Ok(3) => Numeric\n"
+        "        _ => None\n"
+        "    }\n\n"
+        "    value_of : U32 -> [None, Some(Rational)]\n"
+        "    value_of = |scalar| {\n"
+        "        row = lookup_u8(scalar).to_u64()\n"
+        "        if row == 0 { None } else {\n"
+        "            match (numerators.get(row), denominators.get(row)) {\n"
+        "                (Ok(numerator), Ok(denominator)) => Some({ numerator, denominator })\n"
+        "                _ => None\n"
+        "            }\n"
+        "        }\n"
+        "    }\n\n"
+        + aliases
+        + "}\n\n"
+        + lookup + tables + "\n"
+        + f"kinds : List(U8)\nkinds = {kinds}\n\n"
+        + f"numerators : List(I64)\nnumerators = {numerators}\n\n"
+        + f"denominators : List(U64)\ndenominators = {denominators}\n"
+    )
+
+
 def render_emoji_variations(version: str, bases: tuple[int, ...]) -> str:
     return (
         f"## GENERATED from Unicode {version} emoji variation sequences. Run `python3 scripts/unicode_data.py generate`. ##\n\n"
@@ -5855,6 +6123,8 @@ def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
             default_alias="R",
         ),
         "character-flags": lambda: render_character_flags(manifest, version, public),
+        "identifier-properties": lambda: render_identifier_properties(manifest, version),
+        "numeric-properties": lambda: render_numeric_properties(manifest, version, canonical),
         "emoji-variations": lambda: render_emoji_variations(
             version, public.emoji_variation_bases
         ),
