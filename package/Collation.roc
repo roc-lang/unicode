@@ -222,7 +222,7 @@ collation_elements = |initial, root, cldr_variables, options, limits| {
 		unit = $units.get($at) ?? return Err(InternalFault)
 		if unit.removed {
 			$at = $at + 1
-		} else if options.numeric and is_digit(unit.scalar) {
+		} else if options.numeric and decimal_digit(unit.scalar) != None {
 			run = read_digits($units, $at, limits.max_numeric_digits)?
 			$out = numeric_elements($out, run.digits, limits.max_elements)?
 			$at = run.next
@@ -286,10 +286,10 @@ primary_weight = |value| { primary: value, secondary: 0, tertiary: 0, variable: 
 common_element : U32 -> Element
 common_element = |primary| { primary, secondary: 0x20 * 4, tertiary: 2 * 4, variable: Bool.False, case_kind: 0 }
 
-is_digit : U32 -> Bool
-is_digit = |code| match Scalar.from_u32(code) {
-	Ok(scalar) => Numeric.is_decimal_digit(scalar)
-	Err(_) => Bool.False
+decimal_digit : U32 -> [None, Some(U8)]
+decimal_digit = |code| match Scalar.from_u32(code) {
+	Ok(scalar) => Numeric.decimal_digit(scalar)
+	Err(_) => None
 }
 
 read_digits : List(Unit), U64, U64 -> Try({ digits : List(U8), next : U64 }, Collation.Error)
@@ -300,22 +300,18 @@ read_digits = |units, start, limit| {
 	while $at < units.len() {
 		unit = units.get($at) ?? return Err(InternalFault)
 		if !unit.removed {
-			scalar = Scalar.from_u32(unit.scalar) ?? return Err(InternalFault)
-			if !Numeric.is_decimal_digit(scalar) {
-				break
-			}
-			if $count == limit {
-				return Err(limit_error(NumericDigits, limit, checked_sum($count, 1)))
-			}
-			match Numeric.value_of(scalar) {
-				Some({ numerator, denominator: 1 }) if numerator >= 0 and numerator <= 9 => {
-					if numerator != 0 or !$digits.is_empty() {
-						$digits = $digits.append(numerator.to_u8_wrap())
+			match decimal_digit(unit.scalar) {
+				None => break
+				Some(digit) => {
+					if $count == limit {
+						return Err(limit_error(NumericDigits, limit, checked_sum($count, 1)))
 					}
+					if digit != 0 or !$digits.is_empty() {
+						$digits = $digits.append(digit)
+					}
+					$count = $count + 1
 				}
-				_ => return Err(InternalFault)
 			}
-			$count = $count + 1
 		}
 		$at = $at + 1
 	}

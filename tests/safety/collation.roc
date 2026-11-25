@@ -115,3 +115,24 @@ expect {
 	locale = Locale.parse(unsupported)?
 	Collation.collator(locale, Collation.default_options).map_ok(|_| {}) == Err(UnsupportedLocale(unsupported))
 }
+
+# Differential fixture recorded with ICU4J 79.1, Unicode 18.0.0, CLDR 49.
+# The ICU4J Maven artifact's SHA-256 is
+# 28b292e60d0d00c496bae88a15b2615f89f781be13670aeac9dc90f189570e07.
+# Every row names the locale and settings actually used by the reference.
+# Numeric cases stay within ICU's 254-significant-digit segment limit.
+expect {
+	differential_limits = { ..limits, max_numeric_digits: 254 }
+	fixtures = [("de-standard-umlaut-primary", "de", Primary, Default, NonIgnorable, Bool.False, "\u(00E4)", "a", Eq), ("de-phonebook-expands-a", "de-u-co-phonebk", Primary, Default, NonIgnorable, Bool.False, "\u(00E4)", "ae", Eq), ("de-phonebook-expands-o", "de-u-co-phonebk", Primary, Default, NonIgnorable, Bool.False, "\u(00D6)", "oe", Eq), ("de-phonebook-expands-u", "de-u-co-phonebk", Primary, Default, NonIgnorable, Bool.False, "\u(00FC)", "ue", Eq), ("de-phonebook-distinguishes-expansion", "de-u-co-phonebk", Secondary, Default, NonIgnorable, Bool.False, "ae", "\u(00E4)", Lt), ("de-phonebook-prefix-order", "de-u-co-phonebk", Primary, Default, NonIgnorable, Bool.False, "ad", "\u(00E4)", Lt), ("de-phonebook-nfd", "de-u-co-phonebk", Identical, Default, NonIgnorable, Bool.False, "\u(00E4)", "a\u(0308)", Eq), ("de-phonebook-discontiguous", "de-u-co-phonebk", Primary, Default, NonIgnorable, Bool.False, "a\u(0327)\u(0308)", "ae", Eq), ("de-phonebook-cgj-block", "de-u-co-phonebk", Primary, Default, NonIgnorable, Bool.False, "a\u(034F)\u(0308)", "ae", Lt), ("de-phonebook-default-case", "de-u-co-phonebk", Tertiary, Default, NonIgnorable, Bool.False, "\u(00E4)", "\u(00C4)", Lt), ("de-phonebook-upper-first", "de-u-co-phonebk", Tertiary, UpperFirst, NonIgnorable, Bool.False, "\u(00E4)", "\u(00C4)", Gt), ("de-phonebook-lower-first", "de-u-co-phonebk", Tertiary, LowerFirst, NonIgnorable, Bool.False, "\u(00E4)", "\u(00C4)", Lt), ("es-n-tilde", "es", Primary, Default, NonIgnorable, Bool.False, "nz", "\u(00F1)", Lt), ("es-n-tilde-before-o", "es", Primary, Default, NonIgnorable, Bool.False, "\u(00F1)z", "o", Lt), ("es-n-tilde-uppercase", "es", Primary, Default, NonIgnorable, Bool.False, "\u(00D1)", "\u(00F1)", Eq), ("es-nfd", "es", Identical, Default, NonIgnorable, Bool.False, "\u(00D1)", "N\u(0303)", Eq), ("es-standard-ch", "es", Primary, Default, NonIgnorable, Bool.False, "ch", "cz", Lt), ("es-traditional-ch", "es-u-co-trad", Primary, Default, NonIgnorable, Bool.False, "ch", "cz", Gt), ("es-traditional-ch-before-d", "es-u-co-trad", Primary, Default, NonIgnorable, Bool.False, "chz", "d", Lt), ("es-traditional-case-mixed-default", "es-u-co-trad", Tertiary, Default, NonIgnorable, Bool.False, "Ch", "CH", Lt), ("es-traditional-case-mixed-upper-first", "es-u-co-trad", Tertiary, UpperFirst, NonIgnorable, Bool.False, "Ch", "CH", Gt), ("es-traditional-case-mixed-lower-first", "es-u-co-trad", Tertiary, LowerFirst, NonIgnorable, Bool.False, "Ch", "CH", Lt), ("es-traditional-reverse-mixed-no-contraction", "es-u-co-trad", Primary, Default, NonIgnorable, Bool.False, "cH", "ch", Lt), ("es-traditional-cgj-block", "es-u-co-trad", Primary, Default, NonIgnorable, Bool.False, "c\u(034F)h", "ch", Lt), ("es-traditional-hyphen-blocks-shifted", "es-u-co-trad", Primary, Default, Shifted, Bool.False, "c-h", "ch", Lt), ("es-traditional-ll", "es-u-co-trad", Primary, Default, NonIgnorable, Bool.False, "ll", "lz", Gt), ("cldr-ignore-hyphen-when-shifted", "de", Tertiary, Default, Shifted, Bool.False, "a-b", "ab", Eq), ("cldr-hyphen-quaternary", "de", Quaternary, Default, Shifted, Bool.False, "a-b", "ab", Lt), ("cldr-heart-stays-nonvariable", "de", Primary, Default, Shifted, Bool.False, "a\u(2665)b", "ab", Lt), ("cldr-embedded-nul", "de", Tertiary, Default, NonIgnorable, Bool.False, "a\u(0000)b", "ab", Eq), ("cldr-numeric", "de", Tertiary, Default, NonIgnorable, Bool.True, "file2", "file10", Lt), ("cldr-numeric-arabic-indic", "de", Tertiary, Default, NonIgnorable, Bool.True, "file\u(0662)", "file02", Eq), ("cldr-numeric-254-digits", "de", Tertiary, Default, NonIgnorable, Bool.True, Str.join_with(List.repeat("9", 253), ""), Str.concat("1", Str.join_with(List.repeat("0", 253), "")), Lt), ("cldr-fffe-identical", "de", Identical, Default, NonIgnorable, Bool.False, "a\u(00AD)\u(FFFE)", "a\u(FFFE)\u(00AD)", Gt)]
+	fixtures.all(
+		|(name, identifier, strength, case_first, alternate, numeric, left, right, expected)| {
+			locale = Locale.parse(identifier) ?? crash "invalid differential locale ${name}"
+			instance = Collation.collator(locale, { strength, alternate, numeric, case_first }) ?? crash "differential locale rejected for ${name}"
+			actual = Collation.compare(instance, left, right, differential_limits)
+			if actual != Ok(expected) {
+				crash "${name}: expected ${Str.inspect(expected)} and got ${Str.inspect(actual)}"
+			}
+			Bool.True
+		},
+	)
+}
