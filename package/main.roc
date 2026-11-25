@@ -16,6 +16,7 @@ package
 		JoiningGroup,
 		JoiningType,
 		LineBreak,
+		Locale,
 		Property,
 		Scalar,
 		ScalarRange,

@@ -1,4 +1,5 @@
 import InternalCase
+import Locale
 import TextPosition
 import TextRange
 import UnicodeVersion
@@ -54,6 +55,26 @@ Case :: [].{
 
 	lithuanian : MappingProfile
 	lithuanian = Lithuanian
+
+	## Select the UCD casing profile for a caller-supplied locale. The language
+	## determines the profile: Turkish and Azerbaijani select Turkic, and
+	## Lithuanian selects Lithuanian. With all other language subtags, the UCD
+	## default applies. Script, region, variants, and extensions carry no
+	## additional SpecialCasing conditions.
+	mapping_profile_for_locale : Locale -> MappingProfile
+	mapping_profile_for_locale = |locale| match Locale.language(locale) {
+		"tr" | "az" => Turkic
+		"lt" => Lithuanian
+		_ => UnicodeDefault
+	}
+
+	## Select the full folding profile with Turkic overrides only for the
+	## explicitly supplied Turkish and Azerbaijani language identifiers.
+	full_fold_profile_for_locale : Locale -> FoldProfile
+	full_fold_profile_for_locale = |locale| match Case.mapping_profile_for_locale(locale) {
+		Turkic => TurkicFull
+		_ => Full
+	}
 
 	default_fold_profile : FoldProfile
 	default_fold_profile = Full
@@ -246,4 +267,22 @@ result_with_fold = |result, profile| {
 			Some(revision) => Some(Folding(revision))
 		},
 	}
+}
+
+expect {
+	turkish = Locale.parse("tr-Latn-TR-x-example") ?? crash "valid Turkish locale"
+	azerbaijani = Locale.parse("az") ?? crash "valid Azerbaijani locale"
+	lithuanian = Locale.parse("lt-LT") ?? crash "valid Lithuanian locale"
+	english = Locale.parse("en-u-co-phonebk") ?? crash "valid English locale"
+	lower = |locale| {
+		result = Case.to_lower("I", Case.mapping_profile_for_locale(locale), Case.unlimited_limits) ?? crash "case mapping failed"
+		Case.result_text(result)
+	}
+	Case.mapping_profile_for_locale(lithuanian) == Case.lithuanian
+		and Case.mapping_profile_for_locale(Locale.root) == Case.unicode_default
+		and lower(turkish) == "ı"
+		and lower(azerbaijani) == "ı"
+		and lower(english) == "i"
+		and Case.full_fold_profile_for_locale(turkish) == Case.turkic_full
+		and Case.full_fold_profile_for_locale(lithuanian) == Case.full
 }
