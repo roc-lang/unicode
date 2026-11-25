@@ -100,11 +100,11 @@ A focused growth probe fed an optimized arm64 macOS build repeated
 `roc_alloc` and `roc_realloc` around the tailoring operation after dictionary
 construction. Timings are medians of five fresh processes and include process
 startup. The probe used `--opt=speed` and the compiler pinned by commit
-`0d8ead4`.
+`a62401f`.
 
 | Thai scalars | UTF-8 bytes | Opportunities | Allocations and reallocations | Elapsed |
 | ---: | ---: | ---: | ---: | ---: |
-| 3,000 | 9,000 | 2,000 | 43 | 2.8 ms |
-| 6,000 | 18,000 | 4,000 | 47 | 3.0 ms |
-| 12,000 | 36,000 | 8,000 | 52 | 3.6 ms |
-| 24,000 | 72,000 | 16,000 | 55 | 4.5 ms |
+| 3,000 | 9,000 | 2,000 | 44 | 2.8 ms |
+| 6,000 | 18,000 | 4,000 | 48 | 2.9 ms |
+| 12,000 | 36,000 | 8,000 | 53 | 3.5 ms |
+| 24,000 | 72,000 | 16,000 | 56 | 4.5 ms |
