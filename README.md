@@ -140,6 +140,10 @@ core. Its package policy is independently versioned as
 `LineBreak.preserve_graphemes_revision`, and `LineBreak.profile_revision`
 distinguishes that policy axis from the Unicode/UAX version.
 
+[Thai dictionary line breaking](docs/thai-line-breaking.md) is available for
+complete strings under an explicit policy with a caller-supplied dictionary
+and byte limits.
+
 ## Bidirectional text
 
 `Bidi` implements Unicode 17.0.0 UAX #9 revision 51 at conformance level

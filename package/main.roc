@@ -23,6 +23,7 @@ package
 		ScriptItemization,
 		TextPosition,
 		TextRange,
+		ThaiLineBreak,
 		UnicodeVersion,
 		Utf8,
 		VerticalOrientation,
