@@ -368,7 +368,7 @@ def main() -> int:
     document: dict[str, object] = {
         "schema_version": 2,
         "unicode_version": MANIFEST["releases"]["unicode"]["version"],
-        "uax14_revision": 55,
+        "uax14_revision": int(MANIFEST["specifications"]["uax_14"]["revision"]),
         "provenance": provenance(args),
         "corpora": corpus_document,
         "benchmarks": benchmarks,
