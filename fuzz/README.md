@@ -17,7 +17,8 @@ its evidence. [Testing methodology](../docs/testing.md)
 The UTF-8 model exhausts the 781 histories of at most four actions drawn from
 ASCII, a multibyte lead, its tail, an empty chunk, and finish. Its independent
 decoder predicts emitted values and coordinates, consumed byte counts, and
-terminal diagnostics. The saved goal witnesses are checked during smoke and
+terminal diagnostics. Changing the decoder’s truncation diagnostic in a scratch
+copy makes this model fail at `[Lead, Finish]`. The saved goal witnesses are checked during smoke and
 campaign runs. The Solve check proves the checked-append capacity law for
 8-bit lengths and limits and widths 1 through 4. A concrete solver witness
 exercises both sides of the real U64-limit API.
@@ -44,7 +45,8 @@ actual binary membership before running it. The smoke configuration uses up
 to 2,000 runs, a 60-second wall-clock search allowance, a 5-second per-input
 timeout and a 2048-MiB RSS limit. Seed executions may exceed the run count.
 Campaigns keep their discoveries and use a separate time limit per target
-with the same per-input and RSS bounds.
+with the same per-input and RSS bounds. Runs, reduction, and minimization
+also have an outer deadline to bound a stalled supervisor.
 
 ## Input formats and seeds
 
@@ -79,7 +81,8 @@ Each run's directory under `.roc-unicode-tmp/fuzz/reports/` contains the
 runner report and evidence. CI uploads those directories and the native
 artifacts for failures. The scheduled Linux campaign also uploads its
 persistent corpus and build/run log. Read the report's target and source
-revision to find the right checkout and target name. Download its original
+revision to find the right checkout and target name. A revision with a
+`-dirty` suffix requires the local source changes as well as that checkout. Download its original
 input or failing example and pass that file to `reproduce` and `minimize`.
 
 1. Replay the original bytes and keep them with the report.

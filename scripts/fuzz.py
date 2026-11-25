@@ -9,6 +9,7 @@ import json
 import os
 import platform
 import re
+import signal
 import subprocess
 import sys
 import tempfile
@@ -30,6 +31,7 @@ PLATFORM_BUNDLE_ID = "BUNcJDHxCd7xLVSe3WBioyXqR6tm1MqXwzwGgtnmqK43"
 PLATFORM_SHA256 = "8d7a2df0c33658e33968e774f9b62669a290fbbf05d477982458a382b89fa664"
 SMOKE_SEED = 50
 INPUT_TIMEOUT = 5
+SUPERVISOR_MARGIN_SECONDS = 30
 MEMORY_LIMIT = 2048
 CONFORMANCE_SEED_LIMIT = 256
 SEED_PATH = FUZZ_ROOT / "seeds.json"
@@ -82,10 +84,11 @@ def command(
     *,
     cwd: Path = ROOT,
     capture: bool = False,
+    timeout: float | None = None,
 ) -> subprocess.CompletedProcess[str]:
     values = [str(value) for value in args]
     print("+", " ".join(values), flush=True)
-    completed = subprocess.run(
+    with subprocess.Popen(
         values,
         cwd=cwd,
         text=True,
@@ -93,8 +96,20 @@ def command(
         errors="replace",
         stdout=subprocess.PIPE if capture else None,
         stderr=subprocess.STDOUT if capture else None,
-        check=False,
-    )
+        start_new_session=timeout is not None,
+    ) as process:
+        try:
+            output, _ = process.communicate(timeout=timeout)
+        except subprocess.TimeoutExpired as error:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            process.communicate()
+            raise FuzzFailure(
+                f"command exceeded the {timeout:g}-second deadline: {' '.join(values)}"
+            ) from error
+        completed = subprocess.CompletedProcess(values, process.returncode, output)
     if completed.returncode != 0:
         if capture and completed.stdout:
             print(completed.stdout, end="" if completed.stdout.endswith("\n") else "\n")
@@ -211,7 +226,7 @@ def target_seed_payloads(target: Target) -> list[tuple[str, bytes]]:
     for name, payload in manifest[target.name]:
         points = [ord(character) for character in payload.decode("utf-8")]
         seeds.append((name, scalar_entropy(points)))
-        for config in (1, 6, 16, 32, 48, 64):
+        for config in (1, 2, 3, 6, 8, 12, 16, 32, 48, 64):
             seeds.append((f"{name}-plan-{config}", scalar_entropy(points, config=config, planned=True)))
 
     unicode_manifest = unicode_data.load_manifest()
@@ -322,6 +337,9 @@ def execution_arguments(
     target: Target, operation: str, report: Path | None = None
 ) -> list[str | Path]:
     revision = command(["git", "rev-parse", "HEAD"], capture=True).stdout.strip()
+    dirty = command(["git", "status", "--porcelain"], capture=True).stdout
+    if dirty:
+        revision += "-dirty"
     compiler = (ROOT / ".roc-version").read_text(encoding="utf-8").strip()
     if report is None:
         report = new_report_directory(target, operation)
@@ -340,7 +358,7 @@ def explore(target: Target, corpus: Path, seconds: int, runs: int, seed: int) ->
         f"--time={seconds}", f"--seed={seed}",
         f"--max-input-size={target.max_input_size}", f"--memory-limit={MEMORY_LIMIT}",
         *([f"--runs={runs}"] if runs else []),
-    ])
+    ], timeout=seconds + SUPERVISOR_MARGIN_SECONDS)
     report = json.loads((report_dir / "report.json").read_text(encoding="utf-8"))
     if (
         report.get("target") != target.declared_name
@@ -383,7 +401,10 @@ def reduce_corpus(target: Target, source: Path, output: Path, seconds: int) -> N
                 write_corpus_entry(staging, payload)
         if not any(staging.iterdir()):
             raise FuzzFailure("cannot reduce a corpus without inputs")
-        command([*execution_arguments(target, "reduce-corpus"), staging, reduced, f"--time={seconds}"])
+        command(
+            [*execution_arguments(target, "reduce-corpus"), staging, reduced, f"--time={seconds}"],
+            timeout=seconds + SUPERVISOR_MARGIN_SECONDS,
+        )
         reduced.rename(output)
 
 
@@ -442,7 +463,7 @@ def main(argv: list[str] | None = None) -> int:
                 command([
                     *execution_arguments(targets[0], "minimize"),
                     args.input.resolve(strict=True), args.output.resolve(), f"--time={args.time}",
-                ])
+                ], timeout=args.time + SUPERVISOR_MARGIN_SECONDS)
             elif args.operation == "reduce":
                 reduce_corpus(targets[0], args.input, args.output, args.time)
     except (FuzzFailure, OSError, ValueError, subprocess.TimeoutExpired) as error:

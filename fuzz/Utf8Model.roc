@@ -126,7 +126,7 @@ expect {
 	if report.verdict != Holds(Exhausted) {
 		crash "${Model.explain(report)} ${Str.inspect(report.verdict)}"
 	}
-	report.states == 781
+	report.states == 781 and report.reached.len() == 3 and report.unreached.is_empty()
 }
 
 decode : List(U8) -> List(Action)
