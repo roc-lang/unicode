@@ -3,18 +3,24 @@ import unicode.Scalar
 
 FuzzSupport := [].{
 
-	## Stable fuzz-only encoding for valid Unicode scalar sequences.
-	##
-	## Every three little-endian entropy bytes select one of the 1,112,064
-	## Unicode scalar values. Ranks above U+D7FF skip the surrogate range. A
-	## trailing group is zero-padded, so every input byte contributes to a value.
-	scalar_sequence : Fuzz.Generator(List(U32))
-	scalar_sequence = Fuzz.map(Fuzz.raw_bytes, scalar_sequence_from_bytes)
+	## A bounded test plan. Each scalar carries a chunk action preceding it.
+	Plan : { code_points : List(U32), actions : List(U8), config : U8 }
 
-	scalar_sequence_from_bytes : List(U8) -> List(U32)
-	scalar_sequence_from_bytes = |bytes| {
-		var $remaining = bytes
+	plan : Fuzz.Generator(Plan)
+	plan = Fuzz.map(Fuzz.raw_bytes, plan_from_bytes)
+
+	## First byte selects the policy, limit or line coordinates. Groups of three
+	## bytes use their low 21 bits for scalar rank and high three bits for
+	## chunk actions. An incomplete final group is zero-padded.
+	plan_from_bytes : List(U8) -> Plan
+	plan_from_bytes = |bytes| {
+		config = match bytes.get(0) {
+			Ok(first) => first
+			Err(_) => 0
+		}
+		var $remaining = bytes.drop_first(1).take_first(384)
 		var $scalars = []
+		var $actions = []
 		while !$remaining.is_empty() {
 			(b0, b1, b2, rest) = match $remaining {
 				[first, second, third, .. as tail] => (first, second, third, tail)
@@ -22,13 +28,66 @@ FuzzSupport := [].{
 				[first] => (first, 0, 0, [])
 				[] => (0, 0, 0, [])
 			}
-			raw = b0.to_u32().bitwise_or(b1.to_u32().shl_wrap(8)).bitwise_or(b2.to_u32().shl_wrap(16))
+			raw = b0.to_u32().bitwise_or(b1.to_u32().shl_wrap(8)).bitwise_or(b2.bitwise_and(31).to_u32().shl_wrap(16))
 			rank = raw % 0x10F800
-			code_point = if (rank <= 0xD7FF) rank else rank + 0x800
-			$scalars = $scalars.append(code_point)
+			$scalars = $scalars.append(if (rank <= 0xD7FF) rank else rank + 0x800)
+			$actions = $actions.append(b2.shr_wrap(5))
 			$remaining = rest
 		}
-		$scalars
+		{ code_points: $scalars, actions: $actions, config }
+	}
+
+	## Bit 0 flushes a chunk before this scalar. Bit 1 inserts an empty chunk.
+	## Bit 2 flushes after this scalar. The first and last chunks may be empty.
+	chunks : Plan, List(Str) -> List(Str)
+	chunks = |input, parts| {
+		var $chunks = []
+		var $pending = ""
+		var $index = 0
+		for part in parts {
+			action = input.actions.get($index) ?? crash "missing fuzz chunk action"
+			if action.bitwise_and(1) != 0 {
+				$chunks = $chunks.append($pending)
+				$pending = ""
+			}
+			if action.bitwise_and(2) != 0 {
+				$chunks = $chunks.append("")
+			}
+			$pending = Str.concat($pending, part)
+			if action.bitwise_and(4) != 0 {
+				$chunks = $chunks.append($pending)
+				$pending = ""
+			}
+			$index = $index + 1
+		}
+		$chunks.append($pending)
+	}
+
+	## Stop after a generated number of yielded items and resume using only the
+	## returned iterator, as a caller with no access to private traversal state.
+	pause_iter : Iter(item), U64 -> List(item)
+	pause_iter = |iter, stop_after| {
+		var $iter = iter
+		var $prefix = []
+		while $prefix.len() < stop_after {
+			match $iter.next() {
+				Done => return $prefix
+				Skip({ rest }) => {
+					$iter = rest
+				}
+				One({ item, rest }) => {
+					$iter = rest
+					$prefix = $prefix.append(item)
+				}
+			}
+		}
+		$iter.fold($prefix, |items, item| items.append(item))
+	}
+
+	show_plan : Plan -> Str
+	show_plan = |input| {
+		chunk_plan = Str.inspect(input.actions)
+		"config=${input.config.to_str()} actions=${chunk_plan} ${show_scalars(input.code_points)}"
 	}
 
 	source_parts : List(U32) -> List(Str)

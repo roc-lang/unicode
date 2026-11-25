@@ -1,25 +1,25 @@
-app [target] {
-	fuzz: platform "https://github.com/lukewilliamboswell/roc-fuzz/releases/download/0.6.2/3kyiehxxzwAsjM23uCQGJ3Hx7dAAdzSGtK3k9Jq7Egtu.tar.zst",
-	unicode: "../package/main.roc",
-}
-
 import FuzzSupport
 import fuzz.Fuzz
 import unicode.ByteRange
+import unicode.Grapheme
 import unicode.LineBreak
 import unicode.TextPosition
 
-test : List(U32) -> Fuzz.Outcome
-test = |code_points| {
+test : FuzzSupport.Plan -> Fuzz.Outcome
+test = |input| {
+	code_points = input.code_points
 	parts = FuzzSupport.source_parts(code_points)
 	source = Str.join_with(parts, "")
 
-	boundaries = LineBreak.boundaries(source)
-	iterated_boundaries = LineBreak.iter_boundaries(source).fold([], |items, item| items.append(item))
-	opportunities = LineBreak.opportunities(source)
-	iterated_opportunities = LineBreak.iter_opportunities(source).fold([], |items, item| items.append(item))
-	whole_cursor = cursor_opportunities([source])
-	scalar_cursor = cursor_opportunities([""].concat(parts).append(""))
+	profile : LineBreak.Profile
+	profile = if (input.config.bitwise_and(1) == 0) UnicodeDefault else PreserveGraphemes
+	boundaries = LineBreak.boundaries_with(source, profile)
+	iterated_boundaries = FuzzSupport.pause_iter(LineBreak.iter_boundaries_with(source, profile), input.config.to_u64() % (parts.len() + 1))
+	opportunities = LineBreak.opportunities_with(source, profile)
+	iterated_opportunities = FuzzSupport.pause_iter(LineBreak.iter_opportunities_with(source, profile), input.config.to_u64() % (parts.len() + 1))
+	whole_cursor = cursor_opportunities(profile, [source])
+	scalar_cursor = cursor_opportunities(profile, [""].concat(parts).append(""))
+	planned_cursor = cursor_opportunities(profile, FuzzSupport.chunks(input, parts))
 
 	if iterated_boundaries != boundaries {
 		crash "LineBreak.iter_boundaries disagreed with LineBreak.boundaries"
@@ -30,7 +30,7 @@ test = |code_points| {
 	if whole_cursor != opportunities {
 		crash "whole-chunk LineBreak.Cursor disagreed with LineBreak.opportunities"
 	}
-	if scalar_cursor != opportunities {
+	if scalar_cursor != opportunities or planned_cursor != opportunities {
 		crash "scalar-chunk LineBreak.Cursor disagreed with LineBreak.opportunities"
 	}
 	if boundaries_as_opportunities(boundaries) != opportunities {
@@ -38,13 +38,40 @@ test = |code_points| {
 	}
 
 	validate_boundaries(source, boundaries, code_points.len())
+	if profile == PreserveGraphemes {
+		validate_tailoring(source, boundaries)
+	}
 
 	Fuzz.keep
 }
 
-cursor_opportunities : List(Str) -> List(LineBreak.BreakOpportunity)
-cursor_opportunities = |chunks| {
-	var $cursor = LineBreak.Cursor.init({})
+validate_tailoring : Str, List(LineBreak.BreakBoundary) -> {}
+validate_tailoring = |source, tailored| {
+	original = LineBreak.boundaries(source)
+	cluster_ends = Grapheme.ranges(source).map(ByteRange.end)
+	var $index = 0
+	for exact in original {
+		got = tailored.get($index) ?? crash "tailoring omitted a scalar boundary"
+		if got.at != exact.at or got.authority != exact.authority {
+			crash "tailoring changed boundary coordinates or authority"
+		}
+		inside_cluster = !cluster_ends.contains(TextPosition.byte_offset(got.at))
+		expected = if exact.decision == Allowed and exact.authority == Tailorable and inside_cluster {
+			Prohibited
+		} else {
+			exact.decision
+		}
+		if got.decision != expected {
+			crash "line tailoring changed an ineligible boundary or split a grapheme"
+		}
+		$index = $index + 1
+	}
+	{}
+}
+
+cursor_opportunities : LineBreak.Profile, List(Str) -> List(LineBreak.BreakOpportunity)
+cursor_opportunities = |profile, chunks| {
+	var $cursor = LineBreak.Cursor.init_with(profile)
 	var $items = []
 	for chunk in chunks {
 		pushed = LineBreak.Cursor.push($cursor, chunk, $items, |items, item| items.append(item))
@@ -63,6 +90,10 @@ cursor_opportunities = |chunks| {
 			match LineBreak.Cursor.finish(done.cursor, [], |items, item| items.append(item)) {
 				Failed({ error: AlreadyFinished, .. }) => {}
 				_ => crash "LineBreak.Cursor was not sealed after finish"
+			}
+			match LineBreak.Cursor.push(done.cursor, "a", [], |items, item| items.append(item)) {
+				Failed({ error: AlreadyFinished, consumed: 0, .. }) => {}
+				_ => crash "LineBreak.Cursor accepted a push after finish"
 			}
 			done.state
 		}
@@ -167,10 +198,12 @@ validate_partition = |source, ranges| {
 	{}
 }
 
-target = Fuzz.target_with({
-	name: "unicode-line-break",
-	examples: [],
-	generator: FuzzSupport.scalar_sequence,
-	test,
-	show: FuzzSupport.show_scalars,
-})
+LineBreakTarget :: [].{
+	target = Fuzz.target_with({
+		name: "unicode-line-break",
+		examples: [Fuzz.saved({ name: "preserve-graphemes", revision: "1", bytes: [0x01, 0x0B, 0x27, 0x00, 0xFB, 0xEB, 0x21, 0x61, 0x00, 0x40, 0x0D, 0x00, 0x60, 0x0A, 0x00, 0x80, 0x62, 0x00, 0xA0] })],
+		generator: FuzzSupport.plan,
+		test,
+		show: FuzzSupport.show_plan,
+	})
+}

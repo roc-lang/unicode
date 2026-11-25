@@ -39,8 +39,22 @@ jobs:
           version: nightly
           nightly-tag: ${{ env.ROC_NIGHTLY_TAG }}
 
+      - name: Run deterministic fuzz suite expectations
+        run: ROC=roc python3 scripts/fuzz.py models
+
       - name: Run bounded fuzz smoke
         run: ROC=roc python3 scripts/fuzz.py smoke
+
+      - name: Upload fuzz failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-smoke-evidence
+          path: |
+            .roc-unicode-tmp/fuzz/reports/
+            .roc-fuzz/
+          include-hidden-files: true
+          if-no-files-found: ignore
 
   test:
     name: ./scripts/all_tests.sh (${{ matrix.os }})
