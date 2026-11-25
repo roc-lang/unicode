@@ -38,6 +38,15 @@ private = |value| value
 """
         self.assertEqual(operations("Example", source), {"Example.public"})
 
+    def test_missing_module_scope_cannot_borrow_the_next_scope(self):
+        source = """Example :: Str
+Private :: [].{
+    helper = |value| value
+}
+"""
+        with self.assertRaises(ValueError):
+            operations("Example", source)
+
     def test_literals_comments_and_interpolation(self):
         source = r'''# crash and ...
 doc = "the word crash and literal ellipsis ..."

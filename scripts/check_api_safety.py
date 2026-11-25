@@ -107,8 +107,11 @@ def operations(module, text):
         column = len(line) - len(stripped)
         if not inside:
             if awaiting_scope:
-                if column == 0 and stripped.endswith(scope_endings):
-                    inside = True
+                if column > 0:
+                    continue
+                if stripped not in scope_endings:
+                    break
+                inside = True
                 continue
             match = MODULE.match(stripped)
             if not match or match[1] != module or column != 0:
