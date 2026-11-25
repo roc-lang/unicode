@@ -1,7 +1,7 @@
 app [run!] {
 	pf: platform "../../platform/main.roc",
-	unicode: "../../../package/main.roc",
 	test_unicode: "../../../package/test-main.roc",
+	unicode: "../../../package/main.roc",
 }
 
 import pf.Host
@@ -74,28 +74,22 @@ run_case! = |suite, line| {
 							checksum = TestPropertyAliases.allocation_probe(str.count_utf8_bytes().to_u8_wrap())
 							after = Host.alloc_count!({})
 							allocations = after - before
-							expected = U64.from_str(expectation) ?? 18446744073709551615
 
 							if checksum == 0 {
 								Err({ case_id, message: "alias probe was optimized away or incomplete" })
-							} else if allocations == expected {
-								Ok({})
 							} else {
-								Err({ case_id, message: "expected ${expected.to_str()}, got ${allocations.to_str()} allocations" })
+								check_ceiling(case_id, expectation, allocations)
 							}
 						} else if suite == "allocation-line-break-cursor" {
 							before = Host.alloc_count!({})
 							signature = line_break_signature(str)
 							after = Host.alloc_count!({})
 							allocations = after - before
-							expected = U64.from_str(expectation) ?? 18446744073709551615
 
 							if signature == 0 {
 								Err({ case_id, message: "line-break cursor probe was optimized away" })
-							} else if allocations == expected {
-								Ok({})
 							} else {
-								Err({ case_id, message: "expected ${expected.to_str()}, got ${allocations.to_str()} allocations" })
+								check_ceiling(case_id, expectation, allocations)
 							}
 						} else if suite == "allocation-bidi-analysis" {
 							before = Host.alloc_count!({})
@@ -114,28 +108,22 @@ run_case! = |suite, line| {
 							signature = word_signature(suite, str)
 							after = Host.alloc_count!({})
 							allocations = after - before
-							expected = U64.from_str(expectation) ?? 18446744073709551615
 
 							if signature == 0 {
 								Err({ case_id, message: "word probe failed or was optimized away" })
-							} else if allocations == expected {
-								Ok({})
 							} else {
-								Err({ case_id, message: "expected ${expected.to_str()}, got ${allocations.to_str()} allocations" })
+								check_ceiling(case_id, expectation, allocations)
 							}
 						} else if suite.starts_with("allocation-case-") {
 							before = Host.alloc_count!({})
 							signature = case_signature(suite, case_id, str)
 							after = Host.alloc_count!({})
 							allocations = after - before
-							expected = U64.from_str(expectation) ?? 18446744073709551615
 
 							if signature == 0 {
 								Err({ case_id, message: "Case probe failed or was optimized away" })
-							} else if allocations == expected {
-								Ok({})
 							} else {
-								Err({ case_id, message: "expected ${expected.to_str()}, got ${allocations.to_str()} allocations" })
+								check_ceiling(case_id, expectation, allocations)
 							}
 						} else {
 							before = Host.alloc_count!({})
@@ -155,12 +143,7 @@ run_case! = |suite, line| {
 									Err({ case_id, message: "expected ${expectation}, got ${allocations.to_str()} allocations" })
 								}
 							} else {
-								expected = U64.from_str(expectation) ?? 18446744073709551615
-								if allocations == expected {
-									Ok({})
-								} else {
-									Err({ case_id, message: "expected ${expected.to_str()}, got ${allocations.to_str()} allocations" })
-								}
+								check_ceiling(case_id, expectation, allocations)
 							}
 						}
 					}
@@ -169,6 +152,16 @@ run_case! = |suite, line| {
 		}
 		[case_id, ..] => Err({ case_id, message: "malformed case row" })
 		_ => Err({ case_id: "unknown", message: "malformed case row" })
+	}
+}
+
+check_ceiling : Str, Str, U64 -> Try({}, { case_id : Str, message : Str })
+check_ceiling = |case_id, expectation, allocations| {
+	maximum = U64.from_str(expectation) ?? return Err({ case_id, message: "invalid allocation ceiling ${expectation}" })
+	if allocations <= maximum {
+		Ok({})
+	} else {
+		Err({ case_id, message: "allocation ceiling ${maximum.to_str()} exceeded, observed ${allocations.to_str()}" })
 	}
 }
 

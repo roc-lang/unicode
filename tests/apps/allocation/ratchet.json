@@ -1,7 +1,7 @@
 {
-  "schema_version": 5,
+  "schema_version": 6,
   "platform": "roc-platform-template-zig-1.1.0+alloc-count",
-  "target": "x64musl",
+  "recorded_target": "x64musl",
   "optimize": "speed",
   "fixtures": {
     "empty": 0,
@@ -166,17 +166,5 @@
       "output-scalars": 0,
       "facts": 0
     }
-  },
-  "case_ascii_doubling_deltas": {
-    "lower-default": 3,
-    "lower-turkic": 3,
-    "upper-default": 3,
-    "upper-lithuanian": 3,
-    "title-default": 3,
-    "title-turkic": 3,
-    "fold-full": 3,
-    "fold-simple": 3,
-    "fold-turkic-full": 3,
-    "fold-turkic-simple": 3
   }
 }

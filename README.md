@@ -397,11 +397,11 @@ records under every public fold profile, and focused source-fact, R3,
 no-normalization, context, supplementary, and exact-limit checks. The property suite covers every
 valid Unicode scalar for grapheme-break, East-Asian-width, and emoji
 properties. A separate allocation harness records the package's allocation
-behavior. Its Linux x64 counts are exact measurements
-for the compiler in `.roc-version`: when an intentional implementation change
-alters them, rerun `scripts/test.py allocations` with that pinned compiler and
-review the measured fixture counts before updating the adjacent baseline file.
-The runner never updates or silently accepts a new allocation baseline.
+behavior. Linux and macOS use the same per-fixture allocation ceilings.
+A lower count passes the gate. When an improvement is repeatable with the
+compiler in `.roc-version`, lower the ceiling after reviewing the fixture's
+output. Investigate increases before changing a ceiling.
+See the [allocation ratchet](tests/apps/allocation/README.md).
 `scripts/test_case_icu.py` is an opt-in differential gate against ICU4J 79.1
 (Unicode 18). It is deliberately outside the offline default suite: provide a
 verified `ICU4J_JAR`, or pass `--download` to cache the pinned Maven artifact

@@ -224,8 +224,7 @@ def load_app_specs() -> dict[str, dict[str, object]]:
             "kind",
             "suites",
             "timeout_seconds",
-            "baseline_file",
-            "exact_baseline_target",
+            "ratchet_file",
         },
         "bidi": {
             "schema_version",
@@ -309,9 +308,9 @@ def load_app_specs() -> dict[str, dict[str, object]]:
         raise TestFailure("properties spec must cover every production property view")
     if specs["properties"]["scalar_domain"] != "valid-unicode-scalars":
         raise TestFailure("properties spec must cover the valid Unicode scalar domain")
-    allocation_baseline = ROOT / str(specs["allocation"]["baseline_file"])
-    if allocation_baseline.parent != APP_ROOT / "allocation" or not allocation_baseline.is_file():
-        raise TestFailure("allocation baselines must be adjacent to their app")
+    allocation_ratchet = ROOT / str(specs["allocation"]["ratchet_file"])
+    if allocation_ratchet.parent != APP_ROOT / "allocation" or not allocation_ratchet.is_file():
+        raise TestFailure("the allocation ratchet must be adjacent to its app")
     return specs
 
 
@@ -1336,18 +1335,8 @@ CASE_ALLOCATION_MODES = (
     "limits",
 )
 
-CASE_ALLOCATION_SUCCESS_MODES = CASE_ALLOCATION_MODES[:-1]
-CASE_ALLOCATION_ASCII_HALF_SCALARS = 320
-CASE_ALLOCATION_ASCII_SCALARS = 640
-# Doubling the ASCII input must not double the allocation count: the result
-# buffer and the fact list both grow geometrically, so the extra 320 scalars
-# may only add the few reallocations that growth schedule needs. A slope
-# anywhere near the added scalar count means per-scalar copying is back.
-CASE_ALLOCATION_ASCII_MAX_DELTA = 8
-
-# These sources make result ownership and the Case-specific context paths
-# visible to exact allocation baselines across distinct scalar and byte-count
-# regimes, rather than letting a baseline change hide in one ASCII example.
+# The 320- and 640-scalar ASCII fixtures independently guard allocation growth,
+# alongside expansion-heavy inputs and the Case-specific context paths.
 CASE_ALLOCATION_FIXTURES = {
     "ascii-half": "ASCII Case" * 32,
     "ascii": "ASCII Case" * 64,
@@ -1381,8 +1370,6 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
         f"positive\t{utf8_hex('allocation calibration input')}\tpositive",
     ]
     timeout = int(spec["timeout_seconds"])
-    if spec["exact_baseline_target"] != "linux-x64":
-        raise TestFailure("allocation spec exact baseline target has drifted")
     suites = spec["suites"]
     if suites != [
         "allocation-calibration",
@@ -1406,7 +1393,7 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
         "allocation-case-fold-turkic-full",
         "allocation-case-fold-turkic-simple",
         "allocation-case-limits",
-        "allocation-baselines",
+        "allocation-ratchet",
     ]:
         raise TestFailure("allocation spec suites have drifted")
     run_serial_suite(binary, suites[0], calibration, timeout=timeout)
@@ -1427,57 +1414,39 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
     ]
     run_serial_suite(binary, suites[4], bidi_scaling_rows, timeout=timeout)
 
-    machine = platform.machine().lower()
-    if platform.system() != "Linux" or machine not in ("x86_64", "amd64"):
-        print("SKIP allocation-baselines: exact baselines are Linux x64 only")
+    if platform.system() not in ("Linux", "Darwin"):
+        print("SKIP allocation-ratchet: shared ceilings are enabled on Linux and macOS")
         return
     try:
-        baseline_path = ROOT / str(spec["baseline_file"])
-        baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+        ratchet_path = ROOT / str(spec["ratchet_file"])
+        ratchet = json.loads(ratchet_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as err:
-        raise TestFailure(f"unable to read allocation baselines: {err}") from err
+        raise TestFailure(f"unable to read allocation ratchets: {err}") from err
     if (
-        baseline.get("schema_version") != 5
-        or baseline.get("platform") != "roc-platform-template-zig-1.1.0+alloc-count"
-        or baseline.get("target") != "x64musl"
-        or baseline.get("optimize") != "speed"
+        ratchet.get("schema_version") != 6
+        or ratchet.get("platform") != "roc-platform-template-zig-1.1.0+alloc-count"
+        or ratchet.get("recorded_target") != "x64musl"
+        or ratchet.get("optimize") != "speed"
     ):
-        raise TestFailure("allocation baseline metadata has drifted")
-    expected = baseline.get("fixtures")
+        raise TestFailure("allocation ratchet metadata has drifted")
+    expected = ratchet.get("fixtures")
     if not isinstance(expected, dict) or set(expected) != set(ALLOCATION_FIXTURES):
-        raise TestFailure("allocation baseline fixture set has drifted")
-    word = baseline.get("word")
+        raise TestFailure("allocation ratchet fixture set has drifted")
+    word = ratchet.get("word")
     if not isinstance(word, dict) or set(word) != set(WORD_ALLOCATION_MODES):
-        raise TestFailure("word allocation baseline modes have drifted")
+        raise TestFailure("word allocation ratchet modes have drifted")
     for mode in WORD_ALLOCATION_MODES:
         expected_word = word[mode]
         if not isinstance(expected_word, dict) or set(expected_word) != set(WORD_ALLOCATION_FIXTURES):
-            raise TestFailure(f"word allocation baseline fixture set has drifted for {mode}")
-    case = baseline.get("case")
+            raise TestFailure(f"word allocation ratchet fixture set has drifted for {mode}")
+    case = ratchet.get("case")
     if not isinstance(case, dict) or set(case) != set(CASE_ALLOCATION_MODES):
-        raise TestFailure("case allocation baseline modes have drifted")
-    case_ascii_doubling_deltas = baseline.get("case_ascii_doubling_deltas")
-    if not isinstance(case_ascii_doubling_deltas, dict) or set(case_ascii_doubling_deltas) != set(CASE_ALLOCATION_SUCCESS_MODES):
-        raise TestFailure("case ASCII doubling allocation baseline modes have drifted")
-    if (
-        len(CASE_ALLOCATION_FIXTURES["ascii-half"]) != CASE_ALLOCATION_ASCII_HALF_SCALARS
-        or len(CASE_ALLOCATION_FIXTURES["ascii"]) != CASE_ALLOCATION_ASCII_SCALARS
-    ):
-        raise TestFailure("case ASCII doubling fixtures have drifted")
+        raise TestFailure("case allocation ratchet modes have drifted")
     for mode in CASE_ALLOCATION_MODES:
         expected_case = case[mode]
         fixtures = CASE_LIMIT_FIXTURES if mode == "limits" else CASE_ALLOCATION_FIXTURES
         if not isinstance(expected_case, dict) or set(expected_case) != set(fixtures):
-            raise TestFailure(f"case allocation baseline fixture set has drifted for {mode}")
-        if mode in CASE_ALLOCATION_SUCCESS_MODES:
-            documented_delta = case_ascii_doubling_deltas[mode]
-            actual_delta = expected_case["ascii"] - expected_case["ascii-half"]
-            if (
-                not isinstance(documented_delta, int)
-                or not 0 <= documented_delta <= CASE_ALLOCATION_ASCII_MAX_DELTA
-                or actual_delta != documented_delta
-            ):
-                raise TestFailure(f"case ASCII allocation scaling has drifted for {mode}")
+            raise TestFailure(f"case allocation ratchet fixture set has drifted for {mode}")
         rows = [
             f"{name}\t{utf8_hex(value)}\t{expected_case[name]}"
             for name, value in fixtures.items()

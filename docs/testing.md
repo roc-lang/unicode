@@ -16,7 +16,7 @@ revision when they affect the result.
 | `Model` | Exhaustive exploration of a small, declared state space, such as short chunk histories or a tiny ambiguous dictionary. Give the model an independent implementation of the expected behavior. |
 | `Solve` | Integer laws over a declared domain, such as coordinate addition and limits. Use production terms when possible and pass concrete endpoints or solver witnesses through the real caller. |
 | Coverage-guided fuzz suites | Broader combinations of Unicode scalars, raw bytes, drive plans, and explicit policies. Seed successful and failing paths. Check relationships across public APIs and use independent oracles where practical. |
-| Host allocation and work probes | Exact resource evidence for representative inputs under the repository toolchain and target. Interpret these alongside semantic checks. |
+| Host allocation and work probes | Resource evidence for representative runtime inputs. Allocation ratchets guard against increases and allow improvements. |
 
 ## Design and review an oracle
 
@@ -71,10 +71,11 @@ for campaigns, corpus maintenance, and replay. Run the broader conformance,
 resource, and campaign checks when reviewing the integrated change.
 
 Keep resource tests driven by runtime input so compiler constant evaluation
-cannot erase the measured work. Compare baseline changes against independently
-verified output and record the cause of metric differences before updating the
-baseline. Record the repository commit that names the compiler pin, the
-optimization mode, and the target. See the
-[allocation baselines](../tests/apps/allocation/README.md) for current evidence.
+cannot erase the measured work. Keep the same allocation ceilings for pure
+Roc fixtures on Linux and macOS.
+Investigate increases and tighten ceilings after repeatable improvements.
+Verify the output independently and record the repository commit that names
+the compiler pin, the optimization mode, and the recording target. See the
+[allocation ratchet](../tests/apps/allocation/README.md) for current evidence.
 
 Adapted from [Testing roc-pdf](https://github.com/lukewilliamboswell/roc-pdf/blob/ce52d1509a316fa10ff6f7aa0bb9f64f0bdf3283/docs/testing.adoc).
