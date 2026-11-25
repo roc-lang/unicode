@@ -9,6 +9,7 @@ import json
 import random
 import shutil
 import subprocess
+import sys
 import tempfile
 import urllib.request
 from pathlib import Path
@@ -79,6 +80,13 @@ def download_verified(relative: str, digest: str, destination: Path) -> None:
 def build_code9(directory: Path) -> Path:
     for relative, digest in CODE9_FILES.items():
         download_verified(relative, digest, directory / relative)
+    if sys.platform == "darwin":
+        # The upstream allocator calls use the standard C declarations.
+        # Provide the legacy include using the SDK header on macOS while
+        # keeping the checksum-verified reference source unchanged.
+        (directory / "include" / "malloc.h").write_text(
+            "#include <stdlib.h>\n", encoding="utf-8"
+        )
     data = directory / "data"
     data.mkdir()
     manifest = json.loads((ROOT / "vendor" / "unicode" / "manifest.json").read_text(encoding="utf-8"))
@@ -209,7 +217,7 @@ def main() -> int:
             data_directory = directory / "data"
             run_candidate(args.candidate, generated, code9_results(reference, data_directory, generated), reference, data_directory)
     except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
-        print(f"error: {error}", file=__import__("sys").stderr)
+        print(f"error: {error}", file=sys.stderr)
         return 1
     print(f"PASS Code9 Unicode 18.0.0 UAX #9 r52 differential: {args.cases} seeded cases")
     return 0
