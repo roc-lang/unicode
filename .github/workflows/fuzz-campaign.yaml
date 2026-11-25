@@ -1,0 +1,47 @@
+name: Scheduled Unicode fuzz campaign
+
+on:
+  schedule:
+    - cron: '31 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: unicode-fuzz-campaign
+  cancel-in-progress: false
+
+jobs:
+  explore:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Read pinned Roc version
+        run: printf 'ROC_NIGHTLY_TAG=%s\n' "$(sed -n '1p' .roc-version)" >> "$GITHUB_ENV"
+
+      - uses: roc-lang/setup-roc@dd81390553b0a1236aedb61cdd4c0ed7cf7eaec4
+        with:
+          version: nightly
+          nightly-tag: ${{ env.ROC_NIGHTLY_TAG }}
+
+      - name: Explore each suite member for at most two minutes
+        run: |
+          set -o pipefail
+          mkdir -p .roc-unicode-tmp/fuzz
+          ROC=roc python3 scripts/fuzz.py campaign --time=120 2>&1 | tee .roc-unicode-tmp/fuzz/campaign.log
+
+      - name: Upload findings, reports, and corpus discoveries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unicode-fuzz-${{ github.sha }}
+          path: |
+            .roc-unicode-tmp/fuzz/campaign.log
+            .roc-unicode-tmp/fuzz/corpus/
+            .roc-unicode-tmp/fuzz/reports/
+            .roc-fuzz/
+          include-hidden-files: true
+          if-no-files-found: ignore

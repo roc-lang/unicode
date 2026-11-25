@@ -1,35 +1,52 @@
-app [target] {
-	fuzz: platform "https://github.com/lukewilliamboswell/roc-fuzz/releases/download/0.6.2/3kyiehxxzwAsjM23uCQGJ3Hx7dAAdzSGtK3k9Jq7Egtu.tar.zst",
-	unicode: "../package/main.roc",
-}
-
 import FuzzSupport
 import fuzz.Fuzz
+import unicode.BidiClass
+import unicode.BidiProperties
 import unicode.ByteRange
+import unicode.EastAsianWidth
+import unicode.Emoji
+import unicode.IndicPositionalCategory
+import unicode.IndicSyllabicCategory
+import unicode.JoiningGroup
+import unicode.JoiningType
 import unicode.CanonicalCombiningClass
 import unicode.GeneralCategory
 import unicode.Property
 import unicode.Scalar
 import unicode.ScalarRange
 import unicode.TextRange
+import unicode.VerticalOrientation
 
 RunShape : { byte_start : U64, byte_end : U64, scalar_start : U64, scalar_end : U64, value : Str }
 
-test : List(U32) -> Fuzz.Outcome
-test = |code_points| {
+test : FuzzSupport.Plan -> Fuzz.Outcome
+test = |input| {
+	code_points = input.code_points
 	parts = FuzzSupport.source_parts(code_points)
 	source = Str.join_with(parts, "")
 
 	entries = Property.fold(source, [], |items, entry| items.append(entry))
 	iterated_scalars = Property.iter(source).fold([], |items, entry| items.append(Scalar.to_u32(entry.located.scalar)))
 	folded_scalars = entries.map(|entry| Scalar.to_u32(entry.located.scalar))
-	if iterated_scalars != folded_scalars {
+	if iterated_scalars != folded_scalars or folded_scalars != code_points {
 		crash "Property.iter disagreed with Property.fold on the decoded scalar sequence"
 	}
 
+	var $offsets = [0.U64]
+	var $byte = 0
+	var $index = 0
 	var $gc_values = []
 	var $ccc_values = []
 	for entry in entries {
+		part = parts.get($index) ?? crash "property scanning produced an extra scalar"
+		end = $byte + part.count_utf8_bytes()
+		if entry.located.scalar_index != $index or ByteRange.start(entry.located.byte_range) != $byte or ByteRange.end(entry.located.byte_range) != end {
+			crash "property scanning did not preserve exact byte and scalar coordinates"
+		}
+		$offsets = $offsets.append(end)
+		$byte = end
+		$index = $index + 1
+		validate_row(entry.located.scalar, entry.row)
 		gc_direct = GeneralCategory.of_scalar(entry.located.scalar)
 		gc_composite = Property.Row.general_category(entry.row)
 		if GeneralCategory.short(gc_direct) != GeneralCategory.short(gc_composite) {
@@ -53,15 +70,35 @@ test = |code_points| {
 	if gc_runs != GeneralCategory.iter_runs(source).fold([], |runs, run| runs.append(gc_run_shape(run))) {
 		crash "GeneralCategory.fold_runs disagreed with GeneralCategory.iter_runs"
 	}
-	validate_runs(source, gc_runs, $gc_values)
+	validate_runs(source, gc_runs, $gc_values, $offsets)
 
 	ccc_runs = CanonicalCombiningClass.fold_runs(source, [], |runs, run| runs.append(ccc_run_shape(run)))
 	if ccc_runs != CanonicalCombiningClass.iter_runs(source).fold([], |runs, run| runs.append(ccc_run_shape(run))) {
 		crash "CanonicalCombiningClass.fold_runs disagreed with CanonicalCombiningClass.iter_runs"
 	}
-	validate_runs(source, ccc_runs, $ccc_values)
+	validate_runs(source, ccc_runs, $ccc_values, $offsets)
 
 	Fuzz.keep
+}
+
+validate_row : Scalar, Property.Row -> {}
+validate_row = |scalar, row| {
+	if BidiClass.of_scalar(scalar) != Property.Row.bidi_class(row)
+		or BidiProperties.is_mirrored(scalar) != Property.Row.bidi_mirrored(row)
+		or BidiProperties.mirroring_glyph(scalar) != Property.Row.bidi_mirroring_glyph(row)
+		or BidiProperties.paired_bracket(scalar) != Property.Row.bidi_paired_bracket(row)
+		or EastAsianWidth.of_scalar(scalar) != Property.Row.east_asian_width(row)
+		or JoiningGroup.of_scalar(scalar) != Property.Row.joining_group(row)
+		or JoiningType.of_scalar(scalar) != Property.Row.joining_type(row)
+		or IndicPositionalCategory.of_scalar(scalar) != Property.Row.indic_positional_category(row)
+		or IndicSyllabicCategory.of_scalar(scalar) != Property.Row.indic_syllabic_category(row)
+		or VerticalOrientation.of_scalar(scalar) != Property.Row.vertical_orientation(row)
+		or Property.is_default_ignorable(scalar) != Property.Row.default_ignorable(row)
+		or Property.is_variation_selector(scalar) != Property.Row.variation_selector(row)
+		or Emoji.of_scalar(scalar) != Property.Row.emoji(row) {
+		crash "a direct scalar property disagreed with its composite accessor"
+	}
+	{}
 }
 
 gc_run_shape : GeneralCategory.Run -> RunShape
@@ -86,8 +123,8 @@ shape_from_range = |range, value| {
 ## Runs must be a lossless, scalar-aligned, contiguous partition of the
 ## source; adjacent runs must never share a value (maximality); and every
 ## scalar inside a run must carry that run's directly-queried value.
-validate_runs : Str, List(RunShape), List(Str) -> {}
-validate_runs = |source, runs, entry_values| {
+validate_runs : Str, List(RunShape), List(Str), List(U64) -> {}
+validate_runs = |source, runs, entry_values, offsets| {
 	if source == "" and !runs.is_empty() {
 		crash "empty source produced a property run"
 	}
@@ -102,6 +139,9 @@ validate_runs = |source, runs, entry_values| {
 	for run in runs {
 		if run.byte_start != $next_byte or run.byte_end <= run.byte_start or run.scalar_start != $next_scalar or run.scalar_end <= run.scalar_start {
 			crash "property runs were empty, overlapping, or discontinuous"
+		}
+		if offsets.get(run.scalar_start) != Ok(run.byte_start) or offsets.get(run.scalar_end) != Ok(run.byte_end) {
+			crash "a property run's byte and scalar axes did not select the same input"
 		}
 		match $previous_value {
 			None => {}
@@ -188,10 +228,12 @@ validate_canonical_combining_class_aliases = |value| {
 	{}
 }
 
-target = Fuzz.target_with({
-	name: "unicode-property",
-	examples: [],
-	generator: FuzzSupport.scalar_sequence,
-	test,
-	show: FuzzSupport.show_scalars,
-})
+PropertyTarget :: [].{
+	target = Fuzz.target_with({
+		name: "unicode-property",
+		examples: [Fuzz.saved({ name: "sparse-emoji-and-unassigned", revision: "1", bytes: [0x00, 0x28, 0x00, 0x00, 0xDB, 0xCF, 0x21, 0x29, 0x00, 0x40, 0x78, 0x03, 0x60, 0x0F, 0xF6, 0x80, 0x69, 0xEC, 0xA1] })],
+		generator: FuzzSupport.plan,
+		test,
+		show: FuzzSupport.show_plan,
+	})
+}

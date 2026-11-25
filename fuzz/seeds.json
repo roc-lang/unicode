@@ -69,5 +69,17 @@
     { "name": "bmp-page-boundary", "bytes_hex": "C3BFC480EFBFBF" },
     { "name": "supplementary-plane-boundary", "bytes_hex": "EFBFBFF0908080" },
     { "name": "noncharacter", "bytes_hex": "EFB790" }
+  ],
+  "bidi": [
+    { "name": "isolates-and-brackets", "bytes_hex": "E281A728D790D79120313229E281A978" },
+    { "name": "paragraphs-and-marks", "bytes_hex": "610D0AD790CC81E280AA42E280AC" },
+    { "name": "arabic-numbers", "bytes_hex": "D8B920D9A1D9A220283329" }
+  ],
+  "script": [
+    { "name": "ambiguous-kana", "bytes_hex": "E383BCE38182E383BCE382A2E383BC" },
+    { "name": "ambiguous-neutral", "bytes_hex": "412E2E2E2E2E2ED790" },
+    { "name": "unknown-barrier", "bytes_hex": "612ECDB82ED096" },
+    { "name": "indic-and-emoji", "bytes_hex": "E0A48520E0A4B7E0A58DE2808DE0A4A0F09F91A9E2808DF09F91A9" },
+    { "name": "neutral-then-strong", "bytes_hex": "C2B7C2B7C2B7C2B7C2B7C2B7CEB1" }
   ]
 }

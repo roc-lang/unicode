@@ -1,8 +1,3 @@
-app [target] {
-	fuzz: platform "https://github.com/lukewilliamboswell/roc-fuzz/releases/download/0.6.2/3kyiehxxzwAsjM23uCQGJ3Hx7dAAdzSGtK3k9Jq7Egtu.tar.zst",
-	unicode: "../package/main.roc",
-}
-
 import FuzzSupport
 import fuzz.Fuzz
 import unicode.ByteRange
@@ -24,11 +19,12 @@ test = |bytes| {
 	whole = decode_whole(bytes)
 	chunked = decode_byte_chunks(bytes)
 	stopped = decode_with_stops(bytes)
+	planned = decode_planned(bytes)
 
 	if whole != chunked {
 		crash "Utf8.Cursor whole and byte-chunk decoding disagreed"
 	}
-	if whole != stopped {
+	if whole != stopped or whole != planned {
 		crash "Utf8.Cursor Continue and Stop/resume decoding disagreed"
 	}
 	validate_trace(bytes, whole)
@@ -84,6 +80,60 @@ decode_with_stops = |bytes| {
 			Failed(failure) => return failed_trace(failure.cursor, failure.state, failure.error)
 		}
 	}
+}
+
+## Derive chunk sizes and a stop point from raw bytes without stripping any
+## byte from the source. Resume mid-chunk with exactly the unconsumed suffix.
+decode_planned : List(U8) -> Trace
+decode_planned = |bytes| {
+	var $cursor = Utf8.Cursor.init({})
+	var $items = []
+	var $remaining = bytes
+	while !$remaining.is_empty() {
+		marker = $remaining.get(0) ?? crash "a nonempty raw chunk has no first byte"
+		chunk = $remaining.take_first(1 + marker.to_u64() % 11)
+		$remaining = $remaining.drop_first(chunk.len())
+		if marker.bitwise_and(1) == 0 {
+			match Utf8.Cursor.push($cursor, [], $items, append_item) {
+				Pushed(next) if next.consumed == 0 and next.state == $items => {
+					$cursor = next.cursor
+				}
+				_ => crash "an empty UTF-8 chunk changed the cursor's output"
+			}
+		}
+		stop_after = $items.len() + 1 + marker.to_u64() % 3
+		var $suffix = chunk
+		while !$suffix.is_empty() {
+			match Utf8.Cursor.push(
+				$cursor,
+				$suffix,
+				$items,
+				|items, located| {
+					next = items.append(item_shape(located))
+					if (next.len() == stop_after) Stop(next) else Continue(next)
+				},
+			) {
+				Pushed(next) => {
+					if next.consumed != $suffix.len() {
+						crash "UTF-8 push did not consume a complete chunk"
+					}
+					$cursor = next.cursor
+					$items = next.state
+					$suffix = []
+				}
+				Stopped(next) => {
+					if next.consumed == 0 or next.consumed > $suffix.len() or next.state.len() != stop_after {
+						crash "UTF-8 stop reported inconsistent consumed bytes or events"
+					}
+					$cursor = next.cursor
+					$items = next.state
+					$suffix = $suffix.drop_first(next.consumed)
+				}
+				Failed(failure) => return failed_trace(failure.cursor, failure.state, failure.error)
+			}
+		}
+	}
+	finish_trace($cursor, $items)
 }
 
 append_item = |items, located| Continue(items.append(item_shape(located)))
@@ -201,10 +251,15 @@ validate_trace = |bytes, trace| {
 	{}
 }
 
-target = Fuzz.target_with({
-	name: "unicode-utf8",
-	examples: [],
-	generator: Fuzz.raw_bytes,
-	test,
-	show: FuzzSupport.show_bytes,
-})
+Utf8Target :: [].{
+	target = Fuzz.target_with({
+		name: "unicode-utf8",
+		examples: [
+			Fuzz.saved({ name: "utf8-widths", revision: "1", bytes: [0x41, 0xC2, 0x80, 0xE0, 0xA0, 0x80, 0xF4, 0x8F, 0xBF, 0xBF] }),
+			Fuzz.saved({ name: "partial-then-ascii", revision: "1", bytes: [0xF0, 0x9F, 0x41] }),
+		],
+		generator: Fuzz.raw_bytes,
+		test,
+		show: FuzzSupport.show_bytes,
+	})
+}
