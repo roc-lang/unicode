@@ -94,3 +94,17 @@ first token is `กข`. Authored examples in the suite record Thai phrase
 boundaries and offsets. The fuzz target covers longer repeated runs, exact
 limits, prefix-sharing spellings, marked graphemes, and explicit controls.
 The default line-break corpus continues to verify the base algorithm.
+
+A focused growth probe fed an optimized arm64 macOS build repeated
+`กขค` as runtime input, using the same tie lexicon. It counted calls to
+`roc_alloc` and `roc_realloc` around the tailoring operation after dictionary
+construction. Timings are medians of five fresh processes and include process
+startup. The probe used `--opt=speed` and the compiler pinned by commit
+`0d8ead4`.
+
+| Thai scalars | UTF-8 bytes | Opportunities | Allocations and reallocations | Elapsed |
+| ---: | ---: | ---: | ---: | ---: |
+| 3,000 | 9,000 | 2,000 | 43 | 2.8 ms |
+| 6,000 | 18,000 | 4,000 | 47 | 3.0 ms |
+| 12,000 | 36,000 | 8,000 | 52 | 3.6 ms |
+| 24,000 | 72,000 | 16,000 | 55 | 4.5 ms |
