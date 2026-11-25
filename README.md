@@ -255,6 +255,28 @@ python3 scripts/unicode_data.py generate --check
 
 Regenerate them with `scripts/rebuild.sh`.
 
+## Public API safety
+
+Valid Roc `Str` APIs process every Unicode scalar, including NUL, noncharacters,
+and unassigned values. Arbitrary bytes use `Utf8.Cursor`, which reports
+malformed input at an absolute byte offset and preserves the already
+irrevocable prefix. EOF and caller stop have distinct outcomes.
+
+Caller-provided ranges are ordered before construction and checked against
+the relevant source or analysis before use. Requested optional behavior
+reports its own unsupported or invalid configuration error where applicable.
+Collectors with explicit budgets report typed exhaustion without returning a
+partial collection. Detectable implementation faults in fallible APIs are
+distinct from caller errors. A host allocator failure can terminate Roc.
+
+Use the `*_limited` segmentation collectors to cap input bytes and output
+items. `Case` and `Bidi` accept feature-specific bounds on transformed or
+retained results. Lazy iterators allow early stop, while streaming cursors
+require explicit completion and retain no consumed chunk. The
+[public API audit](docs/api-safety.md) records per-operation behavior, resource
+bounds and invariant evidence. Run its focused checks with
+`python3 scripts/test.py safety`.
+
 ## Tests
 
 The [testing guide](docs/testing.md) describes how to build and review

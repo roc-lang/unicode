@@ -1,3 +1,4 @@
+import InternalBoundedCollect
 import ByteRange
 import InternalGrapheme
 
@@ -93,23 +94,43 @@ Grapheme :: [].{
 
 	## Return seamless slices of the source, retaining its backing storage.
 	slices : Str -> List(Str)
-	slices = |source| {
-		InternalGrapheme.ranges(source).map(
-			|range| {
-				ByteRange.slice(range, source) ?? ...
-			},
-		)
-	}
+	slices = |source| Grapheme.ranges(source).map(|range| source_slice(source, range))
 
 	## Split the source into independently materialized cluster strings.
 	split : Str -> List(Str)
-	split = |source| {
-		InternalGrapheme.ranges(source).map(
-			|range| {
-				slice = ByteRange.slice(range, source) ?? ...
-				copied_bytes = slice.to_utf8().map(|byte| byte)
-				Str.from_utf8(copied_bytes) ?? ...
-			},
-		)
+	split = |source| Grapheme.ranges(source).map(|range| owned_slice(source, range))
+
+	## Resource limits for the bounded collecting operations in this module.
+	CollectionLimits : InternalBoundedCollect.Limits
+	CollectionError : InternalBoundedCollect.Error
+
+	## Collect ranges with an input-byte and output-item limit. Fails atomically
+	## before exceeding either limit and uses the same traversal as `ranges`.
+	ranges_limited : Str, CollectionLimits -> Try(List(ByteRange), CollectionError)
+	ranges_limited = |source, limits| {
+		InternalBoundedCollect.from_iter(source.count_utf8_bytes(), limits, |{}| Grapheme.iter_ranges(source), |range| range)
 	}
+
+	## Collect slices with an input-byte and output-item limit. Fails atomically
+	## before exceeding either limit and uses the same traversal as `slices`.
+	slices_limited : Str, CollectionLimits -> Try(List(Str), CollectionError)
+	slices_limited = |source, limits| {
+		InternalBoundedCollect.from_iter(source.count_utf8_bytes(), limits, |{}| Grapheme.iter_ranges(source), |range| source_slice(source, range))
+	}
+
+	## Collect split with an input-byte and output-item limit. Fails atomically
+	## before exceeding either limit and uses the same traversal as `split`.
+	split_limited : Str, CollectionLimits -> Try(List(Str), CollectionError)
+	split_limited = |source, limits| {
+		InternalBoundedCollect.from_iter(source.count_utf8_bytes(), limits, |{}| Grapheme.iter_ranges(source), |range| owned_slice(source, range))
+	}
+}
+
+# Both inputs come from the same boundary traversal. Its ranges are ordered
+# scalar boundaries within the source. Copying the slice bytes preserves UTF-8.
+source_slice = |source, range| ByteRange.slice(range, source) ?? ...
+
+owned_slice = |source, range| {
+	slice = source_slice(source, range)
+	Str.from_utf8(slice.to_utf8().map(|byte| byte)) ?? ...
 }

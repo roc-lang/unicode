@@ -1,3 +1,4 @@
+import InternalBoundedCollect
 import ByteRange
 import InternalGrapheme
 import InternalScriptData
@@ -346,6 +347,18 @@ ScriptItemization :: [].{
 			}
 		}
 	}
+
+	## Resource limits for the bounded collecting operations in this module.
+	CollectionLimits : InternalBoundedCollect.Limits
+	CollectionError : InternalBoundedCollect.Error
+
+	## Collect runs with an input-byte and output-item limit. Fails atomically
+	## before exceeding either limit and uses the same traversal as `runs`.
+	runs_limited : Str, ConservativeScxV1, CollectionLimits -> Try(List(Run), CollectionError)
+	runs_limited = |source, policy, limits| {
+		InternalBoundedCollect.from_iter(source.count_utf8_bytes(), limits, |{}| ScriptItemization.iter_runs(source, policy), |item| item)
+	}
+
 }
 
 next_run : IterationState -> Try((ScriptItemization.Run, IterationState), [NoMore])
