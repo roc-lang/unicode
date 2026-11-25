@@ -37,13 +37,8 @@ jobs:
       - name: Check out the repository
         uses: actions/checkout@v7
 
-      - name: Read pinned Roc version
-        run: printf 'ROC_NIGHTLY_TAG=%s\n' "$(sed -n '1p' .roc-version)" >> "$GITHUB_ENV"
-
-      - uses: roc-lang/setup-roc@dd81390553b0a1236aedb61cdd4c0ed7cf7eaec4
-        with:
-          version: nightly
-          nightly-tag: ${{ env.ROC_NIGHTLY_TAG }}
+      - name: Install Roc
+        uses: ./.github/actions/setup-roc
 
       - run: roc version
 

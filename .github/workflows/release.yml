@@ -39,14 +39,8 @@ jobs:
           version: ${{ env.ZIG_VERSION }}
           use-cache: false
 
-      - name: Read pinned Roc version
-        run: printf 'ROC_NIGHTLY_TAG=%s\n' "$(sed -n '1p' .roc-version)" >> "$GITHUB_ENV"
-
       - name: Install Roc
-        uses: roc-lang/setup-roc@dd81390553b0a1236aedb61cdd4c0ed7cf7eaec4
-        with:
-          version: nightly
-          nightly-tag: ${{ env.ROC_NIGHTLY_TAG }}
+        uses: ./.github/actions/setup-roc
 
       - name: Run checks
         run: ROC=roc ./scripts/all_tests.sh
@@ -100,14 +94,8 @@ jobs:
           version: ${{ env.ZIG_VERSION }}
           use-cache: false
 
-      - name: Read pinned Roc version
-        run: printf 'ROC_NIGHTLY_TAG=%s\n' "$(sed -n '1p' .roc-version)" >> "$GITHUB_ENV"
-
       - name: Install Roc
-        uses: roc-lang/setup-roc@dd81390553b0a1236aedb61cdd4c0ed7cf7eaec4
-        with:
-          version: nightly
-          nightly-tag: ${{ env.ROC_NIGHTLY_TAG }}
+        uses: ./.github/actions/setup-roc
 
       - name: Download package bundle artifact
         uses: actions/download-artifact@v8
@@ -141,14 +129,8 @@ jobs:
           name: package-bundle
           path: dist
 
-      - name: Read pinned Roc version
-        run: printf 'ROC_NIGHTLY_TAG=%s\n' "$(sed -n '1p' .roc-version)" >> "$GITHUB_ENV"
-
       - name: Install Roc
-        uses: roc-lang/setup-roc@dd81390553b0a1236aedb61cdd4c0ed7cf7eaec4
-        with:
-          version: nightly
-          nightly-tag: ${{ env.ROC_NIGHTLY_TAG }}
+        uses: ./.github/actions/setup-roc
 
       - name: Create release
         env:

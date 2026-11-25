@@ -1,0 +1,74 @@
+name: Setup Roc
+description: Install the Roc compiler pinned in .roc-version (a release tag, or a nightly tag).
+
+outputs:
+  cache-path:
+    description: Roc cache directory (nightly pins only, empty otherwise).
+    value: ${{ steps.nightly.outputs.cache-path }}
+  cache-key:
+    description: Roc cache key (nightly pins only, empty otherwise).
+    value: ${{ steps.nightly.outputs.cache-key }}
+
+runs:
+  using: composite
+  steps:
+    - name: Read pinned Roc version
+      id: pin
+      shell: bash
+      run: echo "version=$(sed -n '1p' .roc-version)" >> "$GITHUB_OUTPUT"
+
+    # Nightly pins are only used by the "Update Roc nightly" workflow.
+    - name: Install Roc nightly
+      id: nightly
+      if: startsWith(steps.pin.outputs.version, 'nightly-')
+      uses: roc-lang/setup-roc@dd81390553b0a1236aedb61cdd4c0ed7cf7eaec4
+      with:
+        version: nightly
+        nightly-tag: ${{ steps.pin.outputs.version }}
+
+    - name: Install Roc release
+      if: ${{ !startsWith(steps.pin.outputs.version, 'nightly-') }}
+      shell: bash
+      env:
+        ROC_TAG: ${{ steps.pin.outputs.version }}
+      run: |
+        set -euo pipefail
+
+        case "$RUNNER_OS-$RUNNER_ARCH" in
+          Linux-X64) platform=linux_x86_64; ext=tar.gz ;;
+          Linux-ARM64) platform=linux_arm64; ext=tar.gz ;;
+          macOS-ARM64) platform=macos_apple_silicon; ext=tar.gz ;;
+          macOS-X64) platform=macos_x86_64; ext=tar.gz ;;
+          Windows-X64) platform=windows_x86_64; ext=zip ;;
+          *) echo "unsupported runner: $RUNNER_OS-$RUNNER_ARCH" >&2; exit 1 ;;
+        esac
+
+        asset="roc-$platform-$ROC_TAG.$ext"
+        dir="$RUNNER_TEMP/roc-release"
+        mkdir -p "$dir"
+        curl --fail --silent --show-error --location --retry 5 --retry-all-errors \
+          --output "$dir/$asset" \
+          "https://github.com/roc-lang/roc/releases/download/$ROC_TAG/$asset"
+
+        if [ "$ext" = zip ]; then
+          unzip -q "$dir/$asset" -d "$dir/extracted"
+        else
+          mkdir "$dir/extracted"
+          tar -xzf "$dir/$asset" -C "$dir/extracted"
+        fi
+
+        roc_bin="$(find "$dir/extracted" -maxdepth 2 -type f \( -name roc -o -name roc.exe \) | head -n 1)"
+        if [ -z "$roc_bin" ]; then
+          echo "no roc binary found in $asset" >&2
+          exit 1
+        fi
+
+        roc_dir="$(dirname "$roc_bin")"
+        if [ "$RUNNER_OS" = Windows ]; then
+          roc_dir="$(cygpath -w "$roc_dir")"
+        fi
+        echo "$roc_dir" >> "$GITHUB_PATH"
+
+    - name: Show Roc version
+      shell: bash
+      run: roc version
