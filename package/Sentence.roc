@@ -99,7 +99,7 @@ Sentence :: [].{
 	slices : Str -> List(Str)
 	slices = |source| Sentence.ranges(source).map(|range| source_slice(source, range))
 
-	## Return independently owned strings for each word-boundary range.
+	## Return independently owned strings for each sentence-boundary range.
 	owned : Str -> List(Str)
 	owned = |source| Sentence.ranges(source).map(|range| owned_slice(source, range))
 
