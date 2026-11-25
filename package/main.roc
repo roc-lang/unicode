@@ -17,6 +17,7 @@ package
 		JoiningType,
 		LineBreak,
 		Locale,
+		Normalization,
 		Property,
 		Scalar,
 		ScalarRange,

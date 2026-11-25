@@ -15,6 +15,11 @@
     }
   },
   "specifications": {
+    "uax_15": {
+      "revision": "58",
+      "release": "unicode",
+      "document": "https://www.unicode.org/reports/tr15/tr15-58.html"
+    },
     "uax_9": {
       "revision": "52",
       "release": "unicode",
@@ -68,6 +73,44 @@
     }
   },
   "sources": {
+    "normalization_properties": {
+      "path": "vendor/unicode/18.0.0/DerivedNormalizationProps.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/DerivedNormalizationProps.txt",
+      "sha256": "98ac7f67d985fe781e317f6182e885e94cabb0c314769e6dd73e48b226931ccd",
+      "header": "# DerivedNormalizationProps-18.0.0.txt",
+      "records": 16384,
+      "role": "production",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": [
+        "unicode"
+      ],
+      "format": "ucd-normalization-properties",
+      "properties": [
+        "Full_Composition_Exclusion",
+        "NFC_QC",
+        "NFD_QC",
+        "NFKC_QC",
+        "NFKD_QC",
+        "NFKC_CF"
+      ]
+    },
+    "normalization_test": {
+      "path": "vendor/unicode/18.0.0/NormalizationTest.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/NormalizationTest.txt",
+      "sha256": "25a50d816764b04abfb4a646d3eb2b2a803284c3873d9a06757b94fe4513dde3",
+      "header": "# NormalizationTest-18.0.0.txt",
+      "records": 20177,
+      "role": "conformance",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": [
+        "unicode"
+      ],
+      "format": "uax-15-normalization-test",
+      "properties": [],
+      "cases": 20171
+    },
     "east_asian_width": {
       "path": "vendor/unicode/18.0.0/EastAsianWidth.txt",
       "url": "https://www.unicode.org/Public/18.0.0/ucd/EastAsianWidth.txt",
@@ -383,7 +426,7 @@
       "storage_release": "unicode",
       "release_axes": ["unicode"],
       "format": "ucd-unicode-data",
-      "properties": ["Bidi_Mirrored", "Simple_Uppercase_Mapping", "Simple_Lowercase_Mapping", "Simple_Titlecase_Mapping"]
+      "properties": ["Bidi_Mirrored", "Decomposition_Mapping", "Simple_Uppercase_Mapping", "Simple_Lowercase_Mapping", "Simple_Titlecase_Mapping"]
     },
     "special_casing": {
       "path": "vendor/unicode/18.0.0/SpecialCasing.txt",
@@ -558,6 +601,20 @@
     }
   },
   "artifacts": {
+    "normalization_data": {
+      "generator": "normalization-data",
+      "output": "package/InternalNormalizationData.roc",
+      "sources": [
+        "unicode_data",
+        "normalization_properties"
+      ],
+      "specifications": [
+        "uax_15"
+      ],
+      "artifacts": [
+        "canonical_combining_class"
+      ]
+    },
     "unicode_version": {
       "generator": "unicode-version",
       "output": "package/UnicodeVersion.roc",

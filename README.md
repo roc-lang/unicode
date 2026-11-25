@@ -241,6 +241,18 @@ subtag. For collation or other locale data consumers,
 `Locale.unicode_keyword` can retrieve values such as `co=phonebk` from
 `de-u-co-phonebk`.
 
+## Unicode normalization
+
+`Normalization` implements NFC, NFD, NFKC, and NFKD for the pinned Unicode
+release. `quick_check` is a total forward scan. `is_normalized` decides
+`Maybe` by running the same engine as `normalize`. The complete-string
+normalizer returns owned text and has explicit input-byte, temporary-scalar,
+and output-byte limits. Limit failures return a typed error atomically.
+Unicode canonical equivalence uses NFD, canonical caseless matching adds the
+default full case fold, and `nfkc_case_fold` uses the Unicode identifier
+mapping followed by NFC. The [test driver](docs/testing.md) checks the four
+forms against the pinned official normalization conformance corpus.
+
 ## Scripts and shaping-oriented itemization
 
 `Script` exposes Unicode 18's normative `Script` and `Script_Extensions`

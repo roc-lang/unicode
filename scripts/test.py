@@ -52,6 +52,7 @@ APP_NAMES = {
     "grapheme": "grapheme",
     "line-break": "line-break",
     "word": "word",
+    "normalization": "normalization",
     "case": "case",
     "properties": "properties",
     "allocation": "allocation",
@@ -195,6 +196,9 @@ def load_app_specs() -> dict[str, dict[str, object]]:
             "timeout_seconds",
             "unicode_manifest_files",
         },
+        "normalization": {
+            "schema_version", "kind", "suite", "timeout_seconds", "unicode_manifest_file",
+        },
         "case": {
             "schema_version",
             "kind",
@@ -267,6 +271,11 @@ def load_app_specs() -> dict[str, dict[str, object]]:
         raise TestFailure("word/sentence spec suites have drifted")
     if specs["word"]["unicode_manifest_files"] != ["word_break_test", "sentence_break_test"]:
         raise TestFailure("word/sentence spec references unexpected manifest files")
+    normalization = specs["normalization"]
+    if (normalization["suite"] != "normalization"
+            or normalization["unicode_manifest_file"] != "normalization_test"
+            or "normalization_test" not in manifest_files):
+        raise TestFailure("normalization spec must use the pinned conformance corpus")
     case_sources = set(specs["case"]["unicode_manifest_files"])
     if specs["case"]["suite"] != "case" or case_sources != {
         "unicode_data",
@@ -703,6 +712,43 @@ def run_segmentation(
         lambda index: segmentation_row(cases[index]),
         jobs=jobs,
         timeout=int(spec["timeout_seconds"]),
+    )
+
+
+def normalization_row(index: int, row: tuple) -> str:
+    fields = [",".join(map(str, scalars)) for scalars in row]
+    return "\t".join([f"NormalizationTest:{index + 1}", *fields])
+
+
+def normalization_identity_points(manifest, corpus) -> list[int]:
+    # UAX #15 conformance condition 2 covers assigned scalars that have
+    # no explicit source record in Part1. A singleton listed in another
+    # section does not exempt it from this separate identity test.
+    explicit = {columns[0][0] for part, columns in corpus if part == 1 and len(columns[0]) == 1}
+    categories = unicode_data.load_canonical_properties(manifest).general_category
+    return [
+        code
+        for category in categories if category.property not in ("Cn", "Cs", "Unassigned", "Surrogate")
+        for code in range(category.start, category.end + 1)
+        if code not in explicit
+    ]
+
+
+def run_normalization(binary: Path, jobs: int, spec: dict[str, object]) -> None:
+    manifest = load_manifest()
+    text = unicode_data.verify_source(manifest, "normalization_test")
+    records = tuple(unicode_data.unicode_normalization.conformance_rows(text, with_parts=True))
+    cases = [columns for _, columns in records]
+    identities = normalization_identity_points(manifest, records)
+    def rows():
+        for index, case in enumerate(cases):
+            yield normalization_row(index, case)
+        for code in identities:
+            yield f"Identity\t{code}"
+
+    run_parallel_stream(
+        binary, "normalization", rows(), len(cases) + len(identities),
+        jobs=jobs, timeout=int(spec["timeout_seconds"]),
     )
 
 
@@ -1443,6 +1489,7 @@ def run_data_checks() -> None:
         "-m",
         "unittest",
         "scripts/test_unicode_data.py",
+        "scripts/test_unicode_normalization.py",
         "scripts/test_bidi_reduce.py",
     ])
 
@@ -1453,7 +1500,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "suite",
         nargs="?",
-        choices=("all", "data", "bidi", "grapheme", "line-break", "word", "sentence", "case", "properties", "allocations", "safety"),
+        choices=("all", "data", "safety", "allocations", "sentence", *(name for name in APP_NAMES if name != "allocation")),
         default="all",
     )
     parser.add_argument("--roc", default=os.environ.get("ROC", "roc"))
@@ -1483,6 +1530,9 @@ def main(argv: list[str] | None = None) -> int:
             requested_apps.append("line-break")
         if args.suite in ("all", "word", "sentence"):
             requested_apps.append("word")
+        if args.suite in ("all", "normalization"):
+            command([args.roc, "test", "tests/apps/normalization/main.roc", "--no-cache"])
+            requested_apps.append("normalization")
         if args.suite in ("all", "case"):
             requested_apps.append("case")
         if args.suite in ("all", "properties"):
@@ -1502,6 +1552,8 @@ def main(argv: list[str] | None = None) -> int:
             for suite in ("word", "sentence"):
                 if args.suite in ("all", suite):
                     run_segmentation(binaries["word"], suite, args.jobs, app_specs["word"])
+            if "normalization" in requested_apps:
+                run_normalization(binaries["normalization"], args.jobs, app_specs["normalization"])
             if "case" in requested_apps:
                 run_case(binaries["case"], args.jobs, app_specs["case"])
             if "properties" in requested_apps:

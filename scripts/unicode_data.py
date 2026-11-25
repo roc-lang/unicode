@@ -19,6 +19,11 @@ from pathlib import Path
 from typing import Callable, Iterable
 from urllib.parse import urlparse
 
+if __package__:
+    from . import unicode_normalization
+else:
+    import unicode_normalization
+
 
 ROOT = Path(__file__).resolve().parents[1]
 UNICODE_VENDOR_ROOT = ROOT / "vendor" / "unicode"
@@ -73,6 +78,7 @@ DERIVED_CORE_PROPERTIES = (
 PROP_LIST_PROPERTIES = ("Variation_Selector", "Soft_Dotted")
 UNICODE_DATA_PROPERTIES = (
     "Bidi_Mirrored",
+    "Decomposition_Mapping",
     "Simple_Uppercase_Mapping",
     "Simple_Lowercase_Mapping",
     "Simple_Titlecase_Mapping",
@@ -440,6 +446,12 @@ class SourceProjectionContract:
 
 
 SOURCE_PROJECTION_CONTRACTS = {
+    ("ucd-normalization-properties", unicode_normalization.PROPERTIES): SourceProjectionContract(
+        "ucd/DerivedNormalizationProps.txt", "production"
+    ),
+    ("uax-15-normalization-test", ()): SourceProjectionContract(
+        "ucd/NormalizationTest.txt", "conformance", has_cases=True, cases_match_records=False
+    ),
     ("ucd-property-ranges", ("East_Asian_Width",)): SourceProjectionContract(
         "ucd/EastAsianWidth.txt", "production-and-conformance"
     ),
@@ -550,6 +562,7 @@ SOURCE_PROJECTION_CONTRACTS = {
 }
 
 SPECIFICATION_COMPATIBILITY = {
+    "uax_15": ("unicode", "18.0.0", "58"),
     "uax_9": ("unicode", "18.0.0", "52"),
     "uax_11": ("unicode", "18.0.0", "46"),
     "uax_14": ("unicode", "18.0.0", "57"),
@@ -561,6 +574,15 @@ SPECIFICATION_COMPATIBILITY = {
 }
 
 GENERATOR_CONTRACTS = {
+    "normalization-data": GeneratorContract(
+        (
+            ("ucd-unicode-data", UNICODE_DATA_PROPERTIES),
+            ("ucd-normalization-properties", unicode_normalization.PROPERTIES),
+        ),
+        ("uax_15",),
+        ("canonical-combining-class",),
+        "package/InternalNormalizationData.roc",
+    ),
     "unicode-version": GeneratorContract((), ("uax_44",), (), "package/UnicodeVersion.roc"),
     "grapheme-data": GeneratorContract(
         (
@@ -5696,6 +5718,29 @@ def render_unicode_version(version: str) -> str:
     )
 
 
+def parse_normalization_tests(manifest: dict[str, object]) -> tuple:
+    name = _source_for(manifest, "uax-15-normalization-test", ())
+    try:
+        rows = tuple(unicode_normalization.conformance_rows(verify_source(manifest, name)))
+    except ValueError as error:
+        raise DataError(f"{name}: {error}") from error
+    if len(rows) != _entry(manifest, name)["cases"]:
+        raise DataError(f"{name}: normalization case count drifted")
+    return rows
+
+
+def render_normalization(manifest: dict[str, object], version: str) -> str:
+    data_name = _source_for(manifest, "ucd-unicode-data", UNICODE_DATA_PROPERTIES)
+    prop_name = _source_for(manifest, "ucd-normalization-properties", unicode_normalization.PROPERTIES)
+    try:
+        data = unicode_normalization.parse_data(
+            verify_source(manifest, data_name), verify_source(manifest, prop_name)
+        )
+        return unicode_normalization.render(data, version, _roc_list)
+    except ValueError as error:
+        raise DataError(f"normalization data: {error}") from error
+
+
 def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
     properties = load_property_data(manifest)
     gcb = list(properties.grapheme.records)
@@ -5720,6 +5765,7 @@ def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
         (MissingDefault(0, MAX_CODE_POINT, "Joining_Group", jg_identities[0], 0),),
     )
     generators: dict[str, Callable[[], str]] = {
+        "normalization-data": lambda: render_normalization(manifest, version),
         "unicode-version": lambda: render_unicode_version(version),
         "grapheme-data": lambda: render_grapheme_data(manifest, version, gcb, incb, emoji),
         "legacy-grapheme-break": lambda: render_gcb(version, gcb),
@@ -5874,6 +5920,7 @@ def validate_all(manifest: dict[str, object]) -> None:
     load_line_break_properties(manifest)
     load_public_properties(manifest, canonical)
     load_script_properties(manifest)
+    parse_normalization_tests(manifest)
     parse_grapheme_tests(manifest)
     parse_word_break_tests(manifest)
     parse_sentence_break_tests(manifest)
