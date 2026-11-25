@@ -1563,7 +1563,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.suite in ("all", "word", "sentence"):
             requested_apps.append("word")
         if args.suite in ("all", "collation"):
-            command([args.roc, "test", "tests/safety/collation.roc", "--no-cache"])
+            if args.suite == "collation":
+                command([args.roc, "test", "tests/safety/collation.roc", "--opt=dev", "--no-cache"])
             requested_apps.append("collation")
         if args.suite in ("all", "normalization"):
             command([args.roc, "test", "tests/apps/normalization/main.roc", "--no-cache"])
