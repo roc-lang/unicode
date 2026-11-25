@@ -669,6 +669,25 @@ explicit:
 
 This is a semantic distinction between profiles, not an implementation detail.
 
+### Locale identifiers and collation
+
+A locale identifier is an explicit, validated value. Its Unicode BCP 47
+grammar and catalog-independent syntax normalization are distinct from
+catalog aliases, available locale data and fallback. A locale consumer
+declares the locales and options it implements and returns a typed error for
+a requested unsupported policy. No consumer derives a locale from the
+environment.
+
+The default collation is versioned UCA and DUCET. Tailored collation declares
+its separate CLDR release and profile revision. Collation shares canonical
+decomposition and combining-class facts with normalization. It compares
+complete text through collation elements and level weights. Contraction
+matching may need canonically ordered lookahead, so this operation exposes
+bounded retained state and atomic failure. It does not emit replacement text
+or change the source identity. Comparison and sorting use the same key
+semantics. Sort keys are private encodings tied to the release and configured
+policy, and sorting preserves input order for equal keys.
+
 ### Properties for shaping and layout
 
 The property layer supplies immutable Unicode facts needed before font-specific
@@ -814,6 +833,8 @@ revision of each source.
 
 - [The Unicode Standard](https://www.unicode.org/standard/standard.html)
 - [Unicode Core Default Case Algorithms](https://www.unicode.org/versions/Unicode18.0.0/core-spec/chapter-3/#Default_Case_Algorithms)
+- [UTS #10: Unicode Collation Algorithm](https://www.unicode.org/reports/tr10/)
+- [UTS #35: Unicode Locale Data Markup Language](https://www.unicode.org/reports/tr35/)
 - [UAX #9: Unicode Bidirectional Algorithm](https://www.unicode.org/reports/tr9/)
 - [UAX #14: Unicode Line Breaking Algorithm](https://www.unicode.org/reports/tr14/)
 - [UAX #15: Unicode Normalization Forms](https://www.unicode.org/reports/tr15/)

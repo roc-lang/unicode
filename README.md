@@ -267,6 +267,13 @@ default full case fold, and `nfkc_case_fold` uses the Unicode identifier
 mapping followed by NFC. The [test driver](docs/testing.md) checks the four
 forms against the pinned official normalization conformance corpus.
 
+## Collation
+
+`Collation` compares or stably sorts complete strings and produces bounded
+bytewise-sortable keys. Choose the Unicode default ordering or one of the
+included CLDR language profiles. See the [collation guide](docs/collation.md)
+for locale selection, options, version identity and resource limits.
+
 ## Scripts and shaping-oriented itemization
 
 `Script` exposes Unicode 18's normative `Script` and `Script_Extensions`

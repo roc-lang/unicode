@@ -7,6 +7,7 @@ package
 		CanonicalCombiningClass,
 		Case,
 		CodePoint,
+		Collation,
 		EastAsianWidth,
 		Emoji,
 		GeneralCategory,

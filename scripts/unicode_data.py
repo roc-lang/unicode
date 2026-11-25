@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 from array import array
 import hashlib
+from io import BytesIO
 import json
 import re
 import sys
@@ -19,10 +20,12 @@ from fractions import Fraction
 from pathlib import Path
 from typing import Callable, Iterable
 from urllib.parse import urlparse
+from zipfile import BadZipFile, ZipFile
 
 if __package__:
-    from . import unicode_normalization
+    from . import unicode_collation, unicode_normalization
 else:
+    import unicode_collation
     import unicode_normalization
 
 
@@ -79,7 +82,7 @@ DERIVED_CORE_PROPERTIES = (
     "Case_Ignorable",
     *DERIVED_IDENTIFIER_PROPERTIES,
 )
-PROP_LIST_PROPERTIES = ("Variation_Selector", "Soft_Dotted", *PATTERN_PROPERTIES)
+PROP_LIST_PROPERTIES = ("Variation_Selector", "Soft_Dotted", *PATTERN_PROPERTIES, "Unified_Ideograph")
 NUMERIC_TYPES = ("None", "Decimal", "Digit", "Numeric")
 UNICODE_DATA_PROPERTIES = (
     "Bidi_Mirrored",
@@ -458,7 +461,27 @@ class SourceProjectionContract:
     header: str | None = None
 
 
+COLLATION_TEST_FILES = (
+    ("collation-non-ignorable", "CollationTest/CollationTest_NON_IGNORABLE_SHORT.txt"),
+    ("collation-shifted", "CollationTest/CollationTest_SHIFTED_SHORT.txt"),
+)
+
+
 SOURCE_PROJECTION_CONTRACTS = {
+    ("uts-10-allkeys", ()): SourceProjectionContract("uca/allkeys.txt", "production"),
+    ("uts-10-collation-archive", ()): SourceProjectionContract(
+        "uca/CollationTest.zip", "conformance", has_cases=True, cases_match_records=False,
+        header="# UCA Version: 18.0.0",
+    ),
+    ("cldr-root-collation", ()): SourceProjectionContract(
+        "common/uca/allkeys_CLDR.txt", "production", ("cldr",), header="# UCA Version: 18.0.0",
+    ),
+    ("cldr-collation", ("German",)): SourceProjectionContract(
+        "common/collation/de.xml", "production", ("cldr",), header='<?xml version="1.0" encoding="UTF-8" ?>',
+    ),
+    ("cldr-collation", ("Spanish",)): SourceProjectionContract(
+        "common/collation/es.xml", "production", ("cldr",), header='<?xml version="1.0" encoding="UTF-8" ?>',
+    ),
     ("ucd-normalization-properties", unicode_normalization.PROPERTIES): SourceProjectionContract(
         "ucd/DerivedNormalizationProps.txt", "production"
     ),
@@ -590,10 +613,26 @@ SPECIFICATION_COMPATIBILITY = {
     "uax_31": ("unicode", "18.0.0", "45"),
     "uax_44": ("unicode", "18.0.0", "38"),
     "uax_50": ("unicode", "18.0.0", "35"),
+    "uts_10": ("unicode", "18.0.0", "55"),
+    "uts_35": ("cldr", "49", "79"),
+    "uts_35_collation": ("cldr", "49", "79"),
     "uts_51": ("emoji", "18.0", "31"),
 }
 
 GENERATOR_CONTRACTS = {
+    "collation-data": GeneratorContract(
+        (
+            ("uts-10-allkeys", ()),
+            ("cldr-root-collation", ()),
+            ("cldr-collation", ("Spanish",)),
+            ("cldr-collation", ("German",)),
+            ("ucd-binary-property-ranges", PROP_LIST_PROPERTIES),
+            ("ucd-unicode-data", UNICODE_DATA_PROPERTIES),
+        ),
+        ("uts_10", "uts_35", "uts_35_collation"),
+        ("normalization-data", "canonical-combining-class", "general-category"),
+        "package/InternalCollationData.roc",
+    ),
     "normalization-data": GeneratorContract(
         (
             ("ucd-unicode-data", UNICODE_DATA_PROPERTIES),
@@ -987,7 +1026,11 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
         "unicode": {
             "url_prefix": "https://www.unicode.org/",
             "license": "unicode-data",
-        }
+        },
+        "cldr": {
+            "url_prefix": "https://raw.githubusercontent.com/unicode-org/cldr/",
+            "license": "unicode-data",
+        },
     }:
         raise DataError("manifest Unicode authority provenance drifted")
 
@@ -1116,13 +1159,17 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
             raise DataError(
                 f"manifest.specifications.{name} is incompatible with its exact release"
             )
-        number_match = re.fullmatch(r"(?:uax|uts)_([0-9]+)", name)
+        number_match = re.fullmatch(r"(?:uax|uts)_([0-9]+)(?:_collation)?", name)
         if number_match is None or not isinstance(item.get("document"), str):
             raise DataError(f"manifest.specifications.{name} has invalid document metadata")
         number = number_match.group(1)
-        expected_document = (
-            f"https://www.unicode.org/reports/tr{number}/tr{number}-{item['revision']}.html"
-        )
+        revision = item["revision"]
+        prefix = f"https://www.unicode.org/reports/tr{number}/tr{number}-{revision}"
+        if name in ("uts_35", "uts_35_collation"):
+            part = "tr35-collation.html" if name.endswith("_collation") else "tr35.html"
+            expected_document = f"{prefix}/{part}"
+        else:
+            expected_document = f"{prefix}.html"
         if item["document"] != expected_document:
             raise DataError(f"manifest.specifications.{name}.document does not pin its revision")
 
@@ -1197,7 +1244,10 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
             raise DataError(f"manifest.sources.{name}.cases must exactly match data records")
         unicode_version = release_version(manifest, storage_release)
         authority_prefix = str(authority["url_prefix"])
-        expected_url_prefix = f"{authority_prefix}Public/{unicode_version}/"
+        expected_url_prefix = (
+            f"{authority_prefix}release-{unicode_version.replace('.', '-')}/"
+            if storage["kind"] == "cldr" else f"{authority_prefix}Public/{unicode_version}/"
+        )
         expected_url = expected_url_prefix + projection_contract.official_suffix
         if item["url"] != expected_url:
             raise DataError(f"manifest.sources.{name}.url does not identify its exact release")
@@ -1434,7 +1484,7 @@ def data_path(manifest: dict[str, object], name: str) -> Path:
     return ROOT / relative
 
 
-def verify_source(manifest: dict[str, object], name: str) -> str:
+def verify_source_bytes(manifest: dict[str, object], name: str) -> bytes:
     item = _entry(manifest, name)
     path = data_path(manifest, name)
     try:
@@ -1446,6 +1496,13 @@ def verify_source(manifest: dict[str, object], name: str) -> str:
         raise DataError(
             f"SHA-256 mismatch for {path}: expected {item['sha256']}, got {digest}"
         )
+    return content
+
+
+def verify_source(manifest: dict[str, object], name: str) -> str:
+    item = _entry(manifest, name)
+    path = data_path(manifest, name)
+    content = verify_source_bytes(manifest, name)
     try:
         text = content.decode("utf-8")
     except UnicodeDecodeError as err:
@@ -6021,6 +6078,64 @@ def render_normalization(manifest: dict[str, object], version: str) -> str:
         raise DataError(f"normalization data: {error}") from error
 
 
+def render_collation(manifest: dict[str, object], version: str) -> str:
+    def source(format, projection=()):
+        return verify_source(manifest, _source_for(manifest, format, projection))
+
+    try:
+        ducet, implicit = unicode_collation.parse_ducet(source("uts-10-allkeys"), version)
+        cldr_root, _ = unicode_collation.parse_ducet(source("cldr-root-collation"), version, cldr=True)
+        root = unicode_collation.merge_cldr_root(ducet, cldr_root)
+        direct = unicode_normalization.parse_decompositions(source("ucd-unicode-data", UNICODE_DATA_PROPERTIES))
+        canonical = {cp: values for cp, (compatibility, values) in direct.items() if not compatibility}
+        spanish = source("cldr-collation", ("Spanish",))
+        german = source("cldr-collation", ("German",))
+        overlays = [
+            unicode_collation.tailor(root, unicode_collation.parse_cldr_collation(text, language, kind), canonical)
+            for text, language, kind in (
+                (spanish, "es", "standard"),
+                (spanish, "es", "traditional"),
+                (german, "de", "phonebook"),
+            )
+        ]
+        unified = _parse_binary_projection(
+            source("ucd-binary-property-ranges", PROP_LIST_PROPERTIES),
+            source="PropList.txt", property_name="Unified_Ideograph",
+        )
+        han = [(row.start, row.end) for row in unified]
+        return unicode_collation.render(
+            root, overlays, implicit, han, version, release_version(manifest, "cldr"), _roc_list
+        )
+    except (ValueError, KeyError) as error:
+        raise DataError(f"collation data: {error}") from error
+
+
+def collation_test_sources(manifest: dict[str, object]) -> dict[str, str]:
+    name = _source_for(manifest, "uts-10-collation-archive", ())
+    item = _entry(manifest, name)
+    content = verify_source_bytes(manifest, name)
+    try:
+        with ZipFile(BytesIO(content)) as archive:
+            results = {
+                suite: archive.read(path).decode("utf-8")
+                for suite, path in COLLATION_TEST_FILES
+            }
+        records = sum(
+            1 for text in results.values() for line in text.splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        )
+        version = release_version(manifest, "unicode")
+        cases = sum(
+            1 for text in results.values()
+            for _ in unicode_collation.parse_short_tests(text, version)
+        )
+    except (BadZipFile, KeyError, ValueError) as error:
+        raise DataError(f"collation conformance archive: {error}") from error
+    if records != item["records"] or cases != item["cases"]:
+        raise DataError("collation conformance row counts drifted")
+    return results
+
+
 def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
     properties = load_property_data(manifest)
     gcb = list(properties.grapheme.records)
@@ -6045,6 +6160,7 @@ def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
         (MissingDefault(0, MAX_CODE_POINT, "Joining_Group", jg_identities[0], 0),),
     )
     generators: dict[str, Callable[[], str]] = {
+        "collation-data": lambda: render_collation(manifest, version),
         "normalization-data": lambda: render_normalization(manifest, version),
         "unicode-version": lambda: render_unicode_version(version),
         "grapheme-data": lambda: render_grapheme_data(manifest, version, gcb, incb, emoji),
@@ -6195,7 +6311,10 @@ def validate_all(manifest: dict[str, object]) -> None:
         if not license_path.is_file():
             raise DataError(f"missing data license: {license_path}")
     for source in _require_dict(manifest["sources"], "manifest.sources"):
-        verify_source(manifest, source)
+        if _entry(manifest, source)["format"] == "uts-10-collation-archive":
+            collation_test_sources(manifest)
+        else:
+            verify_source(manifest, source)
     load_property_data(manifest)
     canonical = load_canonical_properties(manifest)
     load_case_data(manifest, canonical)
