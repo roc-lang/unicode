@@ -5,9 +5,11 @@ app [target] {
 
 import fuzz.Fuzz
 import CaseTarget
+import NormalizationTarget
 import PropertyTarget
 
 target = Fuzz.suite([
 	CaseTarget.target,
+	NormalizationTarget.target,
 	PropertyTarget.target,
 ])

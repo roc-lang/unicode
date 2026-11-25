@@ -71,6 +71,7 @@ TARGETS = {
         Target("sentence", "source_suite", 385),
         Target("line-break", "source_suite", 385),
         Target("case", "scalar_suite", 385),
+        Target("normalization", "scalar_suite", 385),
         Target("property", "scalar_suite", 385),
         Target("bidi", "analysis_suite", 385),
         Target("script", "analysis_suite", 385),
@@ -247,6 +248,14 @@ def target_seed_payloads(target: Target) -> list[tuple[str, bytes]]:
         for case in evenly_sample(cases):
             config = case.paragraph_mode if target.name == "bidi" else 0
             seeds.append((f"unicode-{release}-{case.line}", scalar_entropy(case.code_points, config=config)))
+    elif target.name == "normalization":
+        rows = unicode_data.parse_normalization_tests(unicode_manifest)
+        for index, row in enumerate(evenly_sample(rows)):
+            for column in (0, 1 + index % 4):
+                points = row[column]
+                if 1 + 3 * len(points) <= target.max_input_size:
+                    name = f"normalization-{release}-{index}-{column}"
+                    seeds.append((name, scalar_entropy(points, config=index % 256)))
     elif target.name in ("case", "property"):
         canonical = unicode_data.load_canonical_properties(unicode_manifest)
         if target.name == "case":
