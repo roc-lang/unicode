@@ -111,18 +111,15 @@ class UnicodeDataTests(unittest.TestCase):
             tuple(baseline.values()), tuple(unicode_data.rendered_modules(loaded).values())
         )
 
-    def test_cldr_axis_is_structural_but_unimplemented_formats_are_rejected(self) -> None:
-        base = json.loads(unicode_data.MANIFEST_PATH.read_text(encoding="utf-8"))
-        base["releases"]["cldr"] = {
-            "version": "48",
-            "authority": "unicode",
-            "kind": "cldr",
-            "vendor_prefix": "vendor/unicode/cldr/48",
-        }
-        with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "manifest.json"
-            path.write_text(json.dumps(base), encoding="utf-8")
-            unicode_data.load_manifest(path)
+    def test_cldr_axis_is_pinned_and_unimplemented_formats_are_rejected(self) -> None:
+        base = unicode_data.load_manifest()
+        self.assertEqual(unicode_data.release_version(base, "cldr"), "49")
+        self.assertEqual(base["specifications"]["uts_35_collation"]["release"], "cldr")
+
+        wrong_cldr = json.loads(json.dumps(base))
+        wrong_cldr["releases"]["cldr"]["version"] = "48"
+        wrong_cldr["releases"]["cldr"]["vendor_prefix"] = "vendor/cldr/48"
+        self.assert_manifest_rejected(wrong_cldr, "uts_35.*incompatible with its exact release")
 
         unsupported = json.loads(json.dumps(base))
         unsupported["sources"]["cldr_annotations"] = {
@@ -135,8 +132,6 @@ class UnicodeDataTests(unittest.TestCase):
         self.assert_manifest_rejected(unsupported, "no implemented parser")
 
         fake_sync = json.loads(json.dumps(base))
-        fake_sync["releases"]["cldr"]["version"] = "18.0.0"
-        fake_sync["releases"]["cldr"]["vendor_prefix"] = "vendor/unicode/cldr/18.0.0"
         fake_sync["releases"]["emoji"]["synchronized_with"] = "cldr"
         self.assert_manifest_rejected(fake_sync, "must name a Unicode UCD release")
 
