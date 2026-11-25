@@ -50,3 +50,10 @@ No feature or substrate branch may be merged into the integration branch until
 a different agent or reviewer has performed an adversarial review against
 `design.md`. Resolve material findings on the feature branch and record the
 review outcome before integration. Authors do not approve their own changes.
+
+## Testing methodology
+
+Follow [docs/testing.md](docs/testing.md) when designing or reviewing test
+evidence. Identify the production contract, the independent expected result,
+and the limits of the evidence. Record the result of a targeted mutation when
+adding or materially changing an oracle.

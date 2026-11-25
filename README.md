@@ -253,6 +253,9 @@ Regenerate them with `scripts/rebuild.sh`.
 
 ## Tests
 
+The [testing guide](docs/testing.md) describes how to build and review
+correctness oracles, conformance checks, and resource evidence.
+
 Each purpose-built test app lives in `tests/apps/<suite>/main.roc` with an
 adjacent `spec.json`. The runner builds optimized binaries once, sends cases
 over a versioned stdin protocol, and executes deterministic shards in parallel.
