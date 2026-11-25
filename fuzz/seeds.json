@@ -69,6 +69,14 @@
     { "name": "ligature-ffi", "bytes_hex": "EFAC83" },
     { "name": "combining-dot-above", "bytes_hex": "69CC87" }
   ],
+  "normalization": [
+    { "name": "leading-nonstarter-order", "bytes_hex": "CC95CC80CC8141CC8A" },
+    { "name": "composition-exclusion", "bytes_hex": "E0A598E0A79CE284AB" },
+    { "name": "hangul-joins", "bytes_hex": "E18480E185A1E186A8EAB080E186A8" },
+    { "name": "compatibility-and-fold-removal", "bytes_hex": "EFBCB3747261C39F65C2ADEFAC83" },
+    { "name": "combining-graph-joiner-barrier", "bytes_hex": "61CC81CD8FCCA7" },
+    { "name": "supplementary-musical-marks", "bytes_hex": "F09D859EF09D85AFCD80" }
+  ],
   "property": [
     { "name": "ascii-boundary", "bytes_hex": "415A617A3039" },
     { "name": "unassigned-scalar", "bytes_hex": "CDB8" },

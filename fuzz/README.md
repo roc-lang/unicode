@@ -10,7 +10,7 @@ its evidence. [Testing methodology](../docs/testing.md)
 | Suite | Members | Checks |
 | --- | --- | --- |
 | `source_suite.roc` | `utf8`, `utf8-model`, `grapheme`, `word`, `sentence`, `line-break` | Raw-byte and scalar-aligned source contracts, ordered ranges, profiles, cursor completion, and iterator pause/resume. |
-| `scalar_suite.roc` | `case`, `property` | Mapping coordinates and shape, profiles and exact limits, scalar properties, maximal runs, and aliases. |
+| `scalar_suite.roc` | `case`, `normalization`, `property` | Mapping coordinates and shape, normalization laws and budgets, scalar properties, maximal runs, and aliases. |
 | `analysis_suite.roc` | `bidi`, `script` | Retained paragraph and line analysis, L2 reordering and inverse mappings, grapheme-aligned script runs, preferences, and pending limits. |
 | `thai_suite.roc` | `thai` | Dictionary-backed line tailoring, model agreement, coordinates, and resource limits. |
 
@@ -29,6 +29,15 @@ before lowercase or uppercase resolution or explicit completion. It checks
 the independently expected cut and when it can be emitted. A targeted
 mutation that ignored the lowercase resolver produced the shortest failure
 `[Append(Neutral), ResolveLower]`.
+
+The normalization target checks all four forms for idempotence, quick-check
+agreement, and canonical and compatibility equivalence. The configuration
+selects one form and a scalar-aligned split for the concatenation law and
+sets the smaller capacity for each resource check. The intermediate budget
+comes from the decomposed form, and the output budget uses the first scalar
+that cannot fit. Identifier fold also checks idempotence and NFC output.
+A scratch mutation that rejected equality at the intermediate limit failed
+the compose-across-cut example.
 
 ## Local checks
 
@@ -77,9 +86,10 @@ actions.
 
 `seeds.json` retains named regression and branch-driving inputs as readable
 UTF-8 hex or raw malformed bytes. The seed preparer also takes bounded,
-evenly spaced samples from the pinned grapheme, word, sentence, line, bidi, and case
-data. For composite property checks it groups valid scalars at and next to
-property source boundaries. The full official tests run through the owning
+evenly spaced samples from the pinned grapheme, word, sentence, line, bidi,
+case, and normalization data. Normalization samples include the original
+source and one rotating normalized column. For composite property checks,
+the preparer groups valid scalars at and next to property source boundaries. The full official tests run through the owning
 feature suites.
 
 The bounded segmentation and script/Bidi collectors are checked at exact
