@@ -36,6 +36,10 @@ test = |input| {
 		crash "grapheme materialization lost or changed source text"
 	}
 
+	FuzzSupport.check_bounded_collection("Grapheme.ranges_limited", source, input.config, collected, |limits| Grapheme.ranges_limited(source, limits))
+	FuzzSupport.check_bounded_collection("Grapheme.slices_limited", source, input.config, expected_materialized, |limits| Grapheme.slices_limited(source, limits))
+	FuzzSupport.check_bounded_collection("Grapheme.split_limited", source, input.config, expected_materialized, |limits| Grapheme.split_limited(source, limits))
+
 	for cluster in expected_materialized {
 		inner = Grapheme.ranges(cluster)
 		if inner.len() != 1 {

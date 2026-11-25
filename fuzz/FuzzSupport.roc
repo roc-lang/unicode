@@ -84,6 +84,34 @@ FuzzSupport := [].{
 		$iter.fold($prefix, |items, item| items.append(item))
 	}
 
+	CollectorLimits : { max_input_bytes : U64, max_items : U64 }
+	CollectorError : [LimitExceeded({ resource : [InputBytes, OutputItems], limit : U64, required : U64 })]
+
+	## Compare public limited collectors with the independently collected result.
+	## Probe exact capacities, varied smaller capacities, and input precedence.
+	check_bounded_collection : Str, Str, U8, List(item), (CollectorLimits -> Try(List(item), CollectorError)) -> {}
+		where [item.is_eq : item, item -> Bool]
+	check_bounded_collection = |name, input_text, config, expected, collect| {
+		bytes = input_text.count_utf8_bytes()
+		count = expected.len()
+		if collect({ max_input_bytes: bytes, max_items: count }) != Ok(expected) {
+			crash "${name} changed its output at the exact byte and item limits"
+		}
+		if bytes > 0 {
+			byte_limit = config.to_u64() % bytes
+			if collect({ max_input_bytes: byte_limit, max_items: 0 }) != Err(LimitExceeded({ resource: InputBytes, limit: byte_limit, required: bytes })) {
+				crash "${name} did not report the input-byte limit before collection"
+			}
+		}
+		if count > 0 {
+			item_limit = config.to_u64() % count
+			if collect({ max_input_bytes: bytes, max_items: item_limit }) != Err(LimitExceeded({ resource: OutputItems, limit: item_limit, required: item_limit + 1 })) {
+				crash "${name} did not report the first item beyond the output limit"
+			}
+		}
+		{}
+	}
+
 	show_plan : Plan -> Str
 	show_plan = |input| {
 		chunk_plan = Str.inspect(input.actions)

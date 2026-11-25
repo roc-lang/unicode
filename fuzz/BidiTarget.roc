@@ -18,6 +18,12 @@ test = |input| {
 		_ => Auto
 	}
 	paragraphs = Bidi.paragraph_ranges(source)
+	FuzzSupport.check_bounded_collection("Bidi.paragraph_ranges_limited", source, input.config, paragraphs, |limits| Bidi.paragraph_ranges_limited(source, limits))
+	paused = FuzzSupport.pause_iter(Bidi.iter_paragraph_ranges(source), input.config.to_u64() % (paragraphs.len() + 1))
+	if paused != paragraphs {
+		crash "Bidi paragraph iterator disagreed after pause and resume"
+	}
+
 	var $byte = 0
 	var $scalar = 0
 	for range in paragraphs {

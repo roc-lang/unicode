@@ -45,7 +45,7 @@ actual binary membership before running it. The smoke configuration uses up
 to 2,000 runs, a 60-second wall-clock search allowance, a 5-second per-input
 timeout and a 2048-MiB RSS limit. Seed executions may exceed the run count.
 Campaigns keep their discoveries and use a separate time limit per target
-with the same per-input and RSS bounds. Runs, reduction, and minimization
+with the same per-input and RSS bounds. Runs, reproduction, reduction, and minimization
 also have an outer deadline to bound a stalled supervisor.
 
 ## Input formats and seeds
@@ -74,6 +74,12 @@ evenly spaced samples from the pinned grapheme, word, line, bidi, and case
 data. For composite property checks it groups valid scalars at and next to
 property source boundaries. The full official tests run through the owning
 feature suites.
+
+The bounded segmentation and script/Bidi collectors are checked at exact
+capacities and against generated undersized byte and item limits. The checks
+compare successful results with the public unbounded collectors and require
+the typed diagnostic for the first limit reached. A scratch mutation that
+rejects equality at the item limit fails the grapheme suite's declared example.
 
 ## Findings and corpus maintenance
 
