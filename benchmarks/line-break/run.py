@@ -19,6 +19,7 @@ from typing import Sequence
 
 ROOT = Path(__file__).resolve().parents[2]
 BENCH = Path(__file__).resolve().parent
+MANIFEST = json.loads((ROOT / "vendor/unicode/manifest.json").read_text(encoding="utf-8"))
 BUILD = ROOT / ".roc-unicode-tmp" / "benchmarks" / "line-break"
 DEFAULT_OUTPUT = BUILD / "results.json"
 DEFAULT_TARGET_SECONDS = 0.40
@@ -47,7 +48,7 @@ def capture(args: Sequence[str], *, cwd: Path = ROOT) -> str:
 
 
 def hard_line_break_scalars() -> set[int]:
-    path = ROOT / "vendor/unicode/17.0.0/LineBreak.txt"
+    path = ROOT / MANIFEST["sources"]["line_break"]["path"]
     hard: set[int] = set()
     for raw_line in path.read_text(encoding="utf-8").splitlines():
         body = raw_line.split("#", 1)[0].strip()
@@ -64,7 +65,7 @@ def hard_line_break_scalars() -> set[int]:
 
 
 def conformance_corpus() -> tuple[bytes, tuple[int, int, int], int]:
-    path = ROOT / "vendor/unicode/17.0.0/LineBreakTest.txt"
+    path = ROOT / MANIFEST["sources"]["line_break_test"]["path"]
     hard = hard_line_break_scalars()
     corpus = bytearray()
     offsets: list[int] = []
@@ -366,7 +367,7 @@ def main() -> int:
 
     document: dict[str, object] = {
         "schema_version": 2,
-        "unicode_version": "17.0.0",
+        "unicode_version": MANIFEST["releases"]["unicode"]["version"],
         "uax14_revision": 55,
         "provenance": provenance(args),
         "corpora": corpus_document,

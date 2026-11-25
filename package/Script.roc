@@ -1,4 +1,4 @@
-## GENERATED public Unicode 17.0.0 Script/Script_Extensions API from PropertyValueAliases.txt under UAX #24 revision 39. ##
+## GENERATED public Unicode 18.0.0 Script/Script_Extensions API from PropertyValueAliases.txt under UAX #24. ##
 ## Run `python3 scripts/unicode_data.py generate`; representation IDs and bit ordering are private. ##
 ## ScriptSet traversal and comparison use canonical short-alias lexicographic order. ##
 
@@ -108,7 +108,7 @@ Script :: [].{
         var $private_id = 0.U8
         var $left_seen = 0.U8
         var $right_seen = 0.U8
-        while $private_id < 176 {
+        while $private_id < 179 {
             left_has = contains_private(left, $private_id)
             right_has = contains_private(right, $private_id)
             if left_has and right_has {
@@ -130,7 +130,7 @@ Script :: [].{
         if wanted >= set.length { return None }
         var $private_id = 0.U8
         var $seen = 0.U8
-        while $private_id < 176 {
+        while $private_id < 179 {
             if contains_private(set, $private_id) {
                 if $seen == wanted { return Some(InternalScriptData.from_private_id($private_id)) }
                 $seen = $seen + 1
@@ -145,7 +145,7 @@ Script :: [].{
     walk = |set, initial, visit| {
         var $state = initial
         var $private_id = 0.U8
-        while $private_id < 176 {
+        while $private_id < 179 {
             if contains_private(set, $private_id) {
                 $state = visit($state, InternalScriptData.from_private_id($private_id))
             }

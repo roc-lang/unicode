@@ -20,17 +20,17 @@ except ModuleNotFoundError:
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CODE9_ROOT = "https://www.unicode.org/Public/PROGRAMS/BidiReferenceC/17.0.0/"
+CODE9_ROOT = "https://www.unicode.org/Public/PROGRAMS/BidiReferenceC/18.0.0/"
 CODE9_FILES = {
-    "include/bidiref.h": "92af5400d2bcd6e5c905bd0d495327922d808a89411290b1464f4bb57eb69f1e",
-    "source/bidiref.c": "4dc992dcbf4a9219319e8c567794d9c0956f65f4023fed8a3179af6cb8ea2666",
-    "source/bidiref1.c": "9fb4f07be60e13006f4835f5934025d96db5ea2967a975db8b3b4ce198ccb8ae",
-    "source/bidirefp.h": "74427a3d798b8caa62a04b40a48be990bcdba1c1bd0a25db0f97be86cd18a58c",
-    "source/brinput.c": "ec627e197b663432f7a8e3042d6d358a2630519ef6a264ee77febe90b2b0afc0",
-    "source/brrule.c": "e5b54978f2f7c2f21070810ef65d958848ae0ab002bec3f40f93da9a300f7a38",
-    "source/brtable.c": "bc42a4355fba47eb0426bc9755a090e30deda1371cf3a026e789f404934b96eb",
-    "source/brtest.c": "359d42e4ce17352547e77d5a354ff1d906aeaf1585940af920b0dffd188a433c",
-    "source/brutils.c": "3ae40615e4e3adaa4445be272c98133bbe62489084721bb9c6a103e0ce1a8b04",
+    "include/bidiref.h": "398200a349609dacb0174da205ac9d8076576fffe954059d71b6b30a242a290e",
+    "source/bidiref.c": "56a28f3d1aca0c151bd0b3a96807dbabc34606c9fb296eec905bed6fea6887d2",
+    "source/bidiref1.c": "fa252aa18dd3dad27ad6bb590e64ac1c9751bdfc0c42e58f7dc9d08c4edec6b7",
+    "source/bidirefp.h": "ddc8f6647e1592145140b48646fa6d43763258f25c4f177f7b4fcd37b95c56cc",
+    "source/brinput.c": "54eae61720bfd4ef32f8dc4ac269005214f0cd604fcbbf4fbf6da65f439bed79",
+    "source/brrule.c": "1d66c253123cdcbaa18f9850ecb0012480cb7c479def121b51b89e52d56c97ad",
+    "source/brtable.c": "cde3029e3c0caa9a16c771f60593c8e71086504c8fc3cae6c9857602b9182294",
+    "source/brtest.c": "6cf9882043ac45bc31f533e72ae6555446b86aa97f5d73f3a999a10ac3163763",
+    "source/brutils.c": "73a14aa4bc761bfdaaaa2820c809f96f2bc94f1e8904e8b91c9aebbc4b28bb86",
 }
 SCALARS = (
     0x61, 0x05D0, 0x0627, 0x30, 0x0660, 0x2B, 0x24, 0x2C, 0x0300,
@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
   char input[8192], levels[8192], order[8192], *field, *codes, *next;
   U_Int_32 text[BR_MAXINPUTLEN]; int mode, count, level, rc;
   TraceOff(TraceAll);
-  if (argc != 2 || br_InitWithPath(UBA170, argv[1]) != BR_TESTOK) return 2;
+  if (argc != 2 || br_InitWithPath(UBA180, argv[1]) != BR_TESTOK) return 2;
   while (fgets(input, sizeof(input), stdin)) {
     field = strtok(input, "\t\n"); codes = strtok(NULL, "\t\n");
     if (!field || !codes) return 3; mode = atoi(field); count = 0; next = codes;
@@ -82,10 +82,10 @@ def build_code9(directory: Path) -> Path:
     data = directory / "data"
     data.mkdir()
     manifest = json.loads((ROOT / "vendor" / "unicode" / "manifest.json").read_text(encoding="utf-8"))
-    if manifest["releases"]["unicode"]["version"] != "17.0.0" or manifest["specifications"]["uax_9"]["revision"] != "51":
-        raise RuntimeError("Code9 source pin requires Unicode 17.0.0 / UAX #9 revision 51")
-    shutil.copyfile(ROOT / "vendor/unicode/17.0.0/UnicodeData.txt", data / "UnicodeData-17.0.0.txt")
-    shutil.copyfile(ROOT / "vendor/unicode/17.0.0/BidiBrackets.txt", data / "BidiBrackets-17.0.0.txt")
+    if manifest["releases"]["unicode"]["version"] != "18.0.0" or manifest["specifications"]["uax_9"]["revision"] != "52":
+        raise RuntimeError("Code9 source pin requires Unicode 18.0.0 / UAX #9 revision 52")
+    shutil.copyfile(ROOT / "vendor/unicode/18.0.0/UnicodeData.txt", data / "UnicodeData-18.0.0.txt")
+    shutil.copyfile(ROOT / "vendor/unicode/18.0.0/BidiBrackets.txt", data / "BidiBrackets-18.0.0.txt")
     wrapper = directory / "wrapper.c"
     wrapper.write_text(WRAPPER, encoding="utf-8")
     binary = directory / "code9-query"
@@ -211,7 +211,7 @@ def main() -> int:
     except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
         print(f"error: {error}", file=__import__("sys").stderr)
         return 1
-    print(f"PASS Code9 Unicode 17.0.0 UAX #9 r51 differential: {args.cases} seeded cases")
+    print(f"PASS Code9 Unicode 18.0.0 UAX #9 r52 differential: {args.cases} seeded cases")
     return 0
 
 

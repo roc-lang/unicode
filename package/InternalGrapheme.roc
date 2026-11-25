@@ -4,7 +4,7 @@ import InternalUtf8
 
 EmojiContext : [NoEmojiContext, AfterExtendedPictographic, AfterExtendedPictographicZwj]
 
-IndicContext : [NoIndicContext, AfterConsonant, AfterLinker]
+IndicContext : [NoIndicContext, AfterLinker]
 
 MachineState : {
 	started : Bool,
@@ -23,7 +23,7 @@ RangeIterState : {
 	finished : Bool,
 }
 
-## Unicode 17 extended grapheme cluster transition core.
+## Unicode 18 extended grapheme cluster transition core.
 InternalGrapheme :: [].{
 	Machine : MachineState
 
@@ -304,7 +304,6 @@ is_control = |gcb| gcb == Control or gcb == CR or gcb == LF
 advance_context : MachineState, InternalGraphemeData.Props, U64, Bool -> MachineState
 advance_context = |machine, current, byte_start, broke_before| {
 	prior_emoji = if (broke_before) NoEmojiContext else machine.emoji_context
-	prior_indic = if (broke_before) NoIndicContext else machine.indic_context
 
 	next_ri_odd = if current.gcb == RI {
 		if !broke_before and machine.previous == RI {
@@ -326,15 +325,11 @@ advance_context = |machine, current, byte_start, broke_before| {
 		}
 	}
 
+	# GB9c remembers a linker followed by zero or more InCB=Extend scalars.
 	next_indic = match current.incb {
-		Consonant => AfterConsonant
-		Extend => prior_indic
-		Linker => if prior_indic == AfterConsonant or prior_indic == AfterLinker {
-			AfterLinker
-		} else {
-			NoIndicContext
-		}
-		None => NoIndicContext
+		Linker => AfterLinker
+		Extend => machine.indic_context
+		Consonant | None => NoIndicContext
 	}
 
 	{

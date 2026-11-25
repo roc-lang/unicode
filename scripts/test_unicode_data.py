@@ -71,7 +71,7 @@ class UnicodeDataTests(unittest.TestCase):
         base = json.loads(unicode_data.MANIFEST_PATH.read_text(encoding="utf-8"))
         vendor_overwrite = json.loads(json.dumps(base))
         vendor_overwrite["artifacts"]["general_category"]["output"] = (
-            "vendor/unicode/17.0.0/DerivedGeneralCategory.txt"
+            "vendor/unicode/18.0.0/DerivedGeneralCategory.txt"
         )
         self.assert_manifest_rejected(vendor_overwrite, "authoritative generated module")
 
@@ -84,7 +84,7 @@ class UnicodeDataTests(unittest.TestCase):
         )
         loaded = unicode_data.load_manifest()
         loaded["artifacts"]["unicode_version"]["output"] = (
-            "vendor/unicode/17.0.0/PropertyAliases.txt"
+            "vendor/unicode/18.0.0/PropertyAliases.txt"
         )
         with self.assertRaisesRegex(unicode_data.DataError, "authoritative generated module"):
             unicode_data.rendered_modules(loaded)
@@ -134,17 +134,17 @@ class UnicodeDataTests(unittest.TestCase):
         self.assert_manifest_rejected(unsupported, "no implemented parser")
 
         fake_sync = json.loads(json.dumps(base))
-        fake_sync["releases"]["cldr"]["version"] = "17.0.0"
-        fake_sync["releases"]["cldr"]["vendor_prefix"] = "vendor/unicode/cldr/17.0.0"
+        fake_sync["releases"]["cldr"]["version"] = "18.0.0"
+        fake_sync["releases"]["cldr"]["vendor_prefix"] = "vendor/unicode/cldr/18.0.0"
         fake_sync["releases"]["emoji"]["synchronized_with"] = "cldr"
         self.assert_manifest_rejected(fake_sync, "must name a Unicode UCD release")
 
         wrong_ucd = json.loads(json.dumps(base))
         wrong_ucd["releases"]["shadow_ucd"] = {
-            "version": "17.0.0",
+            "version": "18.0.0",
             "authority": "unicode",
             "kind": "ucd",
-            "vendor_prefix": "vendor/unicode/shadow/17.0.0",
+            "vendor_prefix": "vendor/unicode/shadow/18.0.0",
         }
         wrong_ucd["releases"]["emoji"]["synchronized_with"] = "shadow_ucd"
         self.assert_manifest_rejected(wrong_ucd, "storage release does not match")
@@ -205,7 +205,7 @@ class UnicodeDataTests(unittest.TestCase):
             {record.property for record in properties.word_break.records},
             set(unicode_data.WORD_BREAK_PROPERTIES[1:]),
         )
-        self.assertEqual(len(properties.word_break.records), 1432)
+        self.assertEqual(len(properties.word_break.records), 1449)
         cases = unicode_data.parse_word_break_tests(manifest)
         self.assertEqual(len(cases), 1944)
         self.assertEqual(cases[0].break_offsets, (0, 1, 2))
@@ -242,8 +242,8 @@ class UnicodeDataTests(unittest.TestCase):
         manifest = unicode_data.load_manifest()
         canonical = unicode_data.load_canonical_properties(manifest)
         case = unicode_data.load_case_data(manifest, canonical)
-        self.assertEqual(len(case.special), 119)
-        self.assertEqual(len(case.folding), 1618)
+        self.assertEqual(len(case.special), 120)
+        self.assertEqual(len(case.folding), 1640)
         self.assertTrue(case.simple_upper and case.simple_lower and case.simple_title)
         generated = unicode_data.rendered_modules(manifest)[
             unicode_data.ROOT / "package" / "InternalCaseData.roc"
@@ -252,7 +252,7 @@ class UnicodeDataTests(unittest.TestCase):
         self.assertIn("case_ignorable : Bool", generated)
         self.assertIn("FoldStatus : [Common, Full, Simple, Turkic]", generated)
         self.assertIn("lower: []", generated)
-        self.assertIn("logical non-page payload 72774 bytes", generated)
+        self.assertIn("logical non-page payload 73728 bytes", generated)
 
         equivalent_turkic = unicode_data.parse_special_casing(
             "0049; 0131; 0049; 0049; tr lt Not_Before_Dot;\n"
@@ -420,7 +420,7 @@ class UnicodeDataTests(unittest.TestCase):
                         unicode_data, "verify_source", side_effect=verify_with_mutation
                     ),
                     self.assertRaisesRegex(
-                        unicode_data.DataError, "exact Unicode 17.0.0 cascade"
+                        unicode_data.DataError, "exact Unicode 18.0.0 cascade"
                     ),
                 ):
                     unicode_data.load_public_properties(manifest, canonical)
@@ -481,6 +481,17 @@ class UnicodeDataTests(unittest.TestCase):
             with self.subTest(character=text):
                 with self.assertRaisesRegex(unicode_data.DataError, message):
                     list(unicode_data.parse_bidi_character_tests(manifest, text))
+
+    def test_mirroring_pairs_are_sorted_for_runtime_search(self) -> None:
+        # Match Unicode 18's grouping of the Leibnizian comparisons.
+        rows = "1DB0F; 1DB10\n1DB10; 1DB0F\n1DB03; 1DB04\n1DB04; 1DB03\n"
+        records = unicode_data._parse_sparse_mapping(rows, source="BidiMirroring")
+        self.assertEqual(
+            tuple((row.source, row.target) for row in records),
+            ((0x1DB03, 0x1DB04), (0x1DB04, 0x1DB03), (0x1DB0F, 0x1DB10), (0x1DB10, 0x1DB0F)),
+        )
+        with self.assertRaisesRegex(unicode_data.DataError, "duplicate"):
+            unicode_data._parse_sparse_mapping(rows + "1DB03; 1DB0F\n", source="BidiMirroring")
 
     def test_sparse_public_data_rejects_every_non_scalar_endpoint(self) -> None:
         for invalid in ("D800", "110000"):
@@ -657,12 +668,12 @@ class UnicodeDataTests(unittest.TestCase):
                         value=value,
                     )
 
-    def test_script_sources_preserve_defaults_aliases_and_unicode_17_values(self) -> None:
+    def test_script_sources_preserve_defaults_aliases_and_unicode_18_values(self) -> None:
         manifest = unicode_data.load_manifest()
         properties = unicode_data.load_script_properties(manifest)
-        self.assertEqual(len(properties.aliases), 176)
+        self.assertEqual(len(properties.aliases), 179)
         self.assertEqual(properties.script_default, "Zzzz")
-        self.assertEqual(len({record.scripts for record in properties.extensions}), 118)
+        self.assertEqual(len({record.scripts for record in properties.extensions}), 120)
         ordered_aliases = unicode_data._script_aliases_by_identity(properties)
         self.assertEqual(
             tuple(record.short for record in ordered_aliases),
@@ -696,6 +707,9 @@ class UnicodeDataTests(unittest.TestCase):
             (0x11DB0, "Tols"),
             (0x16EA0, "Berf"),
             (0x1E6C0, "Tayo"),
+            (0x12550, "Xsux"),
+            (0x18E00, "Jurc"),
+            (0x3D000, "Seal"),
             (0xE000, "Zzzz"),
             (0x10FFFF, "Zzzz"),
             (0xD800, "Zzzz"),

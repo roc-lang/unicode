@@ -7,7 +7,7 @@ import ScalarRange
 import TextPosition
 import TextRange
 
-## Retained paragraph analysis for Unicode 17 UAX #9. The retained tape keeps
+## Retained paragraph analysis for Unicode 18 UAX #9. The retained tape keeps
 ## original scalar identities and coordinates; it deliberately never retains
 ## the input `Str`. Line reordering is a separate operation because L1 is
 ## defined at actual line boundaries.
@@ -1290,7 +1290,7 @@ resolve_bracket_pair = |entries, irs, sequence, pair, preceding| {
 			$current = $current.set(pair.close, { ..closing, working_class: class }) ?? ...
 			# W1 has already converted NSMs to their preceding type. N0 must
 			# carry a changed bracket class through original NSMs immediately
-			# after *both* endpoints (UAX #9 rev. 51 N0).
+			# after *both* endpoints (UAX #9 rev. 52 N0).
 			after_open = propagate_bracket_nsm($current, irs.links, pair.open, class)
 			propagate_bracket_nsm(after_open, irs.links, pair.close, class)
 		}

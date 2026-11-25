@@ -547,20 +547,21 @@ def run_grapheme(binary: Path, jobs: int, spec: dict[str, object]) -> None:
     )
 
 
-def line_break_row(case: LineBreakCase) -> str:
+def line_break_row(case: LineBreakCase, unicode_version: str) -> str:
     code_points = ",".join(f"{code_point:04X}" for code_point in case.code_points)
     offsets = ",".join(str(offset) for offset in case.break_offsets)
-    return f"17.0.0:LineBreakTest.txt:{case.line}\t{code_points}\t{offsets}"
+    return f"{unicode_version}:LineBreakTest.txt:{case.line}\t{code_points}\t{offsets}"
 
 
 def run_line_break(binary: Path, jobs: int, spec: dict[str, object]) -> None:
     manifest = load_manifest()
     cases = parse_line_break_tests(manifest)
+    version = unicode_data.release_version(manifest, "unicode")
     run_parallel_suite(
         binary,
         "line-break",
         len(cases),
-        lambda index: line_break_row(cases[index]),
+        lambda index: line_break_row(cases[index], version),
         jobs=jobs,
         timeout=int(spec["timeout_seconds"]),
     )
@@ -974,8 +975,8 @@ def case_rows() -> list[str]:
     language_rules = [record for record in case.special if record.languages]
     context_rules = [record for record in case.special if record.contexts]
     language_context_rules = [record for record in case.special if record.languages and record.contexts]
-    if (len(case.special), len(language_rules), len(context_rules), len(language_context_rules)) != (119, 15, 9, 8):
-        raise TestFailure("Unicode 17 SpecialCasing conditional rule inventory drifted")
+    if (len(case.special), len(language_rules), len(context_rules), len(language_context_rules)) != (120, 15, 9, 8):
+        raise TestFailure("Unicode 18 SpecialCasing conditional rule inventory drifted")
 
     for record in case.special:
         profile = _special_profile(record)
@@ -1070,7 +1071,7 @@ def case_rows() -> list[str]:
         hand_rows.append(_encode_case_row(
             f"limits:{name}", operation, profile, source, output, contextual
         ))
-    # These deliberately pin the committed Unicode 17 corpus and each harness
+    # These deliberately pin the committed Unicode 18 corpus and each harness
     # projection. A vendor/parser change cannot silently reduce one family.
     component_counts = (
         len(unicode_rows),
@@ -1080,7 +1081,7 @@ def case_rows() -> list[str]:
         len(folding_rows),
         len(hand_rows),
     )
-    if component_counts != (4502, 357, 45, 27, 6472, 13):
+    if component_counts != (4562, 360, 45, 27, 6560, 13):
         raise TestFailure(f"Case conformance row inventory drifted: {component_counts}")
     rows = [
         *unicode_rows,
@@ -1090,7 +1091,7 @@ def case_rows() -> list[str]:
         *folding_rows,
         *hand_rows,
     ]
-    if len(rows) != 11416:
+    if len(rows) != 11567:
         raise TestFailure(f"Case conformance total drifted: {len(rows)}")
     return rows
 
