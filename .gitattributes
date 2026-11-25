@@ -1,6 +1,8 @@
 # Official Unicode inputs are hashed byte-for-byte by their manifest. Preserve
 # upstream LF line endings even when Git is configured to use CRLF on Windows.
 /vendor/unicode/** text eol=lf
+/vendor/unicode/**/*.zip -text
+/vendor/cldr/** text eol=lf
 
 # Roc formatting is byte-sensitive, so keep source line endings identical on
 # every development and CI host.

@@ -1,6 +1,12 @@
 {
   "schema_version": 2,
   "releases": {
+    "cldr": {
+      "version": "49",
+      "authority": "cldr",
+      "kind": "cldr",
+      "vendor_prefix": "vendor/cldr/49"
+    },
     "unicode": {
       "version": "18.0.0",
       "authority": "unicode",
@@ -15,6 +21,21 @@
     }
   },
   "specifications": {
+    "uts_10": {
+      "revision": "55",
+      "release": "unicode",
+      "document": "https://www.unicode.org/reports/tr10/tr10-55.html"
+    },
+    "uts_35": {
+      "revision": "79",
+      "release": "cldr",
+      "document": "https://www.unicode.org/reports/tr35/tr35-79/tr35.html"
+    },
+    "uts_35_collation": {
+      "revision": "79",
+      "release": "cldr",
+      "document": "https://www.unicode.org/reports/tr35/tr35-79/tr35-collation.html"
+    },
     "uax_15": {
       "revision": "58",
       "release": "unicode",
@@ -67,6 +88,10 @@
     }
   },
   "authorities": {
+    "cldr": {
+      "url_prefix": "https://raw.githubusercontent.com/unicode-org/cldr/",
+      "license": "unicode-data"
+    },
     "unicode": {
       "url_prefix": "https://www.unicode.org/",
       "license": "unicode-data"
@@ -78,6 +103,86 @@
     }
   },
   "sources": {
+    "ducet": {
+      "path": "vendor/unicode/18.0.0/uca/allkeys.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/uca/allkeys.txt",
+      "sha256": "9b7539f54715e9b9f6686eee87fd846185e689eef7f182ac23fd5eae1eca5814",
+      "header": "# allkeys-18.0.0.txt",
+      "records": 40476,
+      "role": "production",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": [
+        "unicode"
+      ],
+      "format": "uts-10-allkeys",
+      "properties": []
+    },
+    "uca_collation_test": {
+      "path": "vendor/unicode/18.0.0/uca/CollationTest.zip",
+      "url": "https://www.unicode.org/Public/18.0.0/uca/CollationTest.zip",
+      "sha256": "02af87f32b787fef873eaa9a279420f41c6ea58caa15ed95821e911fc91bf662",
+      "header": "# UCA Version: 18.0.0",
+      "records": 424132,
+      "role": "conformance",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": [
+        "unicode"
+      ],
+      "format": "uts-10-collation-archive",
+      "properties": [],
+      "cases": 424072
+    },
+    "cldr_root_collation": {
+      "path": "vendor/cldr/49/collation/allkeys_CLDR.txt",
+      "url": "https://raw.githubusercontent.com/unicode-org/cldr/release-49/common/uca/allkeys_CLDR.txt",
+      "sha256": "cd5bc1048dfb692f0be1944f368905ea9651356dabb9e082cee713ee820cd39d",
+      "header": "# UCA Version: 18.0.0",
+      "records": 40468,
+      "role": "production",
+      "authority": "cldr",
+      "storage_release": "cldr",
+      "release_axes": [
+        "cldr"
+      ],
+      "format": "cldr-root-collation",
+      "properties": []
+    },
+    "cldr_spanish": {
+      "path": "vendor/cldr/49/collation/es.xml",
+      "url": "https://raw.githubusercontent.com/unicode-org/cldr/release-49/common/collation/es.xml",
+      "sha256": "ab7b5b8066379ed64830805a231eac31f306c949f30d4ab39c665ab86b9b89cf",
+      "header": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>",
+      "records": 40,
+      "role": "production",
+      "authority": "cldr",
+      "storage_release": "cldr",
+      "release_axes": [
+        "cldr"
+      ],
+      "format": "cldr-collation",
+      "properties": [
+        "Spanish"
+      ]
+    },
+    "cldr_german": {
+      "path": "vendor/cldr/49/collation/de.xml",
+      "url": "https://raw.githubusercontent.com/unicode-org/cldr/release-49/common/collation/de.xml",
+      "sha256": "81c4992984f284f771c449a761926bf15e90e1f133b47a1a695df8096cb7871e",
+      "header": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>",
+      "records": 67,
+      "role": "production",
+      "authority": "cldr",
+      "storage_release": "cldr",
+      "release_axes": [
+        "cldr"
+      ],
+      "format": "cldr-collation",
+      "properties": [
+        "German"
+      ]
+    },
     "normalization_properties": {
       "path": "vendor/unicode/18.0.0/DerivedNormalizationProps.txt",
       "url": "https://www.unicode.org/Public/18.0.0/ucd/DerivedNormalizationProps.txt",
@@ -592,7 +697,7 @@
       "storage_release": "unicode",
       "release_axes": ["unicode"],
       "format": "ucd-binary-property-ranges",
-      "properties": ["Variation_Selector", "Soft_Dotted", "White_Space", "Pattern_Syntax", "Pattern_White_Space"]
+      "properties": ["Variation_Selector", "Soft_Dotted", "White_Space", "Pattern_Syntax", "Pattern_White_Space", "Unified_Ideograph"]
     },
     "vertical_orientation": {
       "path": "vendor/unicode/18.0.0/VerticalOrientation.txt",
@@ -648,6 +753,28 @@
     }
   },
   "artifacts": {
+    "collation_data": {
+      "generator": "collation-data",
+      "output": "package/InternalCollationData.roc",
+      "sources": [
+        "ducet",
+        "cldr_root_collation",
+        "cldr_spanish",
+        "cldr_german",
+        "prop_list",
+        "unicode_data"
+      ],
+      "specifications": [
+        "uts_10",
+        "uts_35",
+        "uts_35_collation"
+      ],
+      "artifacts": [
+        "normalization_data",
+        "canonical_combining_class",
+        "general_category"
+      ]
+    },
     "normalization_data": {
       "generator": "normalization-data",
       "output": "package/InternalNormalizationData.roc",

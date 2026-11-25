@@ -27,7 +27,7 @@ Collation :: [].{
 	default_options = { strength: Tertiary, alternate: NonIgnorable, numeric: Bool.False, case_first: Default }
 
 	Profile : [Ducet, GermanStandard, GermanPhonebook, SpanishStandard, SpanishTraditional]
-	ProfileRevision : [DucetV1, Cldr49RulesV1]
+	ProfileRevision : [DucetV1, CldrRulesV1]
 	Collator :: { profile : Profile, options : Options }
 
 	SelectionError : [UnsupportedLocale(Str)]
@@ -61,7 +61,18 @@ Collation :: [].{
 	profile = |value| value.profile
 
 	profile_revision : Collator -> ProfileRevision
-	profile_revision = |value| if (value.profile == Ducet) DucetV1 else Cldr49RulesV1
+	profile_revision = |value| if (value.profile == Ducet) DucetV1 else CldrRulesV1
+
+	## Version of the independent locale catalog for a selected CLDR profile.
+	## DUCET uses only UnicodeVersion.current.
+	cldr_version : Collator -> [None, Some(Str)]
+	cldr_version = |value| {
+		if value.profile == Ducet {
+			None
+		} else {
+			Some(InternalCollationData.cldr_version)
+		}
+	}
 
 	## Sort keys compare bytewise under identical settings and data pins.
 	## They are opaque to callers and their encoding can change on upgrade.

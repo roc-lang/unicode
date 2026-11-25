@@ -7,6 +7,7 @@ import argparse
 from array import array
 import concurrent.futures
 import json
+from itertools import pairwise
 import os
 import platform
 import random
@@ -53,6 +54,7 @@ APP_NAMES = {
     "line-break": "line-break",
     "word": "word",
     "normalization": "normalization",
+    "collation": "collation",
     "case": "case",
     "properties": "properties",
     "allocation": "allocation",
@@ -196,6 +198,9 @@ def load_app_specs() -> dict[str, dict[str, object]]:
             "timeout_seconds",
             "unicode_manifest_files",
         },
+        "collation": {
+            "schema_version", "kind", "suites", "timeout_seconds", "unicode_manifest_file",
+        },
         "normalization": {
             "schema_version", "kind", "suite", "timeout_seconds", "unicode_manifest_file",
         },
@@ -271,6 +276,11 @@ def load_app_specs() -> dict[str, dict[str, object]]:
         raise TestFailure("word/sentence spec suites have drifted")
     if specs["word"]["unicode_manifest_files"] != ["word_break_test", "sentence_break_test"]:
         raise TestFailure("word/sentence spec references unexpected manifest files")
+    collation = specs["collation"]
+    if (collation["suites"] != [name for name, _ in unicode_data.COLLATION_TEST_FILES]
+            or collation["unicode_manifest_file"] != "uca_collation_test"
+            or "uca_collation_test" not in manifest_files):
+        raise TestFailure("collation spec must cover both official short conformance suites")
     normalization = specs["normalization"]
     if (normalization["suite"] != "normalization"
             or normalization["unicode_manifest_file"] != "normalization_test"
@@ -713,6 +723,22 @@ def run_segmentation(
         jobs=jobs,
         timeout=int(spec["timeout_seconds"]),
     )
+
+
+def collation_rows(cases):
+    for index, (left, right) in enumerate(pairwise(cases), 1):
+        yield "\t".join([str(index), ",".join(map(str, left)), ",".join(map(str, right))])
+
+
+def run_collation(binary: Path, jobs: int, spec: dict[str, object]) -> None:
+    manifest = load_manifest()
+    version = release_version(manifest, "unicode")
+    for suite, source in unicode_data.collation_test_sources(manifest).items():
+        cases = tuple(unicode_data.unicode_collation.parse_short_tests(source, version))
+        run_parallel_stream(
+            binary, suite, collation_rows(cases), len(cases) - 1,
+            jobs=jobs, timeout=int(spec["timeout_seconds"]),
+        )
 
 
 def normalization_row(index: int, row: tuple) -> str:
@@ -1490,6 +1516,7 @@ def run_data_checks() -> None:
         "unittest",
         "scripts/test_unicode_data.py",
         "scripts/test_unicode_normalization.py",
+        "scripts/test_unicode_collation.py",
         "scripts/test_bidi_reduce.py",
     ])
 
@@ -1530,6 +1557,9 @@ def main(argv: list[str] | None = None) -> int:
             requested_apps.append("line-break")
         if args.suite in ("all", "word", "sentence"):
             requested_apps.append("word")
+        if args.suite in ("all", "collation"):
+            command([args.roc, "test", "tests/safety/collation.roc", "--no-cache"])
+            requested_apps.append("collation")
         if args.suite in ("all", "normalization"):
             command([args.roc, "test", "tests/apps/normalization/main.roc", "--no-cache"])
             requested_apps.append("normalization")
@@ -1552,6 +1582,8 @@ def main(argv: list[str] | None = None) -> int:
             for suite in ("word", "sentence"):
                 if args.suite in ("all", suite):
                     run_segmentation(binaries["word"], suite, args.jobs, app_specs["word"])
+            if "collation" in requested_apps:
+                run_collation(binaries["collation"], args.jobs, app_specs["collation"])
             if "normalization" in requested_apps:
                 run_normalization(binaries["normalization"], args.jobs, app_specs["normalization"])
             if "case" in requested_apps:
