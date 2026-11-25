@@ -160,7 +160,7 @@ FORMAL_PROPERTY_ALIASES = {
     "Script_Extensions": ("scx",),
 }
 
-# DerivedBidiClass-17.0.0 has an ordered default cascade whose ranges are part
+# DerivedBidiClass-18.0.0 has an ordered default cascade whose ranges are part
 # of the data contract, not merely an implementation detail. In particular,
 # changing one nontrivial default can silently reclassify large unassigned
 # regions while every explicit record remains valid.
@@ -539,14 +539,14 @@ SOURCE_PROJECTION_CONTRACTS = {
 }
 
 SPECIFICATION_COMPATIBILITY = {
-    "uax_9": ("unicode", "17.0.0", "51"),
-    "uax_11": ("unicode", "17.0.0", "44"),
-    "uax_14": ("unicode", "17.0.0", "55"),
-    "uax_24": ("unicode", "17.0.0", "39"),
-    "uax_29": ("unicode", "17.0.0", "47"),
-    "uax_44": ("unicode", "17.0.0", "36"),
-    "uax_50": ("unicode", "17.0.0", "33"),
-    "uts_51": ("emoji", "17.0", "29"),
+    "uax_9": ("unicode", "18.0.0", "52"),
+    "uax_11": ("unicode", "18.0.0", "46"),
+    "uax_14": ("unicode", "18.0.0", "57"),
+    "uax_24": ("unicode", "18.0.0", "41"),
+    "uax_29": ("unicode", "18.0.0", "49"),
+    "uax_44": ("unicode", "18.0.0", "38"),
+    "uax_50": ("unicode", "18.0.0", "35"),
+    "uts_51": ("emoji", "18.0", "31"),
 }
 
 GENERATOR_CONTRACTS = {
@@ -1120,7 +1120,7 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
         if projection_contract.header is not None:
             expected_header = projection_contract.header
         elif projection_contract.emoji_header:
-            expected_header = f"# Version: {release_version(manifest, 'emoji')}"
+            expected_header = f"# Version: {unicode_version}"
         else:
             expected_header = f"# {Path(path_value).stem}-{unicode_version}.txt"
         if item["header"] != expected_header:
@@ -1426,7 +1426,7 @@ def parse_ranges(
 
 
 def loose_alias(value: str) -> str:
-    """UAX #44 revision 36, LM3 loose matching for ASCII property aliases."""
+    """UAX #44, LM3 loose matching for ASCII property aliases."""
     ignored_whitespace = {
         "\u0009", "\u000A", "\u000B", "\u000C", "\u000D", "\u0020",
         "\u0085", "\u00A0", "\u1680", "\u2000", "\u2001", "\u2002",
@@ -2437,9 +2437,11 @@ def _parse_sparse_mapping(text: str, *, source: str) -> tuple[SparseMapping, ...
             raise DataError(f"{source}:{line_number}: duplicate or non-scalar mapping endpoint")
         seen.add(source_cp)
         records.append(SparseMapping(source_cp, target_cp, line_number))
-    if not records or tuple(record.source for record in records) != tuple(sorted(seen)):
-        raise DataError(f"{source}: scalar mappings must be nonempty and strictly ordered")
-    return tuple(records)
+    if not records:
+        raise DataError(f"{source}: no scalar mappings")
+    # BidiMirroring groups some mathematical symbols by pair in Unicode 18.
+    # Canonicalize their order for the runtime binary-search table.
+    return tuple(sorted(records, key=lambda record: record.source))
 
 
 def _parse_bidi_brackets(text: str, *, source: str) -> tuple[BidiBracket, ...]:
@@ -2641,7 +2643,7 @@ def load_public_properties(
         or actual_bidi_defaults != expected_bidi_defaults
     ):
         raise DataError(
-            f"{bidi_path}: Bidi_Class @missing declarations drifted from the exact Unicode 17.0.0 cascade"
+            f"{bidi_path}: Bidi_Class @missing declarations drifted from the exact Unicode 18.0.0 cascade"
         )
 
     unicode_data_text, unicode_data_path = load_source("ucd-unicode-data", UNICODE_DATA_PROPERTIES)
@@ -4262,7 +4264,7 @@ def render_script_data(
             f"            {hash_value} => {conditions} else None"
         )
     return (
-        f"## GENERATED from Unicode {version} Scripts.txt and PropertyValueAliases.txt under UAX #24 revision 39. ##\n"
+        f"## GENERATED from Unicode {version} Scripts.txt and PropertyValueAliases.txt under UAX #24. ##\n"
         "## Run `python3 scripts/unicode_data.py generate`. Named tags/aliases are stable; U8 values are private. ##\n"
         "## Private IDs are generator-asserted canonical short-alias order solely to implement the public order contract. ##\n"
         f"## default: {properties.script_default}; {len(identities)} identities; layout: "
@@ -4481,7 +4483,7 @@ def render_script_extensions_data(
         words2.append(words[2])
         lengths.append(len(members))
     return (
-        f"## GENERATED from Unicode {version} ScriptExtensions.txt and PropertyValueAliases.txt under UAX #24 revision 39. ##\n"
+        f"## GENERATED from Unicode {version} ScriptExtensions.txt and PropertyValueAliases.txt under UAX #24. ##\n"
         "## Zero means the normative implicit singleton Script(cp); nonzero U8 values name interned sets. ##\n"
         f"## {len(sets)} explicit sets, {sum(lengths)} pooled members, max {max(lengths)} members; layout: "
         f"{len(paged.page_index)} {paged.index_type} page ids + {len(paged.pages)} x {page_size} U8 values; "
@@ -4529,7 +4531,7 @@ def render_script_extensions_data(
 def render_script_api(version: str, properties: ScriptProperties) -> str:
     identities = tuple(record.identity for record in _script_aliases_by_identity(properties))
     return (
-        f"## GENERATED public Unicode {version} Script/Script_Extensions API from PropertyValueAliases.txt under UAX #24 revision 39. ##\n"
+        f"## GENERATED public Unicode {version} Script/Script_Extensions API from PropertyValueAliases.txt under UAX #24. ##\n"
         "## Run `python3 scripts/unicode_data.py generate`; representation IDs and bit ordering are private. ##\n"
         "## ScriptSet traversal and comparison use canonical short-alias lexicographic order. ##\n\n"
         "import InternalScriptData\n"

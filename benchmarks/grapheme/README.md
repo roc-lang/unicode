@@ -2,10 +2,10 @@
 
 This local benchmark compares allocation-free extended-grapheme-cluster
 counting over identical UTF-8 bytes. It uses a representative set of optimized
-Unicode 17 implementations with iterator or next-boundary APIs, so the timed
+implementations with iterator or next-boundary APIs, so the timed
 loop does not need to materialize every boundary:
 
-- Roc: `Grapheme.Cursor.push`/`finish`, using this package's Unicode 17 tables.
+- Roc: `Grapheme.Cursor.push`/`finish`, using this package's Unicode 18 tables.
 - Rust/ICU4X: `icu_segmenter` 2.2.0, Unicode 17, from the Unicode Consortium.
 - Go: `clipperhouse/uax29` 2.7.0, Unicode 17, with a specialized forward
   iterator.
@@ -81,9 +81,9 @@ the segmentation core rather than allocation and reference-count behavior from
 materializing lists of ranges or strings. Input reading, process startup, and
 printing one checksum are included but amortized over repeated scans.
 
-Before timing, every implementation emits a compact signature of all boundary
-positions. The signatures must agree on every corpus, and the official corpus
-must match the boundaries encoded in Unicode 17's `GraphemeBreakTest.txt`.
-This catches misplaced boundaries even when the total cluster count happens to
-match. The runner aborts rather than reporting incomparable timings when those
-checks fail.
+Before timing, every implementation emits a compact signature of its boundary
+positions. The Roc signature for the official corpus must match the pinned
+Unicode conformance data. The Unicode 17 reference implementations must agree
+with each other. The report records each signature and the runner logs
+cross-version differences so performance comparisons account for the different
+boundaries the versions can emit.

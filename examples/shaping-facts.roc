@@ -115,11 +115,11 @@ report = |source| {
 }
 
 expect report("") ==
-	\\unicode: 17.0.0
+	\\unicode: 18.0.0
 	\\scalars: 0
 	\\variation-requests: 0
 expect report("A") ==
-	\\unicode: 17.0.0
+	\\unicode: 18.0.0
 	\\scalars: 1
 	\\variation-requests: 0
 	\\0 value=65 bytes=0..1

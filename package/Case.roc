@@ -3,7 +3,7 @@ import TextPosition
 import TextRange
 import UnicodeVersion
 
-## Unicode 17 complete-string case mapping and folding.
+## Unicode 18 complete-string case mapping and folding.
 ##
 ## Every successful result owns both its transformed text and one source fact
 ## for every input scalar. Case conversion never normalizes the source or the
@@ -180,7 +180,7 @@ Case :: [].{
 		InternalEncodingFault => NoErrorPosition
 	}
 
-	## Apply Unicode 17 full lowercase mappings under an explicit profile.
+	## Apply Unicode 18 full lowercase mappings under an explicit profile.
 	to_lower : Str, MappingProfile, Limits -> Try(Result, Error)
 	to_lower = |source, profile, budget| {
 		match InternalCase.lower(source, profile, budget) {
@@ -189,7 +189,7 @@ Case :: [].{
 		}
 	}
 
-	## Apply Unicode 17 full uppercase mappings under an explicit profile.
+	## Apply Unicode 18 full uppercase mappings under an explicit profile.
 	to_upper : Str, MappingProfile, Limits -> Try(Result, Error)
 	to_upper = |source, profile, budget| {
 		match InternalCase.upper(source, profile, budget) {
@@ -209,7 +209,7 @@ Case :: [].{
 		}
 	}
 
-	## Apply Unicode 17 case folding. Full uses C+F, simple uses C+S, and an
+	## Apply Unicode 18 case folding. Full uses C+F, simple uses C+S, and an
 	## explicit Turkic profile lets a T mapping override that normal selection.
 	fold : Str, FoldProfile, Limits -> Try(Result, Error)
 	fold = |source, profile, budget| {

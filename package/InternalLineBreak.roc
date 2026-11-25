@@ -77,7 +77,7 @@ StreamState : { machine : MachineState, pending : PendingState }
 
 EmittedEvents : [NoEvents, OneEvent(EventRecord), TwoEvents({ first : EventRecord, second : EventRecord })]
 
-## Exact Unicode 17 UAX #14 rev-55 transition core.
+## Exact Unicode 18 UAX #14 rev-57 transition core.
 ##
 ## `classify` contains rule precedence and authority in one place. The complete
 ## string adapter supplies bounded lookahead when requested. The non-replayable
@@ -429,8 +429,8 @@ classify_boundary = |machine, prepared| {
 	} else if left_class == GL {
 		# LB12.
 		Resolved({ decision: Prohibited, authority: NonTailorable })
-	} else if current_class == GL and left_class != SP and left_class != BA and left_class != HY and left_class != HH {
-		# LB12a is the first tailorable rule in rev 55.
+	} else if current_class == GL and left_class != SP and left_class != HY and left_class != HH {
+		# LB12a is the first tailorable rule in rev 57.
 		Resolved({ decision: Prohibited, authority: Tailorable })
 	} else if current_class == CL or current_class == CP or current_class == EX or current_class == SY {
 		# LB13.

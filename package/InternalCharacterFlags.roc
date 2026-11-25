@@ -1,4 +1,4 @@
-## GENERATED from Unicode 17.0.0 binary properties. Run `python3 scripts/unicode_data.py generate`. ##
+## GENERATED from Unicode 18.0.0 binary properties. Run `python3 scripts/unicode_data.py generate`. ##
 ## layout: 4352 U8 ids + 15 x 256 U8 values; logical payload 8192 bytes. ##
 
 InternalCharacterFlags :: [].{

@@ -65,6 +65,14 @@ run_focused = |runtime_seed| {
         return Err("LB12/LB12a authority boundary drifted: ${Str.inspect(glue)}")
     }
 
+    # UAX #14 revision 57 prohibits BA × GL and keeps the HH exception.
+    en_dash_glue = source_from_code_points([0x2013, 0x00A0])?
+    soft_hyphen_glue = source_from_code_points([0x00AD, 0x00A0])?
+    if boundary_shape(LineBreak.boundaries(en_dash_glue)).get(1) != Ok((3.U64, 1.U64, Prohibited, Tailorable))
+        or boundary_shape(LineBreak.boundaries(soft_hyphen_glue)).get(1) != Ok((2.U64, 1.U64, Allowed, Tailorable)) {
+        return Err("Unicode 18 LB12a BA/HH behavior drifted")
+    }
+
     prepend_source = source_from_code_points([0x0600, 0x4E00])?
     default_prepend = LineBreak.boundaries(prepend_source)
     preserved_prepend = LineBreak.boundaries_with(prepend_source, PreserveGraphemes)

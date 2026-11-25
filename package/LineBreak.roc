@@ -35,7 +35,7 @@ ChunkCursorState : {
 	status : [Open, Ended, Faulted],
 }
 
-## Unicode 17 default line-break opportunities and decisions (UAX #14 rev 55).
+## Unicode 18 default line-break opportunities and decisions (UAX #14 rev 57).
 ##
 ## This module reports logical boundaries; it does not choose a line width.
 ## The exact un-tailored Unicode algorithm is the obvious no-configuration

@@ -1,4 +1,4 @@
-## GENERATED from Unicode 17.0.0 PropertyAliases and PropertyValueAliases. Run `python3 scripts/unicode_data.py generate`. ##
+## GENERATED from Unicode 18.0.0 PropertyAliases and PropertyValueAliases. Run `python3 scripts/unicode_data.py generate`. ##
 ## These canonical names are metadata for stable identities, never storage ordinals. ##
 ## metadata: 30 scalar category identities; 58 exact CCC identities. ##
 

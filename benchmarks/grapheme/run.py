@@ -22,6 +22,8 @@ from typing import Sequence
 
 ROOT = Path(__file__).resolve().parents[2]
 BENCH = Path(__file__).resolve().parent
+MANIFEST = json.loads((ROOT / "vendor/unicode/manifest.json").read_text(encoding="utf-8"))
+UNICODE_VERSION = MANIFEST["releases"]["unicode"]["version"]
 BUILD = ROOT / ".roc-unicode-tmp" / "benchmarks" / "grapheme"
 DEFAULT_OUTPUT = BUILD / "results.json"
 DEFAULT_TARGET_BYTES = 1024 * 1024
@@ -88,7 +90,7 @@ def boundary_signature(ends: Sequence[int]) -> tuple[int, int, int]:
 
 
 def conformance_corpus() -> tuple[bytes, tuple[int, int, int]]:
-    path = ROOT / "vendor/unicode/17.0.0/GraphemeBreakTest.txt"
+    path = ROOT / MANIFEST["sources"]["grapheme_break_test"]["path"]
     corpus = bytearray()
     ends: list[int] = []
     for raw_line in path.read_text(encoding="utf-8").splitlines():
@@ -344,12 +346,31 @@ def benchmark(
     for case_name, corpus in cases.items():
         print(f"\n[{case_name}] {len(corpus):,} bytes", flush=True)
         case_results: dict[str, dict] = {}
-        one_pass_counts: dict[str, int] = {}
-        signatures: dict[str, tuple[int, int, int]] = {}
+        signatures = {
+            language: verify_boundaries(binary, corpus, cpu)
+            for language, binary in binaries.items()
+        }
+        if case_name in expected and signatures["roc"] != expected[case_name]:
+            raise BenchmarkFailure(
+                f"{case_name}: Unicode {UNICODE_VERSION} expected boundary signature "
+                f"{expected[case_name]}, got {signatures['roc']}"
+            )
+        reference_signatures = {
+            language: signature for language, signature in signatures.items()
+            if language != "roc"
+        }
+        if len(set(reference_signatures.values())) != 1:
+            raise BenchmarkFailure(
+                f"{case_name}: Unicode 17 reference boundary signatures differ: "
+                f"{reference_signatures}"
+            )
+        if len(set(signatures.values())) > 1:
+            print(f"  Unicode versions yield different boundary signatures: {signatures}")
+
         for language, binary in binaries.items():
-            signatures[language] = verify_boundaries(binary, corpus, cpu)
             repeats, checksum = calibrate(binary, corpus, cpu, target_seconds)
-            one_pass_counts[language] = checksum
+            if checksum != signatures[language][0]:
+                raise BenchmarkFailure(f"{case_name}: {language} count and signature disagree")
             checked_invoke(binary, corpus, repeats, cpu, checksum)
             samples = []
             for _ in range(samples_count):
@@ -359,6 +380,7 @@ def benchmark(
             mad = statistics.median(abs(value - median) for value in samples)
             case_results[language] = {
                 "clusters": checksum,
+                "boundary_signature": signatures[language],
                 "repeats": repeats,
                 "mb_per_second_median": median,
                 "mb_per_second_mad": mad,
@@ -370,19 +392,6 @@ def benchmark(
                 flush=True,
             )
 
-        if len(set(one_pass_counts.values())) != 1:
-            raise BenchmarkFailure(
-                f"{case_name}: implementations disagree on cluster counts: {one_pass_counts}"
-            )
-        if len(set(signatures.values())) != 1:
-            raise BenchmarkFailure(
-                f"{case_name}: implementations disagree on boundary positions: {signatures}"
-            )
-        if case_name in expected and next(iter(signatures.values())) != expected[case_name]:
-            raise BenchmarkFailure(
-                f"{case_name}: Unicode 17 expected boundary signature "
-                f"{expected[case_name]}, got {signatures}"
-            )
         results[case_name] = {"bytes": len(corpus), "implementations": case_results}
     return results
 
@@ -541,6 +550,7 @@ def main() -> None:
             "cc": capture([args.cc, "--version"]),
         },
         "libraries": {
+            "roc_unicode": UNICODE_VERSION,
             "unicode_segmentation": "1.13.3 (Unicode 17)",
             "icu_segmenter": "2.2.0 (Unicode 17)",
             "clipperhouse_uax29": "2.7.0 (Unicode 17)",

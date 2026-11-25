@@ -115,8 +115,8 @@ ResolvedStep : [NextResolved({ segment : ResolvedSegment, state : IterationState
 ## Script runs under the package's explicitly named ConservativeScxV1 policy.
 ##
 ## This is shaping-oriented package policy, not a normative Unicode
-## itemization algorithm. It uses Unicode 17 Script/Script_Extensions facts and
-## the Unicode 17 extended grapheme algorithm. Grapheme clusters are atomic.
+## itemization algorithm. It uses Unicode 18 Script/Script_Extensions facts and
+## the Unicode 18 extended grapheme algorithm. Grapheme clusters are atomic.
 ## Restricted scx candidates use nearest explicit neighbors, then explicit
 ## preference order, then their explicit primary Script, otherwise Common.
 ## Broadly Common spans inherit one equal/single explicit side; conflicting or

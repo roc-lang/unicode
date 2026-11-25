@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Opt-in Unicode 17 Case differential test against ICU4J 78.3.
+"""Opt-in Unicode 18 Case differential test against ICU4J 79.1.
 
 The normal offline suite never calls this script. Supply ICU4J_JAR (or
 --icu4j-jar) for a local artifact, or pass --download to fetch the pinned jar
@@ -21,11 +21,11 @@ import unicode_data
 
 ROOT = Path(__file__).resolve().parents[1]
 TMP = ROOT / ".roc-unicode-tmp" / "case-icu"
-JAR_NAME = "icu4j-78.3.jar"
-JAR_URL = "https://repo.maven.apache.org/maven2/com/ibm/icu/icu4j/78.3/icu4j-78.3.jar"
-JAR_SHA256 = "e962c1758d9659ea1e1fbab99c58683f654d304e1126ace19aaabfe39e0edb25"
-EXPECTED_ICU_PREFIX = "78.3"
-EXPECTED_UNICODE_PREFIX = "17.0"
+JAR_NAME = "icu4j-79.1.jar"
+JAR_URL = "https://repo.maven.apache.org/maven2/com/ibm/icu/icu4j/79.1/icu4j-79.1.jar"
+JAR_SHA256 = "28b292e60d0d00c496bae88a15b2615f89f781be13670aeac9dc90f189570e07"
+EXPECTED_ICU_PREFIX = "79.1"
+EXPECTED_UNICODE_PREFIX = "18.0"
 # ICU's titlecase API is not Unicode Core R3 for an isolated U+0345: it leaves
 # the combining ypogegrammeni unchanged, while R3 title-maps its first cased
 # scalar. The oracle has no switch for R3, so this one scalar/title combination
@@ -197,7 +197,7 @@ def resolve_jar(args: argparse.Namespace) -> Path:
     if cache.is_file():
         return checked_jar(cache)
     if not args.download:
-        raise Failure("set ICU4J_JAR/--icu4j-jar, or pass --download to fetch the pinned ICU4J 78.3 jar")
+        raise Failure("set ICU4J_JAR/--icu4j-jar, or pass --download to fetch the pinned ICU4J 79.1 jar")
     TMP.mkdir(parents=True, exist_ok=True)
     print(f"+ download {JAR_URL}")
     with urllib.request.urlopen(JAR_URL, timeout=60) as response:

@@ -7,7 +7,7 @@ CursorState : {
 	status : [Open, Ended, Faulted],
 }
 
-## Unicode 17 default UAX #29 word-boundary ranges.
+## Unicode 18 default UAX #29 word-boundary ranges.
 ##
 ## These are all ranges between default word boundaries: whitespace and
 ## punctuation are ordinary ranges, not filtered dictionary words.

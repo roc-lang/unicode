@@ -18,9 +18,9 @@ sizes. Retained state and work should grow linearly with paragraph size.
 
 ## Optional external differential
 
-Normal CI uses the vendored Unicode 17 BidiTest and BidiCharacterTest data.
+Normal CI uses the vendored Unicode 18 BidiTest and BidiCharacterTest data.
 `scripts/bidi_reference_differential.py` is an explicit local verification tool.
-It downloads Unicode's official Code9 C reference source for Unicode 17.0.0,
+It downloads Unicode's official Code9 C reference source for Unicode 18.0.0,
 verifies every source file against recorded SHA-256 digests, compiles an
 isolated query wrapper, and compares deterministic seeded scalar cases against
 the Roc test app. It verifies the Roc compiler against `.roc-version`; a failed

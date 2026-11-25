@@ -1,7 +1,7 @@
 # Line-break benchmark
 
 This opt-in benchmark measures the allocation-free `LineBreak.Cursor`
-opportunity stream over both all 19,338 Unicode 17 `LineBreakTest.txt` cases
+opportunity stream over both all 19,346 Unicode 18 `LineBreakTest.txt` cases
 joined by hard-break separators and a 1 MiB ASCII-letter run. Before timing,
 the runner validates the pinned-data manifest and compares a signature of every
 emitted byte offset with an independently derived signature. Every timed count

@@ -25,7 +25,7 @@ The string/unicode rabbit hole goes deep, we have a [good overview](https://www.
 ## Unicode data
 
 Production tables and conformance tests are generated from the official,
-versioned Unicode files in `vendor/unicode/17.0.0/`.
+versioned Unicode files in `vendor/unicode/18.0.0/`.
 `vendor/unicode/manifest.json` pins their source URLs, SHA-256 hashes, header
 markers, and record counts. Its release snapshots, specification revisions,
 sources, and generated artifacts are separate dependency-graph nodes; this
@@ -68,9 +68,9 @@ they do not materialize per-scalar substrings or an intermediate list.
 
 Generated scalar ordinals, row IDs, and bit positions remain private.
 The direct views and the composite-only fused index have independent checked
-static-size budgets in the manifest. The Unicode 17 composite contains 615
-rows: its U16 page index is 93,184 bytes, its eleven packed U8 columns are
-6,765 bytes, and its total logical payload is bounded at 99,949 bytes.
+static-size budgets in the manifest. The Unicode 18 composite contains 627
+rows: its U16 page index is 94,720 bytes, its eleven packed U8 columns are
+6,897 bytes, and its total logical payload is bounded at 101,617 bytes.
 Property-specific defaults are parsed as
 ordered ranges and checked before explicit records take precedence, including
 all six Emoji defaults, East_Asian_Width's five wide unassigned ranges, the 24
@@ -117,7 +117,7 @@ reserving, and later algorithms use operation-specific limits where they
 intrinsically retain input-proportional state. There is intentionally no
 universal options or limits record.
 
-Grapheme segmentation follows the default, un-tailored Unicode 17 extended
+Grapheme segmentation follows the default, un-tailored Unicode 18 extended
 grapheme cluster algorithm. Its primary output is half-open UTF-8 byte ranges;
 callers can consume them lazily with `Grapheme.iter_ranges`, collect them with
 `Grapheme.ranges`, retain seamless source slices with `Grapheme.slices`, or
@@ -125,7 +125,7 @@ request independent copies with `Grapheme.split`. `Grapheme.Cursor` carries the
 same algorithm across scalar-aligned streaming chunks without treating a chunk
 edge as end-of-text.
 
-Line breaking follows the exact default Unicode 17 UAX #14 revision 55
+Line breaking follows the exact default Unicode 18 UAX #14 revision 57
 algorithm and reports logical opportunities rather than choosing a line width.
 `LineBreak.iter_boundaries` lazily visits every scalar boundary with its
 `TextPosition`, `Mandatory`/`Allowed`/`Prohibited` decision, and whether the
@@ -142,7 +142,7 @@ distinguishes that policy axis from the Unicode/UAX version.
 
 ## Bidirectional text
 
-`Bidi` implements Unicode 17.0.0 UAX #9 revision 51 at conformance level
+`Bidi` implements Unicode 18.0.0 UAX #9 revision 52 at conformance level
 UAX9-C1: P1--P3, X1--X10, W1--W7, N0--N2, I1--I2, and the line-specific
 L1--L4 steps. `Bidi.analyze_paragraph` retains paragraph analysis facts rather
 than replacing logical text: original scalar/text ranges, resolved levels,
@@ -175,14 +175,14 @@ inverse stays compact for the requested line.
 
 ## Word segmentation and case mapping
 
-Word segmentation implements the un-tailored Unicode 17.0.0 UAX #29 word
+Word segmentation implements the un-tailored Unicode 18.0.0 UAX #29 word
 boundary rules. `Word.iter_ranges` and `Word.ranges` return every nonempty
 UTF-8 range between boundaries (including whitespace and punctuation), while
 `Word.Cursor` carries the same bounded transition across scalar-aligned `Str`
 chunks and must be explicitly finished. Ranges partition the original source;
 `slices` retains seamless views and `owned` copies selected text.
 
-`Case` implements Unicode 17.0.0 full lowercase, uppercase, and technical R3
+`Case` implements Unicode 18.0.0 full lowercase, uppercase, and technical R3
 titlecase mappings. The default profile is locale-independent; `Turkic` and
 `Lithuanian` are explicit profiles, never ambient locale choices. Folding has
 explicit full, simple, Turkic-full, and Turkic-simple profiles. Every
@@ -194,9 +194,9 @@ atomic rather than a partial result.
 
 ## Scripts and shaping-oriented itemization
 
-`Script` exposes Unicode 17's normative `Script` and `Script_Extensions`
+`Script` exposes Unicode 18's normative `Script` and `Script_Extensions`
 properties from `Scripts.txt`, `ScriptExtensions.txt`, and
-`PropertyValueAliases.txt` under UAX #24 revision 39. A script is a character
+`PropertyValueAliases.txt` under UAX #24 revision 41. A script is a character
 property, not a Unicode block, language, text direction, font choice, or
 security classification. `Common` (`Zyyy`), `Inherited` (`Zinh`), and
 `Unknown` (`Zzzz`) are ordinary property values rather than errors.
@@ -277,11 +277,11 @@ python3 scripts/test.py allocations
 python3 scripts/test_bundle_examples.py
 ```
 
-The grapheme suite covers all 766 official Unicode 17 conformance cases, the
-line-break suite covers all 19,338 official Unicode 17 cases through both
+The grapheme suite covers all 853 official Unicode 18 conformance cases, the
+line-break suite covers all 19,346 official Unicode 18 cases through both
 complete-string and one-scalar-per-chunk paths, and the word suite covers all
-1,944 official Unicode 17 cases through complete and scalar-aligned chunked
-paths. The Case suite covers 11,416 deterministic Unicode 17 oracle cases:
+1,944 official Unicode 18 cases through complete and scalar-aligned chunked
+paths. The Case suite covers 11,567 deterministic Unicode 18 oracle cases:
 all simple mappings, all SpecialCasing witnesses and controls, all CaseFolding
 records under every public fold profile, and focused source-fact, R3,
 no-normalization, context, supplementary, and exact-limit checks. The property suite covers every
@@ -292,8 +292,8 @@ for the compiler in `.roc-version`: when an intentional implementation change
 alters them, rerun `scripts/test.py allocations` with that pinned compiler and
 review the measured fixture counts before updating the adjacent baseline file.
 The runner never updates or silently accepts a new allocation baseline.
-`scripts/test_case_icu.py` is an opt-in differential gate against ICU4J 78.3
-(Unicode 17). It is deliberately outside the offline default suite: provide a
+`scripts/test_case_icu.py` is an opt-in differential gate against ICU4J 79.1
+(Unicode 18). It is deliberately outside the offline default suite: provide a
 verified `ICU4J_JAR`, or pass `--download` to cache the pinned Maven artifact
 under `.roc-unicode-tmp/case-icu`. It compares lower/upper/title under root,
 Turkic, and Lithuanian locales plus default full folding over every pinned case
@@ -313,5 +313,5 @@ its dense literals substantially.
 ## Benchmarks
 
 Opt-in local benchmarks live in [`benchmarks`](benchmarks/README.md). They are
-kept outside CI and include a reproducible Unicode 17 grapheme comparison with
+kept outside CI and include a reproducible Unicode 18 grapheme comparison with
 Rust and Go plus an official-conformance-corpus line-break benchmark.

@@ -4,7 +4,7 @@ import InternalGrapheme
 ## Extended grapheme cluster boundaries and materializers.
 ##
 ## The public contract is range-first and implements the default, un-tailored
-## Unicode 17 extended grapheme cluster algorithm.
+## Unicode 18 extended grapheme cluster algorithm.
 Grapheme :: [].{
 
 	## Incremental segmentation over scalar-aligned `Str` chunks.
