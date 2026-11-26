@@ -22,12 +22,13 @@ Collation :: [].{
 	Strength : [Primary, Secondary, Tertiary, Quaternary, Identical]
 	Alternate : [NonIgnorable, Shifted]
 	CaseFirst : [Default, UpperFirst, LowerFirst]
+	DigitOrder : [ByCollationWeight, ByNumericValue]
 
 	## Omitted settings use standard tertiary, non-ignorable collation.
 	Options := {
 		strength : Strength ?? Tertiary,
 		alternate : Alternate ?? NonIgnorable,
-		numeric : Bool ?? Bool.False,
+		digit_order : DigitOrder ?? ByCollationWeight,
 		case_first : CaseFirst ?? Default,
 	}
 
@@ -238,7 +239,7 @@ collation_elements = |initial, root, cldr_variables, options, limits| {
 		unit = $units.get($at) ?? return Err(InternalFault)
 		if unit.removed {
 			$at = $at + 1
-		} else if options.numeric and decimal_digit(unit.scalar) != None {
+		} else if options.digit_order == ByNumericValue and decimal_digit(unit.scalar) != None {
 			run = read_digits($units, $at, limits.max_numeric_digits)?
 			$out = numeric_elements($out, run.digits, limits.max_elements)?
 			$at = run.next

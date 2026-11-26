@@ -79,7 +79,7 @@ test = |input| {
 	options : Collation.Options
 	options = {
 		strength,
-		numeric: input.config.bitwise_and(8) != 0,
+		digit_order: if (input.config.bitwise_and(8) == 0) ByCollationWeight else ByNumericValue,
 		alternate: if (input.config.bitwise_and(16) == 0) NonIgnorable else Shifted,
 	}
 	collator = Collation.collator(locale, options) ?? crash "collation rejected a supported test profile"
