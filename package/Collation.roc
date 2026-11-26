@@ -22,9 +22,14 @@ Collation :: [].{
 	Strength : [Primary, Secondary, Tertiary, Quaternary, Identical]
 	Alternate : [NonIgnorable, Shifted]
 	CaseFirst : [Default, UpperFirst, LowerFirst]
-	Options : { strength : Strength, alternate : Alternate, numeric : Bool, case_first : CaseFirst }
-	default_options : Options
-	default_options = { strength: Tertiary, alternate: NonIgnorable, numeric: Bool.False, case_first: Default }
+
+	## Omitted settings use standard tertiary, non-ignorable collation.
+	Options := {
+		strength : Strength ?? Tertiary,
+		alternate : Alternate ?? NonIgnorable,
+		numeric : Bool ?? Bool.False,
+		case_first : CaseFirst ?? Default,
+	}
 
 	Profile : [Ducet, GermanStandard, GermanPhonebook, SpanishStandard, SpanishTraditional]
 	ProfileRevision : [DucetV1, CldrRulesV1]

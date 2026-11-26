@@ -122,7 +122,7 @@ Normalization :: [].{
 
 canonical_fold = |source, limits, fold_limits| {
 	decomposed = Normalization.normalize(source, NFD, limits).map_err(|error| NormalizeFailed(error))?
-	folded = Case.fold(decomposed, Case.full, fold_limits).map_err(|error| FoldFailed(error))?
+	folded = Case.fold(decomposed, { limits: fold_limits }).map_err(|error| FoldFailed(error))?
 	Normalization.normalize(Case.result_text(folded), NFD, limits).map_err(|error| NormalizeFailed(error))
 }
 

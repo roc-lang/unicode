@@ -20,7 +20,7 @@ limits = {
 # UCA §7.2. Cyrillic И + breve forms a root contraction. U+0327 (202)
 # can be skipped for U+0306 (230), whereas U+0301 (230) blocks U+0306.
 expect {
-	root = Collation.collator(Locale.root, { ..Collation.default_options, strength: Primary })?
+	root = Collation.collator(Locale.root, { strength: Primary })?
 	Collation.compare(root, "И\u(0327)\u(0306)", "Й", limits) == Ok(Eq) and
 		Collation.compare(root, "И\u(0301)\u(0306)", "И", limits) == Ok(Eq) and
 			Collation.compare(root, "И\u(0301)\u(0306)", "Й", limits) == Ok(Lt)
@@ -29,7 +29,8 @@ expect {
 # The skipped cedilla is still present at the secondary level. Canonically
 # equivalent inputs get identical keys even under the Identical strength.
 expect {
-	options = { ..Collation.default_options, strength: Identical }
+	options : Collation.Options
+	options = { strength: Identical }
 	root = Collation.collator(Locale.root, options)?
 	Collation.sort_key(root, "И\u(0327)\u(0306)", limits) == Collation.sort_key(root, "Й\u(0327)", limits) and
 		Collation.compare(root, "Й", "Й\u(0327)", limits) == Ok(Lt) and
@@ -39,7 +40,8 @@ expect {
 
 # CLDR Spanish n/ñ and traditional ch/ll, plus German phonebook expansions.
 expect {
-	options = { ..Collation.default_options, strength: Primary }
+	options : Collation.Options
+	options = { strength: Primary }
 	root = Collation.collator(Locale.root, options)?
 	spanish = Collation.collator(Locale.parse("es")?, options)?
 	traditional = Collation.collator(Locale.parse("es-u-co-trad")?, options)?
@@ -58,9 +60,10 @@ expect {
 # A variable and its following ignorable disappear through tertiary. The
 # shifted quaternary retains the variable. CLDR retains symbols like U+2620.
 expect {
-	options = { ..Collation.default_options, alternate: Shifted }
+	options : Collation.Options
+	options = { alternate: Shifted }
 	root = Collation.collator(Locale.root, options)?
-	fourth = Collation.collator(Locale.root, { ..options, strength: Quaternary })?
+	fourth = Collation.collator(Locale.root, { alternate: Shifted, strength: Quaternary })?
 	spanish = Collation.collator(Locale.parse("es")?, options)?
 	Collation.compare(root, "a \u(0300)b", "ab", limits) == Ok(Eq) and
 		Collation.compare(root, "a\u(0300)b", "ab", limits) == Ok(Gt) and
@@ -72,7 +75,8 @@ expect {
 # Different scripts and leading zeroes can spell the same numeric value.
 # The count/ordinal encoding also handles values beyond machine integers.
 expect {
-	options = { ..Collation.default_options, numeric: Bool.True }
+	options : Collation.Options
+	options = { numeric: Bool.True }
 	root = Collation.collator(Locale.root, options)?
 	Collation.compare(root, "file9", "file10", limits) == Ok(Lt) and
 		Collation.compare(root, "file09", "file٩", limits) == Ok(Eq) and
@@ -83,11 +87,10 @@ expect {
 }
 
 expect {
-	open = Collation.default_options
-	root = Collation.collator(Locale.root, open)?
-	upper = Collation.collator(Locale.root, { ..open, case_first: UpperFirst })?
-	lower = Collation.collator(Locale.root, { ..open, case_first: LowerFirst })?
-	traditional = Collation.collator(Locale.parse("es-u-co-trad")?, { ..open, case_first: UpperFirst })?
+	root = Collation.collator(Locale.root, {})?
+	upper = Collation.collator(Locale.root, { case_first: UpperFirst })?
+	lower = Collation.collator(Locale.root, { case_first: LowerFirst })?
+	traditional = Collation.collator(Locale.parse("es-u-co-trad")?, { case_first: UpperFirst })?
 	Collation.compare(root, "a", "A", limits) == Ok(Lt) and
 		Collation.compare(upper, "A", "a", limits) == Ok(Lt) and
 			Collation.compare(lower, "a", "A", limits) == Ok(Lt) and
@@ -96,7 +99,7 @@ expect {
 }
 
 expect {
-	root = Collation.collator(Locale.root, { ..Collation.default_options, strength: Primary })?
+	root = Collation.collator(Locale.root, { strength: Primary })?
 	per_text = { ..limits, max_key_bytes: 4 }
 	sort_limits = { per_text, max_items: 3, max_total_key_bytes: 12 }
 	Collation.sort(root, ["b", "A", "a"], sort_limits) == Ok(["A", "a", "b"]) and
@@ -113,7 +116,7 @@ expect {
 expect {
 	unsupported = "es-u-co-search"
 	locale = Locale.parse(unsupported)?
-	Collation.collator(locale, Collation.default_options).map_ok(|_| {}) == Err(UnsupportedLocale(unsupported))
+	Collation.collator(locale, {}).map_ok(|_| {}) == Err(UnsupportedLocale(unsupported))
 }
 
 # Differential fixture recorded with ICU4J 79.1, Unicode 18.0.0, CLDR 49.

@@ -7,6 +7,12 @@ variable elements to the quaternary level. Select `Identical` for an additional
 NFD scalar tie-break, which preserves canonical equivalence. Numeric ordering
 compares runs of Unicode decimal digits by value without converting to a
 machine integer. `case_first` explicitly controls tertiary case order.
+Pass `{}` for the standard options and specify fields where needed.
+
+```roc
+standard = Collation.collator(Locale.root, {})?
+numeric = Collation.collator(Locale.root, { numeric: Bool.True })?
+```
 
 The supported locale identifiers and aliases are listed below. Selection
 returns `UnsupportedLocale` for other identifiers. Supply strength, alternate

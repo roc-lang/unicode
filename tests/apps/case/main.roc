@@ -40,7 +40,7 @@ parse_header = |header, actual_count| {
 	match header.split_on("\t") {
 		["ROC_UNICODE_TEST_V1", "case", count_str] => {
 			expected = U64.from_str(count_str) ?? return Err("invalid header count")
-			if expected == actual_count Ok({}) else Err("header count mismatch")
+			if (expected == actual_count) Ok({}) else Err("header count mismatch")
 		}
 		_ => Err("malformed protocol header")
 	}
@@ -85,19 +85,19 @@ invoke = |operation, profile, source| {
 	match operation {
 		"lower" => match mapping_profile(profile) {
 			Err(message) => Err(message)
-			Ok(value) => Case.to_lower(source, value, limits) |> Try.map_err(error_message)
+			Ok(value) => Case.to_lower(source, { profile: value, limits }) |> Try.map_err(error_message)
 		}
 		"upper" => match mapping_profile(profile) {
 			Err(message) => Err(message)
-			Ok(value) => Case.to_upper(source, value, limits) |> Try.map_err(error_message)
+			Ok(value) => Case.to_upper(source, { profile: value, limits }) |> Try.map_err(error_message)
 		}
 		"title" => match mapping_profile(profile) {
 			Err(message) => Err(message)
-			Ok(value) => Case.to_title(source, value, limits) |> Try.map_err(error_message)
+			Ok(value) => Case.to_title(source, { profile: value, limits }) |> Try.map_err(error_message)
 		}
 		"fold" => match fold_profile(profile) {
 			Err(message) => Err(message)
-			Ok(value) => Case.fold(source, value, limits) |> Try.map_err(error_message)
+			Ok(value) => Case.fold(source, { profile: value, limits }) |> Try.map_err(error_message)
 		}
 		_ => Err("unknown operation")
 	}
@@ -268,37 +268,36 @@ run_focused = |runtime_seed| {
 	# Exact limits are successful; reducing each relevant bound by one reports
 	# the typed resource and cannot expose a partial Case.Result.
 	zero = runtime_seed - runtime_seed
-	max = U64.highest
-	assert_lower_success("empty exact zero", "", Case.unicode_default, Case.limits(zero, zero, zero, zero, zero), "", zero)?
-	assert_lower_success("ASCII exact", "A", Case.unicode_default, Case.limits(1, 1, 1, 1, 1), "a", 1)?
-	assert_lower_limit("ASCII input bytes", "A", Case.unicode_default, Case.limits(zero, max, max, max, max), InputBytes)?
-	assert_lower_limit("ASCII input scalars", "A", Case.unicode_default, Case.limits(max, zero, max, max, max), InputScalars)?
-	assert_lower_limit("ASCII output bytes", "A", Case.unicode_default, Case.limits(max, max, zero, max, max), OutputBytes)?
-	assert_lower_limit("ASCII output scalars", "A", Case.unicode_default, Case.limits(max, max, max, zero, max), OutputScalars)?
-	assert_lower_limit("ASCII facts", "A", Case.unicode_default, Case.limits(max, max, max, max, zero), Facts)?
+	assert_lower_success("empty exact zero", "", Case.unicode_default, { max_input_bytes: zero, max_input_scalars: zero, max_output_bytes: zero, max_output_scalars: zero, max_mapping_facts: zero }, "", zero)?
+	assert_lower_success("ASCII exact", "A", Case.unicode_default, { max_input_bytes: 1, max_input_scalars: 1, max_output_bytes: 1, max_output_scalars: 1, max_mapping_facts: 1 }, "a", 1)?
+	assert_lower_limit("ASCII input bytes", "A", Case.unicode_default, { ..Case.unlimited_limits, max_input_bytes: zero }, InputBytes)?
+	assert_lower_limit("ASCII input scalars", "A", Case.unicode_default, { ..Case.unlimited_limits, max_input_scalars: zero }, InputScalars)?
+	assert_lower_limit("ASCII output bytes", "A", Case.unicode_default, { ..Case.unlimited_limits, max_output_bytes: zero }, OutputBytes)?
+	assert_lower_limit("ASCII output scalars", "A", Case.unicode_default, { ..Case.unlimited_limits, max_output_scalars: zero }, OutputScalars)?
+	assert_lower_limit("ASCII facts", "A", Case.unicode_default, { ..Case.unlimited_limits, max_mapping_facts: zero }, Facts)?
 
 	# U+0130 is a two-byte input whose full default lowercase expands to three
 	# bytes and two scalars; each resource succeeds exactly at the boundary.
-	assert_lower_success("multibyte exact", "İ", Case.unicode_default, Case.limits(2, 1, 3, 2, 1), "i̇", 1)?
-	assert_lower_limit("multibyte input bytes", "İ", Case.unicode_default, Case.limits(1, max, max, max, max), InputBytes)?
-	assert_lower_limit("multibyte output bytes", "İ", Case.unicode_default, Case.limits(max, max, 2, max, max), OutputBytes)?
-	assert_lower_limit("multibyte output scalars", "İ", Case.unicode_default, Case.limits(max, max, max, 1, max), OutputScalars)?
+	assert_lower_success("multibyte exact", "İ", Case.unicode_default, { max_input_bytes: 2, max_input_scalars: 1, max_output_bytes: 3, max_output_scalars: 2, max_mapping_facts: 1 }, "i̇", 1)?
+	assert_lower_limit("multibyte input bytes", "İ", Case.unicode_default, { ..Case.unlimited_limits, max_input_bytes: 1 }, InputBytes)?
+	assert_lower_limit("multibyte output bytes", "İ", Case.unicode_default, { ..Case.unlimited_limits, max_output_bytes: 2 }, OutputBytes)?
+	assert_lower_limit("multibyte output scalars", "İ", Case.unicode_default, { ..Case.unlimited_limits, max_output_scalars: 1 }, OutputScalars)?
 
 	# U+00DF uppercases to two ASCII scalars while retaining one source fact.
-	assert_upper_success("sharp s expansion exact", "ß", Case.unicode_default, Case.limits(2, 1, 2, 2, 1), "SS", 1)?
-	assert_upper_limit("sharp s output bytes", "ß", Case.limits(max, max, 1, max, max), OutputBytes)?
-	assert_upper_limit("sharp s output scalars", "ß", Case.limits(max, max, max, 1, max), OutputScalars)?
+	assert_upper_success("sharp s expansion exact", "ß", Case.unicode_default, { max_input_bytes: 2, max_input_scalars: 1, max_output_bytes: 2, max_output_scalars: 2, max_mapping_facts: 1 }, "SS", 1)?
+	assert_upper_limit("sharp s output bytes", "ß", { ..Case.unlimited_limits, max_output_bytes: 1 }, OutputBytes)?
+	assert_upper_limit("sharp s output scalars", "ß", { ..Case.unlimited_limits, max_output_scalars: 1 }, OutputScalars)?
 
 	# In Turkic casing the dot's fact has an empty output range, while the
 	# complete result still has exact output and fact limits.
-	assert_lower_success("Turkic deletion exact", "İ", Case.turkic, Case.limits(3, 2, 1, 1, 2), "i", 2)?
-	assert_lower_limit("Turkic deletion facts", "İ", Case.turkic, Case.limits(max, max, max, max, 1), Facts)?
+	assert_lower_success("Turkic deletion exact", "İ", Case.turkic, { max_input_bytes: 3, max_input_scalars: 2, max_output_bytes: 1, max_output_scalars: 1, max_mapping_facts: 2 }, "i", 2)?
+	assert_lower_limit("Turkic deletion facts", "İ", Case.turkic, { ..Case.unlimited_limits, max_mapping_facts: 1 }, Facts)?
 	Ok({})
 }
 
 assert_lower_success : Str, Str, Case.MappingProfile, Case.Limits, Str, U64 -> Try({}, Str)
 assert_lower_success = |label, source, profile, limits, expected, expected_facts| {
-	match Case.to_lower(source, profile, limits) {
+	match Case.to_lower(source, { profile, limits }) {
 		Ok(result) if Case.result_text(result) == expected and Case.result_facts(result).len() == expected_facts => Ok({})
 		Ok(_) => Err("${label}: exact limit success returned wrong result")
 		Err(error) => Err("${label}: exact limit unexpectedly failed ${Str.inspect(error)}")
@@ -307,7 +306,7 @@ assert_lower_success = |label, source, profile, limits, expected, expected_facts
 
 assert_upper_success : Str, Str, Case.MappingProfile, Case.Limits, Str, U64 -> Try({}, Str)
 assert_upper_success = |label, source, profile, limits, expected, expected_facts| {
-	match Case.to_upper(source, profile, limits) {
+	match Case.to_upper(source, { profile, limits }) {
 		Ok(result) if Case.result_text(result) == expected and Case.result_facts(result).len() == expected_facts => Ok({})
 		Ok(_) => Err("${label}: exact limit success returned wrong result")
 		Err(error) => Err("${label}: exact limit unexpectedly failed ${Str.inspect(error)}")
@@ -316,7 +315,7 @@ assert_upper_success = |label, source, profile, limits, expected, expected_facts
 
 assert_lower_limit : Str, Str, Case.MappingProfile, Case.Limits, [NoLimitResource, InputBytes, InputScalars, OutputBytes, OutputScalars, Facts] -> Try({}, Str)
 assert_lower_limit = |label, source, profile, limits, expected| {
-	match Case.to_lower(source, profile, limits) {
+	match Case.to_lower(source, { profile, limits }) {
 		Err(error) if Case.error_limit_resource(error) == expected => Ok({})
 		Err(error) => Err("${label}: wrong limit failure ${Str.inspect(error)}")
 		Ok(_) => Err("${label}: limit returned a partial/success result")
@@ -325,7 +324,7 @@ assert_lower_limit = |label, source, profile, limits, expected| {
 
 assert_upper_limit : Str, Str, Case.Limits, [NoLimitResource, InputBytes, InputScalars, OutputBytes, OutputScalars, Facts] -> Try({}, Str)
 assert_upper_limit = |label, source, limits, expected| {
-	match Case.to_upper(source, Case.unicode_default, limits) {
+	match Case.to_upper(source, { limits: limits }) {
 		Err(error) if Case.error_limit_resource(error) == expected => Ok({})
 		Err(error) => Err("${label}: wrong limit failure ${Str.inspect(error)}")
 		Ok(_) => Err("${label}: limit returned a partial/success result")

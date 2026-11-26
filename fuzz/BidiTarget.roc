@@ -40,7 +40,7 @@ test = |input| {
 		crash "bidi paragraph ranges did not reach the end of the input"
 	}
 	if paragraphs.len() > 1 {
-		match Bidi.analyze_paragraph(source, base, Bidi.default_limits) {
+		match Bidi.analyze_paragraph(source, { base_direction: base, limits: Bidi.default_limits }) {
 			Err(MultipleParagraphs) => {}
 			_ => crash "bidi accepted multiple paragraphs as one paragraph"
 		}
@@ -54,7 +54,7 @@ check_paragraph = |source, input, base, range| {
 	scalars = TextRange.scalar_range(range)
 	limits : Bidi.Limits
 	limits = { max_scalars: ScalarRange.len(scalars), max_bytes: ByteRange.len(bytes) }
-	analysis = Bidi.analyze_range(source, range, base, limits) ?? crash "bidi rejected a P1 paragraph at its exact input limit"
+	analysis = Bidi.analyze_range(source, range, { base_direction: base, limits }) ?? crash "bidi rejected a P1 paragraph at its exact input limit"
 	if Bidi.requested_base_direction(analysis) != base or Bidi.paragraph_range(analysis) != range {
 		crash "bidi analysis changed the requested paragraph or base direction"
 	}
@@ -85,12 +85,12 @@ check_paragraph = |source, input, base, range| {
 	case_limit = if entries.is_empty() {
 		Bool.True
 	} else if input.config.bitwise_and(4) == 0 {
-		match Bidi.analyze_range(source, range, base, { ..limits, max_scalars: limits.max_scalars - 1 }) {
+		match Bidi.analyze_range(source, range, { base_direction: base, limits: { ..limits, max_scalars: limits.max_scalars - 1 } }) {
 			Err(ScalarLimitExceeded(detail)) => detail.limit + 1 == detail.required and detail.required == limits.max_scalars and Some(detail.range) == last_entry_range(entries)
 			_ => Bool.False
 		}
 	} else {
-		match Bidi.analyze_range(source, range, base, { ..limits, max_bytes: limits.max_bytes - 1 }) {
+		match Bidi.analyze_range(source, range, { base_direction: base, limits: { ..limits, max_bytes: limits.max_bytes - 1 } }) {
 			Err(ByteLimitExceeded(detail)) => detail.limit + 1 == detail.required and detail.required == limits.max_bytes and detail.range == bytes
 			_ => Bool.False
 		}

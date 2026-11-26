@@ -18,6 +18,7 @@ Bidi :: [].{
 	LimitStage : [Ingestion]
 	ResolvedLevel : [Level(U8), RemovedByX9]
 	Limits : { max_scalars : U64, max_bytes : U64 }
+	AnalysisOptions := { base_direction : BaseDirection ?? Auto, limits : Limits }
 
 	## Limit errors identify the operation before the retained tape is committed.
 	## Their paragraph range is in the caller's original source coordinates.
@@ -60,16 +61,16 @@ Bidi :: [].{
 		InternalBoundedCollect.from_iter(source.count_utf8_bytes(), limits, |{}| Bidi.iter_paragraph_ranges(source), |range| range)
 	}
 
-	analyze_paragraph : Str, BaseDirection, Limits -> Try(Analysis, Error)
-	analyze_paragraph = |source, base_direction, limits| analyze_source(source, base_direction, limits, TextPosition.from_offsets(0, 0))
+	analyze_paragraph : Str, AnalysisOptions -> Try(Analysis, Error)
+	analyze_paragraph = |source, AnalysisOptions.{ base_direction, limits }| analyze_source(source, base_direction, limits, TextPosition.from_offsets(0, 0))
 
 	## Analyze one P1 paragraph selected from a complete source. Validation scans
 	## through the selected P1 boundary, then replays only the selected seamless
 	## slice for retained analysis; this explicit replay keeps global coordinates
 	## without retaining the source. Line ranges and visual mappings remain
 	## absolute to `source`.
-	analyze_range : Str, TextRange, BaseDirection, Limits -> Try(Analysis, Error)
-	analyze_range = |source, selected, base_direction, limits| {
+	analyze_range : Str, TextRange, AnalysisOptions -> Try(Analysis, Error)
+	analyze_range = |source, selected, AnalysisOptions.{ base_direction, limits }| {
 		if !is_p1_range(source, selected) {
 			Err(InvalidParagraphRange(selected))
 		} else {
