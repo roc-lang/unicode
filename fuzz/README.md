@@ -60,8 +60,8 @@ a member requires updating the driver's inventory. The driver checks the
 actual binary membership before running it. The smoke configuration uses up
 to 2,000 runs, a 60-second wall-clock search allowance, a 5-second per-input
 timeout and a 2048-MiB RSS limit. Seed executions may exceed the run count.
-Campaigns keep their discoveries and use a separate time limit per target
-with the same per-input and RSS bounds. Runs, reproduction, reduction, and minimization
+Run campaigns locally. They keep discoveries in a persistent corpus and use
+a separate time limit per target with the same per-input and RSS bounds. Runs, reproduction, reduction, and minimization
 also have an outer deadline to bound a stalled supervisor.
 
 ## Input formats and seeds
@@ -85,7 +85,7 @@ artifact. Its old entropy format had neither a configuration byte nor chunk
 actions.
 
 `seeds.json` retains named regression and branch-driving inputs as readable
-UTF-8 hex or raw malformed bytes. Smoke and scheduled campaigns start with
+UTF-8 hex or raw malformed bytes. Smoke and local campaigns start with
 these seeds and the suites' saved examples. For a local campaign during a
 Unicode update, run `python3 scripts/unicode_data.py fetch` and pass
 `--sample-upstream` to add inputs from the pinned data. The sampler adds bounded
@@ -102,12 +102,12 @@ rejects equality at the item limit fails the grapheme suite's declared example.
 ## Findings and corpus maintenance
 
 Each run's directory under `.roc-unicode-tmp/fuzz/reports/` contains the
-runner report and evidence. CI uploads those directories and the native
-artifacts for failures. The scheduled Linux campaign also uploads its
-persistent corpus and build/run log. Read the report's target and source
+runner report and evidence. PR smoke uploads those directories and native
+failure artifacts. Local campaigns keep their corpus under
+`.roc-unicode-tmp/fuzz/corpus/plan-v1/`. Read the report's target and source
 revision to find the right checkout and target name. A revision with a
-`-dirty` suffix requires the local source changes as well as that checkout. Download its original
-input or failing example and pass that file to `reproduce` and `minimize`.
+`-dirty` suffix requires the local source changes as well as that checkout.
+Pass the original input or failing example to `reproduce` and `minimize`.
 
 1. Replay the original bytes and keep them with the report.
 2. Minimize the witness and verify that it still reaches the same failure.
