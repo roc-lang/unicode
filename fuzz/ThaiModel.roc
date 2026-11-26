@@ -95,10 +95,10 @@ expect {
 
 expect {
 	limits = { max_words: 2, max_total_bytes: 6, max_word_bytes: 3 }
-	(ThaiLineBreak.Dictionary.from_words(["ก", "ก"], "rev", limits).map_ok(ThaiLineBreak.Dictionary.revision) == Ok("rev")) and
-		(ThaiLineBreak.Dictionary.from_words(["ก"], "", limits).map_ok(|_| {}) == Err(MissingRevision)) and
-			(ThaiLineBreak.Dictionary.from_words(["ก", "ข", "ค"], "rev", limits).map_ok(|_| {}) == Err(TooManyWords({ limit: 2 }))) and
-				(ThaiLineBreak.Dictionary.from_words(["กข"], "rev", limits).map_ok(|_| {}) == Err(WordByteLimit({ word: 0, limit: 3 }))) and
-					(ThaiLineBreak.Dictionary.from_words(["ก", "ข"], "rev", { ..limits, max_total_bytes: 5 }).map_ok(|_| {}) == Err(DictionaryByteLimit({ word: 1, limit: 5 }))) and
-						(ThaiLineBreak.Dictionary.from_words(["กx"], "rev", { ..limits, max_word_bytes: 6 }).map_ok(|_| {}) == Err(InvalidWord({ word: 0, byte_offset: 3 })))
+	(ThaiLineBreak.Dictionary.from_words(["ก", "ก"], { revision: "rev", limits }).map_ok(ThaiLineBreak.Dictionary.revision) == Ok("rev")) and
+		(ThaiLineBreak.Dictionary.from_words(["ก"], { revision: "", limits }).map_ok(|_| {}) == Err(MissingRevision)) and
+			(ThaiLineBreak.Dictionary.from_words(["ก", "ข", "ค"], { revision: "rev", limits }).map_ok(|_| {}) == Err(TooManyWords({ limit: 2 }))) and
+				(ThaiLineBreak.Dictionary.from_words(["กข"], { revision: "rev", limits }).map_ok(|_| {}) == Err(WordByteLimit({ word: 0, limit: 3 }))) and
+					(ThaiLineBreak.Dictionary.from_words(["ก", "ข"], { revision: "rev", limits: { ..limits, max_total_bytes: 5 } }).map_ok(|_| {}) == Err(DictionaryByteLimit({ word: 1, limit: 5 }))) and
+						(ThaiLineBreak.Dictionary.from_words(["กx"], { revision: "rev", limits: { ..limits, max_word_bytes: 6 } }).map_ok(|_| {}) == Err(InvalidWord({ word: 0, byte_offset: 3 })))
 }

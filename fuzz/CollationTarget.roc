@@ -76,8 +76,8 @@ test = |input| {
 		3 => Quaternary
 		_ => Identical
 	}
+	options : Collation.Options
 	options = {
-		..Collation.default_options,
 		strength,
 		numeric: input.config.bitwise_and(8) != 0,
 		alternate: if (input.config.bitwise_and(16) == 0) NonIgnorable else Shifted,

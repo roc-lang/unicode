@@ -201,7 +201,7 @@ bidi_allocation_measurement! = |source| {
 
 bidi_signature : Str -> U64
 bidi_signature = |source| {
-	analysis = Bidi.analyze_paragraph(source, Auto, Bidi.default_limits) ?? return 0
+	analysis = Bidi.analyze_paragraph(source, { limits: Bidi.default_limits }) ?? return 0
 	line = Bidi.reorder_line(analysis, TextRange.scalar_range(Bidi.paragraph_range(analysis))) ?? return 0
 	Bidi.entries(analysis).len() + Bidi.visual_to_logical(line).len() + 1
 }
@@ -284,37 +284,36 @@ word_cursor_signature = |source| {
 
 case_signature : Str, Str, Str -> U64
 case_signature = |suite, case_id, source| {
-	max = U64.highest
 	outcome = if suite == "allocation-case-lower-default" {
-		Case.to_lower(source, Case.unicode_default, Case.unlimited_limits)
+		Case.to_lower(source, { limits: Case.unlimited_limits })
 	} else if suite == "allocation-case-lower-turkic" {
-		Case.to_lower(source, Case.turkic, Case.unlimited_limits)
+		Case.to_lower(source, { profile: Case.turkic, limits: Case.unlimited_limits })
 	} else if suite == "allocation-case-upper-default" {
-		Case.to_upper(source, Case.unicode_default, Case.unlimited_limits)
+		Case.to_upper(source, { limits: Case.unlimited_limits })
 	} else if suite == "allocation-case-upper-lithuanian" {
-		Case.to_upper(source, Case.lithuanian, Case.unlimited_limits)
+		Case.to_upper(source, { profile: Case.lithuanian, limits: Case.unlimited_limits })
 	} else if suite == "allocation-case-title-default" {
-		Case.to_title(source, Case.unicode_default, Case.unlimited_limits)
+		Case.to_title(source, { limits: Case.unlimited_limits })
 	} else if suite == "allocation-case-title-turkic" {
-		Case.to_title(source, Case.turkic, Case.unlimited_limits)
+		Case.to_title(source, { profile: Case.turkic, limits: Case.unlimited_limits })
 	} else if suite == "allocation-case-fold-full" {
-		Case.fold(source, Case.full, Case.unlimited_limits)
+		Case.fold(source, { limits: Case.unlimited_limits })
 	} else if suite == "allocation-case-fold-simple" {
-		Case.fold(source, Case.simple, Case.unlimited_limits)
+		Case.fold(source, { profile: Case.simple, limits: Case.unlimited_limits })
 	} else if suite == "allocation-case-fold-turkic-full" {
-		Case.fold(source, Case.turkic_full, Case.unlimited_limits)
+		Case.fold(source, { profile: Case.turkic_full, limits: Case.unlimited_limits })
 	} else if suite == "allocation-case-fold-turkic-simple" {
-		Case.fold(source, Case.turkic_simple, Case.unlimited_limits)
+		Case.fold(source, { profile: Case.turkic_simple, limits: Case.unlimited_limits })
 	} else if suite == "allocation-case-limits" {
 		limits = match case_id {
-			"input-bytes" => Case.limits(0, max, max, max, max)
-			"input-scalars" => Case.limits(max, 0, max, max, max)
-			"output-bytes" => Case.limits(max, max, 0, max, max)
-			"output-scalars" => Case.limits(max, max, max, 0, max)
-			"facts" => Case.limits(max, max, max, max, 0)
+			"input-bytes" => { ..Case.unlimited_limits, max_input_bytes: 0 }
+			"input-scalars" => { ..Case.unlimited_limits, max_input_scalars: 0 }
+			"output-bytes" => { ..Case.unlimited_limits, max_output_bytes: 0 }
+			"output-scalars" => { ..Case.unlimited_limits, max_output_scalars: 0 }
+			"facts" => { ..Case.unlimited_limits, max_mapping_facts: 0 }
 			_ => return 0
 		}
-		Case.to_lower(source, Case.unicode_default, limits)
+		Case.to_lower(source, { limits: limits })
 	} else {
 		return 0
 	}

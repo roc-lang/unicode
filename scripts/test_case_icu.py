@@ -94,17 +94,17 @@ keep_oks = |items| items.fold(
 invoke = |operation, profile, source| {
 	limits = Case.unlimited_limits
 	match (operation, profile) {
-		("lower", "default") => Case.to_lower(source, Case.unicode_default, limits)
-		("lower", "turkic") => Case.to_lower(source, Case.turkic, limits)
-		("lower", "lithuanian") => Case.to_lower(source, Case.lithuanian, limits)
-		("upper", "default") => Case.to_upper(source, Case.unicode_default, limits)
-		("upper", "turkic") => Case.to_upper(source, Case.turkic, limits)
-		("upper", "lithuanian") => Case.to_upper(source, Case.lithuanian, limits)
-		("title", "default") => Case.to_title(source, Case.unicode_default, limits)
-		("title", "turkic") => Case.to_title(source, Case.turkic, limits)
-		("title", "lithuanian") => Case.to_title(source, Case.lithuanian, limits)
-		("fold", "full") => Case.fold(source, Case.full, limits)
-		_ => Case.to_lower(source, Case.unicode_default, limits)
+		("lower", "default") => Case.to_lower(source, { limits: limits })
+		("lower", "turkic") => Case.to_lower(source, { profile: Case.turkic, limits })
+		("lower", "lithuanian") => Case.to_lower(source, { profile: Case.lithuanian, limits })
+		("upper", "default") => Case.to_upper(source, { limits: limits })
+		("upper", "turkic") => Case.to_upper(source, { profile: Case.turkic, limits })
+		("upper", "lithuanian") => Case.to_upper(source, { profile: Case.lithuanian, limits })
+		("title", "default") => Case.to_title(source, { limits: limits })
+		("title", "turkic") => Case.to_title(source, { profile: Case.turkic, limits })
+		("title", "lithuanian") => Case.to_title(source, { profile: Case.lithuanian, limits })
+		("fold", "full") => Case.fold(source, { limits: limits })
+		_ => Case.to_lower(source, { limits: limits })
 	}
 }
 

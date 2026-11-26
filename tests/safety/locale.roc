@@ -74,7 +74,7 @@ expect {
 	lithuanian = Locale.parse("lt-LT") ?? crash "valid Lithuanian locale"
 	english = Locale.parse("en-u-co-phonebk") ?? crash "valid English locale"
 	lower = |locale| {
-		result = Case.to_lower("I", Case.mapping_profile_for_locale(locale), Case.unlimited_limits) ?? crash "case mapping failed"
+		result = Case.to_lower("I", { profile: Case.mapping_profile_for_locale(locale), limits: Case.unlimited_limits }) ?? crash "case mapping failed"
 		Case.result_text(result)
 	}
 	Case.mapping_profile_for_locale(lithuanian) == Case.lithuanian
@@ -92,4 +92,11 @@ expect {
 		and Locale.parse_limited("xx-!", 3) == Err(InputByteLimitExceeded({ limit: 3, required: 4 }))
 		and Locale.parse_limited("xx-!", 4) == Err(InvalidSubtag("!"))
 		and Locale.parse_limited("語", 1) == Err(InputByteLimitExceeded({ limit: 1, required: 3 }))
+}
+
+# Omitted case profiles use Unicode default mapping and full default folding.
+expect {
+	lowered = Case.to_lower("I", { limits: Case.unlimited_limits })?
+	folded = Case.fold("Iß", { limits: Case.unlimited_limits })?
+	Case.result_text(lowered) == "i" and Case.result_text(folded) == "iss"
 }

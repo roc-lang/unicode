@@ -37,12 +37,13 @@ ThaiLineBreak :: [].{
 	]
 
 	Dictionary :: { revision : Str, nodes : List(TrieNode) }.{
+		BuildOptions := { revision : Str, limits : DictionaryLimits }
 
 		## Build an owned index without retaining the word strings. The caller
 		## assigns a stable revision identifying the exact word set. Identical
 		## spellings are idempotent and count toward input limits.
-		from_words : List(Str), Str, DictionaryLimits -> Try(Dictionary, DictionaryError)
-		from_words = |words, dictionary_revision, limits| {
+		from_words : List(Str), BuildOptions -> Try(Dictionary, DictionaryError)
+		from_words = |words, BuildOptions.{ revision: dictionary_revision, limits }| {
 			if dictionary_revision.count_utf8_bytes() == 0 {
 				return Err(MissingRevision)
 			}

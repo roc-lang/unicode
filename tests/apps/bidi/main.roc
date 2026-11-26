@@ -69,11 +69,11 @@ verify_paragraph_api = |protocol_input| {
 	if Bidi.paragraph_ranges(empty_input).len() != 1 or Bidi.paragraph_ranges("${crlf}${crlf}").len() != 2 {
 		return Err("P1 empty/final-separator ranges are not deterministic")
 	}
-	match Bidi.analyze_paragraph("a\nb${empty_input}", Auto, Bidi.default_limits) {
+	match Bidi.analyze_paragraph("a\nb${empty_input}", { limits: Bidi.default_limits }) {
 		Err(MultipleParagraphs) => {}
 		_ => return Err("paragraph ingestion accepted multiple P1 paragraphs")
 	}
-	match Bidi.analyze_paragraph(crlf, Auto, Bidi.default_limits) {
+	match Bidi.analyze_paragraph(crlf, { limits: Bidi.default_limits }) {
 		Err(error) => Err("P1 range could not be analyzed: ${Str.inspect(error)}")
 		Ok(_) => verify_global_range_api(protocol_input)
 	}
@@ -85,7 +85,7 @@ verify_global_range_api = |protocol_input| {
 	source = "a\r\nא${empty_input}"
 	ranges = Bidi.paragraph_ranges(source)
 	second = ranges.get(1) ?? return Err("P1 did not return a second paragraph")
-	analysis = bidi_result(Bidi.analyze_range(source, second, RightToLeft, Bidi.default_limits))?
+	analysis = bidi_result(Bidi.analyze_range(source, second, { base_direction: RightToLeft, limits: Bidi.default_limits }))?
 	if !TextRange.is_eq(Bidi.paragraph_range(analysis), second) {
 		return Err("range analysis rebased paragraph coordinates")
 	}
@@ -99,7 +99,7 @@ verify_global_range_api = |protocol_input| {
 	}
 	bracket_source = "a\r\n()${empty_input}"
 	bracket_range = Bidi.paragraph_ranges(bracket_source).get(1) ?? return Err("P1 did not return bracket paragraph")
-	bracket_analysis = bidi_result(Bidi.analyze_range(bracket_source, bracket_range, Auto, Bidi.default_limits))?
+	bracket_analysis = bidi_result(Bidi.analyze_range(bracket_source, bracket_range, { limits: Bidi.default_limits }))?
 	if Bidi.matched_brackets(bracket_analysis).get(0) != Ok(Some(4)) {
 		return Err("range analysis rebased paired-bracket indices")
 	}
@@ -114,8 +114,8 @@ verify_global_range_api = |protocol_input| {
 	}
 	first_many = many_ranges.get(0) ?? return Err("P1 missing first short paragraph")
 	last_many = many_ranges.get(256) ?? return Err("P1 missing final short paragraph")
-	first_analysis = bidi_result(Bidi.analyze_range(many_short, first_many, Auto, Bidi.default_limits))?
-	last_analysis = bidi_result(Bidi.analyze_range(many_short, last_many, RightToLeft, Bidi.default_limits))?
+	first_analysis = bidi_result(Bidi.analyze_range(many_short, first_many, { limits: Bidi.default_limits }))?
+	last_analysis = bidi_result(Bidi.analyze_range(many_short, last_many, { base_direction: RightToLeft, limits: Bidi.default_limits }))?
 	if !TextRange.is_eq(Bidi.paragraph_range(first_analysis), first_many) or !TextRange.is_eq(Bidi.paragraph_range(last_analysis), last_many) {
 		return Err("range analysis lost coordinates across many short paragraphs")
 	}
@@ -133,7 +133,7 @@ verify_metamorphic_invariants : Str -> Try({}, Str)
 verify_metamorphic_invariants = |protocol_input| {
 	empty_input = protocol_input.drop_last_bytes(protocol_input.count_utf8_bytes()) ?? return Err("could not derive empty protocol input")
 	source = "אa(${empty_input}"
-	analysis = bidi_result(Bidi.analyze_paragraph(source, Auto, Bidi.default_limits))?
+	analysis = bidi_result(Bidi.analyze_paragraph(source, { limits: Bidi.default_limits }))?
 	paragraph = TextRange.scalar_range(Bidi.paragraph_range(analysis))
 	line = bidi_result(Bidi.reorder_line(analysis, paragraph))?
 	verify_entry_partition(Bidi.entries(analysis), source.count_utf8_bytes(), ScalarRange.end(paragraph))?
@@ -149,8 +149,8 @@ verify_metamorphic_invariants = |protocol_input| {
 		return Err("line-specific L1/L2 changed retained paragraph levels")
 	}
 
-	plain = bidi_result(Bidi.analyze_paragraph("אa${empty_input}", Auto, Bidi.default_limits))?
-	isolated = bidi_result(Bidi.analyze_paragraph("א\u(2068)a\u(2069)a${empty_input}", Auto, Bidi.default_limits))?
+	plain = bidi_result(Bidi.analyze_paragraph("אa${empty_input}", { limits: Bidi.default_limits }))?
+	isolated = bidi_result(Bidi.analyze_paragraph("א\u(2068)a\u(2069)a${empty_input}", { limits: Bidi.default_limits }))?
 	plain_first = Bidi.entries(plain).get(0) ?? return Err("missing plain first scalar")
 	plain_last = Bidi.entries(plain).get(1) ?? return Err("missing plain last scalar")
 	isolated_first = Bidi.entries(isolated).get(0) ?? return Err("missing isolate first scalar")
@@ -233,33 +233,33 @@ verify_control_and_bracket_boundaries : Str -> Try({}, Str)
 verify_control_and_bracket_boundaries = |protocol_input| {
 	empty_input = protocol_input.drop_last_bytes(protocol_input.count_utf8_bytes()) ?? return Err("could not derive empty protocol input")
 	controls = Str.join_with([repeat_text("\u(202B)", 126), "a", repeat_text("\u(202C)", 126), empty_input], "")
-	control_analysis = bidi_result(Bidi.analyze_paragraph(controls, Auto, Bidi.default_limits))?
+	control_analysis = bidi_result(Bidi.analyze_paragraph(controls, { limits: Bidi.default_limits }))?
 	verify_level_parity(Bidi.levels(control_analysis))?
 	if !contains_level(Bidi.levels(control_analysis), 126) {
 		return Err("deep explicit controls did not reach the permitted I2 level 126")
 	}
-	missing_pdi = bidi_result(Bidi.analyze_paragraph("\u(2068)א\u(2068)a${empty_input}", Auto, Bidi.default_limits))?
+	missing_pdi = bidi_result(Bidi.analyze_paragraph("\u(2068)א\u(2068)a${empty_input}", { limits: Bidi.default_limits }))?
 	verify_level_parity(Bidi.levels(missing_pdi))?
 
 	for depth in [62, 63] {
 		brackets = Str.join_with([repeat_text("(", depth), repeat_text(")", depth)], "")
-		analysis = bidi_result(Bidi.analyze_paragraph(brackets, Auto, Bidi.default_limits))?
+		analysis = bidi_result(Bidi.analyze_paragraph(brackets, { limits: Bidi.default_limits }))?
 		if Bidi.matched_brackets(analysis).get(0) != Ok(Some(depth * 2 - 1)) {
 			return Err("BD16 did not retain a bracket pair within capacity")
 		}
 	}
 	overflow = Str.join_with([repeat_text("(", 64), repeat_text(")", 64)], "")
-	overflow_analysis = bidi_result(Bidi.analyze_paragraph(overflow, Auto, Bidi.default_limits))?
+	overflow_analysis = bidi_result(Bidi.analyze_paragraph(overflow, { limits: Bidi.default_limits }))?
 	if Bidi.matched_brackets(overflow_analysis).get(0) != Ok(None) {
 		return Err("BD16 bracket-stack overflow retained a pair")
 	}
 	for source in ["〈a〉", "〈a〉"] {
-		analysis = bidi_result(Bidi.analyze_paragraph("${source}${empty_input}", Auto, Bidi.default_limits))?
+		analysis = bidi_result(Bidi.analyze_paragraph("${source}${empty_input}", { limits: Bidi.default_limits }))?
 		if Bidi.matched_brackets(analysis).get(0) != Ok(Some(2)) {
 			return Err("canonical angle-bracket form was not paired")
 		}
 	}
-	mirrorless = bidi_result(Bidi.analyze_paragraph("∁${empty_input}", RightToLeft, Bidi.default_limits))?
+	mirrorless = bidi_result(Bidi.analyze_paragraph("∁${empty_input}", { base_direction: RightToLeft, limits: Bidi.default_limits }))?
 	mirrorless_range = ScalarRange.from_bounds(0, 1) ?? return Err("could not create mirrorless line")
 	mirrorless_line = bidi_result(Bidi.reorder_line(mirrorless, mirrorless_range))?
 	mirrorless_fact = Bidi.line_mirroring(mirrorless_line).get(0) ?? return Err("missing mirrorless fact")
@@ -282,7 +282,7 @@ contains_level = |levels, wanted| {
 verify_l1_line_boundaries : Str -> Try({}, Str)
 verify_l1_line_boundaries = |protocol_input| {
 	empty_input = protocol_input.drop_last_bytes(protocol_input.count_utf8_bytes()) ?? return Err("could not derive empty protocol input")
-	analysis = bidi_result(Bidi.analyze_paragraph("א a${empty_input}", LeftToRight, Bidi.default_limits))?
+	analysis = bidi_result(Bidi.analyze_paragraph("א a${empty_input}", { base_direction: LeftToRight, limits: Bidi.default_limits }))?
 	first_range = ScalarRange.from_bounds(0, 2) ?? return Err("could not create first L1 line")
 	second_range = ScalarRange.from_bounds(2, 3) ?? return Err("could not create second L1 line")
 	first = bidi_result(Bidi.reorder_line(analysis, first_range))?
@@ -296,7 +296,7 @@ verify_l1_line_boundaries = |protocol_input| {
 verify_x9_logical_runs : Str -> Try({}, Str)
 verify_x9_logical_runs = |protocol_input| {
 	empty_input = protocol_input.drop_last_bytes(protocol_input.count_utf8_bytes()) ?? return Err("could not derive empty protocol input")
-	analysis = bidi_result(Bidi.analyze_paragraph("א​ב${empty_input}", Auto, Bidi.default_limits))?
+	analysis = bidi_result(Bidi.analyze_paragraph("א​ב${empty_input}", { limits: Bidi.default_limits }))?
 	var $runs = []
 	for run in Bidi.logical_runs(analysis) {
 		$runs = $runs.append(run)
@@ -314,7 +314,7 @@ verify_x9_logical_runs = |protocol_input| {
 verify_open_bracket_nsm : Str -> Try({}, Str)
 verify_open_bracket_nsm = |protocol_input| {
 	empty_input = protocol_input.drop_last_bytes(protocol_input.count_utf8_bytes()) ?? return Err("could not derive empty protocol input")
-	analysis = bidi_result(Bidi.analyze_paragraph("א(̀a)${empty_input}", Auto, Bidi.default_limits))?
+	analysis = bidi_result(Bidi.analyze_paragraph("א(̀a)${empty_input}", { limits: Bidi.default_limits }))?
 	opening = Bidi.entries(analysis).get(1) ?? return Err("missing opening bracket")
 	nsm = Bidi.entries(analysis).get(2) ?? return Err("missing opening-bracket NSM")
 	if BidiClass.short(opening.working_class) != "R" or opening.working_class != nsm.working_class {
@@ -326,13 +326,13 @@ verify_open_bracket_nsm = |protocol_input| {
 verify_empty_line_and_mirroring : Str -> Try({}, Str)
 verify_empty_line_and_mirroring = |protocol_input| {
 	empty_input = protocol_input.drop_last_bytes(protocol_input.count_utf8_bytes()) ?? return Err("could not derive empty protocol input")
-	empty = bidi_result(Bidi.analyze_paragraph(empty_input, Auto, Bidi.default_limits))?
+	empty = bidi_result(Bidi.analyze_paragraph(empty_input, { limits: Bidi.default_limits }))?
 	empty_range = ScalarRange.from_bounds(0, 0) ?? return Err("could not create empty line range")
 	empty_line = bidi_result(Bidi.reorder_line(empty, empty_range))?
 	if Bidi.visual_to_logical(empty_line) != [] or Bidi.visual_runs(empty_line) != [] {
 		return Err("empty line did not have empty visual order/runs")
 	}
-	rtl = bidi_result(Bidi.analyze_paragraph("(", RightToLeft, Bidi.default_limits))?
+	rtl = bidi_result(Bidi.analyze_paragraph("(", { base_direction: RightToLeft, limits: Bidi.default_limits }))?
 	rtl_range = ScalarRange.from_bounds(0, 1) ?? return Err("could not create RTL line range")
 	rtl_line = bidi_result(Bidi.reorder_line(rtl, rtl_range))?
 	mirror = Bidi.line_mirroring(rtl_line).get(0) ?? return Err("missing mirror fact")
@@ -346,35 +346,35 @@ verify_limits_and_bracket_cap : Str -> Try({}, Str)
 verify_limits_and_bracket_cap = |protocol_input| {
 	limited = { max_scalars: 0, max_bytes: U64.highest }
 	limited_source = "a${protocol_input.drop_last_bytes(protocol_input.count_utf8_bytes()) ?? ""}"
-	match Bidi.analyze_paragraph(limited_source, Auto, limited) {
+	match Bidi.analyze_paragraph(limited_source, { limits: limited }) {
 		Err(ScalarLimitExceeded(_)) => {}
 		_ => return Err("scalar limit was not reported atomically")
 	}
 	byte_limited = { max_scalars: U64.highest, max_bytes: 0 }
-	match Bidi.analyze_paragraph(limited_source, Auto, byte_limited) {
+	match Bidi.analyze_paragraph(limited_source, { limits: byte_limited }) {
 		Err(ByteLimitExceeded({ limit, required, stage: Ingestion, range })) if limit == 0 and required == limited_source.count_utf8_bytes() and ByteRange.start(range) == 0 and ByteRange.end(range) == limited_source.count_utf8_bytes() => {}
 		_ => return Err("byte limit was not reported with the full ingestion range")
 	}
 	ranged_source = "a\r\nא${protocol_input.drop_last_bytes(protocol_input.count_utf8_bytes()) ?? ""}"
 	foreign_range = Bidi.paragraph_ranges("x").get(0) ?? return Err("could not create foreign range")
-	match Bidi.analyze_range(ranged_source, foreign_range, Auto, Bidi.default_limits) {
+	match Bidi.analyze_range(ranged_source, foreign_range, { limits: Bidi.default_limits }) {
 		Err(InvalidParagraphRange(_)) => {}
 		_ => return Err("analyze_range accepted a non-P1 range")
 	}
 	valid_range = Bidi.paragraph_ranges(ranged_source).get(1) ?? return Err("could not find P1 range")
-	match Bidi.analyze_range(ranged_source, valid_range, Auto, { max_scalars: U64.highest, max_bytes: 0 }) {
+	match Bidi.analyze_range(ranged_source, valid_range, { limits: { max_scalars: U64.highest, max_bytes: 0 } }) {
 		Err(ByteLimitExceeded({ limit, required, stage: Ingestion, range })) if limit == 0 and required == 2 and ByteRange.start(range) == 3 and ByteRange.end(range) == 5 => {}
 		_ => return Err("range byte limit did not retain absolute byte coordinates")
 	}
 	paragraph = TextRange.scalar_range(valid_range)
 	overrun = ScalarRange.from_bounds(ScalarRange.start(paragraph), ScalarRange.end(paragraph) + 1) ?? return Err("could not create overrunning line")
-	range_analysis = bidi_result(Bidi.analyze_range(ranged_source, valid_range, Auto, Bidi.default_limits))?
+	range_analysis = bidi_result(Bidi.analyze_range(ranged_source, valid_range, { limits: Bidi.default_limits }))?
 	match Bidi.reorder_line(range_analysis, overrun) {
 		Err(LineOutOfBounds(_)) => {}
 		_ => return Err("line reordering accepted an out-of-bounds range")
 	}
 	deep = Str.join_with([repeat_text("(", 64), repeat_text(")", 64)], "")
-	analysis = bidi_result(Bidi.analyze_paragraph(deep, Auto, Bidi.default_limits))?
+	analysis = bidi_result(Bidi.analyze_paragraph(deep, { limits: Bidi.default_limits }))?
 	if Bidi.matched_brackets(analysis).get(0) != Ok(None) {
 		return Err("BD16 bracket-stack overflow retained a pair")
 	}
@@ -447,7 +447,7 @@ run_bidi_metamorphic_case = |line| {
 			}
 			mode = require(parse_bidi_test_mode(mode_str), case_id, "invalid metamorphic paragraph mode")?
 			for paragraph_range in Bidi.paragraph_ranges(source) {
-				analysis = match Bidi.analyze_range(source, paragraph_range, mode, Bidi.default_limits) {
+				analysis = match Bidi.analyze_range(source, paragraph_range, { base_direction: mode, limits: Bidi.default_limits }) {
 					Err(error) => return Err({ case_id, message: "metamorphic range analysis failed: ${Str.inspect(error)}" })
 					Ok(value) => value
 				}
@@ -516,7 +516,7 @@ run_bidi_character_case = |line| {
 
 check_case : Str, Str, Bidi.BaseDirection, [Some(U8), None], List(Bidi.ResolvedLevel), List(U64) -> Try({}, { case_id : Str, message : Str })
 check_case = |case_id, source, base_direction, expected_paragraph_level, expected_levels, expected_reorder| {
-	analysis = match Bidi.analyze_paragraph(source, base_direction, Bidi.default_limits) {
+	analysis = match Bidi.analyze_paragraph(source, { base_direction, limits: Bidi.default_limits }) {
 		Ok(value) => value
 		Err(error) => return Err({ case_id, message: "analysis failed: ${Str.inspect(error)}" })
 	}

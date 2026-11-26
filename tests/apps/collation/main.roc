@@ -25,7 +25,8 @@ run! = |input| match input.split_on("\n").drop_if(|line| line == "") {
 				"collation-shifted" => Shifted
 				_ => return "FAIL\tcollation\tunknown suite"
 			}
-			options = { ..Collation.default_options, alternate, strength: Identical }
+			options : Collation.Options
+			options = { alternate, strength: Identical }
 			collator = Collation.collator(Locale.root, options) ?? return "FAIL\tcollation\troot configuration"
 			for row in rows {
 				match row.split_on("\t") {

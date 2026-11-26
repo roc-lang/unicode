@@ -23,22 +23,22 @@ test = |input| {
 		2 => Case.turkic_full
 		_ => Case.turkic_simple
 	}
-	lower = Case.to_lower(source, mapping, Case.unlimited_limits) ?? crash "Case.to_lower failed under unlimited limits"
-	upper = Case.to_upper(source, mapping, Case.unlimited_limits) ?? crash "Case.to_upper failed under unlimited limits"
-	title = Case.to_title(source, mapping, Case.unlimited_limits) ?? crash "Case.to_title failed under unlimited limits"
-	folded = Case.fold(source, folding, Case.unlimited_limits) ?? crash "Case.fold failed under unlimited limits"
+	lower = Case.to_lower(source, { profile: mapping, limits: Case.unlimited_limits }) ?? crash "Case.to_lower failed under unlimited limits"
+	upper = Case.to_upper(source, { profile: mapping, limits: Case.unlimited_limits }) ?? crash "Case.to_upper failed under unlimited limits"
+	title = Case.to_title(source, { profile: mapping, limits: Case.unlimited_limits }) ?? crash "Case.to_title failed under unlimited limits"
+	folded = Case.fold(source, { profile: folding, limits: Case.unlimited_limits }) ?? crash "Case.fold failed under unlimited limits"
 
 	validate_result(source, lower)
 	validate_result(source, upper)
 	validate_result(source, title)
 	validate_result(source, folded)
 
-	refolded = Case.fold(Case.result_text(folded), folding, Case.unlimited_limits) ?? crash "Case.fold failed on its own output"
+	refolded = Case.fold(Case.result_text(folded), { profile: folding, limits: Case.unlimited_limits }) ?? crash "Case.fold failed on its own output"
 	if Case.result_text(refolded) != Case.result_text(folded) {
 		crash "Case.fold was not idempotent on its own output"
 	}
 
-	relowered = Case.to_lower(Case.result_text(lower), Case.unicode_default, Case.unlimited_limits) ?? crash "Case.to_lower failed on its own output"
+	relowered = Case.to_lower(Case.result_text(lower), { limits: Case.unlimited_limits }) ?? crash "Case.to_lower failed on its own output"
 	if Case.result_text(relowered) != Case.result_text(lower) {
 		crash "Case.to_lower was not idempotent on its own output"
 	}
@@ -55,20 +55,20 @@ check_limits = |source, input_scalars, mapping, expected, selector| {
 	output_bytes = text.count_utf8_bytes()
 	output_scalars = Scalar.iter(text).fold(0.U64, |count, _| count + 1)
 	facts = Case.result_facts(expected).len()
-	exact = Case.limits(input_bytes, input_scalars, output_bytes, output_scalars, facts)
-	fit = Case.to_lower(source, mapping, exact) ?? crash "case operation failed at the exact limit"
+	exact = { max_input_bytes: input_bytes, max_input_scalars: input_scalars, max_output_bytes: output_bytes, max_output_scalars: output_scalars, max_mapping_facts: facts }
+	fit = Case.to_lower(source, { profile: mapping, limits: exact }) ?? crash "case operation failed at the exact limit"
 	if Case.result_text(fit) != text or Case.result_facts(fit) != Case.result_facts(expected) {
 		crash "case operation changed text or mapping facts at the exact limit"
 	}
 	(tightened, required, resource) = match selector % 5 {
-		0 => (Case.limits(previous(input_bytes), input_scalars, output_bytes, output_scalars, facts), input_bytes, InputBytes)
-		1 => (Case.limits(input_bytes, previous(input_scalars), output_bytes, output_scalars, facts), input_scalars, InputScalars)
-		2 => (Case.limits(input_bytes, input_scalars, previous(output_bytes), output_scalars, facts), output_bytes, OutputBytes)
-		3 => (Case.limits(input_bytes, input_scalars, output_bytes, previous(output_scalars), facts), output_scalars, OutputScalars)
-		_ => (Case.limits(input_bytes, input_scalars, output_bytes, output_scalars, previous(facts)), facts, Facts)
+		0 => ({ ..exact, max_input_bytes: previous(input_bytes) }, input_bytes, InputBytes)
+		1 => ({ ..exact, max_input_scalars: previous(input_scalars) }, input_scalars, InputScalars)
+		2 => ({ ..exact, max_output_bytes: previous(output_bytes) }, output_bytes, OutputBytes)
+		3 => ({ ..exact, max_output_scalars: previous(output_scalars) }, output_scalars, OutputScalars)
+		_ => ({ ..exact, max_mapping_facts: previous(facts) }, facts, Facts)
 	}
 	if required != 0 {
-		match Case.to_lower(source, mapping, tightened) {
+		match Case.to_lower(source, { profile: mapping, limits: tightened }) {
 			Err(error) => if Case.error_kind(error) != LimitExceeded or Case.error_limit_resource(error) != resource or Case.error_limit(error) != Some({ limit: required - 1, required }) {
 				crash "case limit failure reported incorrect resource or bounds"
 			}

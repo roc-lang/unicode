@@ -12,8 +12,7 @@ import unicode.ThaiLineBreak
 thai_example = || {
 	dictionary = ThaiLineBreak.Dictionary.from_words(
 		["ภาษา", "ไทย"],
-		"local-example-v1",
-		{ max_words: 2, max_total_bytes: 21, max_word_bytes: 12 },
+		{ revision: "local-example-v1", limits: { max_words: 2, max_total_bytes: 21, max_word_bytes: 12 } },
 	).map_err(DictionaryError)?
 	ThaiLineBreak.opportunities(
 		"ภาษาไทย",

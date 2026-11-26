@@ -186,9 +186,10 @@ preceding range and treating CRLF as one separator. Empty input returns one
 empty paragraph range; a final separator does not add an artificial empty
 paragraph.
 
-For a paragraph selected from a larger `Str`, use
-`Bidi.analyze_range(source, paragraph_range, direction, limits)`. It validates
-that the supplied `TextRange` is one of the P1 ranges and retains absolute byte
+Call `Bidi.analyze_paragraph(text, { limits: budget })` to infer the base direction.
+Pass `base_direction` to override it. For a paragraph selected from a larger
+`Str`, call `Bidi.analyze_range(source, paragraph_range, { limits: budget })`. It
+validates that the supplied `TextRange` is one of the P1 ranges and retains absolute byte
 and scalar coordinates from the full source; line ranges, visual-to-logical
 mappings, and visual runs use those same coordinates. This range API validates
 through the selected P1 boundary and replays the selected paragraph for
@@ -244,9 +245,15 @@ import unicode.Locale
 
 lower_for_locale = |text, locale| {
     profile = Case.mapping_profile_for_locale(locale)
-    Case.to_lower(text, profile, Case.unlimited_limits)
+    Case.to_lower(text, { profile, limits: Case.unlimited_limits })
 }
 ```
+
+Case mapping defaults to the locale-independent Unicode rules, and case
+folding defaults to full folding. Every call requires `limits`. Construct
+a `Case.Limits` record with named input byte, input scalar, output byte,
+output scalar, and mapping-fact caps, or pass `Case.unlimited_limits`
+explicitly.
 
 `Case.mapping_profile_for_locale` selects the UCD's Turkic casing for Turkish
 and Azerbaijani and Lithuanian casing for Lithuanian. Other languages use

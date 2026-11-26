@@ -63,8 +63,7 @@ ThaiOracle := [].{
 	dictionary = |lexicon| {
 		ThaiLineBreak.Dictionary.from_words(
 			lexicon,
-			"authored testing lexicon",
-			{ max_words: 16, max_total_bytes: 256, max_word_bytes: 32 },
+			{ revision: "authored testing lexicon", limits: { max_words: 16, max_total_bytes: 256, max_word_bytes: 32 } },
 		) ?? crash "test dictionary was rejected"
 	}
 }
