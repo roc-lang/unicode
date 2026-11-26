@@ -1487,7 +1487,7 @@ def run_data_checks() -> None:
         "scripts/test_unicode_normalization.py",
         "scripts/test_unicode_collation.py",
         "scripts/test_bidi_reduce.py",
-    ])
+    ], timeout=900)
 
 
 def main(argv: list[str] | None = None) -> int:
