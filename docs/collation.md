@@ -4,14 +4,15 @@ Construct a `Collation.Collator` from an explicit `Locale` and
 `Collation.Options`. The default options compare primary weights, accents,
 and case or variants, with punctuation significant. Select `Shifted` to move
 variable elements to the quaternary level. Select `Identical` for an additional
-NFD scalar tie-break, which preserves canonical equivalence. Numeric ordering
-compares runs of Unicode decimal digits by value without converting to a
-machine integer. `case_first` explicitly controls tertiary case order.
+NFD scalar tie-break, which preserves canonical equivalence. The default
+`digit_order`, `ByCollationWeight`, uses the normal weights for each digit.
+`ByNumericValue` compares runs of Unicode decimal digits by value without
+converting them to machine integers. `case_first` controls tertiary case order.
 Pass `{}` for the standard options and specify fields where needed.
 
 ```roc
 standard = Collation.collator(Locale.root, {})?
-numeric = Collation.collator(Locale.root, { numeric: Bool.True })?
+numeric = Collation.collator(Locale.root, { digit_order: ByNumericValue })?
 ```
 
 The supported locale identifiers and aliases are listed below. Selection
