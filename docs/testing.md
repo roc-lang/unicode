@@ -71,7 +71,7 @@ python3 scripts/fuzz.py smoke
 Choose an affected feature while developing. Run the deterministic oracles and
 the optimized smoke build when changing suite imports. The pull-request fuzz
 lane is a bounded integration check. See [fuzz operations](../fuzz/README.md)
-for campaigns, corpus maintenance, and replay. For a Unicode update, fetch
+for local campaigns, corpus maintenance, and replay. For a Unicode update, fetch
 the exact inputs into the ignored versioned directories and run the broader
 conformance and regeneration checks locally. Fetch verifies SHA-256 before
 installing each download and rechecks existing copies on subsequent runs.
