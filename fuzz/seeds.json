@@ -69,6 +69,13 @@
     { "name": "ligature-ffi", "bytes_hex": "EFAC83" },
     { "name": "combining-dot-above", "bytes_hex": "69CC87" }
   ],
+  "collation": [
+    { "name": "canonical-equivalence", "bytes_hex": "C38541CC8A" },
+    { "name": "spanish-contractions", "bytes_hex": "63687A637A" },
+    { "name": "reordered-combining-marks", "bytes_hex": "61CC81CCA761CCA7CC81" },
+    { "name": "numeric-across-scripts", "bytes_hex": "66696C65303966696C65D9A9" },
+    { "name": "shifted-punctuation", "bytes_hex": "612D6261CC8162" }
+  ],
   "normalization": [
     { "name": "leading-nonstarter-order", "bytes_hex": "CC95CC80CC8141CC8A" },
     { "name": "composition-exclusion", "bytes_hex": "E0A598E0A79CE284AB" },

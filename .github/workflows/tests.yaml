@@ -92,7 +92,7 @@ jobs:
 
       - run: roc version
 
-      - name: Run all tests
+      - name: Run checkout-only examples, API checks, and allocation ratchets
         run: ROC=roc ./scripts/all_tests.sh
 
       # Also save the cache when the job fails, so tests that passed are cached.
@@ -101,11 +101,3 @@ jobs:
         with:
           path: ${{ steps.roc.outputs.cache-path }}
           key: ${{ steps.roc.outputs.cache-key }}
-
-      - name: Upload minimized Bidi regressions
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: bidi-regressions-${{ matrix.os }}
-          path: .roc-unicode-tmp/failures
-          if-no-files-found: ignore

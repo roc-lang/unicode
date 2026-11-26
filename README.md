@@ -24,10 +24,11 @@ The string/unicode rabbit hole goes deep, we have a [good overview](https://www.
 
 ## Unicode data
 
-Production tables and conformance tests are generated from the official,
-versioned Unicode files in `vendor/unicode/18.0.0/`.
-`vendor/unicode/manifest.json` pins their source URLs, SHA-256 hashes, header
-markers, and record counts. Its release snapshots, specification revisions,
+Production tables and exhaustive conformance tests use pinned upstream inputs.
+`vendor/unicode/manifest.json` records their source URLs, SHA-256 hashes, header
+markers, and record counts. Fetch the inputs into ignored versioned directories
+under `vendor/` when regenerating tables or running exhaustive conformance.
+Applications use the generated Roc modules included in the package. Its release snapshots, specification revisions,
 sources, and generated artifacts are separate dependency-graph nodes; this
 keeps the Unicode and Emoji version axes explicit and leaves room for later
 data authorities such as CLDR. All generated runtime views come from that one
@@ -324,9 +325,11 @@ descriptor. Limit and coordinate failures return the caller state unchanged
 and make the returned cursor terminal; chunks and slices are never retained.
 Chunk boundaries do not imply end of text.
 
-Validate the sources and check generated Roc modules with:
+Fetch the pinned inputs, validate their structure, and check the generated Roc
+modules.
 
 ```sh
+python3 scripts/unicode_data.py fetch
 python3 scripts/unicode_data.py validate
 python3 scripts/unicode_data.py generate --check
 ```
@@ -372,8 +375,20 @@ uses exact output snapshots for deterministic behavior. Adding an unlisted
 example, omitting either outcome, duplicating a name, or leaving a spec field
 unrecognized fails the suite.
 
+Run the checkout-only checks and fuzz oracles with the pinned toolchain.
+
 ```sh
 ROC=roc scripts/all_tests.sh
+ROC=roc python3 scripts/fuzz.py models
+ROC=roc python3 scripts/fuzz.py smoke
+```
+
+Fetch the upstream sources once to run the full conformance and generation
+checks locally. Each conformance suite can also run on its own.
+
+```sh
+python3 scripts/unicode_data.py fetch
+python3 scripts/test.py all
 python3 scripts/test.py grapheme
 python3 scripts/test.py line-break --jobs 8
 python3 scripts/test.py word --jobs 8
@@ -403,7 +418,7 @@ compiler in `.roc-version`, lower the ceiling after reviewing the fixture's
 output. Investigate increases before changing a ceiling.
 See the [allocation ratchet](tests/apps/allocation/README.md).
 `scripts/test_case_icu.py` is an opt-in differential gate against ICU4J 79.1
-(Unicode 18). It is deliberately outside the offline default suite: provide a
+(Unicode 18). For this opt-in check, provide a
 verified `ICU4J_JAR`, or pass `--download` to cache the pinned Maven artifact
 under `.roc-unicode-tmp/case-icu`. It compares lower/upper/title under root,
 Turkic, and Lithuanian locales plus default full folding over every pinned case

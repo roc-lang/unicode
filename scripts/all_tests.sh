@@ -17,4 +17,4 @@ fi
 
 python3 -m unittest scripts/test_bundle_examples_test.py
 python3 scripts/test_bundle_examples.py --roc "$ROC"
-python3 scripts/test.py all --roc "$ROC"
+python3 scripts/test.py ci --roc "$ROC"

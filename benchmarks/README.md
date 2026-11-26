@@ -2,7 +2,9 @@
 
 These benchmarks are intentionally opt-in developer tools. They are not part of
 the test suite or CI because their external toolchains and machine-dependent
-timings are unsuitable as merge gates.
+timings are unsuitable as merge gates. Fetch the pinned upstream data with
+`python3 scripts/unicode_data.py fetch` before running the grapheme, line-break,
+and script validation benchmarks.
 
 - [`grapheme`](grapheme/README.md) compares allocation-free extended
   grapheme segmentation in Roc, Rust, and Go.

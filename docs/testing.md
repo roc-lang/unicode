@@ -9,9 +9,15 @@ revision when they affect the result.
 
 ## Choose the check that fits the contract
 
+Prefer coverage-guided roc-fuzz targets with correctness oracles for committed
+tests. Check invariants over generated inputs and keep a small, named seed set
+for important paths. Add direct expectations for regressions and rule outcomes
+that an invariant cannot distinguish. Use the pinned upstream conformance
+suites locally when updating Unicode data or checking a changed algorithm.
+
 | Evidence | What it checks |
 | --- | --- |
-| Official conformance corpus | Exact default results for the inputs and versions supplied by Unicode. Keep generated expectations independent of the runtime table representation. |
+| Local official conformance | Exact default results for the inputs and versions supplied by Unicode. Fetch pinned sources and keep generated expectations independent of the runtime table representation. |
 | Roc expectations and fixture applications | Concrete public behavior, regressions, rejection and completion states, output ownership, and resource limits. Compare coordinates in the units the API promises. |
 | `Model` | Exhaustive exploration of a small, declared state space, such as short chunk histories or a tiny ambiguous dictionary. Give the model an independent implementation of the expected behavior. |
 | `Solve` | Integer laws over a declared domain, such as coordinate addition and limits. Use production terms when possible and pass concrete endpoints or solver witnesses through the real caller. |
@@ -57,18 +63,26 @@ Zig as pinned in the [test workflow](../.github/workflows/tests.yaml).
 The test and fuzz drivers verify the compiler before running Roc workloads.
 
 ```sh
-python3 scripts/test.py grapheme
-python3 scripts/test.py data
+./scripts/all_tests.sh
 python3 scripts/fuzz.py models
 python3 scripts/fuzz.py smoke
-./scripts/all_tests.sh
 ```
 
 Choose an affected feature while developing. Run the deterministic oracles and
 the optimized smoke build when changing suite imports. The pull-request fuzz
 lane is a bounded integration check. See [fuzz operations](../fuzz/README.md)
-for campaigns, corpus maintenance, and replay. Run the broader conformance,
-resource, and campaign checks when reviewing the integrated change.
+for campaigns, corpus maintenance, and replay. For a Unicode update, fetch
+the exact inputs into the ignored versioned directories and run the broader
+conformance and regeneration checks locally. Fetch verifies SHA-256 before
+installing each download and rechecks existing copies on subsequent runs.
+
+```sh
+python3 scripts/unicode_data.py fetch
+python3 scripts/test.py all
+```
+
+Use `python3 scripts/test.py data` to check regeneration alone, or select a
+feature such as `grapheme` for its full conformance check.
 
 Keep resource tests driven by runtime input so compiler constant evaluation
 cannot erase the measured work. Keep the same allocation ceilings for pure

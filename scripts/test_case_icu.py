@@ -277,6 +277,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         verify_pinned_roc(args.roc)
+        records, skipped_title = corpus()
         jar = resolve_jar(args)
         TMP.mkdir(parents=True, exist_ok=True)
         java_source = TMP / "CaseIcuOracle.java"
@@ -290,7 +291,6 @@ def main(argv: list[str] | None = None) -> int:
         run(["zig", "build", "--build-file", "tests/platform/build.zig", "native", "-Doptimize=ReleaseFast"])
         emitter = TMP / ("case-icu" + (".exe" if os.name == "nt" else ""))
         run([args.roc, "build", str(roc_source), "--opt=speed", f"--output={emitter}", "--no-cache"])
-        records, skipped_title = corpus()
         roc_rows: dict[str, bytes] = {}
         icu_rows: dict[str, bytes] = {}
         for batch in batches(records):
