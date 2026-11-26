@@ -22,8 +22,11 @@ from typing import Sequence
 
 ROOT = Path(__file__).resolve().parents[2]
 BENCH = Path(__file__).resolve().parent
-MANIFEST = json.loads((ROOT / "vendor/unicode/manifest.json").read_text(encoding="utf-8"))
-UNICODE_VERSION = MANIFEST["releases"]["unicode"]["version"]
+sys.path.insert(0, str(ROOT))
+from scripts import unicode_data
+
+MANIFEST = unicode_data.load_manifest()
+UNICODE_VERSION = unicode_data.release_version(MANIFEST, "unicode")
 BUILD = ROOT / ".roc-unicode-tmp" / "benchmarks" / "grapheme"
 DEFAULT_OUTPUT = BUILD / "results.json"
 DEFAULT_TARGET_BYTES = 1024 * 1024
@@ -98,21 +101,14 @@ def boundary_signature(ends: Sequence[int]) -> tuple[int, int, int]:
 
 
 def conformance_corpus() -> tuple[bytes, tuple[int, int, int]]:
-    path = ROOT / MANIFEST["sources"]["grapheme_break_test"]["path"]
     corpus = bytearray()
     ends: list[int] = []
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        body = raw_line.split("#", 1)[0].strip()
-        if not body:
-            continue
-        tokens = body.split()
+    for case in unicode_data.parse_grapheme_tests(MANIFEST):
         # A control separator guarantees a boundary between adjacent test cases.
         corpus.extend(b"\0")
-        ends.append(len(corpus))
-        for index in range(1, len(tokens), 2):
-            corpus.extend(chr(int(tokens[index], 16)).encode("utf-8"))
-            if tokens[index + 1] == "÷":
-                ends.append(len(corpus))
+        start = len(corpus)
+        ends.extend(start + offset for offset in case.break_offsets)
+        corpus.extend("".join(chr(point) for point in case.code_points).encode("utf-8"))
     return bytes(corpus), boundary_signature(ends)
 
 
@@ -528,6 +524,7 @@ def main() -> None:
         raise BenchmarkFailure(
             f"benchmark requires {pinned_roc}, got {actual_roc!r}"
         )
+    all_cases, all_expected = corpora(args.corpus_bytes)
     binaries = (
         {
             "roc": BUILD / "roc",
@@ -544,7 +541,6 @@ def main() -> None:
     if missing:
         raise BenchmarkFailure(f"benchmark binaries are missing: {missing}")
 
-    all_cases, all_expected = corpora(args.corpus_bytes)
     selected_names = args.cases or list(CASE_NAMES)
     cases = {name: all_cases[name] for name in selected_names}
     expected = {name: all_expected[name] for name in selected_names if name in all_expected}
@@ -605,6 +601,6 @@ def main() -> None:
 if __name__ == "__main__":
     try:
         main()
-    except (BenchmarkFailure, OSError, subprocess.CalledProcessError) as error:
+    except (BenchmarkFailure, OSError, subprocess.CalledProcessError, unicode_data.DataError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
         raise SystemExit(1) from error

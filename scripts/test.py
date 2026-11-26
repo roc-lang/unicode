@@ -1496,8 +1496,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "suite",
         nargs="?",
-        choices=("all", "data", "safety", "allocations", "sentence", *(name for name in APP_NAMES if name != "allocation")),
-        default="all",
+        choices=("ci", "all", "data", "safety", "allocations", "sentence", *(name for name in APP_NAMES if name != "allocation")),
+        default="ci",
+        help="ci runs checkout-only checks; all adds local data and exhaustive conformance",
     )
     parser.add_argument("--roc", default=os.environ.get("ROC", "roc"))
     parser.add_argument("--zig", default=os.environ.get("ZIG", "zig"))
@@ -1510,12 +1511,14 @@ def main(argv: list[str] | None = None) -> int:
         app_specs = load_app_specs()
         if args.suite != "data":
             verify_pinned_roc(args.roc)
-        if args.suite in ("all", "safety"):
+        if args.suite in ("ci", "all", "safety"):
             command([sys.executable, "scripts/check_api_safety.py"])
             command([sys.executable, "-m", "unittest", "scripts/test_api_safety.py"])
             safety_roots = sorted((ROOT / "tests" / "safety").glob("*.roc"))
             for mode in ("dev", "speed"):
                 for source in safety_roots:
+                    if args.suite == "ci" and source.name == "scalar-roundtrip.roc":
+                        continue
                     command([
                         args.roc, "test", source.relative_to(ROOT).as_posix(),
                         f"--opt={mode}", "--no-cache",
@@ -1535,14 +1538,17 @@ def main(argv: list[str] | None = None) -> int:
             if args.suite == "collation":
                 command([args.roc, "test", "tests/safety/collation.roc", "--opt=dev", "--no-cache"])
             requested_apps.append("collation")
-        if args.suite in ("all", "normalization"):
+        if args.suite in ("ci", "all", "normalization"):
             command([args.roc, "test", "tests/apps/normalization/main.roc", "--no-cache"])
+        if args.suite in ("all", "normalization"):
             requested_apps.append("normalization")
         if args.suite in ("all", "case"):
             requested_apps.append("case")
         if args.suite in ("all", "properties"):
             requested_apps.append("properties")
-        if args.suite in ("all", "allocations"):
+        if args.suite in ("ci", "all", "properties"):
+            command([args.roc, "test", "tests/properties/identifier.roc", "--no-cache"])
+        if args.suite in ("ci", "all", "allocations"):
             requested_apps.append("allocation")
         if requested_apps:
             binaries = build_apps(
@@ -1564,7 +1570,6 @@ def main(argv: list[str] | None = None) -> int:
             if "case" in requested_apps:
                 run_case(binaries["case"], args.jobs, app_specs["case"])
             if "properties" in requested_apps:
-                command([args.roc, "test", "tests/properties/identifier.roc", "--no-cache"])
                 run_properties(binaries["properties"], args.jobs, app_specs["properties"])
             if "allocation" in requested_apps:
                 run_allocations(binaries["allocation"], app_specs["allocation"])

@@ -7,6 +7,10 @@ examples/get-visual-width
 examples/nr-of-code-points
 examples/split-graphemes
 
+# Pinned upstream data for local conformance and table generation
+/vendor/unicode/[0-9]*/
+/vendor/cldr/[0-9]*/
+
 # Ignore generated output
 generated-docs
 tests/platform/.zig-cache/

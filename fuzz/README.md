@@ -10,7 +10,7 @@ its evidence. [Testing methodology](../docs/testing.md)
 | Suite | Members | Checks |
 | --- | --- | --- |
 | `source_suite.roc` | `utf8`, `utf8-model`, `grapheme`, `word`, `sentence`, `line-break` | Raw-byte and scalar-aligned source contracts, ordered ranges, profiles, cursor completion, and iterator pause/resume. |
-| `scalar_suite.roc` | `case`, `normalization`, `property` | Mapping coordinates and shape, normalization laws and budgets, scalar properties, maximal runs, and aliases. |
+| `scalar_suite.roc` | `case`, `collation`, `normalization`, `property` | Mapping coordinates and shape, canonical collation equality and stable ordering, normalization laws and budgets, scalar properties, maximal runs, and aliases. |
 | `analysis_suite.roc` | `bidi`, `script` | Retained paragraph and line analysis, L2 reordering and inverse mappings, grapheme-aligned script runs, preferences, and pending limits. |
 | `thai_suite.roc` | `thai` | Dictionary-backed line tailoring, model agreement, coordinates, and resource limits. |
 
@@ -85,12 +85,13 @@ artifact. Its old entropy format had neither a configuration byte nor chunk
 actions.
 
 `seeds.json` retains named regression and branch-driving inputs as readable
-UTF-8 hex or raw malformed bytes. The seed preparer also takes bounded,
-evenly spaced samples from the pinned grapheme, word, sentence, line, bidi,
-case, and normalization data. Normalization samples include the original
-source and one rotating normalized column. For composite property checks,
-the preparer groups valid scalars at and next to property source boundaries. The full official tests run through the owning
-feature suites.
+UTF-8 hex or raw malformed bytes. Smoke and scheduled campaigns start with
+these seeds and the suites' saved examples. For a local campaign during a
+Unicode update, run `python3 scripts/unicode_data.py fetch` and pass
+`--sample-upstream` to add inputs from the pinned data. The sampler adds bounded
+samples from conformance files and Case mappings, plus grouped scalars at and
+adjacent to property boundaries. The full official tests run locally through
+the owning feature suites.
 
 The bounded segmentation and script/Bidi collectors are checked at exact
 capacities and against generated undersized byte and item limits. The checks

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Validate pinned Unicode data and generate narrow Roc lookup modules.
 
-This deliberately uses only the Python standard library so normal CI can run
-offline after checkout. The manifest describes independent release and
-specification axes, canonical sources, and the artifacts that depend on them.
+This uses only the Python standard library to fetch and validate local inputs.
+The manifest describes independent release and specification axes, canonical
+sources, and the artifacts that depend on them.
 """
 
 from __future__ import annotations
@@ -18,8 +18,10 @@ import sys
 from dataclasses import dataclass, replace
 from fractions import Fraction
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import Callable, Iterable
 from urllib.parse import urlparse
+from urllib.request import urlopen
 from zipfile import BadZipFile, ZipFile
 
 if __package__:
@@ -1484,19 +1486,50 @@ def data_path(manifest: dict[str, object], name: str) -> Path:
     return ROOT / relative
 
 
+def verify_digest(content: bytes, expected: str, path: Path) -> None:
+    digest = hashlib.sha256(content).hexdigest()
+    if digest != expected:
+        raise DataError(f"SHA-256 mismatch for {path}: expected {expected}, got {digest}")
+
+
 def verify_source_bytes(manifest: dict[str, object], name: str) -> bytes:
-    item = _entry(manifest, name)
     path = data_path(manifest, name)
     try:
         content = path.read_bytes()
+    except FileNotFoundError as err:
+        raise DataError(
+            f"missing pinned input {path}; run `python3 scripts/unicode_data.py fetch`"
+        ) from err
     except OSError as err:
         raise DataError(f"unable to read {path}: {err}") from err
-    digest = hashlib.sha256(content).hexdigest()
-    if digest != item["sha256"]:
-        raise DataError(
-            f"SHA-256 mismatch for {path}: expected {item['sha256']}, got {digest}"
-        )
+    verify_digest(content, str(_entry(manifest, name)["sha256"]), path)
     return content
+
+
+def fetch_sources(manifest: dict[str, object]) -> None:
+    for name in _require_dict(manifest["sources"], "manifest.sources"):
+        path = data_path(manifest, name)
+        if path.exists():
+            verify_source_bytes(manifest, name)
+            continue
+        item = _entry(manifest, name)
+        url = str(item["url"])
+        temporary = None
+        try:
+            with urlopen(url, timeout=60) as response:
+                content = response.read()
+            verify_digest(content, str(item["sha256"]), path)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with NamedTemporaryFile(dir=path.parent, delete=False) as output:
+                temporary = Path(output.name)
+                output.write(content)
+            temporary.replace(path)
+            print(f"fetched {path.relative_to(ROOT)}", flush=True)
+        except OSError as err:
+            raise DataError(f"unable to fetch {url}: {err}") from err
+        finally:
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
 
 
 def verify_source(manifest: dict[str, object], name: str) -> str:
@@ -6353,13 +6386,16 @@ def generate(manifest: dict[str, object], *, check: bool) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers.add_parser("fetch", help="download and verify pinned local inputs")
     subparsers.add_parser("validate", help="validate the manifest and pinned data")
     generate_parser = subparsers.add_parser("generate", help="generate Roc lookup modules")
     generate_parser.add_argument("--check", action="store_true", help="fail if outputs are stale")
     args = parser.parse_args(argv)
     try:
         manifest = load_manifest()
-        if args.command == "validate":
+        if args.command == "fetch":
+            fetch_sources(manifest)
+        elif args.command == "validate":
             validate_all(manifest)
             print(f"Unicode {release_version(manifest, 'unicode')} data are valid")
         elif args.command == "generate":

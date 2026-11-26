@@ -18,15 +18,15 @@ sizes. Retained state and work should grow linearly with paragraph size.
 
 ## Optional external differential
 
-Normal CI uses the vendored Unicode 18 BidiTest and BidiCharacterTest data.
+Run `python3 scripts/unicode_data.py fetch` before the full local Bidi
+conformance suite or the reference differential.
 `scripts/bidi_reference_differential.py` is an explicit local verification tool.
 It downloads Unicode's official Code9 C reference source for Unicode 18.0.0,
 verifies every source file against recorded SHA-256 digests, compiles an
 isolated query wrapper, and compares deterministic seeded scalar cases against
 the Roc test app. It verifies the Roc compiler against `.roc-version`; a failed
-download, checksum, compile, or mismatch fails the command. The source is not
-vendored, so the repository's canonical UCD data remains its local source of
-truth.
+download, checksum, compile, or mismatch fails the command. The reference
+uses the same checksum-verified character and bracket data as the package.
 
 On a differential failure, the command writes a minimized tab-separated row
 under `.roc-unicode-tmp/failures`. Re-run it by placing that row after a

@@ -5,9 +5,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
-import json
 import random
-import shutil
 import subprocess
 import sys
 import tempfile
@@ -15,8 +13,10 @@ import urllib.request
 from pathlib import Path
 
 try:
+    import unicode_data
     from bidi_reduce import capture, minimize
 except ModuleNotFoundError:
+    from scripts import unicode_data
     from scripts.bidi_reduce import capture, minimize
 
 
@@ -78,6 +78,12 @@ def download_verified(relative: str, digest: str, destination: Path) -> None:
 
 
 def build_code9(directory: Path) -> Path:
+    manifest = unicode_data.load_manifest()
+    version = unicode_data.release_version(manifest, "unicode")
+    if version != "18.0.0" or manifest["specifications"]["uax_9"]["revision"] != "52":
+        raise RuntimeError("Code9 source pin requires Unicode 18.0.0 / UAX #9 revision 52")
+    character_data = unicode_data.verify_source_bytes(manifest, "unicode_data")
+    brackets = unicode_data.verify_source_bytes(manifest, "bidi_brackets")
     for relative, digest in CODE9_FILES.items():
         download_verified(relative, digest, directory / relative)
     if sys.platform == "darwin":
@@ -89,11 +95,8 @@ def build_code9(directory: Path) -> Path:
         )
     data = directory / "data"
     data.mkdir()
-    manifest = json.loads((ROOT / "vendor" / "unicode" / "manifest.json").read_text(encoding="utf-8"))
-    if manifest["releases"]["unicode"]["version"] != "18.0.0" or manifest["specifications"]["uax_9"]["revision"] != "52":
-        raise RuntimeError("Code9 source pin requires Unicode 18.0.0 / UAX #9 revision 52")
-    shutil.copyfile(ROOT / "vendor/unicode/18.0.0/UnicodeData.txt", data / "UnicodeData-18.0.0.txt")
-    shutil.copyfile(ROOT / "vendor/unicode/18.0.0/BidiBrackets.txt", data / "BidiBrackets-18.0.0.txt")
+    (data / f"UnicodeData-{version}.txt").write_bytes(character_data)
+    (data / f"BidiBrackets-{version}.txt").write_bytes(brackets)
     wrapper = directory / "wrapper.c"
     wrapper.write_text(WRAPPER, encoding="utf-8")
     binary = directory / "code9-query"
@@ -216,7 +219,7 @@ def main() -> int:
             generated = cases(args.seed, args.cases)
             data_directory = directory / "data"
             run_candidate(args.candidate, generated, code9_results(reference, data_directory, generated), reference, data_directory)
-    except (OSError, RuntimeError, subprocess.CalledProcessError) as error:
+    except (OSError, RuntimeError, subprocess.CalledProcessError, unicode_data.DataError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
     print(f"PASS Code9 Unicode 18.0.0 UAX #9 r52 differential: {args.cases} seeded cases")

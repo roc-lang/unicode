@@ -34,6 +34,15 @@ work. Historical measurements should identify the pin through the repository
 commit that produced them; generated, untracked reports may record the actual
 compiler version they observed.
 
+## Testing policy
+
+Prefer roc-fuzz targets that check explicit correctness invariants and use a
+small set of named seeds. Keep focused expectations for concrete regressions
+or semantics that a general oracle cannot distinguish. Pin upstream Unicode
+and CLDR inputs by URL and checksum in the manifest and fetch them locally
+for Unicode updates and exhaustive conformance. Keep newly fetched inputs and
+corpora out of Git. Commit the generated Roc modules needed by package users.
+
 ## Integration workflow
 
 Develop independent substrates and features in isolated branches and

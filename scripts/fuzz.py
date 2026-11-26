@@ -71,6 +71,7 @@ TARGETS = {
         Target("sentence", "source_suite", 385),
         Target("line-break", "source_suite", 385),
         Target("case", "scalar_suite", 385),
+        Target("collation", "scalar_suite", 385),
         Target("normalization", "scalar_suite", 385),
         Target("property", "scalar_suite", 385),
         Target("bidi", "analysis_suite", 385),
@@ -217,7 +218,7 @@ def scalar_entropy(
     return bytes(result)
 
 
-def target_seed_payloads(target: Target) -> list[tuple[str, bytes]]:
+def target_seed_payloads(target: Target, *, sample_upstream: bool = False) -> list[tuple[str, bytes]]:
     if target.name in BUILTIN_EXAMPLE_TARGETS:
         return []
     manifest = load_seeds()
@@ -225,11 +226,17 @@ def target_seed_payloads(target: Target) -> list[tuple[str, bytes]]:
         return manifest["utf8"]
 
     seeds = []
+    configs = (1, 2, 3, 6, 8, 12, 16, 32, 48, 64)
+    if target.name == "collation":
+        configs += (96, 128)  # Spanish standard and traditional.
     for name, payload in manifest[target.name]:
         points = [ord(character) for character in payload.decode("utf-8")]
         seeds.append((name, scalar_entropy(points)))
-        for config in (1, 2, 3, 6, 8, 12, 16, 32, 48, 64):
+        for config in configs:
             seeds.append((f"{name}-plan-{config}", scalar_entropy(points, config=config, planned=True)))
+
+    if not sample_upstream:
+        return seeds
 
     unicode_manifest = unicode_data.load_manifest()
     release = unicode_data.release_version(unicode_manifest, "unicode")
@@ -298,9 +305,9 @@ def write_corpus_entry(destination: Path, payload: bytes) -> None:
         path.write_bytes(payload)
 
 
-def populate_corpus(target: Target, destination: Path) -> None:
+def populate_corpus(target: Target, destination: Path, *, sample_upstream: bool = False) -> None:
     destination.mkdir(parents=True, exist_ok=True)
-    seeds = target_seed_payloads(target)
+    seeds = target_seed_payloads(target, sample_upstream=sample_upstream)
     for name, payload in seeds:
         if len(payload) <= target.max_input_size:
             write_corpus_entry(destination, payload)
@@ -441,6 +448,7 @@ def main(argv: list[str] | None = None) -> int:
         if operation == "campaign":
             selection.add_argument("--time", type=positive_seconds, default=60, help="seconds per target")
             selection.add_argument("--seed", type=int, default=SMOKE_SEED)
+            selection.add_argument("--sample-upstream", action="store_true", help="add seeds from fetched Unicode data")
     for operation in ("reproduce", "minimize", "reduce"):
         selection = commands.add_parser(operation)
         selection.add_argument("target", choices=tuple(TARGETS))
@@ -461,7 +469,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.operation == "campaign":
                 for target in targets:
                     corpus = PERSISTENT_CORPUS_ROOT / target.name
-                    populate_corpus(target, corpus)
+                    populate_corpus(target, corpus, sample_upstream=args.sample_upstream)
                     explore(target, corpus, args.time, 0, args.seed)
             elif args.operation == "reproduce":
                 target = targets[0]

@@ -5,11 +5,13 @@ app [target] {
 
 import fuzz.Fuzz
 import CaseTarget
+import CollationTarget
 import NormalizationTarget
 import PropertyTarget
 
 target = Fuzz.suite([
 	CaseTarget.target,
+	CollationTarget.target,
 	NormalizationTarget.target,
 	PropertyTarget.target,
 ])
