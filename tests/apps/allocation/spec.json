@@ -23,9 +23,8 @@
     "allocation-case-fold-turkic-full",
     "allocation-case-fold-turkic-simple",
     "allocation-case-limits",
-    "allocation-baselines"
+    "allocation-ratchet"
   ],
   "timeout_seconds": 120,
-  "baseline_file": "tests/apps/allocation/baselines-linux-x64.json",
-  "exact_baseline_target": "linux-x64"
+  "ratchet_file": "tests/apps/allocation/ratchet.json"
 }

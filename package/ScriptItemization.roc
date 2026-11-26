@@ -1,3 +1,4 @@
+import InternalBoundedCollect
 import ByteRange
 import InternalGrapheme
 import InternalScriptData
@@ -115,8 +116,8 @@ ResolvedStep : [NextResolved({ segment : ResolvedSegment, state : IterationState
 ## Script runs under the package's explicitly named ConservativeScxV1 policy.
 ##
 ## This is shaping-oriented package policy, not a normative Unicode
-## itemization algorithm. It uses Unicode 17 Script/Script_Extensions facts and
-## the Unicode 17 extended grapheme algorithm. Grapheme clusters are atomic.
+## itemization algorithm. It uses Unicode 18 Script/Script_Extensions facts and
+## the Unicode 18 extended grapheme algorithm. Grapheme clusters are atomic.
 ## Restricted scx candidates use nearest explicit neighbors, then explicit
 ## preference order, then their explicit primary Script, otherwise Common.
 ## Broadly Common spans inherit one equal/single explicit side; conflicting or
@@ -346,6 +347,18 @@ ScriptItemization :: [].{
 			}
 		}
 	}
+
+	## Resource limits for the bounded collecting operations in this module.
+	CollectionLimits : InternalBoundedCollect.Limits
+	CollectionError : InternalBoundedCollect.Error
+
+	## Collect runs with an input-byte and output-item limit. Fails atomically
+	## before exceeding either limit and uses the same traversal as `runs`.
+	runs_limited : Str, ConservativeScxV1, CollectionLimits -> Try(List(Run), CollectionError)
+	runs_limited = |source, policy, limits| {
+		InternalBoundedCollect.from_iter(source.count_utf8_bytes(), limits, |{}| ScriptItemization.iter_runs(source, policy), |item| item)
+	}
+
 }
 
 next_run : IterationState -> Try((ScriptItemization.Run, IterationState), [NoMore])

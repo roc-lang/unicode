@@ -1,4 +1,4 @@
-## GENERATED from Unicode 17.0.0 emoji variation sequences. Run `python3 scripts/unicode_data.py generate`. ##
+## GENERATED from Unicode 18.0.0 emoji variation sequences. Run `python3 scripts/unicode_data.py generate`. ##
 
 InternalEmojiVariations :: [].{
     lookup : U32, U32 -> [Some([Text, Emoji]), None]

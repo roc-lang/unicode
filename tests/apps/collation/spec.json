@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "kind": "collation",
+  "suites": ["collation-non-ignorable", "collation-shifted"],
+  "timeout_seconds": 120,
+  "unicode_manifest_file": "uca_collation_test"
+}

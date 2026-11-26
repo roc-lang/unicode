@@ -1,9 +1,10 @@
 import InternalCase
+import Locale
 import TextPosition
 import TextRange
 import UnicodeVersion
 
-## Unicode 17 complete-string case mapping and folding.
+## Unicode 18 complete-string case mapping and folding.
 ##
 ## Every successful result owns both its transformed text and one source fact
 ## for every input scalar. Case conversion never normalizes the source or the
@@ -20,6 +21,8 @@ Case :: [].{
 		shape : Shape,
 		contextual : Bool,
 	}
+
+	## Required resource budget for a complete-string transformation.
 	Limits : {
 		max_input_bytes : U64,
 		max_input_scalars : U64,
@@ -27,6 +30,9 @@ Case :: [].{
 		max_output_scalars : U64,
 		max_mapping_facts : U64,
 	}
+	MappingOptions := { profile : MappingProfile ?? UnicodeDefault, limits : Limits }
+	FoldOptions := { profile : FoldProfile ?? Full, limits : Limits }
+
 	Error : [
 		LimitExceeded({ resource : [InputBytes, InputScalars, OutputBytes, OutputScalars, Facts], limit : U64, required : U64 }),
 		CoordinateOverflow({ at : TextPosition }),
@@ -55,6 +61,26 @@ Case :: [].{
 	lithuanian : MappingProfile
 	lithuanian = Lithuanian
 
+	## Select the UCD casing profile for a caller-supplied locale. The language
+	## determines the profile: Turkish and Azerbaijani select Turkic, and
+	## Lithuanian selects Lithuanian. With all other language subtags, the UCD
+	## default applies. Script, region, variants, and extensions carry no
+	## additional SpecialCasing conditions.
+	mapping_profile_for_locale : Locale -> MappingProfile
+	mapping_profile_for_locale = |locale| match Locale.language(locale) {
+		"tr" | "az" => Turkic
+		"lt" => Lithuanian
+		_ => UnicodeDefault
+	}
+
+	## Select the full folding profile with Turkic overrides only for the
+	## explicitly supplied Turkish and Azerbaijani language identifiers.
+	full_fold_profile_for_locale : Locale -> FoldProfile
+	full_fold_profile_for_locale = |locale| match Case.mapping_profile_for_locale(locale) {
+		Turkic => TurkicFull
+		_ => Full
+	}
+
 	default_fold_profile : FoldProfile
 	default_fold_profile = Full
 
@@ -70,19 +96,14 @@ Case :: [].{
 	turkic_simple : FoldProfile
 	turkic_simple = TurkicSimple
 
-	## Construct mandatory resource limits without exposing the sealed record
-	## representation. Every Case operation requires this explicit budget.
-	limits : U64, U64, U64, U64, U64 -> Limits
-	limits = |max_input_bytes, max_input_scalars, max_output_bytes, max_output_scalars, max_mapping_facts| {
-		max_input_bytes,
-		max_input_scalars,
-		max_output_bytes,
-		max_output_scalars,
-		max_mapping_facts,
-	}
-
 	unlimited_limits : Limits
-	unlimited_limits = Case.limits(U64.highest, U64.highest, U64.highest, U64.highest, U64.highest)
+	unlimited_limits = {
+		max_input_bytes: U64.highest,
+		max_input_scalars: U64.highest,
+		max_output_bytes: U64.highest,
+		max_output_scalars: U64.highest,
+		max_mapping_facts: U64.highest,
+	}
 
 	mapping_profile_revision : MappingProfile -> [None, Some(MappingProfileRevision)]
 	mapping_profile_revision = |profile| match profile {
@@ -180,19 +201,19 @@ Case :: [].{
 		InternalEncodingFault => NoErrorPosition
 	}
 
-	## Apply Unicode 17 full lowercase mappings under an explicit profile.
-	to_lower : Str, MappingProfile, Limits -> Try(Result, Error)
-	to_lower = |source, profile, budget| {
-		match InternalCase.lower(source, profile, budget) {
+	## Apply Unicode 18 full lowercase mappings. The default profile is locale-independent.
+	to_lower : Str, MappingOptions -> Try(Result, Error)
+	to_lower = |source, MappingOptions.{ profile, limits }| {
+		match InternalCase.lower(source, profile, limits) {
 			Err(error) => Err(error)
 			Ok(result) => Ok(result_with_mapping(result, Lower, profile))
 		}
 	}
 
-	## Apply Unicode 17 full uppercase mappings under an explicit profile.
-	to_upper : Str, MappingProfile, Limits -> Try(Result, Error)
-	to_upper = |source, profile, budget| {
-		match InternalCase.upper(source, profile, budget) {
+	## Apply Unicode 18 full uppercase mappings. The default profile is locale-independent.
+	to_upper : Str, MappingOptions -> Try(Result, Error)
+	to_upper = |source, MappingOptions.{ profile, limits }| {
+		match InternalCase.upper(source, profile, limits) {
 			Err(error) => Err(error)
 			Ok(result) => Ok(result_with_mapping(result, Upper, profile))
 		}
@@ -201,19 +222,19 @@ Case :: [].{
 	## Apply Unicode R3 titlecasing with the package's exact default Word core.
 	## Scalars before a word segment's first cased scalar remain unchanged; that
 	## scalar title-maps, and every later scalar lower-maps through the boundary.
-	to_title : Str, MappingProfile, Limits -> Try(Result, Error)
-	to_title = |source, profile, budget| {
-		match InternalCase.title(source, profile, budget) {
+	to_title : Str, MappingOptions -> Try(Result, Error)
+	to_title = |source, MappingOptions.{ profile, limits }| {
+		match InternalCase.title(source, profile, limits) {
 			Err(error) => Err(error)
 			Ok(result) => Ok(result_with_mapping(result, Title, profile))
 		}
 	}
 
-	## Apply Unicode 17 case folding. Full uses C+F, simple uses C+S, and an
+	## Apply Unicode 18 case folding. Full uses C+F, simple uses C+S, and an
 	## explicit Turkic profile lets a T mapping override that normal selection.
-	fold : Str, FoldProfile, Limits -> Try(Result, Error)
-	fold = |source, profile, budget| {
-		match InternalCase.fold(source, profile, budget) {
+	fold : Str, FoldOptions -> Try(Result, Error)
+	fold = |source, FoldOptions.{ profile, limits }| {
+		match InternalCase.fold(source, profile, limits) {
 			Err(error) => Err(error)
 			Ok(result) => Ok(result_with_fold(result, profile))
 		}

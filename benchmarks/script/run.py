@@ -19,6 +19,7 @@ from typing import Sequence
 
 ROOT = Path(__file__).resolve().parents[2]
 BENCH = Path(__file__).resolve().parent
+MANIFEST = json.loads((ROOT / "vendor/unicode/manifest.json").read_text(encoding="utf-8"))
 BUILD = ROOT / ".roc-unicode-tmp" / "benchmarks" / "script"
 DEFAULT_OUTPUT = BUILD / "results.json"
 DEFAULT_TARGET_BYTES = 128 * 1024
@@ -442,8 +443,8 @@ def main() -> int:
     }
     document: dict[str, object] = {
         "schema_version": 2,
-        "unicode_version": "17.0.0",
-        "uax24_revision": 39,
+        "unicode_version": MANIFEST["releases"]["unicode"]["version"],
+        "uax24_revision": int(MANIFEST["specifications"]["uax_24"]["revision"]),
         "policy": "ConservativeScxV1",
         "provenance": provenance(args, binaries),
         "validation": validation,

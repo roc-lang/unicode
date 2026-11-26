@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "kind": "normalization",
+  "suite": "normalization",
+  "timeout_seconds": 90,
+  "unicode_manifest_file": "normalization_test"
+}

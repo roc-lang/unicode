@@ -34,6 +34,15 @@ work. Historical measurements should identify the pin through the repository
 commit that produced them; generated, untracked reports may record the actual
 compiler version they observed.
 
+## Testing policy
+
+Prefer roc-fuzz targets that check explicit correctness invariants and use a
+small set of named seeds. Keep focused expectations for concrete regressions
+or semantics that a general oracle cannot distinguish. Pin upstream Unicode
+and CLDR inputs by URL and checksum in the manifest and fetch them locally
+for Unicode updates and exhaustive conformance. Keep newly fetched inputs and
+corpora out of Git. Commit the generated Roc modules needed by package users.
+
 ## Integration workflow
 
 Develop independent substrates and features in isolated branches and
@@ -50,3 +59,10 @@ No feature or substrate branch may be merged into the integration branch until
 a different agent or reviewer has performed an adversarial review against
 `design.md`. Resolve material findings on the feature branch and record the
 review outcome before integration. Authors do not approve their own changes.
+
+## Testing methodology
+
+Follow [docs/testing.md](docs/testing.md) when designing or reviewing test
+evidence. Identify the production contract, the independent expected result,
+and the limits of the evidence. Record the result of a targeted mutation when
+adding or materially changing an oracle.

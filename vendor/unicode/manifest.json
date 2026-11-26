@@ -1,62 +1,97 @@
 {
   "schema_version": 2,
   "releases": {
+    "cldr": {
+      "version": "49",
+      "authority": "cldr",
+      "kind": "cldr",
+      "vendor_prefix": "vendor/cldr/49"
+    },
     "unicode": {
-      "version": "17.0.0",
+      "version": "18.0.0",
       "authority": "unicode",
       "kind": "ucd",
-      "vendor_prefix": "vendor/unicode/17.0.0"
+      "vendor_prefix": "vendor/unicode/18.0.0"
     },
     "emoji": {
-      "version": "17.0",
+      "version": "18.0",
       "authority": "unicode",
       "kind": "emoji",
       "synchronized_with": "unicode"
     }
   },
   "specifications": {
-    "uax_9": {
-      "revision": "51",
-      "release": "unicode",
-      "document": "https://www.unicode.org/reports/tr9/tr9-51.html"
-    },
-    "uax_11": {
-      "revision": "44",
-      "release": "unicode",
-      "document": "https://www.unicode.org/reports/tr11/tr11-44.html"
-    },
-    "uax_14": {
+    "uts_10": {
       "revision": "55",
       "release": "unicode",
-      "document": "https://www.unicode.org/reports/tr14/tr14-55.html"
+      "document": "https://www.unicode.org/reports/tr10/tr10-55.html"
+    },
+    "uts_35": {
+      "revision": "79",
+      "release": "cldr",
+      "document": "https://www.unicode.org/reports/tr35/tr35-79/tr35.html"
+    },
+    "uts_35_collation": {
+      "revision": "79",
+      "release": "cldr",
+      "document": "https://www.unicode.org/reports/tr35/tr35-79/tr35-collation.html"
+    },
+    "uax_15": {
+      "revision": "58",
+      "release": "unicode",
+      "document": "https://www.unicode.org/reports/tr15/tr15-58.html"
+    },
+    "uax_9": {
+      "revision": "52",
+      "release": "unicode",
+      "document": "https://www.unicode.org/reports/tr9/tr9-52.html"
+    },
+    "uax_11": {
+      "revision": "46",
+      "release": "unicode",
+      "document": "https://www.unicode.org/reports/tr11/tr11-46.html"
+    },
+    "uax_14": {
+      "revision": "57",
+      "release": "unicode",
+      "document": "https://www.unicode.org/reports/tr14/tr14-57.html"
     },
     "uax_24": {
-      "revision": "39",
+      "revision": "41",
       "release": "unicode",
-      "document": "https://www.unicode.org/reports/tr24/tr24-39.html"
+      "document": "https://www.unicode.org/reports/tr24/tr24-41.html"
     },
     "uax_29": {
-      "revision": "47",
+      "revision": "49",
       "release": "unicode",
-      "document": "https://www.unicode.org/reports/tr29/tr29-47.html"
+      "document": "https://www.unicode.org/reports/tr29/tr29-49.html"
     },
     "uax_44": {
-      "revision": "36",
+      "revision": "38",
       "release": "unicode",
-      "document": "https://www.unicode.org/reports/tr44/tr44-36.html"
+      "document": "https://www.unicode.org/reports/tr44/tr44-38.html"
     },
     "uax_50": {
-      "revision": "33",
+      "revision": "35",
       "release": "unicode",
-      "document": "https://www.unicode.org/reports/tr50/tr50-33.html"
+      "document": "https://www.unicode.org/reports/tr50/tr50-35.html"
     },
     "uts_51": {
-      "revision": "29",
+      "revision": "31",
       "release": "emoji",
-      "document": "https://www.unicode.org/reports/tr51/tr51-29.html"
+      "document": "https://www.unicode.org/reports/tr51/tr51-31.html"
+    },
+    "uax_31": {
+      "revision": "45",
+      "release": "unicode",
+      "document": "https://www.unicode.org/reports/tr31/tr31-45.html"
     }
   },
   "authorities": {
+    "cldr": {
+      "url_prefix": "https://raw.githubusercontent.com/unicode-org/cldr/",
+      "license": "unicode-data"
+    },
     "unicode": {
       "url_prefix": "https://www.unicode.org/",
       "license": "unicode-data"
@@ -68,12 +103,130 @@
     }
   },
   "sources": {
+    "ducet": {
+      "path": "vendor/unicode/18.0.0/uca/allkeys.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/uca/allkeys.txt",
+      "sha256": "9b7539f54715e9b9f6686eee87fd846185e689eef7f182ac23fd5eae1eca5814",
+      "header": "# allkeys-18.0.0.txt",
+      "records": 40476,
+      "role": "production",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": [
+        "unicode"
+      ],
+      "format": "uts-10-allkeys",
+      "properties": []
+    },
+    "uca_collation_test": {
+      "path": "vendor/unicode/18.0.0/uca/CollationTest.zip",
+      "url": "https://www.unicode.org/Public/18.0.0/uca/CollationTest.zip",
+      "sha256": "02af87f32b787fef873eaa9a279420f41c6ea58caa15ed95821e911fc91bf662",
+      "header": "# UCA Version: 18.0.0",
+      "records": 424132,
+      "role": "conformance",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": [
+        "unicode"
+      ],
+      "format": "uts-10-collation-archive",
+      "properties": [],
+      "cases": 424072
+    },
+    "cldr_root_collation": {
+      "path": "vendor/cldr/49/collation/allkeys_CLDR.txt",
+      "url": "https://raw.githubusercontent.com/unicode-org/cldr/release-49/common/uca/allkeys_CLDR.txt",
+      "sha256": "cd5bc1048dfb692f0be1944f368905ea9651356dabb9e082cee713ee820cd39d",
+      "header": "# UCA Version: 18.0.0",
+      "records": 40468,
+      "role": "production",
+      "authority": "cldr",
+      "storage_release": "cldr",
+      "release_axes": [
+        "cldr"
+      ],
+      "format": "cldr-root-collation",
+      "properties": []
+    },
+    "cldr_spanish": {
+      "path": "vendor/cldr/49/collation/es.xml",
+      "url": "https://raw.githubusercontent.com/unicode-org/cldr/release-49/common/collation/es.xml",
+      "sha256": "ab7b5b8066379ed64830805a231eac31f306c949f30d4ab39c665ab86b9b89cf",
+      "header": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>",
+      "records": 40,
+      "role": "production",
+      "authority": "cldr",
+      "storage_release": "cldr",
+      "release_axes": [
+        "cldr"
+      ],
+      "format": "cldr-collation",
+      "properties": [
+        "Spanish"
+      ]
+    },
+    "cldr_german": {
+      "path": "vendor/cldr/49/collation/de.xml",
+      "url": "https://raw.githubusercontent.com/unicode-org/cldr/release-49/common/collation/de.xml",
+      "sha256": "81c4992984f284f771c449a761926bf15e90e1f133b47a1a695df8096cb7871e",
+      "header": "<?xml version=\"1.0\" encoding=\"UTF-8\" ?>",
+      "records": 67,
+      "role": "production",
+      "authority": "cldr",
+      "storage_release": "cldr",
+      "release_axes": [
+        "cldr"
+      ],
+      "format": "cldr-collation",
+      "properties": [
+        "German"
+      ]
+    },
+    "normalization_properties": {
+      "path": "vendor/unicode/18.0.0/DerivedNormalizationProps.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/DerivedNormalizationProps.txt",
+      "sha256": "98ac7f67d985fe781e317f6182e885e94cabb0c314769e6dd73e48b226931ccd",
+      "header": "# DerivedNormalizationProps-18.0.0.txt",
+      "records": 16384,
+      "role": "production",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": [
+        "unicode"
+      ],
+      "format": "ucd-normalization-properties",
+      "properties": [
+        "Full_Composition_Exclusion",
+        "NFC_QC",
+        "NFD_QC",
+        "NFKC_QC",
+        "NFKD_QC",
+        "NFKC_CF"
+      ]
+    },
+    "normalization_test": {
+      "path": "vendor/unicode/18.0.0/NormalizationTest.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/NormalizationTest.txt",
+      "sha256": "25a50d816764b04abfb4a646d3eb2b2a803284c3873d9a06757b94fe4513dde3",
+      "header": "# NormalizationTest-18.0.0.txt",
+      "records": 20177,
+      "role": "conformance",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": [
+        "unicode"
+      ],
+      "format": "uax-15-normalization-test",
+      "properties": [],
+      "cases": 20171
+    },
     "east_asian_width": {
-      "path": "vendor/unicode/17.0.0/EastAsianWidth.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/EastAsianWidth.txt",
-      "sha256": "ea7ce50f3444a050333448dffef1cadd9325af55cbb764b4a2280faf52170a33",
-      "header": "# EastAsianWidth-17.0.0.txt",
-      "records": 2678,
+      "path": "vendor/unicode/18.0.0/EastAsianWidth.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/EastAsianWidth.txt",
+      "sha256": "a0cf29eacd00cfcaec4381c6b7c281685f18dbb4e7ff82b4076ccb342ca839aa",
+      "header": "# EastAsianWidth-18.0.0.txt",
+      "records": 2711,
       "role": "production-and-conformance",
       "authority": "unicode",
       "storage_release": "unicode",
@@ -82,11 +235,11 @@
       "properties": ["East_Asian_Width"]
     },
     "line_break": {
-      "path": "vendor/unicode/17.0.0/LineBreak.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/LineBreak.txt",
-      "sha256": "e6a18fa91f8f6a6f8e534b1d3f128c21ada45bfe152eb6b1bcc5e15fd8ac92e6",
-      "header": "# LineBreak-17.0.0.txt",
-      "records": 3654,
+      "path": "vendor/unicode/18.0.0/LineBreak.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/LineBreak.txt",
+      "sha256": "ae8cf1970c73f3f1a12d77852df96c4b2b1723ca8b388e36bb5739250c6849de",
+      "header": "# LineBreak-18.0.0.txt",
+      "records": 3685,
       "role": "production-and-conformance",
       "authority": "unicode",
       "storage_release": "unicode",
@@ -95,11 +248,11 @@
       "properties": ["Line_Break"]
     },
     "derived_line_break": {
-      "path": "vendor/unicode/17.0.0/DerivedLineBreak.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/extracted/DerivedLineBreak.txt",
-      "sha256": "dad3ef492d198d6f1dde4922b175f7371a27dfe62fce489f3e04807015a4c682",
-      "header": "# DerivedLineBreak-17.0.0.txt",
-      "records": 3580,
+      "path": "vendor/unicode/18.0.0/DerivedLineBreak.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/extracted/DerivedLineBreak.txt",
+      "sha256": "e015a6d4bde8dd0f8b72bf15ac9a4f588146ce6bc0bf8980e9dae8302cdbdc28",
+      "header": "# DerivedLineBreak-18.0.0.txt",
+      "records": 3610,
       "role": "conformance",
       "authority": "unicode",
       "storage_release": "unicode",
@@ -108,12 +261,12 @@
       "properties": ["Line_Break"]
     },
     "line_break_test": {
-      "path": "vendor/unicode/17.0.0/LineBreakTest.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/auxiliary/LineBreakTest.txt",
-      "sha256": "e69884e0dde6a8724873f885d68c52dc14518abf9ae4ca9e2283b8773db3b752",
-      "header": "# LineBreakTest-17.0.0.txt",
-      "records": 19338,
-      "cases": 19338,
+      "path": "vendor/unicode/18.0.0/LineBreakTest.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/auxiliary/LineBreakTest.txt",
+      "sha256": "fd9ff9eca411080085b41471bba79ae19d9db2e16924f9770b8509f1affd3f95",
+      "header": "# LineBreakTest-18.0.0.txt",
+      "records": 19346,
+      "cases": 19346,
       "role": "conformance",
       "authority": "unicode",
       "storage_release": "unicode",
@@ -122,11 +275,11 @@
       "properties": []
     },
     "grapheme_break_property": {
-      "path": "vendor/unicode/17.0.0/GraphemeBreakProperty.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/auxiliary/GraphemeBreakProperty.txt",
-      "sha256": "d6b51d1d2ae5c33b451b7ed994b48f1f4dc62b2272a5831e7fd418514a6bae89",
-      "header": "# GraphemeBreakProperty-17.0.0.txt",
-      "records": 1429,
+      "path": "vendor/unicode/18.0.0/GraphemeBreakProperty.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/auxiliary/GraphemeBreakProperty.txt",
+      "sha256": "0839dcb79e4ac639ecd538b1abf7c9d22e3f9dd265b7e182d33627aa4d75b45a",
+      "header": "# GraphemeBreakProperty-18.0.0.txt",
+      "records": 1435,
       "role": "production-and-conformance",
       "authority": "unicode",
       "storage_release": "unicode",
@@ -135,12 +288,12 @@
       "properties": ["Grapheme_Cluster_Break"]
     },
     "grapheme_break_test": {
-      "path": "vendor/unicode/17.0.0/GraphemeBreakTest.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/auxiliary/GraphemeBreakTest.txt",
-      "sha256": "e2d134d2c52919bace503ebb6a551c1855fe1a1faec18478c78fff254a1793ec",
-      "header": "# GraphemeBreakTest-17.0.0.txt",
-      "records": 766,
-      "cases": 766,
+      "path": "vendor/unicode/18.0.0/GraphemeBreakTest.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/auxiliary/GraphemeBreakTest.txt",
+      "sha256": "b0cf047ee94485bbdc846de2b902f5f8a815f6b674f9d04223cddadd91c9df31",
+      "header": "# GraphemeBreakTest-18.0.0.txt",
+      "records": 853,
+      "cases": 853,
       "role": "conformance",
       "authority": "unicode",
       "storage_release": "unicode",
@@ -149,11 +302,11 @@
       "properties": []
     },
     "word_break_property": {
-      "path": "vendor/unicode/17.0.0/WordBreakProperty.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/auxiliary/WordBreakProperty.txt",
-      "sha256": "72274cac1e6b919507db35655c3e175aa27274668a1ece95c28d2069f2ad9852",
-      "header": "# WordBreakProperty-17.0.0.txt",
-      "records": 1432,
+      "path": "vendor/unicode/18.0.0/WordBreakProperty.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/auxiliary/WordBreakProperty.txt",
+      "sha256": "8dbfa17063e11084201f33c3e76d485d3b9166930c71db8e39ed1c9234171aec",
+      "header": "# WordBreakProperty-18.0.0.txt",
+      "records": 1449,
       "role": "production-and-conformance",
       "authority": "unicode",
       "storage_release": "unicode",
@@ -162,10 +315,10 @@
       "properties": ["Word_Break"]
     },
     "word_break_test": {
-      "path": "vendor/unicode/17.0.0/WordBreakTest.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/auxiliary/WordBreakTest.txt",
-      "sha256": "1de23a75f37904abc7d206239ee8d34f8fdf0fb4ab32a7174dfbabbde25419b2",
-      "header": "# WordBreakTest-17.0.0.txt",
+      "path": "vendor/unicode/18.0.0/WordBreakTest.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/auxiliary/WordBreakTest.txt",
+      "sha256": "3dd70c071781276067c680d87303f60434adce7b067bd063194af374edad86a5",
+      "header": "# WordBreakTest-18.0.0.txt",
       "records": 1944,
       "cases": 1944,
       "role": "conformance",
@@ -175,12 +328,39 @@
       "format": "uax-29-word-test",
       "properties": []
     },
+    "sentence_break_property": {
+      "path": "vendor/unicode/18.0.0/SentenceBreakProperty.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/auxiliary/SentenceBreakProperty.txt",
+      "sha256": "0ac10c9d6dca3b33ac695ff0968f26356465a51626950c463b3dce8fa07e61cc",
+      "header": "# SentenceBreakProperty-18.0.0.txt",
+      "records": 2986,
+      "role": "production-and-conformance",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "ucd-property-ranges",
+      "properties": ["Sentence_Break"]
+    },
+    "sentence_break_test": {
+      "path": "vendor/unicode/18.0.0/SentenceBreakTest.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/auxiliary/SentenceBreakTest.txt",
+      "sha256": "84ca7516e7bd1203ab7e8d888ae77f0a0af0a254d10e09a2847000588848885c",
+      "header": "# SentenceBreakTest-18.0.0.txt",
+      "records": 512,
+      "role": "conformance",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "uax-29-sentence-test",
+      "properties": [],
+      "cases": 512
+    },
     "emoji_data": {
-      "path": "vendor/unicode/17.0.0/emoji-data.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/emoji/emoji-data.txt",
-      "sha256": "2cb2bb9455cda83e8481541ecf5b6dfda66a3bb89efa3fa7c5297eccf607b72b",
-      "header": "# Version: 17.0",
-      "records": 1226,
+      "path": "vendor/unicode/18.0.0/emoji-data.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/emoji/emoji-data.txt",
+      "sha256": "80d00f8e616a0ef27fd6b8de3b758c06383b5d917e2977709578e68baf733bf1",
+      "header": "# Version: 18.0.0",
+      "records": 1243,
       "role": "production-and-conformance",
       "authority": "unicode",
       "storage_release": "unicode",
@@ -196,24 +376,24 @@
       ]
     },
     "derived_core_properties": {
-      "path": "vendor/unicode/17.0.0/DerivedCoreProperties.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/DerivedCoreProperties.txt",
-      "sha256": "24c7fed1195c482faaefd5c1e7eb821c5ee1fb6de07ecdbaa64b56a99da22c08",
-      "header": "# DerivedCoreProperties-17.0.0.txt",
-      "records": 13345,
+      "path": "vendor/unicode/18.0.0/DerivedCoreProperties.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/DerivedCoreProperties.txt",
+      "sha256": "09c928886a178fcafd93c29e4bd59073a058e5a100b716d425cb563ab50f68c9",
+      "header": "# DerivedCoreProperties-18.0.0.txt",
+      "records": 13601,
       "role": "production-and-conformance",
       "authority": "unicode",
       "storage_release": "unicode",
       "release_axes": ["unicode"],
       "format": "ucd-derived-core-properties",
-      "properties": ["Default_Ignorable_Code_Point", "Indic_Conjunct_Break", "Cased", "Case_Ignorable"]
+      "properties": ["Default_Ignorable_Code_Point", "Indic_Conjunct_Break", "Cased", "Case_Ignorable", "Alphabetic", "XID_Start", "XID_Continue"]
     },
     "derived_general_category": {
-      "path": "vendor/unicode/17.0.0/DerivedGeneralCategory.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/extracted/DerivedGeneralCategory.txt",
-      "sha256": "d62e5bab70ca74f099343f71224fa051cb1fdd61a1ab45c0488c44cfc0b6102e",
-      "header": "# DerivedGeneralCategory-17.0.0.txt",
-      "records": 4144,
+      "path": "vendor/unicode/18.0.0/DerivedGeneralCategory.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/extracted/DerivedGeneralCategory.txt",
+      "sha256": "d6b151d2d40ee9b1876d26f417980f45ffae47b6055ccf7203cb31f07a030f94",
+      "header": "# DerivedGeneralCategory-18.0.0.txt",
+      "records": 4202,
       "role": "production",
       "authority": "unicode",
       "storage_release": "unicode",
@@ -222,11 +402,11 @@
       "properties": ["General_Category"]
     },
     "derived_combining_class": {
-      "path": "vendor/unicode/17.0.0/DerivedCombiningClass.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/extracted/DerivedCombiningClass.txt",
-      "sha256": "191463abfbd202703c6fd6776a92a23ac44ec65e0476a7f95aa91ca492cef29b",
-      "header": "# DerivedCombiningClass-17.0.0.txt",
-      "records": 2477,
+      "path": "vendor/unicode/18.0.0/DerivedCombiningClass.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/extracted/DerivedCombiningClass.txt",
+      "sha256": "ef6b2611cfb660dba3f6b458b9eb4b05f44ed2417302ee7749d7f0f348793121",
+      "header": "# DerivedCombiningClass-18.0.0.txt",
+      "records": 2517,
       "role": "production",
       "authority": "unicode",
       "storage_release": "unicode",
@@ -235,11 +415,11 @@
       "properties": ["Canonical_Combining_Class"]
     },
     "scripts": {
-      "path": "vendor/unicode/17.0.0/Scripts.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/Scripts.txt",
-      "sha256": "9f5e50d3abaee7d6ce09480f325c706f485ae3240912527e651954d2d6b035bf",
-      "header": "# Scripts-17.0.0.txt",
-      "records": 2287,
+      "path": "vendor/unicode/18.0.0/Scripts.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/Scripts.txt",
+      "sha256": "0071fd81b6aeae25f6e8bce8efec3066a6476a91b49bdb2f52dc76e817862a6a",
+      "header": "# Scripts-18.0.0.txt",
+      "records": 2321,
       "role": "production-and-conformance",
       "authority": "unicode",
       "storage_release": "unicode",
@@ -248,11 +428,11 @@
       "properties": ["Script"]
     },
     "script_extensions": {
-      "path": "vendor/unicode/17.0.0/ScriptExtensions.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/ScriptExtensions.txt",
-      "sha256": "ec2107e58825a1586acee8e0911ce18260394ac8b87e535ca325f1ccbeb06bc6",
-      "header": "# ScriptExtensions-17.0.0.txt",
-      "records": 206,
+      "path": "vendor/unicode/18.0.0/ScriptExtensions.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/ScriptExtensions.txt",
+      "sha256": "5c9d34a922f687726f2a8bcf57d49f905987e51f1b21b58c95a00fbe255cec23",
+      "header": "# ScriptExtensions-18.0.0.txt",
+      "records": 210,
       "role": "production-and-conformance",
       "authority": "unicode",
       "storage_release": "unicode",
@@ -261,17 +441,18 @@
       "properties": ["Script_Extensions"]
     },
     "property_aliases": {
-      "path": "vendor/unicode/17.0.0/PropertyAliases.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/PropertyAliases.txt",
-      "sha256": "4441f573caf952ffece1d7c892e7715bd7136dfc26f96eb6f268bf1e474715fb",
-      "header": "# PropertyAliases-17.0.0.txt",
-      "records": 145,
+      "path": "vendor/unicode/18.0.0/PropertyAliases.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/PropertyAliases.txt",
+      "sha256": "83b8df695f9da543dba02b0be2b8bd72f0b52836ad264be113c6d285021ef025",
+      "header": "# PropertyAliases-18.0.0.txt",
+      "records": 152,
       "role": "production-metadata",
       "authority": "unicode",
       "storage_release": "unicode",
       "release_axes": ["unicode"],
       "format": "ucd-property-aliases",
       "properties": [
+        "Alphabetic",
         "Bidi_Class",
         "Bidi_Mirrored",
         "Bidi_Mirroring_Glyph",
@@ -291,23 +472,31 @@
         "Indic_Syllabic_Category",
         "Joining_Group",
         "Joining_Type",
+        "Numeric_Type",
+        "Numeric_Value",
+        "Pattern_Syntax",
+        "Pattern_White_Space",
         "Script",
         "Variation_Selector",
-        "Vertical_Orientation"
+        "Vertical_Orientation",
+        "White_Space",
+        "XID_Start",
+        "XID_Continue"
       ]
     },
     "property_value_aliases": {
-      "path": "vendor/unicode/17.0.0/PropertyValueAliases.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/PropertyValueAliases.txt",
-      "sha256": "64e9a5f76f7a1e8b5a47d6a1f9a26522a251208f5276bdfa1559dac7cf2e827a",
-      "header": "# PropertyValueAliases-17.0.0.txt",
-      "records": 1194,
+      "path": "vendor/unicode/18.0.0/PropertyValueAliases.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/PropertyValueAliases.txt",
+      "sha256": "06c4c8eaf7b0bf34abe73b113da1215bd784ac254d4c223600b90267caa4bbbd",
+      "header": "# PropertyValueAliases-18.0.0.txt",
+      "records": 1215,
       "role": "production-metadata",
       "authority": "unicode",
       "storage_release": "unicode",
       "release_axes": ["unicode"],
       "format": "ucd-property-value-aliases",
       "properties": [
+        "Alphabetic",
         "Bidi_Class",
         "Bidi_Mirrored",
         "Bidi_Mirroring_Glyph",
@@ -327,17 +516,24 @@
         "Indic_Syllabic_Category",
         "Joining_Group",
         "Joining_Type",
+        "Numeric_Type",
+        "Numeric_Value",
+        "Pattern_Syntax",
+        "Pattern_White_Space",
         "Script",
         "Variation_Selector",
-        "Vertical_Orientation"
+        "Vertical_Orientation",
+        "White_Space",
+        "XID_Start",
+        "XID_Continue"
       ]
     },
     "derived_bidi_class": {
-      "path": "vendor/unicode/17.0.0/DerivedBidiClass.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/extracted/DerivedBidiClass.txt",
-      "sha256": "4867b4b7f0731ed1bfcd34cc6251211ff1542541fce0734b6fbda139ee80b3a4",
-      "header": "# DerivedBidiClass-17.0.0.txt",
-      "records": 2323,
+      "path": "vendor/unicode/18.0.0/DerivedBidiClass.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/extracted/DerivedBidiClass.txt",
+      "sha256": "d9e23222522551348ea1ccfbb4f62efbf98982afb95840f8959c08ed992c5607",
+      "header": "# DerivedBidiClass-18.0.0.txt",
+      "records": 2356,
       "role": "production",
       "authority": "unicode",
       "storage_release": "unicode",
@@ -346,24 +542,24 @@
       "properties": ["Bidi_Class"]
     },
     "unicode_data": {
-      "path": "vendor/unicode/17.0.0/UnicodeData.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/UnicodeData.txt",
-      "sha256": "2e1efc1dcb59c575eedf5ccae60f95229f706ee6d031835247d843c11d96470c",
+      "path": "vendor/unicode/18.0.0/UnicodeData.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/UnicodeData.txt",
+      "sha256": "0736451de439ae7baf1425136617da495e09ee5afbe6e394374db7009ea08950",
       "header": "0000;<control>;Cc;0;BN;;;;;N;NULL;;;;",
-      "records": 40575,
+      "records": 41341,
       "role": "production",
       "authority": "unicode",
       "storage_release": "unicode",
       "release_axes": ["unicode"],
       "format": "ucd-unicode-data",
-      "properties": ["Bidi_Mirrored", "Simple_Uppercase_Mapping", "Simple_Lowercase_Mapping", "Simple_Titlecase_Mapping"]
+      "properties": ["Bidi_Mirrored", "Decomposition_Mapping", "Simple_Uppercase_Mapping", "Simple_Lowercase_Mapping", "Simple_Titlecase_Mapping"]
     },
     "special_casing": {
-      "path": "vendor/unicode/17.0.0/SpecialCasing.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/SpecialCasing.txt",
-      "sha256": "efc25faf19de21b92c1194c111c932e03d2a5eaf18194e33f1156e96de4c9588",
-      "header": "# SpecialCasing-17.0.0.txt",
-      "records": 119,
+      "path": "vendor/unicode/18.0.0/SpecialCasing.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/SpecialCasing.txt",
+      "sha256": "8538dea57c184f1ef3783885ea79677b10f6efa06423717157e63712f14d1ad2",
+      "header": "# SpecialCasing-18.0.0.txt",
+      "records": 120,
       "role": "production",
       "authority": "unicode",
       "storage_release": "unicode",
@@ -372,11 +568,11 @@
       "properties": ["Lowercase_Mapping", "Titlecase_Mapping", "Uppercase_Mapping"]
     },
     "case_folding": {
-      "path": "vendor/unicode/17.0.0/CaseFolding.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/CaseFolding.txt",
-      "sha256": "ff8d8fefbf123574205085d6714c36149eb946d717a0c585c27f0f4ef58c4183",
-      "header": "# CaseFolding-17.0.0.txt",
-      "records": 1618,
+      "path": "vendor/unicode/18.0.0/CaseFolding.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/CaseFolding.txt",
+      "sha256": "a004797658a457bec4dc11683e39f69249ea3b595b752dbea6721c4c9f587b0d",
+      "header": "# CaseFolding-18.0.0.txt",
+      "records": 1640,
       "role": "production",
       "authority": "unicode",
       "storage_release": "unicode",
@@ -385,11 +581,11 @@
       "properties": ["Case_Folding"]
     },
     "bidi_mirroring": {
-      "path": "vendor/unicode/17.0.0/BidiMirroring.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/BidiMirroring.txt",
-      "sha256": "a2f16fb873ab4fcdf3221cb1a8a85a134ddd6ed03603181823ff5206af3741ce",
-      "header": "# BidiMirroring-17.0.0.txt",
-      "records": 428,
+      "path": "vendor/unicode/18.0.0/BidiMirroring.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/BidiMirroring.txt",
+      "sha256": "cd54810ebf52f0e61a730c8b9cb25975de6c85f6d788a559b416afd548923fd6",
+      "header": "# BidiMirroring-18.0.0.txt",
+      "records": 438,
       "role": "production",
       "authority": "unicode",
       "storage_release": "unicode",
@@ -398,11 +594,11 @@
       "properties": ["Bidi_Mirroring_Glyph"]
     },
     "bidi_brackets": {
-      "path": "vendor/unicode/17.0.0/BidiBrackets.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/BidiBrackets.txt",
-      "sha256": "dadbaf38a0d0246e5b805bf8725cb81b7c621f93d030595635f5ba2c2f179428",
-      "header": "# BidiBrackets-17.0.0.txt",
-      "records": 128,
+      "path": "vendor/unicode/18.0.0/BidiBrackets.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/BidiBrackets.txt",
+      "sha256": "4b3b62e4a14b84ee752808c810c602534921c09a4a1bf78cfbee566d66c125b3",
+      "header": "# BidiBrackets-18.0.0.txt",
+      "records": 130,
       "role": "production",
       "authority": "unicode",
       "storage_release": "unicode",
@@ -411,10 +607,10 @@
       "properties": ["Bidi_Paired_Bracket", "Bidi_Paired_Bracket_Type"]
     },
     "bidi_test": {
-      "path": "vendor/unicode/17.0.0/BidiTest.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/BidiTest.txt",
-      "sha256": "888bdfc8090652272d1f859cdb00ae659e2dc6c26740be61ef1d03998a687620",
-      "header": "# BidiTest-17.0.0.txt",
+      "path": "vendor/unicode/18.0.0/BidiTest.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/BidiTest.txt",
+      "sha256": "9af2f882a4ab50912e388f069a673b94eacd82fa6d07d20a3ff7f3c759e905aa",
+      "header": "# BidiTest-18.0.0.txt",
       "records": 493502,
       "cases": 490846,
       "role": "conformance",
@@ -425,10 +621,10 @@
       "properties": []
     },
     "bidi_character_test": {
-      "path": "vendor/unicode/17.0.0/BidiCharacterTest.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/BidiCharacterTest.txt",
-      "sha256": "a3e6e905ab5afbe318a96df5401d0372a04cd73ef139ab5e3cf0ae241c255488",
-      "header": "# BidiCharacterTest-17.0.0.txt",
+      "path": "vendor/unicode/18.0.0/BidiCharacterTest.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/BidiCharacterTest.txt",
+      "sha256": "045b24d2c8ab066951bd32fe8c6b4de34647f72b5b1c7df0265f24ab53573e01",
+      "header": "# BidiCharacterTest-18.0.0.txt",
       "records": 91707,
       "cases": 91707,
       "role": "conformance",
@@ -439,11 +635,11 @@
       "properties": []
     },
     "derived_joining_type": {
-      "path": "vendor/unicode/17.0.0/DerivedJoiningType.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/extracted/DerivedJoiningType.txt",
-      "sha256": "f39ebe974825d6736aee15582250307aa532b2cfab3caf3f86bd23fddc9c5c4d",
-      "header": "# DerivedJoiningType-17.0.0.txt",
-      "records": 542,
+      "path": "vendor/unicode/18.0.0/DerivedJoiningType.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/extracted/DerivedJoiningType.txt",
+      "sha256": "e2408ff2c92b175b0f7bf62c989bbb54c7b077528fe31f8d69b96fa09e7d61ed",
+      "header": "# DerivedJoiningType-18.0.0.txt",
+      "records": 546,
       "role": "production",
       "authority": "unicode",
       "storage_release": "unicode",
@@ -452,11 +648,11 @@
       "properties": ["Joining_Type"]
     },
     "arabic_shaping": {
-      "path": "vendor/unicode/17.0.0/ArabicShaping.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/ArabicShaping.txt",
-      "sha256": "39afa01e680e27d0fd10b67a9b27be13fbaa3d0efecfb5be45991de9a0d267d0",
-      "header": "# ArabicShaping-17.0.0.txt",
-      "records": 834,
+      "path": "vendor/unicode/18.0.0/ArabicShaping.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/ArabicShaping.txt",
+      "sha256": "8ccde4ebd070500a68e8bcb9d5514522fb0bebe57b9ebad3ff925b8e1e669f83",
+      "header": "# ArabicShaping-18.0.0.txt",
+      "records": 856,
       "role": "production",
       "authority": "unicode",
       "storage_release": "unicode",
@@ -465,11 +661,11 @@
       "properties": ["Joining_Type", "Joining_Group"]
     },
     "indic_syllabic_category": {
-      "path": "vendor/unicode/17.0.0/IndicSyllabicCategory.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/IndicSyllabicCategory.txt",
-      "sha256": "3fc122f4cf58b0c19268d5f810263b04ab4e1e67743386ec0e0ada9c76aec5be",
-      "header": "# IndicSyllabicCategory-17.0.0.txt",
-      "records": 967,
+      "path": "vendor/unicode/18.0.0/IndicSyllabicCategory.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/IndicSyllabicCategory.txt",
+      "sha256": "a2b3aacf6b3e7bad4ca351ef985d9543825e20280ff280c25f646d9bc4ce304c",
+      "header": "# IndicSyllabicCategory-18.0.0.txt",
+      "records": 969,
       "role": "production",
       "authority": "unicode",
       "storage_release": "unicode",
@@ -478,11 +674,11 @@
       "properties": ["Indic_Syllabic_Category"]
     },
     "indic_positional_category": {
-      "path": "vendor/unicode/17.0.0/IndicPositionalCategory.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/IndicPositionalCategory.txt",
-      "sha256": "68cedc29a7e57f984d90fe2c7712f2e6d0c717e253db219607daea8997d6c480",
-      "header": "# IndicPositionalCategory-17.0.0.txt",
-      "records": 653,
+      "path": "vendor/unicode/18.0.0/IndicPositionalCategory.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/IndicPositionalCategory.txt",
+      "sha256": "c9ad44d267c317ee0e1ec66cbd4d15033c2964f905d11fc8905915f9a5a9ae52",
+      "header": "# IndicPositionalCategory-18.0.0.txt",
+      "records": 654,
       "role": "production",
       "authority": "unicode",
       "storage_release": "unicode",
@@ -491,24 +687,24 @@
       "properties": ["Indic_Positional_Category"]
     },
     "prop_list": {
-      "path": "vendor/unicode/17.0.0/PropList.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/PropList.txt",
-      "sha256": "130dcddcaadaf071008bdfce1e7743e04fdfbc910886f017d9f9ac931d8c64dd",
-      "header": "# PropList-17.0.0.txt",
-      "records": 1744,
+      "path": "vendor/unicode/18.0.0/PropList.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/PropList.txt",
+      "sha256": "f438f532e8737bb8a2702126cdf9c4af5e357c58c7acf9d9eb2fc7c1a1d955d6",
+      "header": "# PropList-18.0.0.txt",
+      "records": 1779,
       "role": "production",
       "authority": "unicode",
       "storage_release": "unicode",
       "release_axes": ["unicode"],
       "format": "ucd-binary-property-ranges",
-      "properties": ["Variation_Selector", "Soft_Dotted"]
+      "properties": ["Variation_Selector", "Soft_Dotted", "White_Space", "Pattern_Syntax", "Pattern_White_Space", "Unified_Ideograph"]
     },
     "vertical_orientation": {
-      "path": "vendor/unicode/17.0.0/VerticalOrientation.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/VerticalOrientation.txt",
-      "sha256": "dcef09c3fb24d356b042569c328ec341efc5b53447700d799f2fb4834c3cd3cd",
-      "header": "# VerticalOrientation-17.0.0.txt",
-      "records": 2470,
+      "path": "vendor/unicode/18.0.0/VerticalOrientation.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/VerticalOrientation.txt",
+      "sha256": "0803e09669d7aa7137de678e55b848bd418c6632694fa1b05f0b40941103c748",
+      "header": "# VerticalOrientation-18.0.0.txt",
+      "records": 2499,
       "role": "production",
       "authority": "unicode",
       "storage_release": "unicode",
@@ -517,10 +713,10 @@
       "properties": ["Vertical_Orientation"]
     },
     "emoji_variation_sequences": {
-      "path": "vendor/unicode/17.0.0/emoji-variation-sequences.txt",
-      "url": "https://www.unicode.org/Public/17.0.0/ucd/emoji/emoji-variation-sequences.txt",
-      "sha256": "bb3d09ef03f206012c7532dd52dc0a21c9efddba0135ea4cf0d9201b8b9bba7e",
-      "header": "# Version: 17.0",
+      "path": "vendor/unicode/18.0.0/emoji-variation-sequences.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/emoji/emoji-variation-sequences.txt",
+      "sha256": "ff1707564aa1f1b2fcf4ec92d609d4cb26940bc0d4dcf07f5328ad6879e84da3",
+      "header": "# Version: 18.0.0",
       "records": 742,
       "role": "production",
       "authority": "unicode",
@@ -528,9 +724,71 @@
       "release_axes": ["unicode", "emoji"],
       "format": "ucd-emoji-variation-sequences",
       "properties": ["Emoji_Variation_Sequence"]
+    },
+    "derived_numeric_type": {
+      "path": "vendor/unicode/18.0.0/DerivedNumericType.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/extracted/DerivedNumericType.txt",
+      "sha256": "3dade4d96bd00d71b10022bf70b370090f3ca947f977ad4dc2854e06c4d074f6",
+      "header": "# DerivedNumericType-18.0.0.txt",
+      "records": 269,
+      "role": "production-and-conformance",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "ucd-property-ranges",
+      "properties": ["Numeric_Type"]
+    },
+    "derived_numeric_values": {
+      "path": "vendor/unicode/18.0.0/DerivedNumericValues.txt",
+      "url": "https://www.unicode.org/Public/18.0.0/ucd/extracted/DerivedNumericValues.txt",
+      "sha256": "c84f084f83ec6852e1db6e7ef15f340a3af2df8cf0c386ac0d076c2cebd189e6",
+      "header": "# DerivedNumericValues-18.0.0.txt",
+      "records": 2272,
+      "role": "production-and-conformance",
+      "authority": "unicode",
+      "storage_release": "unicode",
+      "release_axes": ["unicode"],
+      "format": "ucd-rational-property-ranges",
+      "properties": ["Numeric_Value"]
     }
   },
   "artifacts": {
+    "collation_data": {
+      "generator": "collation-data",
+      "output": "package/InternalCollationData.roc",
+      "sources": [
+        "ducet",
+        "cldr_root_collation",
+        "cldr_spanish",
+        "cldr_german",
+        "prop_list",
+        "unicode_data"
+      ],
+      "specifications": [
+        "uts_10",
+        "uts_35",
+        "uts_35_collation"
+      ],
+      "artifacts": [
+        "normalization_data",
+        "canonical_combining_class",
+        "general_category"
+      ]
+    },
+    "normalization_data": {
+      "generator": "normalization-data",
+      "output": "package/InternalNormalizationData.roc",
+      "sources": [
+        "unicode_data",
+        "normalization_properties"
+      ],
+      "specifications": [
+        "uax_15"
+      ],
+      "artifacts": [
+        "canonical_combining_class"
+      ]
+    },
     "unicode_version": {
       "generator": "unicode-version",
       "output": "package/UnicodeVersion.roc",
@@ -551,8 +809,8 @@
         "index_type": "U8",
         "value_type": "U8",
         "expected_index_entries": 8704,
-        "expected_distinct_pages": 212,
-        "expected_logical_bytes": 35840,
+        "expected_distinct_pages": 215,
+        "expected_logical_bytes": 36224,
         "max_logical_bytes": 65536,
         "ascii": "computed"
       }
@@ -570,9 +828,9 @@
         "index_type": "U8",
         "value_type": "U8",
         "expected_index_entries": 8704,
-        "expected_distinct_pages": 164,
-        "expected_logical_bytes": 29696,
-        "max_logical_bytes": 29696,
+        "expected_distinct_pages": 165,
+        "expected_logical_bytes": 29824,
+        "max_logical_bytes": 29824,
         "ascii": "computed"
       }
     },
@@ -589,9 +847,28 @@
         "index_type": "U8",
         "value_type": "U8",
         "expected_index_entries": 8704,
-        "expected_distinct_pages": 225,
-        "expected_logical_bytes": 37504,
-        "max_logical_bytes": 37504,
+        "expected_distinct_pages": 227,
+        "expected_logical_bytes": 37760,
+        "max_logical_bytes": 37760,
+        "ascii": "computed"
+      }
+    },
+    "sentence_data": {
+      "generator": "sentence-data",
+      "output": "package/InternalSentenceData.roc",
+      "sources": ["sentence_break_property"],
+      "specifications": ["uax_29"],
+      "artifacts": [],
+      "layout": {
+        "kind": "deduplicated-pages",
+        "candidate_page_bits": [6, 7, 8, 9, 10],
+        "page_bits": 7,
+        "index_type": "U8",
+        "value_type": "U8",
+        "expected_index_entries": 8704,
+        "expected_distinct_pages": 231,
+        "expected_logical_bytes": 38272,
+        "max_logical_bytes": 38272,
         "ascii": "computed"
       }
     },
@@ -608,13 +885,13 @@
         "index_type": "U8",
         "value_type": "U16",
         "expected_index_entries": 8704,
-        "expected_distinct_pages": 170,
-        "expected_logical_bytes": 52224,
-        "max_logical_bytes": 52224,
+        "expected_distinct_pages": 172,
+        "expected_logical_bytes": 52736,
+        "max_logical_bytes": 52736,
         "ascii": "computed",
-        "expected_row_count": 3100,
-        "expected_column_bytes": 72774,
-        "max_total_bytes": 124998
+        "expected_row_count": 3141,
+        "expected_column_bytes": 73728,
+        "max_total_bytes": 126464
       }
     },
     "legacy_grapheme_break": {
@@ -670,9 +947,9 @@
         "index_type": "U8",
         "value_type": "U8",
         "expected_index_entries": 4352,
-        "expected_distinct_pages": 162,
-        "expected_logical_bytes": 45824,
-        "max_logical_bytes": 45824,
+        "expected_distinct_pages": 166,
+        "expected_logical_bytes": 46848,
+        "max_logical_bytes": 46848,
         "ascii": "computed"
       }
     },
@@ -689,9 +966,9 @@
         "index_type": "U8",
         "value_type": "U8",
         "expected_index_entries": 8704,
-        "expected_distinct_pages": 97,
-        "expected_logical_bytes": 21120,
-        "max_logical_bytes": 21120,
+        "expected_distinct_pages": 98,
+        "expected_logical_bytes": 21248,
+        "max_logical_bytes": 21248,
         "ascii": "constant-zero"
       }
     },
@@ -708,9 +985,9 @@
         "index_type": "U8",
         "value_type": "U8",
         "expected_index_entries": 8704,
-        "expected_distinct_pages": 191,
-        "expected_logical_bytes": 33152,
-        "max_logical_bytes": 33152,
+        "expected_distinct_pages": 192,
+        "expected_logical_bytes": 33280,
+        "max_logical_bytes": 33280,
         "ascii": "computed"
       }
     },
@@ -803,9 +1080,9 @@
         "index_type": "U8",
         "value_type": "U8",
         "expected_index_entries": 4352,
-        "expected_distinct_pages": 35,
-        "expected_logical_bytes": 13312,
-        "max_logical_bytes": 13312,
+        "expected_distinct_pages": 37,
+        "expected_logical_bytes": 13824,
+        "max_logical_bytes": 13824,
         "ascii": "computed"
       }
     },
@@ -848,13 +1125,13 @@
         "index_type": "U16",
         "value_type": "U16",
         "expected_index_entries": 8704,
-        "expected_distinct_pages": 296,
-        "expected_logical_bytes": 93184,
-        "max_logical_bytes": 93184,
+        "expected_distinct_pages": 302,
+        "expected_logical_bytes": 94720,
+        "max_logical_bytes": 94720,
         "ascii": "computed",
-        "expected_row_count": 615,
-        "expected_column_bytes": 6765,
-        "max_total_bytes": 99949
+        "expected_row_count": 627,
+        "expected_column_bytes": 6897,
+        "max_total_bytes": 101617
       }
     },
     "property_aliases": {
@@ -873,13 +1150,13 @@
       "layout": {
         "kind": "deduplicated-pages",
         "candidate_page_bits": [6, 7, 8, 9, 10],
-        "page_bits": 7,
+        "page_bits": 8,
         "index_type": "U8",
         "value_type": "U8",
-        "expected_index_entries": 8704,
-        "expected_distinct_pages": 255,
-        "expected_logical_bytes": 41344,
-        "max_logical_bytes": 41344,
+        "expected_index_entries": 4352,
+        "expected_distinct_pages": 170,
+        "expected_logical_bytes": 47872,
+        "max_logical_bytes": 47872,
         "ascii": "computed"
       }
     },
@@ -896,9 +1173,9 @@
         "index_type": "U8",
         "value_type": "U8",
         "expected_index_entries": 4352,
-        "expected_distinct_pages": 39,
-        "expected_logical_bytes": 14336,
-        "max_logical_bytes": 14336,
+        "expected_distinct_pages": 40,
+        "expected_logical_bytes": 14592,
+        "max_logical_bytes": 14592,
         "ascii": "constant-zero"
       }
     },
@@ -908,6 +1185,44 @@
       "sources": ["property_value_aliases"],
       "specifications": ["uax_24", "uax_44"],
       "artifacts": ["script_data", "script_extensions_data"]
+    },
+    "identifier_properties": {
+      "generator": "identifier-properties",
+      "output": "package/InternalIdentifierData.roc",
+      "sources": ["derived_core_properties", "prop_list"],
+      "specifications": ["uax_31", "uax_44"],
+      "artifacts": [],
+      "layout": {
+        "kind": "deduplicated-pages",
+        "candidate_page_bits": [6, 7, 8, 9, 10],
+        "page_bits": 7,
+        "index_type": "U8",
+        "value_type": "U8",
+        "expected_index_entries": 8704,
+        "expected_distinct_pages": 218,
+        "expected_logical_bytes": 36608,
+        "max_logical_bytes": 36608,
+        "ascii": "computed"
+      }
+    },
+    "numeric_properties": {
+      "generator": "numeric-properties",
+      "output": "package/InternalNumericData.roc",
+      "sources": ["derived_numeric_type", "derived_numeric_values", "derived_general_category", "property_aliases", "property_value_aliases"],
+      "specifications": ["uax_44"],
+      "artifacts": [],
+      "layout": {
+        "kind": "deduplicated-pages",
+        "candidate_page_bits": [6, 7, 8, 9, 10],
+        "page_bits": 7,
+        "index_type": "U8",
+        "value_type": "U8",
+        "expected_index_entries": 8704,
+        "expected_distinct_pages": 138,
+        "expected_logical_bytes": 26368,
+        "max_logical_bytes": 29173,
+        "ascii": "computed"
+      }
     }
   }
 }

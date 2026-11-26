@@ -79,7 +79,7 @@ main! = |os_args| {
 					return Err(Exit(2))
 				}
 			}
-			analysis = match Bidi.analyze_paragraph(source, base, Bidi.default_limits) {
+			analysis = match Bidi.analyze_paragraph(source, { base_direction: base, limits: Bidi.default_limits }) {
 				Ok(value) => value
 				Err(error) => {
 					Stderr.line!("error: bidi analysis failed: ${Str.inspect(error)}")?

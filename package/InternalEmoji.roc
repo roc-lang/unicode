@@ -1,4 +1,4 @@
-## GENERATED from vendor/unicode/17.0.0 (Emoji 17.0). Run `python3 scripts/unicode_data.py generate`. ##
+## GENERATED from vendor/unicode/18.0.0 (Emoji 18.0). Run `python3 scripts/unicode_data.py generate`. ##
 import CodePoint
 import InternalEmojiData
 

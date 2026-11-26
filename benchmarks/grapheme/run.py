@@ -22,6 +22,11 @@ from typing import Sequence
 
 ROOT = Path(__file__).resolve().parents[2]
 BENCH = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT))
+from scripts import unicode_data
+
+MANIFEST = unicode_data.load_manifest()
+UNICODE_VERSION = unicode_data.release_version(MANIFEST, "unicode")
 BUILD = ROOT / ".roc-unicode-tmp" / "benchmarks" / "grapheme"
 DEFAULT_OUTPUT = BUILD / "results.json"
 DEFAULT_TARGET_BYTES = 1024 * 1024
@@ -34,12 +39,20 @@ LIBGRAPHEME_URL = (
     f"libgrapheme-{LIBGRAPHEME_VERSION}.tar.gz"
 )
 LIBGRAPHEME_SHA256 = "32585af73dda62fbcc0fed14f199aa1bc988ad01dad0bfbd06cf175d9cf3d68c"
+CONFORMANCE_CASE = "unicode_conformance"
+IMPLEMENTATION_UNICODE_VERSIONS = {
+    "roc": UNICODE_VERSION,
+    "rust_icu4x": "18.0.0",
+    "rust_unicode_segmentation": "17.0.0",
+    "go_clipperhouse": "17.0.0",
+    "c_libgrapheme": "17.0.0",
+}
 CASE_NAMES = (
     "ascii",
     "latin_combining",
     "multilingual",
     "emoji_sequences",
-    "unicode17_conformance",
+    CONFORMANCE_CASE,
 )
 
 
@@ -88,21 +101,14 @@ def boundary_signature(ends: Sequence[int]) -> tuple[int, int, int]:
 
 
 def conformance_corpus() -> tuple[bytes, tuple[int, int, int]]:
-    path = ROOT / "vendor/unicode/17.0.0/GraphemeBreakTest.txt"
     corpus = bytearray()
     ends: list[int] = []
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        body = raw_line.split("#", 1)[0].strip()
-        if not body:
-            continue
-        tokens = body.split()
+    for case in unicode_data.parse_grapheme_tests(MANIFEST):
         # A control separator guarantees a boundary between adjacent test cases.
         corpus.extend(b"\0")
-        ends.append(len(corpus))
-        for index in range(1, len(tokens), 2):
-            corpus.extend(chr(int(tokens[index], 16)).encode("utf-8"))
-            if tokens[index + 1] == "÷":
-                ends.append(len(corpus))
+        start = len(corpus)
+        ends.extend(start + offset for offset in case.break_offsets)
+        corpus.extend("".join(chr(point) for point in case.code_points).encode("utf-8"))
     return bytes(corpus), boundary_signature(ends)
 
 
@@ -127,9 +133,9 @@ def corpora(
             "1️⃣ 👋🏿 ❤️‍🔥 🧑‍🚀 ",
             target_bytes,
         ),
-        "unicode17_conformance": conformance,
+        CONFORMANCE_CASE: conformance,
     }
-    return cases, {"unicode17_conformance": expected}
+    return cases, {CONFORMANCE_CASE: expected}
 
 
 def file_sha256(path: Path) -> str:
@@ -330,6 +336,33 @@ def calibrate(
     return repeats, checksum
 
 
+def verify_signatures(
+    case_name: str,
+    signatures: dict[str, tuple[int, int, int]],
+    conformance_signature: tuple[int, int, int] | None,
+) -> None:
+    by_version: dict[str, dict[str, tuple[int, int, int]]] = {}
+    for implementation, signature in signatures.items():
+        version = IMPLEMENTATION_UNICODE_VERSIONS[implementation]
+        by_version.setdefault(version, {})[implementation] = signature
+        if (
+            conformance_signature is not None
+            and version == UNICODE_VERSION
+            and signature != conformance_signature
+        ):
+            raise BenchmarkFailure(
+                f"{case_name}: {implementation} Unicode {version} expected boundary "
+                f"signature {conformance_signature}, got {signature}"
+            )
+    for version, group in by_version.items():
+        if len(set(group.values())) > 1:
+            raise BenchmarkFailure(
+                f"{case_name}: Unicode {version} boundary signatures differ: {group}"
+            )
+    if len(set(signatures.values())) > 1:
+        print(f"  Unicode versions yield different boundary signatures: {by_version}")
+
+
 def benchmark(
     binaries: dict[str, Path],
     cases: dict[str, bytes],
@@ -344,12 +377,16 @@ def benchmark(
     for case_name, corpus in cases.items():
         print(f"\n[{case_name}] {len(corpus):,} bytes", flush=True)
         case_results: dict[str, dict] = {}
-        one_pass_counts: dict[str, int] = {}
-        signatures: dict[str, tuple[int, int, int]] = {}
+        signatures = {
+            language: verify_boundaries(binary, corpus, cpu)
+            for language, binary in binaries.items()
+        }
+        verify_signatures(case_name, signatures, expected.get(case_name))
+
         for language, binary in binaries.items():
-            signatures[language] = verify_boundaries(binary, corpus, cpu)
             repeats, checksum = calibrate(binary, corpus, cpu, target_seconds)
-            one_pass_counts[language] = checksum
+            if checksum != signatures[language][0]:
+                raise BenchmarkFailure(f"{case_name}: {language} count and signature disagree")
             checked_invoke(binary, corpus, repeats, cpu, checksum)
             samples = []
             for _ in range(samples_count):
@@ -359,6 +396,7 @@ def benchmark(
             mad = statistics.median(abs(value - median) for value in samples)
             case_results[language] = {
                 "clusters": checksum,
+                "boundary_signature": signatures[language],
                 "repeats": repeats,
                 "mb_per_second_median": median,
                 "mb_per_second_mad": mad,
@@ -370,19 +408,6 @@ def benchmark(
                 flush=True,
             )
 
-        if len(set(one_pass_counts.values())) != 1:
-            raise BenchmarkFailure(
-                f"{case_name}: implementations disagree on cluster counts: {one_pass_counts}"
-            )
-        if len(set(signatures.values())) != 1:
-            raise BenchmarkFailure(
-                f"{case_name}: implementations disagree on boundary positions: {signatures}"
-            )
-        if case_name in expected and next(iter(signatures.values())) != expected[case_name]:
-            raise BenchmarkFailure(
-                f"{case_name}: Unicode 17 expected boundary signature "
-                f"{expected[case_name]}, got {signatures}"
-            )
         results[case_name] = {"bytes": len(corpus), "implementations": case_results}
     return results
 
@@ -499,6 +524,7 @@ def main() -> None:
         raise BenchmarkFailure(
             f"benchmark requires {pinned_roc}, got {actual_roc!r}"
         )
+    all_cases, all_expected = corpora(args.corpus_bytes)
     binaries = (
         {
             "roc": BUILD / "roc",
@@ -515,7 +541,6 @@ def main() -> None:
     if missing:
         raise BenchmarkFailure(f"benchmark binaries are missing: {missing}")
 
-    all_cases, all_expected = corpora(args.corpus_bytes)
     selected_names = args.cases or list(CASE_NAMES)
     cases = {name: all_cases[name] for name in selected_names}
     expected = {name: all_expected[name] for name in selected_names if name in all_expected}
@@ -541,11 +566,13 @@ def main() -> None:
             "cc": capture([args.cc, "--version"]),
         },
         "libraries": {
+            "roc_unicode": UNICODE_VERSION,
             "unicode_segmentation": "1.13.3 (Unicode 17)",
-            "icu_segmenter": "2.2.0 (Unicode 17)",
+            "icu_segmenter": "2.4.0 (Unicode 18, Neo)",
             "clipperhouse_uax29": "2.7.0 (Unicode 17)",
             "libgrapheme": "3.0.0 (Unicode 17)",
         },
+        "unicode_versions": IMPLEMENTATION_UNICODE_VERSIONS,
         "configuration": {
             "samples": args.samples,
             "target_seconds": args.target_seconds,
@@ -574,6 +601,6 @@ def main() -> None:
 if __name__ == "__main__":
     try:
         main()
-    except (BenchmarkFailure, OSError, subprocess.CalledProcessError) as error:
+    except (BenchmarkFailure, OSError, subprocess.CalledProcessError, unicode_data.DataError) as error:
         print(f"ERROR: {error}", file=sys.stderr)
         raise SystemExit(1) from error

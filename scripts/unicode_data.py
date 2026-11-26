@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Validate pinned Unicode data and generate narrow Roc lookup modules.
 
-This deliberately uses only the Python standard library so normal CI can run
-offline after checkout. The manifest describes independent release and
-specification axes, canonical sources, and the artifacts that depend on them.
+This uses only the Python standard library to fetch and validate local inputs.
+The manifest describes independent release and specification axes, canonical
+sources, and the artifacts that depend on them.
 """
 
 from __future__ import annotations
@@ -11,13 +11,24 @@ from __future__ import annotations
 import argparse
 from array import array
 import hashlib
+from io import BytesIO
 import json
 import re
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from fractions import Fraction
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from typing import Callable, Iterable
 from urllib.parse import urlparse
+from urllib.request import urlopen
+from zipfile import BadZipFile, ZipFile
+
+if __package__:
+    from . import unicode_collation, unicode_normalization
+else:
+    import unicode_collation
+    import unicode_normalization
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -64,15 +75,20 @@ EMOJI_PROPERTIES = (
     "Emoji_Component",
     "Extended_Pictographic",
 )
+DERIVED_IDENTIFIER_PROPERTIES = ("Alphabetic", "XID_Start", "XID_Continue")
+PATTERN_PROPERTIES = ("White_Space", "Pattern_Syntax", "Pattern_White_Space")
 DERIVED_CORE_PROPERTIES = (
     "Default_Ignorable_Code_Point",
     "Indic_Conjunct_Break",
     "Cased",
     "Case_Ignorable",
+    *DERIVED_IDENTIFIER_PROPERTIES,
 )
-PROP_LIST_PROPERTIES = ("Variation_Selector", "Soft_Dotted")
+PROP_LIST_PROPERTIES = ("Variation_Selector", "Soft_Dotted", *PATTERN_PROPERTIES, "Unified_Ideograph")
+NUMERIC_TYPES = ("None", "Decimal", "Digit", "Numeric")
 UNICODE_DATA_PROPERTIES = (
     "Bidi_Mirrored",
+    "Decomposition_Mapping",
     "Simple_Uppercase_Mapping",
     "Simple_Lowercase_Mapping",
     "Simple_Titlecase_Mapping",
@@ -109,6 +125,10 @@ WORD_BREAK_PROPERTIES = (
     "WSegSpace",
     "ZWJ",
 )
+SENTENCE_BREAK_PROPERTIES = (
+    "Other", "CR", "LF", "Sep", "Extend", "Format", "Sp", "Lower", "Upper",
+    "OLetter", "Numeric", "ATerm", "SContinue", "STerm", "Close",
+)
 LINE_BREAK_PROPERTIES = (
     "AI", "AK", "AL", "AP", "AS", "B2", "BA", "BB", "BK", "CB", "CJ",
     "CL", "CM", "CP", "CR", "EB", "EM", "EX", "GL", "H2", "H3", "HH",
@@ -123,6 +143,7 @@ BIDI_CLASS_VALUES = (
 )
 BIDI_TEST_MODE_BITS = ((1, 0), (2, 1), (4, 2))
 PUBLIC_ALIAS_PROPERTIES = (
+    "Alphabetic",
     "Bidi_Class",
     "Bidi_Mirrored",
     "Bidi_Mirroring_Glyph",
@@ -142,9 +163,16 @@ PUBLIC_ALIAS_PROPERTIES = (
     "Indic_Syllabic_Category",
     "Joining_Group",
     "Joining_Type",
+    "Numeric_Type",
+    "Numeric_Value",
+    "Pattern_Syntax",
+    "Pattern_White_Space",
     "Script",
     "Variation_Selector",
     "Vertical_Orientation",
+    "White_Space",
+    "XID_Start",
+    "XID_Continue",
 )
 SCRIPT_PROPERTIES = ("Script",)
 SCRIPT_EXTENSIONS_PROPERTIES = ("Script_Extensions",)
@@ -160,7 +188,7 @@ FORMAL_PROPERTY_ALIASES = {
     "Script_Extensions": ("scx",),
 }
 
-# DerivedBidiClass-17.0.0 has an ordered default cascade whose ranges are part
+# DerivedBidiClass-18.0.0 has an ordered default cascade whose ranges are part
 # of the data contract, not merely an implementation detail. In particular,
 # changing one nontrivial default can silently reclassify large unassigned
 # regions while every explicit record remains valid.
@@ -214,7 +242,7 @@ class GraphemeCase:
 
 
 @dataclass(frozen=True)
-class WordBreakCase:
+class SegmentationCase:
     case_id: str
     line: int
     code_points: tuple[int, ...]
@@ -301,6 +329,7 @@ class ScriptProperties:
 class AlgorithmProperties:
     grapheme: PropertySource
     word_break: PropertySource
+    sentence_break: PropertySource
     east_asian_width: PropertySource
     emoji: PropertySource
     indic_conjunct_break: PropertySource
@@ -434,7 +463,33 @@ class SourceProjectionContract:
     header: str | None = None
 
 
+COLLATION_TEST_FILES = (
+    ("collation-non-ignorable", "CollationTest/CollationTest_NON_IGNORABLE_SHORT.txt"),
+    ("collation-shifted", "CollationTest/CollationTest_SHIFTED_SHORT.txt"),
+)
+
+
 SOURCE_PROJECTION_CONTRACTS = {
+    ("uts-10-allkeys", ()): SourceProjectionContract("uca/allkeys.txt", "production"),
+    ("uts-10-collation-archive", ()): SourceProjectionContract(
+        "uca/CollationTest.zip", "conformance", has_cases=True, cases_match_records=False,
+        header="# UCA Version: 18.0.0",
+    ),
+    ("cldr-root-collation", ()): SourceProjectionContract(
+        "common/uca/allkeys_CLDR.txt", "production", ("cldr",), header="# UCA Version: 18.0.0",
+    ),
+    ("cldr-collation", ("German",)): SourceProjectionContract(
+        "common/collation/de.xml", "production", ("cldr",), header='<?xml version="1.0" encoding="UTF-8" ?>',
+    ),
+    ("cldr-collation", ("Spanish",)): SourceProjectionContract(
+        "common/collation/es.xml", "production", ("cldr",), header='<?xml version="1.0" encoding="UTF-8" ?>',
+    ),
+    ("ucd-normalization-properties", unicode_normalization.PROPERTIES): SourceProjectionContract(
+        "ucd/DerivedNormalizationProps.txt", "production"
+    ),
+    ("uax-15-normalization-test", ()): SourceProjectionContract(
+        "ucd/NormalizationTest.txt", "conformance", has_cases=True, cases_match_records=False
+    ),
     ("ucd-property-ranges", ("East_Asian_Width",)): SourceProjectionContract(
         "ucd/EastAsianWidth.txt", "production-and-conformance"
     ),
@@ -443,6 +498,9 @@ SOURCE_PROJECTION_CONTRACTS = {
     ),
     ("ucd-property-ranges", ("Word_Break",)): SourceProjectionContract(
         "ucd/auxiliary/WordBreakProperty.txt", "production-and-conformance"
+    ),
+    ("ucd-property-ranges", ("Sentence_Break",)): SourceProjectionContract(
+        "ucd/auxiliary/SentenceBreakProperty.txt", "production-and-conformance"
     ),
     ("ucd-property-ranges", ("Line_Break",)): SourceProjectionContract(
         "ucd/LineBreak.txt", "production-and-conformance"
@@ -465,6 +523,9 @@ SOURCE_PROJECTION_CONTRACTS = {
     ("uax-29-word-test", ()): SourceProjectionContract(
         "ucd/auxiliary/WordBreakTest.txt", "conformance", has_cases=True
     ),
+    ("uax-29-sentence-test", ()): SourceProjectionContract(
+        "ucd/auxiliary/SentenceBreakTest.txt", "conformance", has_cases=True
+    ),
     ("ucd-binary-property-ranges", EMOJI_PROPERTIES): SourceProjectionContract(
         "ucd/emoji/emoji-data.txt",
         "production-and-conformance",
@@ -476,6 +537,12 @@ SOURCE_PROJECTION_CONTRACTS = {
     ),
     ("ucd-property-ranges", ("General_Category",)): SourceProjectionContract(
         "ucd/extracted/DerivedGeneralCategory.txt", "production"
+    ),
+    ("ucd-property-ranges", ("Numeric_Type",)): SourceProjectionContract(
+        "ucd/extracted/DerivedNumericType.txt", "production-and-conformance"
+    ),
+    ("ucd-rational-property-ranges", ("Numeric_Value",)): SourceProjectionContract(
+        "ucd/extracted/DerivedNumericValues.txt", "production-and-conformance"
     ),
     ("ucd-numeric-property-ranges", ("Canonical_Combining_Class",)): SourceProjectionContract(
         "ucd/extracted/DerivedCombiningClass.txt", "production"
@@ -539,17 +606,44 @@ SOURCE_PROJECTION_CONTRACTS = {
 }
 
 SPECIFICATION_COMPATIBILITY = {
-    "uax_9": ("unicode", "17.0.0", "51"),
-    "uax_11": ("unicode", "17.0.0", "44"),
-    "uax_14": ("unicode", "17.0.0", "55"),
-    "uax_24": ("unicode", "17.0.0", "39"),
-    "uax_29": ("unicode", "17.0.0", "47"),
-    "uax_44": ("unicode", "17.0.0", "36"),
-    "uax_50": ("unicode", "17.0.0", "33"),
-    "uts_51": ("emoji", "17.0", "29"),
+    "uax_15": ("unicode", "18.0.0", "58"),
+    "uax_9": ("unicode", "18.0.0", "52"),
+    "uax_11": ("unicode", "18.0.0", "46"),
+    "uax_14": ("unicode", "18.0.0", "57"),
+    "uax_24": ("unicode", "18.0.0", "41"),
+    "uax_29": ("unicode", "18.0.0", "49"),
+    "uax_31": ("unicode", "18.0.0", "45"),
+    "uax_44": ("unicode", "18.0.0", "38"),
+    "uax_50": ("unicode", "18.0.0", "35"),
+    "uts_10": ("unicode", "18.0.0", "55"),
+    "uts_35": ("cldr", "49", "79"),
+    "uts_35_collation": ("cldr", "49", "79"),
+    "uts_51": ("emoji", "18.0", "31"),
 }
 
 GENERATOR_CONTRACTS = {
+    "collation-data": GeneratorContract(
+        (
+            ("uts-10-allkeys", ()),
+            ("cldr-root-collation", ()),
+            ("cldr-collation", ("Spanish",)),
+            ("cldr-collation", ("German",)),
+            ("ucd-binary-property-ranges", PROP_LIST_PROPERTIES),
+            ("ucd-unicode-data", UNICODE_DATA_PROPERTIES),
+        ),
+        ("uts_10", "uts_35", "uts_35_collation"),
+        ("normalization-data", "canonical-combining-class", "general-category"),
+        "package/InternalCollationData.roc",
+    ),
+    "normalization-data": GeneratorContract(
+        (
+            ("ucd-unicode-data", UNICODE_DATA_PROPERTIES),
+            ("ucd-normalization-properties", unicode_normalization.PROPERTIES),
+        ),
+        ("uax_15",),
+        ("canonical-combining-class",),
+        "package/InternalNormalizationData.roc",
+    ),
     "unicode-version": GeneratorContract((), ("uax_44",), (), "package/UnicodeVersion.roc"),
     "grapheme-data": GeneratorContract(
         (
@@ -577,6 +671,14 @@ GENERATOR_CONTRACTS = {
         ("uax_29", "uts_51"),
         (),
         "package/InternalWordData.roc",
+        True,
+        "computed",
+    ),
+    "sentence-data": GeneratorContract(
+        (("ucd-property-ranges", ("Sentence_Break",)),),
+        ("uax_29",),
+        (),
+        "package/InternalSentenceData.roc",
         True,
         "computed",
     ),
@@ -745,6 +847,31 @@ GENERATOR_CONTRACTS = {
         True,
         "constant-zero",
     ),
+    "identifier-properties": GeneratorContract(
+        (
+            ("ucd-derived-core-properties", DERIVED_CORE_PROPERTIES),
+            ("ucd-binary-property-ranges", PROP_LIST_PROPERTIES),
+        ),
+        ("uax_31", "uax_44"),
+        (),
+        "package/InternalIdentifierData.roc",
+        True,
+        "computed",
+    ),
+    "numeric-properties": GeneratorContract(
+        (
+            ("ucd-property-ranges", ("Numeric_Type",)),
+            ("ucd-rational-property-ranges", ("Numeric_Value",)),
+            ("ucd-property-ranges", ("General_Category",)),
+            ("ucd-property-aliases", PUBLIC_ALIAS_PROPERTIES),
+            ("ucd-property-value-aliases", PUBLIC_ALIAS_PROPERTIES),
+        ),
+        ("uax_44",),
+        (),
+        "package/InternalNumericData.roc",
+        True,
+        "computed",
+    ),
     "emoji-variations": GeneratorContract(
         (("ucd-emoji-variation-sequences", ("Emoji_Variation_Sequence",)),),
         ("uts_51",),
@@ -901,7 +1028,11 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
         "unicode": {
             "url_prefix": "https://www.unicode.org/",
             "license": "unicode-data",
-        }
+        },
+        "cldr": {
+            "url_prefix": "https://raw.githubusercontent.com/unicode-org/cldr/",
+            "license": "unicode-data",
+        },
     }:
         raise DataError("manifest Unicode authority provenance drifted")
 
@@ -1030,13 +1161,17 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
             raise DataError(
                 f"manifest.specifications.{name} is incompatible with its exact release"
             )
-        number_match = re.fullmatch(r"(?:uax|uts)_([0-9]+)", name)
+        number_match = re.fullmatch(r"(?:uax|uts)_([0-9]+)(?:_collation)?", name)
         if number_match is None or not isinstance(item.get("document"), str):
             raise DataError(f"manifest.specifications.{name} has invalid document metadata")
         number = number_match.group(1)
-        expected_document = (
-            f"https://www.unicode.org/reports/tr{number}/tr{number}-{item['revision']}.html"
-        )
+        revision = item["revision"]
+        prefix = f"https://www.unicode.org/reports/tr{number}/tr{number}-{revision}"
+        if name in ("uts_35", "uts_35_collation"):
+            part = "tr35-collation.html" if name.endswith("_collation") else "tr35.html"
+            expected_document = f"{prefix}/{part}"
+        else:
+            expected_document = f"{prefix}.html"
         if item["document"] != expected_document:
             raise DataError(f"manifest.specifications.{name}.document does not pin its revision")
 
@@ -1111,7 +1246,10 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
             raise DataError(f"manifest.sources.{name}.cases must exactly match data records")
         unicode_version = release_version(manifest, storage_release)
         authority_prefix = str(authority["url_prefix"])
-        expected_url_prefix = f"{authority_prefix}Public/{unicode_version}/"
+        expected_url_prefix = (
+            f"{authority_prefix}release-{unicode_version.replace('.', '-')}/"
+            if storage["kind"] == "cldr" else f"{authority_prefix}Public/{unicode_version}/"
+        )
         expected_url = expected_url_prefix + projection_contract.official_suffix
         if item["url"] != expected_url:
             raise DataError(f"manifest.sources.{name}.url does not identify its exact release")
@@ -1120,7 +1258,7 @@ def load_manifest(path: Path = MANIFEST_PATH) -> dict[str, object]:
         if projection_contract.header is not None:
             expected_header = projection_contract.header
         elif projection_contract.emoji_header:
-            expected_header = f"# Version: {release_version(manifest, 'emoji')}"
+            expected_header = f"# Version: {unicode_version}"
         else:
             expected_header = f"# {Path(path_value).stem}-{unicode_version}.txt"
         if item["header"] != expected_header:
@@ -1348,18 +1486,56 @@ def data_path(manifest: dict[str, object], name: str) -> Path:
     return ROOT / relative
 
 
-def verify_source(manifest: dict[str, object], name: str) -> str:
-    item = _entry(manifest, name)
+def verify_digest(content: bytes, expected: str, path: Path) -> None:
+    digest = hashlib.sha256(content).hexdigest()
+    if digest != expected:
+        raise DataError(f"SHA-256 mismatch for {path}: expected {expected}, got {digest}")
+
+
+def verify_source_bytes(manifest: dict[str, object], name: str) -> bytes:
     path = data_path(manifest, name)
     try:
         content = path.read_bytes()
+    except FileNotFoundError as err:
+        raise DataError(
+            f"missing pinned input {path}; run `python3 scripts/unicode_data.py fetch`"
+        ) from err
     except OSError as err:
         raise DataError(f"unable to read {path}: {err}") from err
-    digest = hashlib.sha256(content).hexdigest()
-    if digest != item["sha256"]:
-        raise DataError(
-            f"SHA-256 mismatch for {path}: expected {item['sha256']}, got {digest}"
-        )
+    verify_digest(content, str(_entry(manifest, name)["sha256"]), path)
+    return content
+
+
+def fetch_sources(manifest: dict[str, object]) -> None:
+    for name in _require_dict(manifest["sources"], "manifest.sources"):
+        path = data_path(manifest, name)
+        if path.exists():
+            verify_source_bytes(manifest, name)
+            continue
+        item = _entry(manifest, name)
+        url = str(item["url"])
+        temporary = None
+        try:
+            with urlopen(url, timeout=60) as response:
+                content = response.read()
+            verify_digest(content, str(item["sha256"]), path)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with NamedTemporaryFile(dir=path.parent, delete=False) as output:
+                temporary = Path(output.name)
+                output.write(content)
+            temporary.replace(path)
+            print(f"fetched {path.relative_to(ROOT)}", flush=True)
+        except OSError as err:
+            raise DataError(f"unable to fetch {url}: {err}") from err
+        finally:
+            if temporary is not None:
+                temporary.unlink(missing_ok=True)
+
+
+def verify_source(manifest: dict[str, object], name: str) -> str:
+    item = _entry(manifest, name)
+    path = data_path(manifest, name)
+    content = verify_source_bytes(manifest, name)
     try:
         text = content.decode("utf-8")
     except UnicodeDecodeError as err:
@@ -1426,7 +1602,7 @@ def parse_ranges(
 
 
 def loose_alias(value: str) -> str:
-    """UAX #44 revision 36, LM3 loose matching for ASCII property aliases."""
+    """UAX #44, LM3 loose matching for ASCII property aliases."""
     ignored_whitespace = {
         "\u0009", "\u000A", "\u000B", "\u000C", "\u000D", "\u0020",
         "\u0085", "\u00A0", "\u1680", "\u2000", "\u2001", "\u2002",
@@ -1872,6 +2048,24 @@ def load_property_data(
             value="Other",
         ),
     )
+    sentence_name = _source_for(manifest, "ucd-property-ranges", ("Sentence_Break",))
+    sentence_text = verify_source(manifest, sentence_name)
+    sentence_source = str(data_path(manifest, sentence_name))
+    sentence_break = parse_ranges(
+        sentence_text,
+        source=sentence_source,
+        allowed_properties=SENTENCE_BREAK_PROPERTIES[1:],
+        default_marker=None,
+    )
+    sentence_defaults = (
+        _required_formal_default(
+            sentence_text,
+            source=sentence_source,
+            property_name="Sentence_Break",
+            declared_property=None,
+            value="Other",
+        ),
+    )
     eaw_name = _source_for(manifest, "ucd-property-ranges", ("East_Asian_Width",))
     eaw_text = verify_source(manifest, eaw_name)
     eaw_source = str(data_path(manifest, eaw_name))
@@ -1922,6 +2116,9 @@ def load_property_data(
         word_break, word_defaults, source=word_source, properties=("Word_Break",)
     )
     _validate_default_precedence(
+        sentence_break, sentence_defaults, source=sentence_source, properties=("Sentence_Break",)
+    )
+    _validate_default_precedence(
         eaw, eaw_defaults, source=eaw_source, properties=("East_Asian_Width",)
     )
     _validate_default_precedence(
@@ -1934,6 +2131,8 @@ def load_property_data(
         raise DataError(f"{gcb_source}: Grapheme_Cluster_Break values/sections drifted")
     if {record.property for record in word_break} != set(WORD_BREAK_PROPERTIES[1:]):
         raise DataError(f"{word_source}: Word_Break values/sections drifted")
+    if {record.property for record in sentence_break} != set(SENTENCE_BREAK_PROPERTIES[1:]):
+        raise DataError(f"{sentence_source}: Sentence_Break values/sections drifted")
     if {record.property for record in eaw} != set(EAW_PROPERTIES):
         raise DataError(f"{eaw_source}: East_Asian_Width values drifted")
     if {record.property for record in incb} != set(INCB_PROPERTIES):
@@ -1941,6 +2140,7 @@ def load_property_data(
     return AlgorithmProperties(
         PropertySource(tuple(gcb), gcb_defaults),
         PropertySource(tuple(word_break), word_defaults),
+        PropertySource(tuple(sentence_break), sentence_defaults),
         PropertySource(tuple(eaw), eaw_defaults),
         PropertySource(tuple(emoji), emoji_defaults),
         PropertySource(tuple(incb), incb_defaults),
@@ -2437,9 +2637,11 @@ def _parse_sparse_mapping(text: str, *, source: str) -> tuple[SparseMapping, ...
             raise DataError(f"{source}:{line_number}: duplicate or non-scalar mapping endpoint")
         seen.add(source_cp)
         records.append(SparseMapping(source_cp, target_cp, line_number))
-    if not records or tuple(record.source for record in records) != tuple(sorted(seen)):
-        raise DataError(f"{source}: scalar mappings must be nonempty and strictly ordered")
-    return tuple(records)
+    if not records:
+        raise DataError(f"{source}: no scalar mappings")
+    # BidiMirroring groups some mathematical symbols by pair in Unicode 18.
+    # Canonicalize their order for the runtime binary-search table.
+    return tuple(sorted(records, key=lambda record: record.source))
 
 
 def _parse_bidi_brackets(text: str, *, source: str) -> tuple[BidiBracket, ...]:
@@ -2554,6 +2756,111 @@ def _parse_binary_projection(
     return tuple(records)
 
 
+def load_identifier_properties(manifest: dict[str, object]) -> dict[str, tuple[RangeRecord, ...]]:
+    properties: dict[str, tuple[RangeRecord, ...]] = {}
+    for source_format, projection, names in (
+        ("ucd-derived-core-properties", DERIVED_CORE_PROPERTIES, DERIVED_IDENTIFIER_PROPERTIES),
+        ("ucd-binary-property-ranges", PROP_LIST_PROPERTIES, PATTERN_PROPERTIES),
+    ):
+        key = _source_for(manifest, source_format, projection)
+        text = verify_source(manifest, key)
+        source = str(data_path(manifest, key))
+        # Both files supply explicit Yes ranges. A new formal default for
+        # these properties must be reviewed, since the runtime assumes No.
+        declarations = parse_missing_defaults(text, source=source)
+        aliases = {loose_alias(name) for name in (*names, "Alpha", "XIDS", "XIDC", "WSpace", "Pat_Syn", "Pat_WS")}
+        if any(
+            default.property is None or loose_alias(default.property) in aliases
+            for default in declarations
+        ):
+            raise DataError(f"{source}: identifier property default declarations drifted")
+        for name in names:
+            ranges = _parse_binary_projection(text, source=source, property_name=name)
+            if any(record.start <= 0xDFFF and record.end >= 0xD800 for record in ranges):
+                raise DataError(f"{source}: {name} range includes surrogates")
+            properties[name] = ranges
+    return properties
+
+
+def parse_numeric_values(text: str, *, source: str) -> dict[int, Fraction]:
+    if not re.search(r"^#\s+Numeric_Value = NaN$", text, re.MULTILINE):
+        raise DataError(f"{source}: Numeric_Value must declare the omitted value NaN")
+    if parse_missing_defaults(text, source=source):
+        raise DataError(f"{source}: Numeric_Value @missing declarations drifted")
+    values: dict[int, Fraction] = {}
+    for line_number, raw_line in enumerate(text.splitlines(), 1):
+        body = raw_line.split("#", 1)[0].strip()
+        if not body:
+            continue
+        fields = [field.strip() for field in body.split(";")]
+        span = fields[0].split("..")
+        if (
+            len(fields) != 4
+            or len(span) not in (1, 2)
+            or any(not HEX_RE.fullmatch(field) for field in span)
+            or not re.fullmatch(r"-?[0-9]+\.[0-9]+", fields[1])
+            or fields[2]
+            or not re.fullmatch(r"-?[0-9]+(?:/[1-9][0-9]*)?", fields[3])
+        ):
+            raise DataError(f"{source}:{line_number}: malformed Numeric_Value record")
+        start, end = int(span[0], 16), int(span[-1], 16)
+        if start > end or end > MAX_CODE_POINT or (start <= 0xDFFF and end >= 0xD800):
+            raise DataError(f"{source}:{line_number}: invalid Numeric_Value range")
+        value = Fraction(fields[3])
+        if not -(1 << 63) <= value.numerator < (1 << 63) or value.denominator >= (1 << 64):
+            raise DataError(f"{source}:{line_number}: exact Numeric_Value exceeds rational storage")
+        for code_point in range(start, end + 1):
+            if code_point in values:
+                raise DataError(f"{source}:{line_number}: overlapping Numeric_Value range")
+            values[code_point] = value
+    if not values:
+        raise DataError(f"{source}: no Numeric_Value records")
+    return values
+
+
+def _numeric_type_aliases(canonical: CanonicalProperties) -> tuple[PropertyValueAlias, ...]:
+    aliases = canonical.property_value_aliases.get("nt", ())
+    if {alias.long for alias in aliases} != set(NUMERIC_TYPES):
+        raise DataError("unexpected Numeric_Type identities")
+    return tuple(replace(alias, identity=alias.long) for alias in aliases)
+
+
+def load_numeric_properties(
+    manifest: dict[str, object], canonical: CanonicalProperties,
+) -> dict[int, tuple[str, Fraction]]:
+    type_key = _source_for(manifest, "ucd-property-ranges", ("Numeric_Type",))
+    type_path = str(data_path(manifest, type_key))
+    type_text = verify_source(manifest, type_key)
+    if {"nt", "nv"} - canonical.property_aliases.keys():
+        raise DataError("Numeric_Type or Numeric_Value is missing its property alias declaration")
+    aliases = _numeric_type_aliases(canonical)
+    types = _resolved_property_source(
+        type_text, source=type_path, property_name="Numeric_Type", aliases=aliases, expected_base="None",
+    )
+    if len(types.defaults) != 1 or {row.property for row in types.records} != set(NUMERIC_TYPES[1:]):
+        raise DataError(f"{type_path}: Numeric_Type records or defaults drifted")
+    value_key = _source_for(manifest, "ucd-rational-property-ranges", ("Numeric_Value",))
+    values = parse_numeric_values(verify_source(manifest, value_key), source=str(data_path(manifest, value_key)))
+    result: dict[int, tuple[str, Fraction]] = {}
+    for entry in types.records:
+        for code_point in range(entry.start, entry.end + 1):
+            if code_point not in values:
+                raise DataError(f"{type_path}:{entry.line}: U+{code_point:04X} has a type without a value")
+            value = values[code_point]
+            if entry.property in ("Decimal", "Digit") and (value.denominator != 1 or not 0 <= value <= 9):
+                raise DataError(f"{type_path}:{entry.line}: U+{code_point:04X} is not a base-10 digit value")
+            result[code_point] = entry.property, value
+    if result.keys() != values.keys():
+        raise DataError("Numeric_Value contains an entry without a Numeric_Type")
+    expected_decimals = {
+        cp for record in canonical.general_category if record.property == "Nd"
+        for cp in range(record.start, record.end + 1)
+    }
+    if {cp for cp, (kind, _) in result.items() if kind == "Decimal"} != expected_decimals:
+        raise DataError("Numeric_Type=Decimal disagrees with General_Category=Nd")
+    return result
+
+
 def _parse_emoji_variation_bases(text: str, *, source: str) -> tuple[int, ...]:
     by_base: dict[int, dict[int, str]] = {}
     previous: tuple[int, int] | None = None
@@ -2641,7 +2948,7 @@ def load_public_properties(
         or actual_bidi_defaults != expected_bidi_defaults
     ):
         raise DataError(
-            f"{bidi_path}: Bidi_Class @missing declarations drifted from the exact Unicode 17.0.0 cascade"
+            f"{bidi_path}: Bidi_Class @missing declarations drifted from the exact Unicode 18.0.0 cascade"
         )
 
     unicode_data_text, unicode_data_path = load_source("ucd-unicode-data", UNICODE_DATA_PROPERTIES)
@@ -2985,13 +3292,25 @@ def parse_grapheme_tests(
 
 def parse_word_break_tests(
     manifest: dict[str, object], text: str | None = None
-) -> list[WordBreakCase]:
+) -> list[SegmentationCase]:
+    return _parse_segmentation_tests(manifest, "uax-29-word-test", "word-break", text)
+
+
+def parse_sentence_break_tests(
+    manifest: dict[str, object], text: str | None = None
+) -> list[SegmentationCase]:
+    return _parse_segmentation_tests(manifest, "uax-29-sentence-test", "sentence-break", text)
+
+
+def _parse_segmentation_tests(
+    manifest: dict[str, object], format_name: str, label: str, text: str | None
+) -> list[SegmentationCase]:
     version = release_version(manifest, "unicode")
-    source_key = _source_for(manifest, "uax-29-word-test", ())
+    source_key = _source_for(manifest, format_name, ())
     source_name = Path(str(_entry(manifest, source_key)["path"])).name
     if text is None:
         text = verify_source(manifest, source_key)
-    cases: list[WordBreakCase] = []
+    cases: list[SegmentationCase] = []
     for line_number, raw_line in enumerate(text.splitlines(), 1):
         stripped = raw_line.strip()
         if not stripped or stripped.startswith("#"):
@@ -3037,7 +3356,7 @@ def parse_word_break_tests(
                 f"got {len(rule_tokens)}"
             )
         cases.append(
-            WordBreakCase(
+            SegmentationCase(
                 case_id=f"{version}:{source_name}:{line_number}",
                 line=line_number,
                 code_points=tuple(code_points),
@@ -3047,7 +3366,7 @@ def parse_word_break_tests(
         )
     expected = _entry(manifest, source_key).get("cases")
     if expected != len(cases):
-        raise DataError(f"word-break case-count drift: expected {expected}, got {len(cases)}")
+        raise DataError(f"{label} case-count drift: expected {expected}, got {len(cases)}")
     return cases
 
 
@@ -3680,6 +3999,52 @@ def render_grapheme_data(
     )
 
 
+def render_sentence_data(
+    manifest: dict[str, object], version: str, sentence: PropertySource
+) -> str:
+    encoded = _encoded_property(sentence, SENTENCE_BREAK_PROPERTIES)
+    paged = _selected_paged_bytes(encoded, manifest=manifest, generator="sentence-data")
+    page_size = 1 << paged.page_bits
+    matches = "\n".join(
+        f"        {index} => {value}" for index, value in enumerate(SENTENCE_BREAK_PROPERTIES)
+    )
+    return (
+        f"## GENERATED from Unicode {version} Sentence_Break. "
+        "Run `python3 scripts/unicode_data.py generate`. ##\n"
+        f"## layout: {len(paged.page_index)} {paged.index_type} page ids + "
+        f"{len(paged.pages)} x {page_size} U8 values; logical payload {paged.storage_bytes} bytes. ##\n\n"
+        "InternalSentenceData :: [].{\n"
+        f"    Class : [{', '.join(SENTENCE_BREAK_PROPERTIES)}]\n\n"
+        "    lookup : U32 -> Class\n"
+        "    lookup = |scalar| {\n"
+        "        value = if scalar < 128 {\n"
+        "            ascii_value(scalar)\n"
+        "        } else if scalar > 0x10FFFF {\n"
+        "            0\n"
+        "        } else {\n"
+        f"            page = page_index.get(scalar.shr_wrap({paged.page_bits}).to_u64()) ?? 0\n"
+        f"            offset = page.to_u64() * {page_size} + scalar.bitwise_and({page_size - 1}).to_u64()\n"
+        "            pages.get(offset) ?? 0\n"
+        "        }\n"
+        "        from_u8(value)\n"
+        "    }\n"
+        "}\n\n"
+        "from_u8 : U8 -> InternalSentenceData.Class\n"
+        "from_u8 = |value| {\n"
+        "    match value {\n"
+        f"{matches}\n"
+        "        _ => Other\n"
+        "    }\n"
+        "}\n\n"
+        "ascii_value : U32 -> U8\n"
+        f"ascii_value = |u32| {_ascii_value_expression(encoded, default=0)}\n\n"
+        f"page_index : List({paged.index_type})\n"
+        f"page_index = {_roc_list(paged.page_index)}\n\n"
+        "pages : List(U8)\n"
+        f"pages = {_roc_list(paged.flat_pages)}\n"
+    )
+
+
 def render_word_data(
     manifest: dict[str, object],
     version: str,
@@ -4262,7 +4627,7 @@ def render_script_data(
             f"            {hash_value} => {conditions} else None"
         )
     return (
-        f"## GENERATED from Unicode {version} Scripts.txt and PropertyValueAliases.txt under UAX #24 revision 39. ##\n"
+        f"## GENERATED from Unicode {version} Scripts.txt and PropertyValueAliases.txt under UAX #24. ##\n"
         "## Run `python3 scripts/unicode_data.py generate`. Named tags/aliases are stable; U8 values are private. ##\n"
         "## Private IDs are generator-asserted canonical short-alias order solely to implement the public order contract. ##\n"
         f"## default: {properties.script_default}; {len(identities)} identities; layout: "
@@ -4481,7 +4846,7 @@ def render_script_extensions_data(
         words2.append(words[2])
         lengths.append(len(members))
     return (
-        f"## GENERATED from Unicode {version} ScriptExtensions.txt and PropertyValueAliases.txt under UAX #24 revision 39. ##\n"
+        f"## GENERATED from Unicode {version} ScriptExtensions.txt and PropertyValueAliases.txt under UAX #24. ##\n"
         "## Zero means the normative implicit singleton Script(cp); nonzero U8 values name interned sets. ##\n"
         f"## {len(sets)} explicit sets, {sum(lengths)} pooled members, max {max(lengths)} members; layout: "
         f"{len(paged.page_index)} {paged.index_type} page ids + {len(paged.pages)} x {page_size} U8 values; "
@@ -4529,7 +4894,7 @@ def render_script_extensions_data(
 def render_script_api(version: str, properties: ScriptProperties) -> str:
     identities = tuple(record.identity for record in _script_aliases_by_identity(properties))
     return (
-        f"## GENERATED public Unicode {version} Script/Script_Extensions API from PropertyValueAliases.txt under UAX #24 revision 39. ##\n"
+        f"## GENERATED public Unicode {version} Script/Script_Extensions API from PropertyValueAliases.txt under UAX #24. ##\n"
         "## Run `python3 scripts/unicode_data.py generate`; representation IDs and bit ordering are private. ##\n"
         "## ScriptSet traversal and comparison use canonical short-alias lexicographic order. ##\n\n"
         "import InternalScriptData\n"
@@ -5033,6 +5398,136 @@ def render_character_flags(
         "    }\n}\n\n"
         f"page_index : List({paged.index_type})\npage_index = {_roc_list(paged.page_index)}\n\n"
         f"pages : List(U8)\npages = {_roc_list(paged.flat_pages)}\n"
+    )
+
+
+def _render_u8_page_lookup(encoded: bytearray, paged: PagedBytes) -> tuple[str, str]:
+    page_size = 1 << paged.page_bits
+    ascii_expression = _ascii_value_expression(encoded, default=0)
+    lookup = (
+        "lookup_u8 : U32 -> U8\n"
+        "lookup_u8 = |u32| {\n"
+        f"    if u32 < 128 {{ {ascii_expression} }} else if u32 > 0x10FFFF {{ 0 }} else {{\n"
+        f"        page_id = page_index.get(u32.shr_wrap({paged.page_bits}).to_u64()) ?? 0\n"
+        f"        offset = page_id.to_u64() * {page_size} + u32.bitwise_and({page_size - 1}).to_u64()\n"
+        "        pages.get(offset) ?? 0\n"
+        "    }\n"
+        "}\n\n"
+    )
+    tables = (
+        f"page_index : List({paged.index_type})\npage_index = {_roc_list(paged.page_index)}\n\n"
+        f"pages : List(U8)\npages = {_roc_list(paged.flat_pages)}\n"
+    )
+    return lookup, tables
+
+
+def render_identifier_properties(manifest: dict[str, object], version: str) -> str:
+    properties = load_identifier_properties(manifest)
+    names = tuple(properties)
+    bits = {name: 1 << index for index, name in enumerate(names)}
+    encoded = bytearray(MAX_CODE_POINT + 1)
+    for name, records in properties.items():
+        for record in records:
+            for code_point in range(record.start, record.end + 1):
+                encoded[code_point] |= bits[name]
+    xid_start = bits["XID_Start"]
+    xid_continue = bits["XID_Continue"]
+    pattern = bits["Pattern_Syntax"] | bits["Pattern_White_Space"]
+    for flags in encoded:
+        if flags & xid_start and not flags & xid_continue:
+            raise DataError("XID_Start is not a subset of XID_Continue")
+        if flags & pattern and flags & xid_continue:
+            raise DataError("XID_Continue intersects Pattern_Syntax or Pattern_White_Space")
+    paged = _selected_paged_bytes(encoded, manifest=manifest, generator="identifier-properties")
+    lookup, tables = _render_u8_page_lookup(encoded, paged)
+    accessors = "\n\n".join(
+        f"    is_{name.lower()} : U32 -> Bool\n"
+        f"    is_{name.lower()} = |scalar| lookup_u8(scalar).bitwise_and({bits[name]}) != 0"
+        for name in names
+    )
+    return (
+        f"## GENERATED from Unicode {version} binary properties. Run `python3 scripts/unicode_data.py generate`. ##\n"
+        f"## Logical payload {paged.storage_bytes} bytes. ##\n\n"
+        "InternalIdentifierData :: [].{\n"
+        f"{accessors}\n"
+        "}\n\n"
+        + lookup + tables
+    )
+
+
+def render_numeric_properties(
+    manifest: dict[str, object], version: str, canonical: CanonicalProperties,
+) -> str:
+    properties = load_numeric_properties(manifest, canonical)
+    rows = sorted(set(properties.values()))
+    if len(rows) > 255:
+        raise DataError("Numeric_Value row identities exceed one byte")
+    ids = {value: index for index, value in enumerate(rows, 1)}
+    encoded = bytearray(MAX_CODE_POINT + 1)
+    for code_point, value in properties.items():
+        encoded[code_point] = ids[value]
+    paged = _selected_paged_bytes(encoded, manifest=manifest, generator="numeric-properties")
+    lookup, tables = _render_u8_page_lookup(encoded, paged)
+    # The generated lookup stores structure-of-arrays columns, with one
+    # byte for each type and eight each for the exact numerator/denominator.
+    layout = manifest["artifacts"][_artifact_for_generator(manifest, "numeric-properties")]["layout"]
+    total_bytes = paged.storage_bytes + (len(rows) + 1) * 17
+    if total_bytes > int(layout["max_logical_bytes"]):
+        raise DataError(f"numeric-properties logical payload {total_bytes} exceeds byte budget")
+    kind_ids = {kind: index for index, kind in enumerate(NUMERIC_TYPES)}
+    kinds = _roc_list([0, *(kind_ids[kind] for kind, _ in rows)])
+    numerators = _roc_list([0, *(value.numerator for _, value in rows)])
+    denominators = _roc_list([1, *(value.denominator for _, value in rows)])
+    aliases = _render_alias_members(NUMERIC_TYPES, _numeric_type_aliases(canonical))
+    names = canonical.property_aliases
+    type_name, value_name = names["nt"], names["nv"]
+    return (
+        f"## GENERATED from Unicode {version} Numeric_Type and Numeric_Value. Run `python3 scripts/unicode_data.py generate`. ##\n"
+        f"## Logical payload {total_bytes} bytes including {len(rows)} present rows and one absent row. ##\n\n"
+        "import InternalLooseAlias\n\n"
+        "InternalNumericData :: [].{\n"
+        f"    Value : [{', '.join(NUMERIC_TYPES)}]\n"
+        "    Rational : { numerator : I64, denominator : U64 }\n"
+        "    PropertyName : { short : Str, long : Str }\n\n"
+        "    type_property : PropertyName\n"
+        f"    type_property = {{ short: {_roc_string(type_name.short)}, long: {_roc_string(type_name.long)} }}\n\n"
+        "    value_property : PropertyName\n"
+        f"    value_property = {{ short: {_roc_string(value_name.short)}, long: {_roc_string(value_name.long)} }}\n\n"
+        "    type_of : U32 -> Value\n"
+        "    type_of = |scalar| match kinds.get(lookup_u8(scalar).to_u64()) {\n"
+        "        Ok(1) => Decimal\n"
+        "        Ok(2) => Digit\n"
+        "        Ok(3) => Numeric\n"
+        "        _ => None\n"
+        "    }\n\n"
+        "    decimal_digit : U32 -> [None, Some(U8)]\n"
+        "    decimal_digit = |scalar| {\n"
+        "        row = lookup_u8(scalar).to_u64()\n"
+        "        match kinds.get(row) {\n"
+        "            Ok(1) => match numerators.get(row) {\n"
+        "                # The generator checks Decimal numerators are integers from 0 to 9.\n"
+        "                Ok(numerator) => Some(numerator.to_u8_wrap())\n"
+        "                Err(_) => None\n"
+        "            }\n"
+        "            _ => None\n"
+        "        }\n"
+        "    }\n\n"
+        "    value_of : U32 -> [None, Some(Rational)]\n"
+        "    value_of = |scalar| {\n"
+        "        row = lookup_u8(scalar).to_u64()\n"
+        "        if row == 0 { None } else {\n"
+        "            match (numerators.get(row), denominators.get(row)) {\n"
+        "                (Ok(numerator), Ok(denominator)) => Some({ numerator, denominator })\n"
+        "                _ => None\n"
+        "            }\n"
+        "        }\n"
+        "    }\n\n"
+        + aliases
+        + "}\n\n"
+        + lookup + tables + "\n"
+        + f"kinds : List(U8)\nkinds = {kinds}\n\n"
+        + f"numerators : List(I64)\nnumerators = {numerators}\n\n"
+        + f"denominators : List(U64)\ndenominators = {denominators}\n"
     )
 
 
@@ -5593,6 +6088,87 @@ def render_unicode_version(version: str) -> str:
     )
 
 
+def parse_normalization_tests(manifest: dict[str, object]) -> tuple:
+    name = _source_for(manifest, "uax-15-normalization-test", ())
+    try:
+        rows = tuple(unicode_normalization.conformance_rows(verify_source(manifest, name)))
+    except ValueError as error:
+        raise DataError(f"{name}: {error}") from error
+    if len(rows) != _entry(manifest, name)["cases"]:
+        raise DataError(f"{name}: normalization case count drifted")
+    return rows
+
+
+def render_normalization(manifest: dict[str, object], version: str) -> str:
+    data_name = _source_for(manifest, "ucd-unicode-data", UNICODE_DATA_PROPERTIES)
+    prop_name = _source_for(manifest, "ucd-normalization-properties", unicode_normalization.PROPERTIES)
+    try:
+        data = unicode_normalization.parse_data(
+            verify_source(manifest, data_name), verify_source(manifest, prop_name)
+        )
+        return unicode_normalization.render(data, version, _roc_list)
+    except ValueError as error:
+        raise DataError(f"normalization data: {error}") from error
+
+
+def render_collation(manifest: dict[str, object], version: str) -> str:
+    def source(format, projection=()):
+        return verify_source(manifest, _source_for(manifest, format, projection))
+
+    try:
+        ducet, implicit = unicode_collation.parse_ducet(source("uts-10-allkeys"), version)
+        cldr_root, _ = unicode_collation.parse_ducet(source("cldr-root-collation"), version, cldr=True)
+        root = unicode_collation.merge_cldr_root(ducet, cldr_root)
+        direct = unicode_normalization.parse_decompositions(source("ucd-unicode-data", UNICODE_DATA_PROPERTIES))
+        canonical = {cp: values for cp, (compatibility, values) in direct.items() if not compatibility}
+        spanish = source("cldr-collation", ("Spanish",))
+        german = source("cldr-collation", ("German",))
+        overlays = [
+            unicode_collation.tailor(root, unicode_collation.parse_cldr_collation(text, language, kind), canonical)
+            for text, language, kind in (
+                (spanish, "es", "standard"),
+                (spanish, "es", "traditional"),
+                (german, "de", "phonebook"),
+            )
+        ]
+        unified = _parse_binary_projection(
+            source("ucd-binary-property-ranges", PROP_LIST_PROPERTIES),
+            source="PropList.txt", property_name="Unified_Ideograph",
+        )
+        han = [(row.start, row.end) for row in unified]
+        return unicode_collation.render(
+            root, overlays, implicit, han, version, release_version(manifest, "cldr"), _roc_list
+        )
+    except (ValueError, KeyError) as error:
+        raise DataError(f"collation data: {error}") from error
+
+
+def collation_test_sources(manifest: dict[str, object]) -> dict[str, str]:
+    name = _source_for(manifest, "uts-10-collation-archive", ())
+    item = _entry(manifest, name)
+    content = verify_source_bytes(manifest, name)
+    try:
+        with ZipFile(BytesIO(content)) as archive:
+            results = {
+                suite: archive.read(path).decode("utf-8")
+                for suite, path in COLLATION_TEST_FILES
+            }
+        records = sum(
+            1 for text in results.values() for line in text.splitlines()
+            if line.strip() and not line.lstrip().startswith("#")
+        )
+        version = release_version(manifest, "unicode")
+        cases = sum(
+            1 for text in results.values()
+            for _ in unicode_collation.parse_short_tests(text, version)
+        )
+    except (BadZipFile, KeyError, ValueError) as error:
+        raise DataError(f"collation conformance archive: {error}") from error
+    if records != item["records"] or cases != item["cases"]:
+        raise DataError("collation conformance row counts drifted")
+    return results
+
+
 def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
     properties = load_property_data(manifest)
     gcb = list(properties.grapheme.records)
@@ -5617,10 +6193,13 @@ def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
         (MissingDefault(0, MAX_CODE_POINT, "Joining_Group", jg_identities[0], 0),),
     )
     generators: dict[str, Callable[[], str]] = {
+        "collation-data": lambda: render_collation(manifest, version),
+        "normalization-data": lambda: render_normalization(manifest, version),
         "unicode-version": lambda: render_unicode_version(version),
         "grapheme-data": lambda: render_grapheme_data(manifest, version, gcb, incb, emoji),
         "legacy-grapheme-break": lambda: render_gcb(version, gcb),
         "word-data": lambda: render_word_data(manifest, version, word_break, emoji),
+        "sentence-data": lambda: render_sentence_data(manifest, version, properties.sentence_break),
         "case-data": lambda: render_case_data(manifest, version, canonical, case),
         "east-asian-width": lambda: render_eaw(
             version, eaw, properties.east_asian_width.defaults
@@ -5705,6 +6284,8 @@ def rendered_modules(manifest: dict[str, object]) -> dict[Path, str]:
             default_alias="R",
         ),
         "character-flags": lambda: render_character_flags(manifest, version, public),
+        "identifier-properties": lambda: render_identifier_properties(manifest, version),
+        "numeric-properties": lambda: render_numeric_properties(manifest, version, canonical),
         "emoji-variations": lambda: render_emoji_variations(
             version, public.emoji_variation_bases
         ),
@@ -5763,15 +6344,20 @@ def validate_all(manifest: dict[str, object]) -> None:
         if not license_path.is_file():
             raise DataError(f"missing data license: {license_path}")
     for source in _require_dict(manifest["sources"], "manifest.sources"):
-        verify_source(manifest, source)
+        if _entry(manifest, source)["format"] == "uts-10-collation-archive":
+            collation_test_sources(manifest)
+        else:
+            verify_source(manifest, source)
     load_property_data(manifest)
     canonical = load_canonical_properties(manifest)
     load_case_data(manifest, canonical)
     load_line_break_properties(manifest)
     load_public_properties(manifest, canonical)
     load_script_properties(manifest)
+    parse_normalization_tests(manifest)
     parse_grapheme_tests(manifest)
     parse_word_break_tests(manifest)
+    parse_sentence_break_tests(manifest)
     parse_line_break_tests(manifest)
     sum(1 for _ in parse_bidi_tests(manifest))
     sum(1 for _ in parse_bidi_character_tests(manifest))
@@ -5800,13 +6386,16 @@ def generate(manifest: dict[str, object], *, check: bool) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers.add_parser("fetch", help="download and verify pinned local inputs")
     subparsers.add_parser("validate", help="validate the manifest and pinned data")
     generate_parser = subparsers.add_parser("generate", help="generate Roc lookup modules")
     generate_parser.add_argument("--check", action="store_true", help="fail if outputs are stale")
     args = parser.parse_args(argv)
     try:
         manifest = load_manifest()
-        if args.command == "validate":
+        if args.command == "fetch":
+            fetch_sources(manifest)
+        elif args.command == "validate":
             validate_all(manifest)
             print(f"Unicode {release_version(manifest, 'unicode')} data are valid")
         elif args.command == "generate":

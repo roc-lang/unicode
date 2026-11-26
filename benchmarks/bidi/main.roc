@@ -24,7 +24,7 @@ run! = |input| {
 						var $checksum = 0.U64
 						var $at = 0.U64
 						while $at < repeats {
-							analysis = Bidi.analyze_paragraph(source, Auto, Bidi.default_limits) ?? return "FAIL\tanalysis"
+							analysis = Bidi.analyze_paragraph(source, { limits: Bidi.default_limits }) ?? return "FAIL\tanalysis"
 							paragraph = TextRange.scalar_range(Bidi.paragraph_range(analysis))
 							whole_line = Bidi.reorder_line(analysis, paragraph) ?? return "FAIL\twhole line"
 							start = ScalarRange.start(paragraph)

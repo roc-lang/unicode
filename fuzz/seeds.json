@@ -44,6 +44,14 @@
     { "name": "regional-indicator-pair", "bytes_hex": "F09F87BAF09F87B8" },
     { "name": "extend-zwj", "bytes_hex": "65CC81E2808D78" }
   ],
+  "sentence": [
+    { "name": "late-lowercase", "bytes_hex": "C3892E20E284A2CC81E284A2CC8161" },
+    { "name": "late-uppercase", "bytes_hex": "C3892E20E284A2CC81E284A2CC8141" },
+    { "name": "pending-at-completion", "bytes_hex": "412E20E284A2CC81" },
+    { "name": "paragraph-separator-and-mark", "bytes_hex": "410ACC8142" },
+    { "name": "initials-and-decimal", "bytes_hex": "552E532E20332E3134" },
+    { "name": "sentence-final-punctuation", "bytes_hex": "2253746F7021222020476F2E" }
+  ],
   "line-break": [
     { "name": "cjk-ideograph-run", "bytes_hex": "E4B8ADE69687E5AD97E7ACA6E4B8B2" },
     { "name": "hyphenated-compound", "bytes_hex": "77656C6C2D6B6E6F776E" },
@@ -61,6 +69,21 @@
     { "name": "ligature-ffi", "bytes_hex": "EFAC83" },
     { "name": "combining-dot-above", "bytes_hex": "69CC87" }
   ],
+  "collation": [
+    { "name": "canonical-equivalence", "bytes_hex": "C38541CC8A" },
+    { "name": "spanish-contractions", "bytes_hex": "63687A637A" },
+    { "name": "reordered-combining-marks", "bytes_hex": "61CC81CCA761CCA7CC81" },
+    { "name": "numeric-across-scripts", "bytes_hex": "66696C65303966696C65D9A9" },
+    { "name": "shifted-punctuation", "bytes_hex": "612D6261CC8162" }
+  ],
+  "normalization": [
+    { "name": "leading-nonstarter-order", "bytes_hex": "CC95CC80CC8141CC8A" },
+    { "name": "composition-exclusion", "bytes_hex": "E0A598E0A79CE284AB" },
+    { "name": "hangul-joins", "bytes_hex": "E18480E185A1E186A8EAB080E186A8" },
+    { "name": "compatibility-and-fold-removal", "bytes_hex": "EFBCB3747261C39F65C2ADEFAC83" },
+    { "name": "combining-graph-joiner-barrier", "bytes_hex": "61CC81CD8FCCA7" },
+    { "name": "supplementary-musical-marks", "bytes_hex": "F09D859EF09D85AFCD80" }
+  ],
   "property": [
     { "name": "ascii-boundary", "bytes_hex": "415A617A3039" },
     { "name": "unassigned-scalar", "bytes_hex": "CDB8" },
@@ -69,5 +92,17 @@
     { "name": "bmp-page-boundary", "bytes_hex": "C3BFC480EFBFBF" },
     { "name": "supplementary-plane-boundary", "bytes_hex": "EFBFBFF0908080" },
     { "name": "noncharacter", "bytes_hex": "EFB790" }
+  ],
+  "bidi": [
+    { "name": "isolates-and-brackets", "bytes_hex": "E281A728D790D79120313229E281A978" },
+    { "name": "paragraphs-and-marks", "bytes_hex": "610D0AD790CC81E280AA42E280AC" },
+    { "name": "arabic-numbers", "bytes_hex": "D8B920D9A1D9A220283329" }
+  ],
+  "script": [
+    { "name": "ambiguous-kana", "bytes_hex": "E383BCE38182E383BCE382A2E383BC" },
+    { "name": "ambiguous-neutral", "bytes_hex": "412E2E2E2E2E2ED790" },
+    { "name": "unknown-barrier", "bytes_hex": "612ECDB82ED096" },
+    { "name": "indic-and-emoji", "bytes_hex": "E0A48520E0A4B7E0A58DE2808DE0A4A0F09F91A9E2808DF09F91A9" },
+    { "name": "neutral-then-strong", "bytes_hex": "C2B7C2B7C2B7C2B7C2B7C2B7CEB1" }
   ]
 }

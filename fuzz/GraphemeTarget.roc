@@ -1,21 +1,18 @@
-app [target] {
-	fuzz: platform "https://github.com/lukewilliamboswell/roc-fuzz/releases/download/0.6.2/3kyiehxxzwAsjM23uCQGJ3Hx7dAAdzSGtK3k9Jq7Egtu.tar.zst",
-	unicode: "../package/main.roc",
-}
-
 import FuzzSupport
 import fuzz.Fuzz
 import unicode.ByteRange
 import unicode.Grapheme
 
-test : List(U32) -> Fuzz.Outcome
-test = |code_points| {
+test : FuzzSupport.Plan -> Fuzz.Outcome
+test = |input| {
+	code_points = input.code_points
 	parts = FuzzSupport.source_parts(code_points)
 	source = Str.join_with(parts, "")
 	collected = Grapheme.ranges(source)
-	iterated = Grapheme.iter_ranges(source).fold([], |ranges, range| ranges.append(range))
+	iterated = FuzzSupport.pause_iter(Grapheme.iter_ranges(source), input.config.to_u64() % (parts.len() + 1))
 	whole_cursor = cursor_ranges([source])
 	scalar_cursor = cursor_ranges([""].concat(parts).append(""))
+	planned_cursor = cursor_ranges(FuzzSupport.chunks(input, parts))
 
 	if iterated != collected {
 		crash "Grapheme.iter_ranges disagreed with Grapheme.ranges"
@@ -23,8 +20,8 @@ test = |code_points| {
 	if whole_cursor != collected {
 		crash "whole-chunk Grapheme.Cursor disagreed with Grapheme.ranges"
 	}
-	if scalar_cursor != collected {
-		crash "scalar-chunk Grapheme.Cursor disagreed with Grapheme.ranges"
+	if scalar_cursor != collected or planned_cursor != collected {
+		crash "scalar or planned chunk Grapheme.Cursor disagreed with Grapheme.ranges"
 	}
 
 	validate_partition(source, collected)
@@ -38,6 +35,10 @@ test = |code_points| {
 	if Str.join_with(expected_materialized, "") != source {
 		crash "grapheme materialization lost or changed source text"
 	}
+
+	FuzzSupport.check_bounded_collection("Grapheme.ranges_limited", source, input.config, collected, |limits| Grapheme.ranges_limited(source, limits))
+	FuzzSupport.check_bounded_collection("Grapheme.slices_limited", source, input.config, expected_materialized, |limits| Grapheme.slices_limited(source, limits))
+	FuzzSupport.check_bounded_collection("Grapheme.split_limited", source, input.config, expected_materialized, |limits| Grapheme.split_limited(source, limits))
 
 	for cluster in expected_materialized {
 		inner = Grapheme.ranges(cluster)
@@ -75,6 +76,10 @@ cursor_ranges = |chunks| {
 				Err(AlreadyFinished) => {}
 				_ => crash "Grapheme.Cursor was not sealed after finish"
 			}
+			match Grapheme.Cursor.push(done.cursor, "a", [], |ranges, range| ranges.append(range)) {
+				Err(AlreadyFinished) => {}
+				_ => crash "Grapheme.Cursor accepted a push after finish"
+			}
 			done.state
 		}
 	}
@@ -109,10 +114,12 @@ materialize = |source, ranges| {
 	ranges.map(|range| ByteRange.slice(range, source) ?? crash "validated grapheme range could not be sliced")
 }
 
-target = Fuzz.target_with({
-	name: "unicode-grapheme",
-	examples: [],
-	generator: FuzzSupport.scalar_sequence,
-	test,
-	show: FuzzSupport.show_scalars,
-})
+GraphemeTarget :: [].{
+	target = Fuzz.target_with({
+		name: "unicode-grapheme",
+		examples: [Fuzz.saved({ name: "combining-and-zwj", revision: "1", bytes: [0x00, 0x78, 0x00, 0x00, 0x01, 0x03, 0x20, 0x69, 0xEC, 0x41, 0x0D, 0x20, 0x60, 0x69, 0xEC, 0x81] })],
+		generator: FuzzSupport.plan,
+		test,
+		show: FuzzSupport.show_plan,
+	})
+}

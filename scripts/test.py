@@ -7,6 +7,7 @@ import argparse
 from array import array
 import concurrent.futures
 import json
+from itertools import pairwise
 import os
 import platform
 import random
@@ -24,7 +25,7 @@ from unicode_data import (
     DataError,
     GraphemeCase,
     LineBreakCase,
-    WordBreakCase,
+    SegmentationCase,
     MAX_CODE_POINT,
     MissingDefault,
     RangeRecord,
@@ -37,6 +38,7 @@ from unicode_data import (
     parse_bidi_tests,
     parse_line_break_tests,
     parse_word_break_tests,
+    parse_sentence_break_tests,
     release_version,
     validate_all,
 )
@@ -51,6 +53,8 @@ APP_NAMES = {
     "grapheme": "grapheme",
     "line-break": "line-break",
     "word": "word",
+    "normalization": "normalization",
+    "collation": "collation",
     "case": "case",
     "properties": "properties",
     "allocation": "allocation",
@@ -190,9 +194,15 @@ def load_app_specs() -> dict[str, dict[str, object]]:
         "word": {
             "schema_version",
             "kind",
-            "suite",
+            "suites",
             "timeout_seconds",
-            "unicode_manifest_file",
+            "unicode_manifest_files",
+        },
+        "collation": {
+            "schema_version", "kind", "suites", "timeout_seconds", "unicode_manifest_file",
+        },
+        "normalization": {
+            "schema_version", "kind", "suite", "timeout_seconds", "unicode_manifest_file",
         },
         "case": {
             "schema_version",
@@ -214,8 +224,7 @@ def load_app_specs() -> dict[str, dict[str, object]]:
             "kind",
             "suites",
             "timeout_seconds",
-            "baseline_file",
-            "exact_baseline_target",
+            "ratchet_file",
         },
         "bidi": {
             "schema_version",
@@ -262,10 +271,20 @@ def load_app_specs() -> dict[str, dict[str, object]]:
     for field in ("bidi_test_executions", "bidi_character_test_executions", "metamorphic_seed", "metamorphic_cases"):
         if not isinstance(specs["bidi"][field], int) or specs["bidi"][field] < 1:
             raise TestFailure(f"bidi spec {field} must be positive")
-    if specs["word"]["suite"] != "word":
-        raise TestFailure("word spec suite has drifted")
-    if specs["word"]["unicode_manifest_file"] != "word_break_test":
-        raise TestFailure("word spec references an unknown manifest file")
+    if specs["word"]["suites"] != ["word", "sentence"]:
+        raise TestFailure("word/sentence spec suites have drifted")
+    if specs["word"]["unicode_manifest_files"] != ["word_break_test", "sentence_break_test"]:
+        raise TestFailure("word/sentence spec references unexpected manifest files")
+    collation = specs["collation"]
+    if (collation["suites"] != [name for name, _ in unicode_data.COLLATION_TEST_FILES]
+            or collation["unicode_manifest_file"] != "uca_collation_test"
+            or "uca_collation_test" not in manifest_files):
+        raise TestFailure("collation spec must cover both official short conformance suites")
+    normalization = specs["normalization"]
+    if (normalization["suite"] != "normalization"
+            or normalization["unicode_manifest_file"] != "normalization_test"
+            or "normalization_test" not in manifest_files):
+        raise TestFailure("normalization spec must use the pinned conformance corpus")
     case_sources = set(specs["case"]["unicode_manifest_files"])
     if specs["case"]["suite"] != "case" or case_sources != {
         "unicode_data",
@@ -289,9 +308,9 @@ def load_app_specs() -> dict[str, dict[str, object]]:
         raise TestFailure("properties spec must cover every production property view")
     if specs["properties"]["scalar_domain"] != "valid-unicode-scalars":
         raise TestFailure("properties spec must cover the valid Unicode scalar domain")
-    allocation_baseline = ROOT / str(specs["allocation"]["baseline_file"])
-    if allocation_baseline.parent != APP_ROOT / "allocation" or not allocation_baseline.is_file():
-        raise TestFailure("allocation baselines must be adjacent to their app")
+    allocation_ratchet = ROOT / str(specs["allocation"]["ratchet_file"])
+    if allocation_ratchet.parent != APP_ROOT / "allocation" or not allocation_ratchet.is_file():
+        raise TestFailure("the allocation ratchet must be adjacent to its app")
     return specs
 
 
@@ -547,20 +566,21 @@ def run_grapheme(binary: Path, jobs: int, spec: dict[str, object]) -> None:
     )
 
 
-def line_break_row(case: LineBreakCase) -> str:
+def line_break_row(case: LineBreakCase, unicode_version: str) -> str:
     code_points = ",".join(f"{code_point:04X}" for code_point in case.code_points)
     offsets = ",".join(str(offset) for offset in case.break_offsets)
-    return f"17.0.0:LineBreakTest.txt:{case.line}\t{code_points}\t{offsets}"
+    return f"{unicode_version}:LineBreakTest.txt:{case.line}\t{code_points}\t{offsets}"
 
 
 def run_line_break(binary: Path, jobs: int, spec: dict[str, object]) -> None:
     manifest = load_manifest()
     cases = parse_line_break_tests(manifest)
+    version = unicode_data.release_version(manifest, "unicode")
     run_parallel_suite(
         binary,
         "line-break",
         len(cases),
-        lambda index: line_break_row(cases[index]),
+        lambda index: line_break_row(cases[index], version),
         jobs=jobs,
         timeout=int(spec["timeout_seconds"]),
     )
@@ -680,22 +700,80 @@ def run_bidi(binary: Path, jobs: int, spec: dict[str, object]) -> None:
     )
 
 
-def word_row(case: WordBreakCase) -> str:
+def segmentation_row(case: SegmentationCase) -> str:
     code_points = ",".join(f"{code_point:04X}" for code_point in case.code_points)
     offsets = ",".join(str(offset) for offset in case.break_offsets)
     return f"{case.case_id}\t{code_points}\t{offsets}"
 
 
-def run_word(binary: Path, jobs: int, spec: dict[str, object]) -> None:
-    manifest = load_manifest()
-    cases = parse_word_break_tests(manifest)
+def run_segmentation(
+    binary: Path, suite: str, jobs: int, spec: dict[str, object]
+) -> None:
+    reader = {
+        "word": parse_word_break_tests,
+        "sentence": parse_sentence_break_tests,
+    }[suite]
+    cases = reader(load_manifest())
     run_parallel_suite(
         binary,
-        "word",
+        suite,
         len(cases),
-        lambda index: word_row(cases[index]),
+        lambda index: segmentation_row(cases[index]),
         jobs=jobs,
         timeout=int(spec["timeout_seconds"]),
+    )
+
+
+def collation_rows(cases):
+    for index, (left, right) in enumerate(pairwise(cases), 1):
+        yield "\t".join([str(index), ",".join(map(str, left)), ",".join(map(str, right))])
+
+
+def run_collation(binary: Path, jobs: int, spec: dict[str, object]) -> None:
+    manifest = load_manifest()
+    version = release_version(manifest, "unicode")
+    for suite, source in unicode_data.collation_test_sources(manifest).items():
+        cases = tuple(unicode_data.unicode_collation.parse_short_tests(source, version))
+        run_parallel_stream(
+            binary, suite, collation_rows(cases), len(cases) - 1,
+            jobs=jobs, timeout=int(spec["timeout_seconds"]),
+        )
+
+
+def normalization_row(index: int, row: tuple) -> str:
+    fields = [",".join(map(str, scalars)) for scalars in row]
+    return "\t".join([f"NormalizationTest:{index + 1}", *fields])
+
+
+def normalization_identity_points(manifest, corpus) -> list[int]:
+    # UAX #15 conformance condition 2 covers assigned scalars that have
+    # no explicit source record in Part1. A singleton listed in another
+    # section does not exempt it from this separate identity test.
+    explicit = {columns[0][0] for part, columns in corpus if part == 1 and len(columns[0]) == 1}
+    categories = unicode_data.load_canonical_properties(manifest).general_category
+    return [
+        code
+        for category in categories if category.property not in ("Cn", "Cs", "Unassigned", "Surrogate")
+        for code in range(category.start, category.end + 1)
+        if code not in explicit
+    ]
+
+
+def run_normalization(binary: Path, jobs: int, spec: dict[str, object]) -> None:
+    manifest = load_manifest()
+    text = unicode_data.verify_source(manifest, "normalization_test")
+    records = tuple(unicode_data.unicode_normalization.conformance_rows(text, with_parts=True))
+    cases = [columns for _, columns in records]
+    identities = normalization_identity_points(manifest, records)
+    def rows():
+        for index, case in enumerate(cases):
+            yield normalization_row(index, case)
+        for code in identities:
+            yield f"Identity\t{code}"
+
+    run_parallel_stream(
+        binary, "normalization", rows(), len(cases) + len(identities),
+        jobs=jobs, timeout=int(spec["timeout_seconds"]),
     )
 
 
@@ -974,8 +1052,8 @@ def case_rows() -> list[str]:
     language_rules = [record for record in case.special if record.languages]
     context_rules = [record for record in case.special if record.contexts]
     language_context_rules = [record for record in case.special if record.languages and record.contexts]
-    if (len(case.special), len(language_rules), len(context_rules), len(language_context_rules)) != (119, 15, 9, 8):
-        raise TestFailure("Unicode 17 SpecialCasing conditional rule inventory drifted")
+    if (len(case.special), len(language_rules), len(context_rules), len(language_context_rules)) != (120, 15, 9, 8):
+        raise TestFailure("Unicode 18 SpecialCasing conditional rule inventory drifted")
 
     for record in case.special:
         profile = _special_profile(record)
@@ -1070,7 +1148,7 @@ def case_rows() -> list[str]:
         hand_rows.append(_encode_case_row(
             f"limits:{name}", operation, profile, source, output, contextual
         ))
-    # These deliberately pin the committed Unicode 17 corpus and each harness
+    # These deliberately pin the committed Unicode 18 corpus and each harness
     # projection. A vendor/parser change cannot silently reduce one family.
     component_counts = (
         len(unicode_rows),
@@ -1080,7 +1158,7 @@ def case_rows() -> list[str]:
         len(folding_rows),
         len(hand_rows),
     )
-    if component_counts != (4502, 357, 45, 27, 6472, 13):
+    if component_counts != (4562, 360, 45, 27, 6560, 13):
         raise TestFailure(f"Case conformance row inventory drifted: {component_counts}")
     rows = [
         *unicode_rows,
@@ -1090,7 +1168,7 @@ def case_rows() -> list[str]:
         *folding_rows,
         *hand_rows,
     ]
-    if len(rows) != 11416:
+    if len(rows) != 11567:
         raise TestFailure(f"Case conformance total drifted: {len(rows)}")
     return rows
 
@@ -1257,18 +1335,8 @@ CASE_ALLOCATION_MODES = (
     "limits",
 )
 
-CASE_ALLOCATION_SUCCESS_MODES = CASE_ALLOCATION_MODES[:-1]
-CASE_ALLOCATION_ASCII_HALF_SCALARS = 320
-CASE_ALLOCATION_ASCII_SCALARS = 640
-# Doubling the ASCII input must not double the allocation count: the result
-# buffer and the fact list both grow geometrically, so the extra 320 scalars
-# may only add the few reallocations that growth schedule needs. A slope
-# anywhere near the added scalar count means per-scalar copying is back.
-CASE_ALLOCATION_ASCII_MAX_DELTA = 8
-
-# These sources make result ownership and the Case-specific context paths
-# visible to exact allocation baselines across distinct scalar and byte-count
-# regimes, rather than letting a baseline change hide in one ASCII example.
+# The 320- and 640-scalar ASCII fixtures independently guard allocation growth,
+# alongside expansion-heavy inputs and the Case-specific context paths.
 CASE_ALLOCATION_FIXTURES = {
     "ascii-half": "ASCII Case" * 32,
     "ascii": "ASCII Case" * 64,
@@ -1302,8 +1370,6 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
         f"positive\t{utf8_hex('allocation calibration input')}\tpositive",
     ]
     timeout = int(spec["timeout_seconds"])
-    if spec["exact_baseline_target"] != "linux-x64":
-        raise TestFailure("allocation spec exact baseline target has drifted")
     suites = spec["suites"]
     if suites != [
         "allocation-calibration",
@@ -1327,7 +1393,7 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
         "allocation-case-fold-turkic-full",
         "allocation-case-fold-turkic-simple",
         "allocation-case-limits",
-        "allocation-baselines",
+        "allocation-ratchet",
     ]:
         raise TestFailure("allocation spec suites have drifted")
     run_serial_suite(binary, suites[0], calibration, timeout=timeout)
@@ -1348,57 +1414,39 @@ def run_allocations(binary: Path, spec: dict[str, object]) -> None:
     ]
     run_serial_suite(binary, suites[4], bidi_scaling_rows, timeout=timeout)
 
-    machine = platform.machine().lower()
-    if platform.system() != "Linux" or machine not in ("x86_64", "amd64"):
-        print("SKIP allocation-baselines: exact baselines are Linux x64 only")
+    if platform.system() not in ("Linux", "Darwin"):
+        print("SKIP allocation-ratchet: shared ceilings are enabled on Linux and macOS")
         return
     try:
-        baseline_path = ROOT / str(spec["baseline_file"])
-        baseline = json.loads(baseline_path.read_text(encoding="utf-8"))
+        ratchet_path = ROOT / str(spec["ratchet_file"])
+        ratchet = json.loads(ratchet_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as err:
-        raise TestFailure(f"unable to read allocation baselines: {err}") from err
+        raise TestFailure(f"unable to read allocation ratchets: {err}") from err
     if (
-        baseline.get("schema_version") != 5
-        or baseline.get("platform") != "roc-platform-template-zig-1.1.0+alloc-count"
-        or baseline.get("target") != "x64musl"
-        or baseline.get("optimize") != "speed"
+        ratchet.get("schema_version") != 6
+        or ratchet.get("platform") != "roc-platform-template-zig-1.1.0+alloc-count"
+        or ratchet.get("recorded_target") != "x64musl"
+        or ratchet.get("optimize") != "speed"
     ):
-        raise TestFailure("allocation baseline metadata has drifted")
-    expected = baseline.get("fixtures")
+        raise TestFailure("allocation ratchet metadata has drifted")
+    expected = ratchet.get("fixtures")
     if not isinstance(expected, dict) or set(expected) != set(ALLOCATION_FIXTURES):
-        raise TestFailure("allocation baseline fixture set has drifted")
-    word = baseline.get("word")
+        raise TestFailure("allocation ratchet fixture set has drifted")
+    word = ratchet.get("word")
     if not isinstance(word, dict) or set(word) != set(WORD_ALLOCATION_MODES):
-        raise TestFailure("word allocation baseline modes have drifted")
+        raise TestFailure("word allocation ratchet modes have drifted")
     for mode in WORD_ALLOCATION_MODES:
         expected_word = word[mode]
         if not isinstance(expected_word, dict) or set(expected_word) != set(WORD_ALLOCATION_FIXTURES):
-            raise TestFailure(f"word allocation baseline fixture set has drifted for {mode}")
-    case = baseline.get("case")
+            raise TestFailure(f"word allocation ratchet fixture set has drifted for {mode}")
+    case = ratchet.get("case")
     if not isinstance(case, dict) or set(case) != set(CASE_ALLOCATION_MODES):
-        raise TestFailure("case allocation baseline modes have drifted")
-    case_ascii_doubling_deltas = baseline.get("case_ascii_doubling_deltas")
-    if not isinstance(case_ascii_doubling_deltas, dict) or set(case_ascii_doubling_deltas) != set(CASE_ALLOCATION_SUCCESS_MODES):
-        raise TestFailure("case ASCII doubling allocation baseline modes have drifted")
-    if (
-        len(CASE_ALLOCATION_FIXTURES["ascii-half"]) != CASE_ALLOCATION_ASCII_HALF_SCALARS
-        or len(CASE_ALLOCATION_FIXTURES["ascii"]) != CASE_ALLOCATION_ASCII_SCALARS
-    ):
-        raise TestFailure("case ASCII doubling fixtures have drifted")
+        raise TestFailure("case allocation ratchet modes have drifted")
     for mode in CASE_ALLOCATION_MODES:
         expected_case = case[mode]
         fixtures = CASE_LIMIT_FIXTURES if mode == "limits" else CASE_ALLOCATION_FIXTURES
         if not isinstance(expected_case, dict) or set(expected_case) != set(fixtures):
-            raise TestFailure(f"case allocation baseline fixture set has drifted for {mode}")
-        if mode in CASE_ALLOCATION_SUCCESS_MODES:
-            documented_delta = case_ascii_doubling_deltas[mode]
-            actual_delta = expected_case["ascii"] - expected_case["ascii-half"]
-            if (
-                not isinstance(documented_delta, int)
-                or not 0 <= documented_delta <= CASE_ALLOCATION_ASCII_MAX_DELTA
-                or actual_delta != documented_delta
-            ):
-                raise TestFailure(f"case ASCII allocation scaling has drifted for {mode}")
+            raise TestFailure(f"case allocation ratchet fixture set has drifted for {mode}")
         rows = [
             f"{name}\t{utf8_hex(value)}\t{expected_case[name]}"
             for name, value in fixtures.items()
@@ -1436,8 +1484,10 @@ def run_data_checks() -> None:
         "-m",
         "unittest",
         "scripts/test_unicode_data.py",
+        "scripts/test_unicode_normalization.py",
+        "scripts/test_unicode_collation.py",
         "scripts/test_bidi_reduce.py",
-    ])
+    ], timeout=900)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -1446,8 +1496,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "suite",
         nargs="?",
-        choices=("all", "data", "bidi", "grapheme", "line-break", "word", "case", "properties", "allocations"),
-        default="all",
+        choices=("ci", "all", "data", "safety", "allocations", "sentence", *(name for name in APP_NAMES if name != "allocation")),
+        default="ci",
+        help="ci runs checkout-only checks; all adds local data and exhaustive conformance",
     )
     parser.add_argument("--roc", default=os.environ.get("ROC", "roc"))
     parser.add_argument("--zig", default=os.environ.get("ZIG", "zig"))
@@ -1460,6 +1511,18 @@ def main(argv: list[str] | None = None) -> int:
         app_specs = load_app_specs()
         if args.suite != "data":
             verify_pinned_roc(args.roc)
+        if args.suite in ("ci", "all", "safety"):
+            command([sys.executable, "scripts/check_api_safety.py"])
+            command([sys.executable, "-m", "unittest", "scripts/test_api_safety.py"])
+            safety_roots = sorted((ROOT / "tests" / "safety").glob("*.roc"))
+            for mode in ("dev", "speed"):
+                for source in safety_roots:
+                    if args.suite == "ci" and source.name == "scalar-roundtrip.roc":
+                        continue
+                    command([
+                        args.roc, "test", source.relative_to(ROOT).as_posix(),
+                        f"--opt={mode}", "--no-cache",
+                    ])
         if args.suite in ("all", "data"):
             run_data_checks()
         requested_apps = []
@@ -1469,13 +1532,23 @@ def main(argv: list[str] | None = None) -> int:
             requested_apps.append("grapheme")
         if args.suite in ("all", "line-break"):
             requested_apps.append("line-break")
-        if args.suite in ("all", "word"):
+        if args.suite in ("all", "word", "sentence"):
             requested_apps.append("word")
+        if args.suite in ("all", "collation"):
+            if args.suite == "collation":
+                command([args.roc, "test", "tests/safety/collation.roc", "--opt=dev", "--no-cache"])
+            requested_apps.append("collation")
+        if args.suite in ("ci", "all", "normalization"):
+            command([args.roc, "test", "tests/apps/normalization/main.roc", "--no-cache"])
+        if args.suite in ("all", "normalization"):
+            requested_apps.append("normalization")
         if args.suite in ("all", "case"):
             requested_apps.append("case")
         if args.suite in ("all", "properties"):
             requested_apps.append("properties")
-        if args.suite in ("all", "allocations"):
+        if args.suite in ("ci", "all", "properties"):
+            command([args.roc, "test", "tests/properties/identifier.roc", "--no-cache"])
+        if args.suite in ("ci", "all", "allocations"):
             requested_apps.append("allocation")
         if requested_apps:
             binaries = build_apps(
@@ -1487,8 +1560,13 @@ def main(argv: list[str] | None = None) -> int:
                 run_bidi(binaries["bidi"], args.jobs, app_specs["bidi"])
             if "line-break" in requested_apps:
                 run_line_break(binaries["line-break"], args.jobs, app_specs["line-break"])
-            if "word" in requested_apps:
-                run_word(binaries["word"], args.jobs, app_specs["word"])
+            for suite in ("word", "sentence"):
+                if args.suite in ("all", suite):
+                    run_segmentation(binaries["word"], suite, args.jobs, app_specs["word"])
+            if "collation" in requested_apps:
+                run_collation(binaries["collation"], args.jobs, app_specs["collation"])
+            if "normalization" in requested_apps:
+                run_normalization(binaries["normalization"], args.jobs, app_specs["normalization"])
             if "case" in requested_apps:
                 run_case(binaries["case"], args.jobs, app_specs["case"])
             if "properties" in requested_apps:

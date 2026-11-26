@@ -1,21 +1,18 @@
-app [target] {
-	fuzz: platform "https://github.com/lukewilliamboswell/roc-fuzz/releases/download/0.6.2/3kyiehxxzwAsjM23uCQGJ3Hx7dAAdzSGtK3k9Jq7Egtu.tar.zst",
-	unicode: "../package/main.roc",
-}
-
 import FuzzSupport
 import fuzz.Fuzz
 import unicode.ByteRange
 import unicode.Word
 
-test : List(U32) -> Fuzz.Outcome
-test = |code_points| {
+test : FuzzSupport.Plan -> Fuzz.Outcome
+test = |input| {
+	code_points = input.code_points
 	parts = FuzzSupport.source_parts(code_points)
 	source = Str.join_with(parts, "")
 	collected = Word.ranges(source)
-	iterated = Word.iter_ranges(source).fold([], |ranges, range| ranges.append(range))
+	iterated = FuzzSupport.pause_iter(Word.iter_ranges(source), input.config.to_u64() % (parts.len() + 1))
 	whole_cursor = cursor_ranges([source])
 	scalar_cursor = cursor_ranges([""].concat(parts).append(""))
+	planned_cursor = cursor_ranges(FuzzSupport.chunks(input, parts))
 
 	if iterated != collected {
 		crash "Word.iter_ranges disagreed with Word.ranges"
@@ -23,8 +20,8 @@ test = |code_points| {
 	if whole_cursor != collected {
 		crash "whole-chunk Word.Cursor disagreed with Word.ranges"
 	}
-	if scalar_cursor != collected {
-		crash "scalar-chunk Word.Cursor disagreed with Word.ranges"
+	if scalar_cursor != collected or planned_cursor != collected {
+		crash "scalar or planned chunk Word.Cursor disagreed with Word.ranges"
 	}
 
 	validate_partition(source, collected)
@@ -38,6 +35,10 @@ test = |code_points| {
 	if Str.join_with(expected_materialized, "") != source {
 		crash "word materialization lost or changed source text"
 	}
+
+	FuzzSupport.check_bounded_collection("Word.ranges_limited", source, input.config, collected, |limits| Word.ranges_limited(source, limits))
+	FuzzSupport.check_bounded_collection("Word.slices_limited", source, input.config, expected_materialized, |limits| Word.slices_limited(source, limits))
+	FuzzSupport.check_bounded_collection("Word.owned_limited", source, input.config, expected_materialized, |limits| Word.owned_limited(source, limits))
 
 	for word in expected_materialized {
 		inner = Word.ranges(word)
@@ -75,6 +76,10 @@ cursor_ranges = |chunks| {
 				Failed({ error: AlreadyFinished, .. }) => {}
 				_ => crash "Word.Cursor was not sealed after finish"
 			}
+			match Word.Cursor.push(done.cursor, "a", [], |ranges, range| ranges.append(range)) {
+				Failed({ error: AlreadyFinished, consumed: 0, .. }) => {}
+				_ => crash "Word.Cursor accepted a push after finish"
+			}
 			done.state
 		}
 	}
@@ -109,10 +114,12 @@ materialize = |source, ranges| {
 	ranges.map(|range| ByteRange.slice(range, source) ?? crash "validated word range could not be sliced")
 }
 
-target = Fuzz.target_with({
-	name: "unicode-word",
-	examples: [],
-	generator: FuzzSupport.scalar_sequence,
-	test,
-	show: FuzzSupport.show_scalars,
-})
+WordTarget :: [].{
+	target = Fuzz.target_with({
+		name: "unicode-word",
+		examples: [Fuzz.saved({ name: "pending-midletter", revision: "1", bytes: [0x00, 0x61, 0x00, 0x00, 0x27, 0x00, 0x20, 0x01, 0x03, 0x40, 0x62, 0x00, 0x60] })],
+		generator: FuzzSupport.plan,
+		test,
+		show: FuzzSupport.show_plan,
+	})
+}
