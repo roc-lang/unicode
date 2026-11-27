@@ -27,7 +27,9 @@ as enduring architecture.
 ## Pinned Roc toolchain
 
 `.roc-version` is the repository's sole source of truth for the Roc compiler.
-Do not duplicate a concrete nightly tag in scripts, workflows, baselines, or
+It names a release tag of github.com/roc-lang/roc (e.g. `0.1.0_RC1`); the daily
+"Update Roc nightly" workflow only opens a PR when the latest nightly fails.
+Do not duplicate a concrete Roc version tag in scripts, workflows, baselines, or
 documentation. Every path that invokes Roc must either install the compiler
 named by `.roc-version` or verify the selected compiler against it before doing
 work. Historical measurements should identify the pin through the repository

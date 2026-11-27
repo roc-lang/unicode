@@ -1,3 +1,5 @@
+# Tests the latest nightly daily. A PR is only opened (and @Anton-4 mentioned)
+# when the tests fail; the pinned release in .roc-version stays the default.
 on:
   schedule:
     # Nightlies are published around 10:30 UTC, run after that.
@@ -77,7 +79,7 @@ jobs:
 
   pull-request:
     needs: [bump, test]
-    if: always() && needs.bump.outputs.changed == 'true'
+    if: always() && needs.bump.outputs.changed == 'true' && needs.test.result != 'success'
     runs-on: ubuntu-26.04
     permissions:
       contents: read
@@ -92,17 +94,11 @@ jobs:
           TEST_RESULT: ${{ needs.test.result }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          if [ "$TEST_RESULT" = "success" ]; then
-            status=":white_check_mark: All tests passed with this nightly."
-          else
-            status=":x: Tests did not pass with this nightly (\`$TEST_RESULT\`), this needs a look before merging."
-          fi
-
-          title="Update Roc nightly pin to $NIGHTLY_TAG"
+          title="Tests fail with the latest Roc nightly ($NIGHTLY_TAG)"
           body="$(printf '%s\n\n%s\n\n%s\n' \
-            "Updates \`.roc-version\` to [\`$NIGHTLY_TAG\`](https://github.com/roc-lang/nightlies/releases/tag/$NIGHTLY_TAG)." \
-            "$status See the [workflow run]($RUN_URL) for details." \
-            "This PR was created automatically by the \`Update Roc nightly\` workflow.")"
+            "Tests did not pass (\`$TEST_RESULT\`) with Roc [\`$NIGHTLY_TAG\`](https://github.com/roc-lang/nightlies/releases/tag/$NIGHTLY_TAG). See the [workflow run]($RUN_URL) for details." \
+            "@Anton-4 this needs a look." \
+            "This PR was created automatically by the \`Update Roc nightly\` workflow. It sets \`.roc-version\` to the failing nightly and must not be merged as is.")"
 
           pr="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')"
 
@@ -111,3 +107,24 @@ jobs:
           else
             gh pr edit "$pr" --title "$title" --body "$body"
           fi
+
+  # Nothing to look at when the nightly passes, drop a stale branch and PR.
+  cleanup:
+    needs: [bump, test]
+    if: needs.test.result == 'success'
+    runs-on: ubuntu-26.04
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Close the stale pull request and delete the branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          pr="$(gh pr list --head "$BRANCH" --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$pr" ]; then
+            gh pr close "$pr" --comment "Tests pass again with the latest Roc nightly."
+          fi
+          git push origin --delete "$BRANCH" || true

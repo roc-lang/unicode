@@ -139,8 +139,8 @@ def verify_pinned_roc(roc: str) -> None:
     result = command([roc, "version"], capture=True)
     actual = result.stdout.strip()
     lines = (ROOT / ".roc-version").read_text(encoding="utf-8").splitlines()
-    if len(lines) != 1 or not lines[0].startswith("nightly-"):
-        raise FuzzFailure(".roc-version must contain exactly one Roc nightly tag")
+    if len(lines) != 1 or not lines[0]:
+        raise FuzzFailure(".roc-version must contain exactly one Roc version tag")
     pinned = lines[0]
     revision = pinned.rsplit("-", 1)[-1]
     if pinned not in actual and revision not in actual:
